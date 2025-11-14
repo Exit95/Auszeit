@@ -4,7 +4,7 @@ export const content = {
     subtitle: 'Keramik · Malatelier',
     claim: 'Auszeit für Kopf und Hände',
     ctaPrimary: 'Termin buchen',
-    ctaSecondary: 'WhatsApp-Frage stellen',
+    ctaSecondary: 'WhatsApp',
   },
   intro: {
     text: 'In ruhiger Atmosphäre kannst du deine eigene Keramik bemalen. Lass den Alltag hinter dir und gestalte dein persönliches Unikat.',
