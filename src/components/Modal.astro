@@ -49,8 +49,8 @@ const { id, title } = Astro.props;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    background: linear-gradient(135deg, rgba(139, 111, 71, 0.85) 0%, rgba(193, 123, 92, 0.85) 100%);
+    backdrop-filter: blur(8px);
     animation: fadeIn 0.3s ease;
   }
 
@@ -61,14 +61,15 @@ const { id, title } = Astro.props;
 
   .modal__content {
     position: relative;
-    background-color: var(--color-off-white);
+    background: linear-gradient(to bottom, var(--color-off-white) 0%, #FAF8F3 100%);
     border-radius: var(--radius-lg);
+    border: 2px solid var(--color-warm-beige);
     max-width: 600px;
     width: 100%;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow-xl);
+    box-shadow: 0 20px 60px rgba(139, 111, 71, 0.3);
     animation: slideUp 0.3s ease;
   }
 
@@ -88,59 +89,126 @@ const { id, title } = Astro.props;
     justify-content: space-between;
     align-items: center;
     padding: var(--space-5);
-    border-bottom: 1px solid var(--color-warm-beige);
+    border-bottom: 2px solid var(--color-warm-beige);
+    background: linear-gradient(to right, var(--color-warm-beige) 0%, transparent 100%);
   }
 
   .modal__title {
-    font-size: 1.5rem;
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
     color: var(--color-clay-brown);
     margin: 0;
+    position: relative;
+  }
+
+  .modal__title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background-color: var(--color-terracotta);
+    border-radius: 2px;
   }
 
   .modal__close {
-    background: none;
-    border: none;
+    background: var(--color-warm-beige);
+    border: 2px solid var(--color-clay-brown);
     cursor: pointer;
     padding: var(--space-2);
     color: var(--color-clay-brown);
     transition: all var(--duration-normal) var(--easing);
-    border-radius: var(--radius);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .modal__close:hover {
-    background-color: var(--color-warm-beige);
-    transform: rotate(90deg);
+    background-color: var(--color-terracotta);
+    color: var(--color-off-white);
+    border-color: var(--color-terracotta);
+    transform: rotate(90deg) scale(1.1);
   }
 
   .modal__body {
-    padding: var(--space-5);
+    padding: var(--space-6);
     overflow-y: auto;
     color: var(--color-text-primary);
-    line-height: 1.6;
+    line-height: 1.8;
   }
 
   .modal__body :global(h3) {
+    font-family: var(--font-serif);
     color: var(--color-clay-brown);
-    margin-top: var(--space-4);
-    margin-bottom: var(--space-2);
+    margin-top: var(--space-5);
+    margin-bottom: var(--space-3);
+    font-size: 1.25rem;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-warm-beige);
+  }
+
+  .modal__body :global(h3:first-child) {
+    margin-top: 0;
   }
 
   .modal__body :global(p) {
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-4);
+    color: var(--color-text-secondary);
   }
 
   .modal__body :global(a) {
     color: var(--color-terracotta);
     text-decoration: underline;
+    transition: color var(--duration-normal) var(--easing);
+  }
+
+  .modal__body :global(a:hover) {
+    color: var(--color-clay-brown);
+  }
+
+  .modal__body :global(br) {
+    line-height: 2;
+  }
+
+  /* Custom Scrollbar */
+  .modal__body::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .modal__body::-webkit-scrollbar-track {
+    background: var(--color-warm-beige);
+    border-radius: 4px;
+  }
+
+  .modal__body::-webkit-scrollbar-thumb {
+    background: var(--color-clay-brown);
+    border-radius: 4px;
+  }
+
+  .modal__body::-webkit-scrollbar-thumb:hover {
+    background: var(--color-terracotta);
   }
 
   @media (max-width: 640px) {
     .modal__content {
       max-height: 90vh;
+      border-radius: var(--radius);
     }
 
     .modal__title {
-      font-size: 1.25rem;
+      font-size: 1.5rem;
+    }
+
+    .modal__header {
+      padding: var(--space-4);
+    }
+
+    .modal__body {
+      padding: var(--space-4);
     }
   }
 </style>
