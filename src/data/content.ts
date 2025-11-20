@@ -5,6 +5,7 @@ export const content = {
     claim: 'Auszeit für Kopf und Hände',
     ctaPrimary: 'Termin buchen',
     ctaSecondary: 'WhatsApp',
+    ctaTertiary: 'Instagram',
   },
   intro: {
     text: 'In ruhiger Atmosphäre kannst du deine eigene Keramik bemalen. Lass den Alltag hinter dir und gestalte dein persönliches Unikat.',
