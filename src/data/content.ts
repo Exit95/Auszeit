@@ -33,9 +33,10 @@ export const content = {
   offerings: {
     title: 'Angebot',
     items: [
-      { name: 'Becher', price: 'ab 12€' },
-      { name: 'Teller', price: 'ab 18€' },
-      { name: 'Schalen', price: 'ab 15€' },
+      { name: 'Becher', price: '17,00€', image: '/becher.jpeg' },
+      { name: 'Teller', price: '12,50€', image: '/teller.jpeg' },
+      { name: 'Spardosen', price: '16,50€', image: '/spardose.jpeg' },
+      { name: 'Weihnachtsanhänger', price: '7,00€', image: '/anhänger.png' },
     ],
     note: 'Glasierung und Brennen inklusive. Abholung nach 7 Tagen.',
   },
