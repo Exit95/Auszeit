@@ -1,8 +1,16 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
+import { readFileSync } from 'fs';
 
-// .env laden
-dotenv.config();
+// .env manuell laden
+const envFile = readFileSync('.env', 'utf-8');
+const envVars = {};
+envFile.split('\n').forEach(line => {
+  const match = line.match(/^([^=:#]+)=(.*)$/);
+  if (match) {
+    envVars[match[1].trim()] = match[2].trim();
+  }
+});
+process.env = { ...process.env, ...envVars };
 
 console.log('🔍 SMTP-Test wird gestartet...\n');
 
@@ -16,25 +24,59 @@ console.log('  From:', process.env.FROM_EMAIL);
 console.log('  To (Admin):', process.env.BOOKING_EMAIL);
 console.log('');
 
-// Transporter erstellen
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  debug: true, // Debug-Modus aktivieren
-  logger: true, // Logging aktivieren
-});
+// Teste verschiedene Ports
+const ports = [
+  { port: 587, secure: false, name: 'STARTTLS (587)' },
+  { port: 465, secure: true, name: 'SSL (465)' },
+  { port: 25, secure: false, name: 'Standard (25)' },
+];
+
+async function testPort(portConfig) {
+  console.log(`\n🔌 Teste ${portConfig.name}...`);
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: portConfig.port,
+    secure: portConfig.secure,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    debug: true,
+    logger: true,
+  });
+
+  return transporter;
+}
 
 async function testSMTP() {
+  let workingTransporter = null;
+
+  // Teste alle Ports
+  for (const portConfig of ports) {
+    try {
+      const transporter = await testPort(portConfig);
+      await transporter.verify();
+      console.log(`✅ ${portConfig.name} funktioniert!\n`);
+      workingTransporter = transporter;
+      break; // Ersten funktionierenden Port verwenden
+    } catch (error) {
+      console.log(`❌ ${portConfig.name} fehlgeschlagen:`, error.message);
+    }
+  }
+
+  if (!workingTransporter) {
+    console.error('\n❌ KEIN SMTP-Port funktioniert!');
+    console.log('\n🔍 Mögliche Ursachen:');
+    console.log('   - SMTP-Server ist down');
+    console.log('   - Firewall blockiert alle SMTP-Ports');
+    console.log('   - SMTP-Zugangsdaten sind falsch');
+    console.log('   - Server-IP ist geblockt');
+    return;
+  }
+
   try {
-    // 1. Verbindung testen
-    console.log('🔌 Teste SMTP-Verbindung...');
-    await transporter.verify();
-    console.log('✅ SMTP-Verbindung erfolgreich!\n');
+    const transporter = workingTransporter;
 
     // 2. Test-E-Mail an Admin senden
     console.log('📧 Sende Test-E-Mail an Admin:', process.env.BOOKING_EMAIL);
