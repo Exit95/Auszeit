@@ -1,5 +1,40 @@
 ---
 import { content } from '../data/content';
+import ProductModal from '../components/ProductModal.astro';
+
+// Produktgalerien - hier kannst du weitere Bilder hinzufügen
+const productGalleries: Record<string, string[]> = {
+  'Becher & Tassen': [
+    '/becher.jpeg',
+    '/products/becher/tassen1.jpeg',
+    '/products/becher/tassen2.jpeg',
+    '/products/becher/tassen3.jpeg',
+    '/products/becher/tassen4.jpeg',
+    '/products/becher/tassen5.jpeg',
+    '/products/becher/tassen6.jpeg',
+    '/products/becher/tassen7.jpeg',
+    '/products/becher/tassen8.jpeg',
+  ],
+  'Teller': [
+    '/teller.jpeg',
+    '/products/teller/teller1.jpeg',
+    '/products/teller/teller4.jpeg',
+    '/products/teller/teller6.jpeg',
+  ],
+  'Spardosen & Krüge & Boxen': [
+    '/spardose.jpeg',
+    '/products/spardosen/spardosen.jpeg',
+    '/products/spardosen/dosen1.jpeg',
+    '/products/spardosen/Krug1.jpeg',
+    '/products/spardosen/Krug2.jpeg',
+  ],
+  'Weihnachtsanhänger': [
+    '/anhänger.png',
+    '/products/anhaenger/anhänger2.png',
+    '/products/anhaenger/anhänger3.png',
+    '/products/anhaenger/anhänger4.png',
+  ],
+};
 ---
 
 <section class="offerings">
@@ -8,13 +43,19 @@ import { content } from '../data/content';
     <div class="offerings__grid">
       {
         content.offerings.items.map((item) => (
-          <div class="offering-card">
+          <div
+            class="offering-card"
+            data-product-name={item.name}
+            data-product-price={item.price}
+            data-product-images={JSON.stringify(productGalleries[item.name] || [item.image])}
+          >
             <div class="offering-card__image">
               <img src={item.image} alt={item.name} loading="lazy" />
             </div>
             <div class="offering-card__content">
               <h3 class="offering-card__name">{item.name}</h3>
               <p class="offering-card__price">{item.price}</p>
+              <span class="offering-card__hint">Klicken für mehr Bilder</span>
             </div>
           </div>
         ))
@@ -38,6 +79,8 @@ import { content } from '../data/content';
     <p class="offerings__note">{content.offerings.note}</p>
   </div>
 </section>
+
+<ProductModal />
 
 <style>
   .offerings {
@@ -84,6 +127,7 @@ import { content } from '../data/content';
     transition: transform var(--duration-normal) var(--easing),
                 box-shadow var(--duration-normal) var(--easing);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
   }
 
   .offering-card:hover {
@@ -133,6 +177,15 @@ import { content } from '../data/content';
     font-size: 1.125rem;
     color: var(--color-terracotta);
     font-weight: 600;
+    margin-bottom: var(--space-2);
+  }
+
+  .offering-card__hint {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--color-clay-brown);
+    opacity: 0.7;
+    font-style: italic;
   }
 
   .offerings__pricing {
@@ -265,3 +318,79 @@ import { content } from '../data/content';
     }
   }
 </style>
+
+<script>
+  // Modal-Funktionalität für Produktgalerien
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('productModal');
+    const modalTitle = modal?.querySelector('.modal__title');
+    const modalPrice = modal?.querySelector('.modal__price');
+    const modalGallery = modal?.querySelector('.modal__gallery');
+    const modalClose = modal?.querySelector('.modal__close');
+    const modalOverlay = modal?.querySelector('.modal__overlay');
+    const offeringCards = document.querySelectorAll('.offering-card');
+
+    // Funktion zum Öffnen des Modals
+    function openModal(productName: string, productPrice: string, images: string[]) {
+      if (!modal || !modalTitle || !modalPrice || !modalGallery) return;
+
+      // Setze Titel und Preis
+      modalTitle.textContent = productName;
+      modalPrice.textContent = productPrice;
+
+      // Leere die Galerie
+      modalGallery.innerHTML = '';
+
+      // Füge Bilder hinzu
+      images.forEach((imageSrc) => {
+        const img = document.createElement('img');
+        img.src = imageSrc;
+        img.alt = `${productName} Bild`;
+        img.loading = 'lazy';
+
+        // Klick auf Bild öffnet es in neuem Tab
+        img.addEventListener('click', () => {
+          window.open(imageSrc, '_blank');
+        });
+
+        modalGallery.appendChild(img);
+      });
+
+      // Zeige Modal
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Funktion zum Schließen des Modals
+    function closeModal() {
+      if (!modal) return;
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Event-Listener für Produktkarten
+    offeringCards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const productName = card.getAttribute('data-product-name') || '';
+        const productPrice = card.getAttribute('data-product-price') || '';
+        const imagesJson = card.getAttribute('data-product-images') || '[]';
+        const images = JSON.parse(imagesJson);
+
+        openModal(productName, productPrice, images);
+      });
+    });
+
+    // Event-Listener für Schließen-Button
+    modalClose?.addEventListener('click', closeModal);
+
+    // Event-Listener für Overlay
+    modalOverlay?.addEventListener('click', closeModal);
+
+    // ESC-Taste zum Schließen
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+      }
+    });
+  });
+</script>

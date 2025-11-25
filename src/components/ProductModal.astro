@@ -1,0 +1,178 @@
+---
+// Modal-Komponente für Produktgalerien
+---
+
+<div id="productModal" class="modal">
+  <div class="modal__overlay"></div>
+  <div class="modal__content">
+    <button class="modal__close" aria-label="Schließen">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    
+    <div class="modal__header">
+      <h3 class="modal__title"></h3>
+      <p class="modal__price"></p>
+    </div>
+    
+    <div class="modal__gallery">
+      <!-- Bilder werden hier dynamisch eingefügt -->
+    </div>
+  </div>
+</div>
+
+<style>
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+  }
+
+  .modal.active {
+    display: flex;
+  }
+
+  .modal__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .modal__content {
+    position: relative;
+    background-color: var(--color-background);
+    border-radius: var(--radius);
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: var(--space-6);
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .modal__close {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    background: var(--color-terracotta);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--easing);
+    z-index: 10;
+  }
+
+  .modal__close:hover {
+    background: var(--color-clay-brown);
+    transform: rotate(90deg);
+  }
+
+  .modal__header {
+    text-align: center;
+    margin-bottom: var(--space-6);
+    padding-right: var(--space-8);
+  }
+
+  .modal__title {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    font-size: 2rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .modal__price {
+    font-size: 1.5rem;
+    color: var(--color-terracotta);
+    font-weight: 600;
+  }
+
+  .modal__gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--space-4);
+  }
+
+  .modal__gallery img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: transform var(--duration-normal) var(--easing);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .modal__gallery img:hover {
+    transform: scale(1.05);
+  }
+
+  @media (max-width: 640px) {
+    .modal {
+      padding: 0;
+    }
+
+    .modal__content {
+      max-height: 100vh;
+      border-radius: 0;
+      padding: var(--space-4);
+    }
+
+    .modal__title {
+      font-size: 1.5rem;
+    }
+
+    .modal__price {
+      font-size: 1.25rem;
+    }
+
+    .modal__gallery {
+      grid-template-columns: 1fr;
+    }
+
+    .modal__gallery img {
+      height: 250px;
+    }
+  }
+</style>
+
