@@ -281,7 +281,10 @@ END:VCALENDAR`;
         calendarEvent: icalEvent,
         emailSent: emailSent,
         customerEmailSent: customerEmailSent,
-        emailError: emailError,
+	        emailError: emailError,
+	        // Debug-Infos zum SMTP-Setup (nur Host/Port, kein Passwort)
+	        smtpHost: import.meta.env.SMTP_HOST,
+	        smtpPort: import.meta.env.SMTP_PORT || '587',
       }),
       {
         status: 200,
