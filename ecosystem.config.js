@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   apps: [{
     name: 'testseite',
     script: './dist/server/entry.mjs',
