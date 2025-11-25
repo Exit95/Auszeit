@@ -26,6 +26,7 @@ console.log('');
 
 // Teste verschiedene Ports
 const ports = [
+  { port: 143, secure: false, name: 'Port 143' },
   { port: 587, secure: false, name: 'STARTTLS (587)' },
   { port: 465, secure: true, name: 'SSL (465)' },
   { port: 25, secure: false, name: 'Standard (25)' },
