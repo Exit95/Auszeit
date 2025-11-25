@@ -38,7 +38,7 @@ export const content = {
       { name: 'Spardosen', price: '16,50€', image: '/spardose.jpeg' },
       { name: 'Weihnachtsanhänger', price: '7,00€', image: '/anhänger.png' },
     ],
-    note: 'Abholung nach 7 Tagen.',
+    note: 'Abholbereit nach 10-14 Tagen.',
     pricing: [
       { description: 'Farb- und Brennpauschale bis 3 Teile', price: '10,00€' },
       { description: 'Farb- und Brennpauschale 4-6 Teile', price: '15,00€' },
