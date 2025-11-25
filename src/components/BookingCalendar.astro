@@ -156,9 +156,8 @@ const { title = "Termin buchen" } = Astro.props;
     }
   }
 
-  /* Verstecke Profil wenn Formular angezeigt wird oder Kalender versteckt ist */
-  .booking-grid:has(.booking-form:not(.hidden)) .profile-card,
-  .booking-grid:has(.booking-calendar.hidden) .profile-card {
+  /* Verstecke Profil wenn Formular angezeigt wird */
+  .booking-grid:has(.booking-form:not(.hidden)) .profile-card {
     display: none;
   }
 
@@ -486,15 +485,14 @@ const { title = "Termin buchen" } = Astro.props;
 
     // Formular-Handler
     function showBookingForm(date: Date, timeSlot: string): void {
-      const calendarEl = document.getElementById("bookingCalendar");
       const formEl = document.getElementById("bookingForm");
       const selectedDateEl = document.getElementById("selectedDate");
       const selectedTimeEl = document.getElementById("selectedTime");
       const capacityEl = document.getElementById("availableCapacity");
 
-      if (!calendarEl || !formEl || !selectedDateEl || !selectedTimeEl || !capacityEl) return;
+      if (!formEl || !selectedDateEl || !selectedTimeEl || !capacityEl) return;
 
-      calendarEl.classList.add("hidden");
+      // Zeige nur das Formular, Kalender bleibt sichtbar
       formEl.classList.remove("hidden");
       selectedDateEl.textContent = formatDate(date);
       selectedTimeEl.textContent = timeSlot;
@@ -536,10 +534,8 @@ const { title = "Termin buchen" } = Astro.props;
     // Zurück-Button
     document.getElementById("backToCalendar")?.addEventListener("click", () => {
       const formEl = document.getElementById("bookingForm");
-      const calendarEl = document.getElementById("bookingCalendar");
 
       if (formEl) formEl.classList.add("hidden");
-      if (calendarEl) calendarEl.classList.remove("hidden");
     });
 
     // Formular-Submit
