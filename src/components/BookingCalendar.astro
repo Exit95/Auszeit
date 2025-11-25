@@ -156,8 +156,9 @@ const { title = "Termin buchen" } = Astro.props;
     }
   }
 
-  /* Verstecke Profil wenn Formular angezeigt wird */
-  .booking-grid:has(.booking-form:not(.hidden)) .profile-card {
+  /* Verstecke Profil wenn Formular angezeigt wird oder Kalender versteckt ist */
+  .booking-grid:has(.booking-form:not(.hidden)) .profile-card,
+  .booking-grid:has(.booking-calendar.hidden) .profile-card {
     display: none;
   }
 
@@ -493,7 +494,7 @@ const { title = "Termin buchen" } = Astro.props;
 
       if (!calendarEl || !formEl || !selectedDateEl || !selectedTimeEl || !capacityEl) return;
 
-      calendarEl.style.display = "none";
+      calendarEl.classList.add("hidden");
       formEl.classList.remove("hidden");
       selectedDateEl.textContent = formatDate(date);
       selectedTimeEl.textContent = timeSlot;
@@ -508,7 +509,19 @@ const { title = "Termin buchen" } = Astro.props;
       selectedDateEl.dataset.isoDate = isoDate;
       selectedTimeEl.dataset.time = timeSlot;
 
-      capacityEl.textContent = "15"; // Beispielwert
+      // Hole die tatsächliche verfügbare Kapazität für diesen Slot
+      fetch(`/api/slots?date=${isoDate}`)
+        .then(res => res.json())
+        .then(slots => {
+          const slot = slots.find((s: any) => s.date === isoDate && s.time === timeSlot);
+          if (slot && capacityEl) {
+            capacityEl.textContent = String(slot.available);
+          }
+        })
+        .catch(err => {
+          console.error('Fehler beim Laden der Kapazität:', err);
+          capacityEl.textContent = "0";
+        });
     }
 
     function formatDate(date: Date): string {
@@ -526,7 +539,7 @@ const { title = "Termin buchen" } = Astro.props;
       const calendarEl = document.getElementById("bookingCalendar");
 
       if (formEl) formEl.classList.add("hidden");
-      if (calendarEl) calendarEl.style.display = "block";
+      if (calendarEl) calendarEl.classList.remove("hidden");
     });
 
     // Formular-Submit
