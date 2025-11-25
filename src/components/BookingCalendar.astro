@@ -252,12 +252,35 @@ const { title = "Termin buchen" } = Astro.props;
 
 <script>
   // Kalender-Initialisierung nach dem Laden der Seite
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
     // Prüfen ob BookingCalendar verfügbar ist
     if (typeof BookingCalendar === "undefined") {
       console.error("BookingCalendar ist nicht geladen");
       return;
     }
+
+    // Lade verfügbare Termine vom Server
+    let availableSlots = [];
+    try {
+      const response = await fetch('/api/slots');
+      if (response.ok) {
+        availableSlots = await response.json();
+        console.log('Geladene Termine:', availableSlots);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Termine:', error);
+    }
+
+    // Konvertiere Slots in das Format, das der Kalender erwartet
+    const bookedSlots = availableSlots.map(slot => ({
+      date: slot.date,
+      time: slot.time,
+      booked: slot.maxCapacity - slot.available,
+      available: slot.available,
+      maxCapacity: slot.maxCapacity,
+      isFull: slot.available === 0,
+      slotId: slot.id
+    }));
 
     // Kalender initialisieren
     const calendar = new BookingCalendar("#bookingCalendar", {
@@ -267,13 +290,14 @@ const { title = "Termin buchen" } = Astro.props;
       maxDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
       timeSlots: {
         enabled: true,
-        start: "14:00",
-        end: "19:00",
+        start: "09:00",
+        end: "20:00",
         duration: 120, // 2 Stunden
       },
       blockedDates: [],
-      blockedWeekdays: [1], // Montag geschlossen
-      bookedSlots: [],
+      blockedWeekdays: [], // Keine festen Ruhetage mehr
+      bookedSlots: bookedSlots,
+      maxCapacityPerSlot: 15,
       onDateSelect: function (date, timeSlot) {
         showBookingForm(date, timeSlot);
       },

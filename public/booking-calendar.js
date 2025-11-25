@@ -213,6 +213,45 @@ class BookingCalendar {
 
     generateTimeSlots() {
         const slots = [];
+
+        // Wenn bookedSlots vorhanden sind, nutze nur diese
+        if (this.config.bookedSlots && this.config.bookedSlots.length > 0) {
+            const selectedDateStr = this.formatDateToString(this.selectedDate);
+
+            // Filtere Slots für das ausgewählte Datum
+            const slotsForDate = this.config.bookedSlots.filter(slot => {
+                return slot.date === selectedDateStr;
+            });
+
+            // Konvertiere in das erwartete Format
+            slotsForDate.forEach(slot => {
+                const key = `${slot.date}|${slot.time}`;
+                const capacity = this.slotsCapacity[key] || {
+                    available: slot.available || 0,
+                    maxCapacity: slot.maxCapacity || 15,
+                    booked: slot.booked || 0
+                };
+
+                slots.push({
+                    time: slot.time,
+                    booked: capacity.available === 0,
+                    disabled: false,
+                    capacity: capacity,
+                    slotId: slot.slotId
+                });
+            });
+
+            // Sortiere nach Zeit
+            slots.sort((a, b) => {
+                const [aHour, aMin] = a.time.split(':').map(Number);
+                const [bHour, bMin] = b.time.split(':').map(Number);
+                return (aHour * 60 + aMin) - (bHour * 60 + bMin);
+            });
+
+            return slots;
+        }
+
+        // Fallback: Generiere Slots basierend auf Start/End-Zeit
         const { start, end, duration, break: breakTime } = this.config.timeSlots;
 
         const [startHour, startMinute] = start.split(':').map(Number);
@@ -320,6 +359,13 @@ class BookingCalendar {
                date1.getDate() === date2.getDate();
     }
 
+    formatDateToString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     isDateDisabled(date) {
         // Vor minDate oder nach maxDate
         if (date < this.config.minDate || date > this.config.maxDate) {
@@ -329,6 +375,15 @@ class BookingCalendar {
         // Blockierte Wochentage
         if (this.config.blockedWeekdays.includes(date.getDay())) {
             return true;
+        }
+
+        // Wenn bookedSlots verwendet werden, prüfe ob es Slots für dieses Datum gibt
+        if (this.config.bookedSlots && this.config.bookedSlots.length > 0) {
+            const dateStr = this.formatDateToString(date);
+            const hasSlots = this.config.bookedSlots.some(slot => slot.date === dateStr);
+            if (!hasSlots) {
+                return true; // Kein Termin verfügbar
+            }
         }
 
         return false;

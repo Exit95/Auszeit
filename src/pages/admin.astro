@@ -1,0 +1,246 @@
+---
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Terminverwaltung | Auszeit Keramik</title>
+  <link rel="stylesheet" href="/admin-styles.css">
+</head>
+<body>
+  <div id="login-screen" class="login-container">
+    <div class="login-box">
+      <h1>🎨 Admin Login</h1>
+      <p>Auszeit Keramik Malatelier</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">Benutzername</label>
+          <input type="text" id="username" name="username" value="admin" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Passwort</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Anmelden</button>
+        <div id="login-error" class="error-message hidden"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="admin-panel" class="admin-container hidden">
+    <header class="admin-header">
+      <h1>🎨 Terminverwaltung</h1>
+      <button id="logout-btn" class="btn btn-secondary">Abmelden</button>
+    </header>
+
+    <main class="admin-main">
+      <section class="add-slot-section">
+        <h2>Neuen Termin hinzufügen</h2>
+        <form id="add-slot-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="slot-date">Datum</label>
+              <input type="date" id="slot-date" name="date" required>
+            </div>
+            <div class="form-group">
+              <label for="slot-time">Uhrzeit</label>
+              <input type="time" id="slot-time" name="time" required>
+            </div>
+            <div class="form-group">
+              <label for="slot-capacity">Max. Personen</label>
+              <input type="number" id="slot-capacity" name="maxCapacity" min="1" max="20" value="15" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Termin hinzufügen</button>
+        </form>
+      </section>
+
+      <section class="slots-section">
+        <h2>Verfügbare Termine</h2>
+        <div id="slots-loading" class="loading">Lade Termine...</div>
+        <div id="slots-list" class="slots-list hidden"></div>
+        <div id="no-slots" class="no-data hidden">Keine Termine vorhanden</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let authCredentials = '';
+
+    // Login-Handler
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target as HTMLFormElement);
+      const username = formData.get('username');
+      const password = formData.get('password');
+
+      authCredentials = btoa(`${username}:${password}`);
+
+      try {
+        const response = await fetch('/api/admin/slots', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (response.ok) {
+          document.getElementById('login-screen')?.classList.add('hidden');
+          document.getElementById('admin-panel')?.classList.remove('hidden');
+          loadSlots();
+        } else {
+          const errorEl = document.getElementById('login-error');
+          if (errorEl) {
+            errorEl.textContent = 'Ungültige Anmeldedaten';
+            errorEl.classList.remove('hidden');
+          }
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+      }
+    });
+
+    // Logout
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      authCredentials = '';
+      document.getElementById('admin-panel')?.classList.add('hidden');
+      document.getElementById('login-screen')?.classList.remove('hidden');
+      (document.getElementById('login-form') as HTMLFormElement)?.reset();
+    });
+
+    // Termin hinzufügen
+    document.getElementById('add-slot-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target as HTMLFormElement);
+      const data = {
+        date: formData.get('date'),
+        time: formData.get('time'),
+        maxCapacity: formData.get('maxCapacity')
+      };
+
+      try {
+        const response = await fetch('/api/admin/slots', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          (e.target as HTMLFormElement).reset();
+          loadSlots();
+        } else {
+          alert('Fehler beim Hinzufügen des Termins');
+        }
+      } catch (error) {
+        console.error('Error adding slot:', error);
+        alert('Fehler beim Hinzufügen des Termins');
+      }
+    });
+
+    // Termine laden
+    async function loadSlots() {
+      const loadingEl = document.getElementById('slots-loading');
+      const listEl = document.getElementById('slots-list');
+      const noSlotsEl = document.getElementById('no-slots');
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (listEl) listEl.classList.add('hidden');
+      if (noSlotsEl) noSlotsEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/admin/slots', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load slots');
+
+        const slots = await response.json();
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        if (slots.length === 0) {
+          if (noSlotsEl) noSlotsEl.classList.remove('hidden');
+          return;
+        }
+
+        if (listEl) {
+          listEl.innerHTML = slots.map((slot: any) => `
+            <div class="slot-card" data-id="${slot.id}">
+              <div class="slot-info">
+                <div class="slot-date">${formatDate(slot.date)}</div>
+                <div class="slot-time">${slot.time} Uhr</div>
+                <div class="slot-capacity">
+                  ${slot.available} / ${slot.maxCapacity} Plätze frei
+                </div>
+              </div>
+              <button class="btn btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
+            </div>
+          `).join('');
+          listEl.classList.remove('hidden');
+
+          // Delete-Handler
+          listEl.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = (e.target as HTMLElement).dataset.id;
+              if (confirm('Termin wirklich löschen?')) {
+                await deleteSlot(id!);
+              }
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error loading slots:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+      }
+    }
+
+    // Termin löschen
+    async function deleteSlot(id: string) {
+      try {
+        const response = await fetch('/api/admin/slots', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id })
+        });
+
+        if (response.ok) {
+          loadSlots();
+        } else {
+          alert('Fehler beim Löschen');
+        }
+      } catch (error) {
+        console.error('Error deleting slot:', error);
+      }
+    }
+
+    // Datum formatieren
+    function formatDate(dateStr: string) {
+      const date = new Date(dateStr + 'T00:00:00');
+      return date.toLocaleDateString('de-DE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    // Setze Mindestdatum auf heute
+    const dateInput = document.getElementById('slot-date') as HTMLInputElement;
+    if (dateInput) {
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.min = today;
+    }
+  </script>
+</body>
+</html>
+

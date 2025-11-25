@@ -1,0 +1,258 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #A67C52 0%, #D4A574 50%, #E8D5C4 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Login Screen */
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.login-box {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 100%;
+}
+
+.login-box h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+  color: #8B6F47;
+  text-align: center;
+}
+
+.login-box p {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+/* Admin Panel */
+.admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.admin-header {
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+  font-size: 1.75rem;
+  color: #8B6F47;
+}
+
+.admin-main {
+  display: grid;
+  gap: 2rem;
+}
+
+/* Sections */
+.add-slot-section,
+.slots-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.add-slot-section h2,
+.slots-section h2 {
+  font-size: 1.5rem;
+  color: #8B6F47;
+  margin-bottom: 1.5rem;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #E8D5C4;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #C17B5C;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: #C17B5C;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #A66A4D;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(193, 123, 92, 0.3);
+}
+
+.btn-secondary {
+  background: #8B6F47;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #6F5838;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+/* Slots List */
+.slots-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.slot-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  background: #FAF8F5;
+  border: 2px solid #E8D5C4;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.slot-card:hover {
+  border-color: #C17B5C;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.slot-info {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.slot-date {
+  font-weight: 600;
+  color: #8B6F47;
+  font-size: 1.1rem;
+}
+
+.slot-time {
+  color: #666;
+  font-size: 1rem;
+}
+
+.slot-capacity {
+  color: #C17B5C;
+  font-weight: 600;
+}
+
+/* Messages */
+.error-message {
+  color: #dc3545;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f8d7da;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .slot-info {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .slot-card {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .btn-delete {
+    width: 100%;
+  }
+}
+
