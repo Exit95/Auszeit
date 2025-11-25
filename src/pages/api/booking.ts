@@ -213,7 +213,8 @@ END:VCALENDAR`;
         console.log('SMTP-Verbindung erfolgreich');
 
         // E-Mail an Admin senden
-        await transporter.sendMail({
+        console.log('📧 Sende Admin-E-Mail an:', bookingEmail);
+        const adminResult = await transporter.sendMail({
           from: `"Atelier Auszeit - Irena Woschkowiak" <${fromEmail}>`,
           to: bookingEmail,
           subject: adminEmailData.subject,
@@ -228,9 +229,16 @@ END:VCALENDAR`;
 
         emailSent = true;
         console.log('✅ Admin-E-Mail erfolgreich gesendet an:', bookingEmail);
+        console.log('📨 Admin-E-Mail Response:', {
+          messageId: adminResult.messageId,
+          accepted: adminResult.accepted,
+          rejected: adminResult.rejected,
+          response: adminResult.response
+        });
 
         // Bestätigungs-E-Mail an Kunden senden
-        await transporter.sendMail({
+        console.log('📧 Sende Kunden-E-Mail an:', email);
+        const customerResult = await transporter.sendMail({
           from: `"Atelier Auszeit - Irena Woschkowiak" <${fromEmail}>`,
           to: customerEmailData.to,
           subject: customerEmailData.subject,
@@ -245,6 +253,12 @@ END:VCALENDAR`;
 
         customerEmailSent = true;
         console.log('✅ Bestätigungs-E-Mail erfolgreich gesendet an:', email);
+        console.log('📨 Kunden-E-Mail Response:', {
+          messageId: customerResult.messageId,
+          accepted: customerResult.accepted,
+          rejected: customerResult.rejected,
+          response: customerResult.response
+        });
       } catch (error: any) {
         emailError = error.message;
         console.error('❌ Fehler beim E-Mail-Versand:', error);
