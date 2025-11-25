@@ -103,7 +103,7 @@ Notizen: ${notes || 'Keine'}
 
     const icalEvent = `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Auszeit Keramik Malatelier//Booking//DE
+PRODID:-//Atelier Auszeit//Booking//DE
 BEGIN:VEVENT
 UID:${Date.now()}@auszeit-keramik.de
 DTSTAMP:${formatDate(new Date())}
@@ -111,7 +111,7 @@ DTSTART:${formatDate(eventDate)}
 DTEND:${formatDate(endDate)}
 SUMMARY:Keramik-Termin: ${name}
 DESCRIPTION:Buchung für ${participants} Person(en)\\nE-Mail: ${email}\\nTelefon: ${phone || 'Nicht angegeben'}\\nNotizen: ${notes || 'Keine'}
-LOCATION:Auszeit Keramik Malatelier
+LOCATION:Atelier Auszeit, Feldstiege 6a, 48599 Gronau
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR`;
@@ -142,7 +142,7 @@ END:VCALENDAR`;
 
         // E-Mail senden
         await transporter.sendMail({
-          from: `"Auszeit Keramik" <${fromEmail}>`,
+          from: `"Atelier Auszeit - Irena Woschkowiak" <${fromEmail}>`,
           to: bookingEmail,
           subject: emailData.subject,
           text: emailData.text,

@@ -1,6 +1,6 @@
 export const content = {
   hero: {
-    title: 'Auszeit',
+    title: 'Atelier Auszeit',
     subtitle: 'Keramik · Malatelier',
     claim: 'Auszeit für Kopf und Hände',
     ctaPrimary: 'Termin buchen',
@@ -84,6 +84,6 @@ export const content = {
       { text: 'Impressum', href: '#impressum' },
       { text: 'Datenschutz', href: '#datenschutz' },
     ],
-    copyright: '© 2025 Auszeit Keramik Malatelier',
+    copyright: '© 2025 Atelier Auszeit · Irena Woschkowiak',
   },
 };
