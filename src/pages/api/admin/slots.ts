@@ -4,16 +4,16 @@ import { getTimeSlots, addTimeSlot, deleteTimeSlot, updateTimeSlot } from '../..
 // Einfache Authentifizierung (später durch besseres System ersetzen)
 function checkAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
-  const adminPassword = import.meta.env.ADMIN_PASSWORD || 'admin123';
-  
+  const adminPassword = 'admin12345'; // Fest eingebautes Passwort
+
   if (!authHeader) return false;
-  
+
   const [type, credentials] = authHeader.split(' ');
   if (type !== 'Basic') return false;
-  
+
   const decoded = Buffer.from(credentials, 'base64').toString();
   const [username, password] = decoded.split(':');
-  
+
   return username === 'admin' && password === adminPassword;
 }
 
