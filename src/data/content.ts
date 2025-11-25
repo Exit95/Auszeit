@@ -70,14 +70,6 @@ export const content = {
     email: 'info@auszeit-keramik.de',
     whatsapp: '+4917634255000',
     whatsappMessage: 'Hallo, ich habe eine Frage zum Keramik-Malatelier.',
-    hours: {
-      title: 'Öffnungszeiten',
-      schedule: [
-        'Di–Fr: 14:00–19:00 Uhr',
-        'Sa–So: 10:00–18:00 Uhr',
-        'Montag Ruhetag',
-      ],
-    },
   },
   footer: {
     links: [
