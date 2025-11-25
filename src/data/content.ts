@@ -63,12 +63,12 @@ export const content = {
   contact: {
     title: 'Kontakt & Standort',
     address: {
-      street: 'Musterstraße 123',
-      city: '12345 Musterstadt',
+      street: 'Feldstiege 6a',
+      city: '48599 Gronau',
     },
-    phone: '+49 123 456789',
+    phone: '+49 176 34255000',
     email: 'info@auszeit-keramik.de',
-    whatsapp: '+49123456789',
+    whatsapp: '+4917634255000',
     whatsappMessage: 'Hallo, ich habe eine Frage zum Keramik-Malatelier.',
     hours: {
       title: 'Öffnungszeiten',
