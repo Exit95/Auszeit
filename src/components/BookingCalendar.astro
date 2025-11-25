@@ -146,6 +146,7 @@ const { title = "Termin buchen" } = Astro.props;
     display: grid;
     gap: var(--space-8);
     grid-template-columns: 1fr;
+    position: relative;
   }
 
   @media (min-width: 1024px) {
@@ -153,6 +154,11 @@ const { title = "Termin buchen" } = Astro.props;
       grid-template-columns: 1fr 380px;
       align-items: start;
     }
+  }
+
+  /* Verstecke Profil wenn Formular angezeigt wird */
+  .booking-grid:has(.booking-form:not(.hidden)) .profile-card {
+    display: none;
   }
 
   .booking-calendar {
