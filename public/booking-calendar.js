@@ -214,95 +214,43 @@ class BookingCalendar {
     generateTimeSlots() {
         const slots = [];
 
-        // Wenn bookedSlots vorhanden sind, nutze nur diese
-        if (this.config.bookedSlots && this.config.bookedSlots.length > 0) {
-            const selectedDateStr = this.formatDateToString(this.selectedDate);
-
-            // Filtere Slots für das ausgewählte Datum
-            const slotsForDate = this.config.bookedSlots.filter(slot => {
-                return slot.date === selectedDateStr;
-            });
-
-            // Konvertiere in das erwartete Format
-            slotsForDate.forEach(slot => {
-                const key = `${slot.date}|${slot.time}`;
-                const capacity = this.slotsCapacity[key] || {
-                    available: slot.available || 0,
-                    maxCapacity: slot.maxCapacity || 15,
-                    booked: slot.booked || 0
-                };
-
-                slots.push({
-                    time: slot.time,
-                    booked: capacity.available === 0,
-                    disabled: false,
-                    capacity: capacity,
-                    slotId: slot.slotId
-                });
-            });
-
-            // Sortiere nach Zeit
-            slots.sort((a, b) => {
-                const [aHour, aMin] = a.time.split(':').map(Number);
-                const [bHour, bMin] = b.time.split(':').map(Number);
-                return (aHour * 60 + aMin) - (bHour * 60 + bMin);
-            });
-
+        // Nutze NUR Admin-erstellte Slots - kein Fallback!
+        if (!this.config.bookedSlots || this.config.bookedSlots.length === 0) {
+            // Keine Termine verfügbar
             return slots;
         }
 
-        // Fallback: Generiere Slots basierend auf Start/End-Zeit
-        const { start, end, duration, break: breakTime } = this.config.timeSlots;
+        const selectedDateStr = this.formatDateToString(this.selectedDate);
 
-        const [startHour, startMinute] = start.split(':').map(Number);
-        const [endHour, endMinute] = end.split(':').map(Number);
+        // Filtere Slots für das ausgewählte Datum
+        const slotsForDate = this.config.bookedSlots.filter(slot => {
+            return slot.date === selectedDateStr;
+        });
 
-        let currentTime = new Date();
-        currentTime.setHours(startHour, startMinute, 0, 0);
-
-        const endTime = new Date();
-        endTime.setHours(endHour, endMinute, 0, 0);
-
-        while (currentTime < endTime) {
-            const timeString = this.formatTime(currentTime);
-
-            // Prüfe ob in Pausenzeit
-            let isBreak = false;
-            if (breakTime) {
-                const [breakStartHour, breakStartMinute] = breakTime.start.split(':').map(Number);
-                const [breakEndHour, breakEndMinute] = breakTime.end.split(':').map(Number);
-
-                const breakStart = new Date();
-                breakStart.setHours(breakStartHour, breakStartMinute, 0, 0);
-
-                const breakEnd = new Date();
-                breakEnd.setHours(breakEndHour, breakEndMinute, 0, 0);
-
-                isBreak = currentTime >= breakStart && currentTime < breakEnd;
-            }
-
-            // Prüfe ob bereits gebucht
-            const isBooked = this.isTimeSlotBooked(this.selectedDate, timeString);
-
-            // Kapazitätsinformationen abrufen
-            const dateStr = this.formatDateForAPI(this.selectedDate);
-            const capacityKey = `${dateStr}|${timeString}`;
-            const capacity = this.slotsCapacity[capacityKey];
+        // Konvertiere in das erwartete Format
+        slotsForDate.forEach(slot => {
+            const key = `${slot.date}|${slot.time}`;
+            const capacity = this.slotsCapacity[key] || {
+                available: slot.available || 0,
+                maxCapacity: slot.maxCapacity || 15,
+                booked: slot.booked || 0
+            };
 
             slots.push({
-                time: timeString,
-                disabled: isBreak,
-                booked: isBooked,
-                capacity: capacity || {
-                    booked: 0,
-                    available: this.config.maxCapacityPerSlot,
-                    maxCapacity: this.config.maxCapacityPerSlot,
-                    isFull: false
-                }
+                time: slot.time,
+                booked: capacity.available === 0,
+                disabled: false,
+                capacity: capacity,
+                slotId: slot.slotId
             });
+        });
 
-            currentTime.setMinutes(currentTime.getMinutes() + duration);
-        }
+        // Sortiere nach Zeit
+        slots.sort((a, b) => {
+            const [aHour, aMin] = a.time.split(':').map(Number);
+            const [bHour, bMin] = b.time.split(':').map(Number);
+            return (aHour * 60 + aMin) - (bHour * 60 + bMin);
+        });
 
         return slots;
     }
@@ -377,13 +325,16 @@ class BookingCalendar {
             return true;
         }
 
-        // Wenn bookedSlots verwendet werden, prüfe ob es Slots für dieses Datum gibt
-        if (this.config.bookedSlots && this.config.bookedSlots.length > 0) {
-            const dateStr = this.formatDateToString(date);
-            const hasSlots = this.config.bookedSlots.some(slot => slot.date === dateStr);
-            if (!hasSlots) {
-                return true; // Kein Termin verfügbar
-            }
+        // NUR Admin-Termine erlauben - wenn keine Slots vorhanden, alle Tage deaktivieren
+        if (!this.config.bookedSlots || this.config.bookedSlots.length === 0) {
+            return true; // Keine Termine verfügbar
+        }
+
+        // Prüfe ob es Slots für dieses Datum gibt
+        const dateStr = this.formatDateToString(date);
+        const hasSlots = this.config.bookedSlots.some(slot => slot.date === dateStr);
+        if (!hasSlots) {
+            return true; // Kein Termin für dieses Datum
         }
 
         return false;
