@@ -17,6 +17,9 @@ pnpm-debug.log*
 .env
 .env.production
 
+# data files (bookings and time slots)
+data/
+
 # macOS-specific files
 .DS_Store
 

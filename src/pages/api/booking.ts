@@ -1,9 +1,65 @@
 import type { APIRoute } from 'astro';
+import nodemailer from 'nodemailer';
+import { getTimeSlots, addBooking } from '../../lib/storage';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const data = await request.json();
     const { name, email, phone, participants, date, time, notes } = data;
+
+    // Finde den passenden Slot
+    const slots = await getTimeSlots();
+    const dateStr = new Date(date).toISOString().split('T')[0];
+    const slot = slots.find(s => s.date === dateStr && s.time === time);
+
+    if (!slot) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Dieser Termin ist nicht mehr verfügbar',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    if (slot.available < parseInt(participants)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: `Nur noch ${slot.available} Plätze verfügbar`,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Buchung speichern
+    const booking = await addBooking({
+      slotId: slot.id,
+      name,
+      email,
+      phone: phone || '',
+      participants: parseInt(participants),
+      notes: notes || '',
+    });
+
+    if (!booking) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Buchung konnte nicht gespeichert werden',
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     // E-Mail-Adressen aus Environment-Variablen
     const bookingEmail = import.meta.env.BOOKING_EMAIL || 'info@auszeit-keramik.de';
@@ -60,32 +116,37 @@ STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR`;
 
-    // Hier würdest du normalerweise einen E-Mail-Service verwenden
-    // Beispiele: SendGrid, Resend, Nodemailer, etc.
-    
-    // Für die Entwicklung: Log die Daten
-    console.log('Buchungsdaten:', data);
-    console.log('E-Mail würde gesendet an:', emailData.to);
-    console.log('Kalender-Event:', icalEvent);
-
-    // TODO: Implementiere hier deinen E-Mail-Service
-    // Beispiel mit Resend (https://resend.com):
-    /*
-    const resend = new Resend(import.meta.env.RESEND_API_KEY);
-    
-    await resend.emails.send({
-      from: 'buchungen@auszeit-keramik.de',
-      to: emailData.to,
-      subject: emailData.subject,
-      html: emailData.html,
-      attachments: [
-        {
-          filename: 'termin.ics',
-          content: Buffer.from(icalEvent).toString('base64'),
-        },
-      ],
+    // Nodemailer konfigurieren
+    const transporter = nodemailer.createTransport({
+      host: import.meta.env.SMTP_HOST,
+      port: parseInt(import.meta.env.SMTP_PORT || '587'),
+      secure: false, // true für Port 465, false für andere Ports
+      auth: {
+        user: import.meta.env.SMTP_USER,
+        pass: import.meta.env.SMTP_PASS,
+      },
     });
-    */
+
+    // E-Mail senden
+    try {
+      await transporter.sendMail({
+        from: `"Auszeit Keramik" <${fromEmail}>`,
+        to: bookingEmail,
+        subject: emailData.subject,
+        text: emailData.text,
+        html: emailData.html,
+        icalEvent: {
+          filename: 'termin.ics',
+          method: 'REQUEST',
+          content: icalEvent,
+        },
+      });
+
+      console.log('E-Mail erfolgreich gesendet an:', bookingEmail);
+    } catch (emailError) {
+      console.error('Fehler beim E-Mail-Versand:', emailError);
+      // Buchung wurde trotzdem gespeichert, nur E-Mail fehlgeschlagen
+    }
 
     return new Response(
       JSON.stringify({
