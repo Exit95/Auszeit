@@ -49,27 +49,48 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  try {
-		const data = await request.json();
-		const { date, time, startTime, endTime, maxCapacity } = data as any;
+	  try {
+	    const data = await request.json();
+	    const { date, time, startTime, endTime, maxCapacity, initialBooked } = data as any;
 
-		// Unterstützt sowohl altes Format (time) als auch neues Format (startTime/endTime)
-		const slotTime = startTime || time;
+	    // Unterstützt sowohl altes Format (time) als auch neues Format (startTime/endTime)
+	    const slotTime = startTime || time;
 
-		if (!date || !slotTime || !maxCapacity) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+	    if (!date || !slotTime || !maxCapacity) {
+	      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+	        status: 400,
+	        headers: { 'Content-Type': 'application/json' }
+	      });
+	    }
 
-    const newSlot = await addTimeSlot({
-		  date,
-		  time: slotTime,
-		  endTime: endTime || undefined,
-		  maxCapacity: parseInt(maxCapacity, 10),
-		  available: parseInt(maxCapacity, 10),
-    });
+	    const totalCapacity = parseInt(String(maxCapacity), 10);
+	    const alreadyBooked = initialBooked != null && initialBooked !== ''
+	      ? parseInt(String(initialBooked), 10)
+	      : 0;
+
+	    if (Number.isNaN(totalCapacity) || totalCapacity <= 0) {
+	      return new Response(JSON.stringify({ error: 'Invalid maxCapacity' }), {
+	        status: 400,
+	        headers: { 'Content-Type': 'application/json' }
+	      });
+	    }
+
+	    if (Number.isNaN(alreadyBooked) || alreadyBooked < 0 || alreadyBooked > totalCapacity) {
+	      return new Response(JSON.stringify({ error: 'Invalid initialBooked value' }), {
+	        status: 400,
+	        headers: { 'Content-Type': 'application/json' }
+	      });
+	    }
+
+	    const available = totalCapacity - alreadyBooked;
+
+	    const newSlot = await addTimeSlot({
+	      date,
+	      time: slotTime,
+	      endTime: endTime || undefined,
+	      maxCapacity: totalCapacity,
+	      available,
+	    });
 
     return new Response(JSON.stringify(newSlot), {
       status: 201,
