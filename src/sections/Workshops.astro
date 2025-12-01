@@ -50,9 +50,10 @@ import WorkshopModal from "../components/WorkshopModal.astro";
         gridEl.classList.remove("hidden");
         gridEl.innerHTML = "";
 
+        // Dynamisch WorkshopCard-HTML erstellen
         activeWorkshops.forEach((workshop) => {
-          const card = createWorkshopCard(workshop);
-          gridEl.appendChild(card);
+          const card = createWorkshopCardHTML(workshop);
+          gridEl.insertAdjacentHTML('beforeend', card);
         });
       }
     } catch (error) {
@@ -63,12 +64,8 @@ import WorkshopModal from "../components/WorkshopModal.astro";
     }
   }
 
-  // Workshop-Karte erstellen
-  function createWorkshopCard(workshop) {
-    const article = document.createElement("article");
-    article.className = "workshop-card";
-    article.setAttribute("data-workshop-id", workshop.id);
-
+  // Workshop-Karte HTML erstellen (wie WorkshopCard.astro)
+  function createWorkshopCardHTML(workshop) {
     const currentParticipants = workshop.currentParticipants ?? 0;
     const availableSpots = workshop.maxParticipants - currentParticipants;
     const isFull = availableSpots <= 0;
@@ -84,34 +81,34 @@ import WorkshopModal from "../components/WorkshopModal.astro";
     const month = date.toLocaleDateString("de-DE", { month: "short" });
 
     const badgeLabel = isFull ? "Ausgebucht" : `${availableSpots} Plätze frei`;
-    const badgeClass = isFull ? "badge--sold" : "badge--available";
+    const badgeVariant = isFull ? "sold" : "available";
 
-    article.innerHTML = `
-      <div class="card-link">
-        <div class="card-image">
-          <img src="${imageUrl}" alt="${escapeHtml(workshop.title)}" loading="lazy" />
-          <span class="badge ${badgeClass} workshop-badge">${badgeLabel}</span>
-          <div class="card-date">
-            <span class="day">${day}</span>
-            <span class="month">${month}</span>
+    return `
+      <article class="workshop-card" data-workshop-id="${workshop.id}">
+        <div class="card-link">
+          <div class="card-image">
+            <img src="${imageUrl}" alt="${escapeHtml(workshop.title)}" loading="lazy" />
+            <span class="badge badge--${badgeVariant} workshop-badge">${badgeLabel}</span>
+            <div class="card-date">
+              <span class="day">${day}</span>
+              <span class="month">${month}</span>
+            </div>
+          </div>
+          <div class="card-content">
+            <h3>${escapeHtml(workshop.title)}</h3>
+            <div class="card-meta">
+              <span>⏰ ${workshop.time} Uhr</span>
+              <span>📍 ${escapeHtml(location)}</span>
+            </div>
+            <p class="description">${escapeHtml(workshop.description)}</p>
+            <div class="card-footer">
+              <span class="price">${escapeHtml(workshop.price)}</span>
+              <span class="btn-text">Details & Buchung →</span>
+            </div>
           </div>
         </div>
-        <div class="card-content">
-          <h3>${escapeHtml(workshop.title)}</h3>
-          <div class="card-meta">
-            <span>⏰ ${workshop.time} Uhr</span>
-            <span>📍 ${escapeHtml(location)}</span>
-          </div>
-          <p class="description">${escapeHtml(workshop.description)}</p>
-          <div class="card-footer">
-            <span class="price">${escapeHtml(workshop.price)}</span>
-            <span class="btn-text">Details & Buchung →</span>
-          </div>
-        </div>
-      </div>
+      </article>
     `;
-
-    return article;
   }
 
   function escapeHtml(text) {
