@@ -163,6 +163,7 @@ export const prerender = false;
                 <option value="">Kein Bild</option>
               </select>
               <small class="form-hint">Wählen Sie ein Bild aus der Galerie</small>
+              <div id="workshop-image-preview" class="workshop-image-preview"></div>
             </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary" id="workshop-submit-btn">Workshop hinzufügen</button>
@@ -240,6 +241,23 @@ export const prerender = false;
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function updateWorkshopImagePreview(filename: string | null) {
+      const previewEl = document.getElementById('workshop-image-preview') as HTMLDivElement | null;
+      if (!previewEl) return;
+
+      if (!filename) {
+        previewEl.innerHTML = '';
+        return;
+      }
+
+      const escapedFilename = escapeHtml(filename);
+      previewEl.innerHTML = `
+        <div class="workshop-image-preview__inner">
+          <img src="/uploads/${escapedFilename}" alt="Ausgewähltes Titelbild" loading="lazy">
+        </div>
+      `;
     }
 
     // Login-Handler
@@ -846,6 +864,7 @@ export const prerender = false;
 
     // ========== WORKSHOPS VERWALTUNG ==========
     let editingWorkshopId: string | null = null;
+    let workshopImagePreviewInitialized = false;
 
     // Workshop-Formular absenden
     document.getElementById('add-workshop-form')?.addEventListener('submit', async (e) => {
@@ -926,10 +945,23 @@ export const prerender = false;
           if (currentValue) {
             selectEl.value = currentValue;
           }
+
+          ensureWorkshopImagePreviewListener();
+          updateWorkshopImagePreview(selectEl.value || null);
         }
       } catch (error) {
         console.error('Error loading images for workshop:', error);
       }
+    }
+
+    function ensureWorkshopImagePreviewListener() {
+      if (workshopImagePreviewInitialized) return;
+      const selectEl = document.getElementById('workshop-image') as HTMLSelectElement | null;
+      if (!selectEl) return;
+      workshopImagePreviewInitialized = true;
+      selectEl.addEventListener('change', () => {
+        updateWorkshopImagePreview(selectEl.value || null);
+      });
     }
 
     // Workshops laden
@@ -1058,6 +1090,7 @@ export const prerender = false;
       (document.getElementById('workshop-max-participants') as HTMLInputElement).value = String(workshop.maxParticipants);
       (document.getElementById('workshop-active') as HTMLInputElement).checked = workshop.active;
       (document.getElementById('workshop-image') as HTMLSelectElement).value = workshop.imageFilename || '';
+      updateWorkshopImagePreview(workshop.imageFilename || null);
 
       const titleEl = document.getElementById('workshop-form-title');
       const submitBtn = document.getElementById('workshop-submit-btn');
@@ -1081,6 +1114,7 @@ export const prerender = false;
       if (titleEl) titleEl.textContent = 'Neuen Workshop hinzufügen';
       if (submitBtn) submitBtn.textContent = 'Workshop hinzufügen';
       if (cancelBtn) cancelBtn.classList.add('hidden');
+      updateWorkshopImagePreview(null);
     }
 
     // ========== GALERIE VERWALTUNG ==========

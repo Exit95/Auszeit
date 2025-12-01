@@ -96,7 +96,7 @@
                </svg>
              </div>`;
 
-        card.innerHTML = `
+          card.innerHTML = `
           ${imageHtml}
           <div class="workshop-card__content">
             <div class="workshop-card__header">
@@ -130,12 +130,12 @@
                 </svg>
                 <span>${availabilityText}</span>
               </div>
+              </div>
+              <button class="btn btn-primary workshop-card__button ${isFull ? 'workshop-card__button--disabled' : ''}" ${isFull ? 'disabled' : ''}>
+                ${isFull ? 'Ausgebucht' : 'Details & Buchen'}
+              </button>
             </div>
-            <button class="workshop-card__button ${isFull ? 'workshop-card__button--disabled' : ''}" ${isFull ? 'disabled' : ''}>
-              ${isFull ? 'Ausgebucht' : 'Details & Buchen'}
-            </button>
-          </div>
-        `;
+          `;
 
         // Click-Handler für Details
         if (!isFull) {
@@ -240,7 +240,8 @@
 <style>
   .workshops {
     padding: var(--space-12) var(--gutter);
-    background-color: var(--color-background);
+    /* Leicht getönter Hintergrund wie in anderen Inhaltsbereichen */
+    background-color: var(--color-soft-cream);
   }
 
   .container {
@@ -288,19 +289,21 @@
   }
 
   .workshop-card {
-    background: white;
-    border-radius: 16px;
+    background-color: var(--color-background);
+    border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: var(--shadow);
+    transition:
+      transform var(--duration-normal) var(--easing),
+      box-shadow var(--duration-normal) var(--easing);
     display: flex;
     flex-direction: column;
     cursor: pointer;
   }
 
   .workshop-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
   }
 
   .workshop-card__image {
@@ -390,23 +393,9 @@
   }
 
   .workshop-card__button {
-    display: block;
+    display: inline-block;
     width: 100%;
-    background: var(--color-terracotta);
-    color: white;
-    padding: var(--space-4) var(--space-6);
-    border: none;
-    border-radius: 8px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
-  }
-
-  .workshop-card__button:hover:not(:disabled) {
-    background: var(--color-clay-brown);
-    transform: translateY(-2px);
+    margin-top: auto;
   }
 
   .workshop-card__button--disabled,
@@ -414,6 +403,7 @@
     background: #ccc;
     cursor: not-allowed;
     opacity: 0.6;
+    box-shadow: none;
   }
 
   .availability-full {

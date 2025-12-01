@@ -420,6 +420,27 @@ body {
   margin-bottom: 2rem;
 }
 
+.workshop-image-preview {
+  margin-top: 0.75rem;
+  min-height: 0;
+}
+
+.workshop-image-preview__inner {
+  display: inline-block;
+  padding: 0.5rem;
+  background: #FAF8F5;
+  border-radius: 10px;
+  border: 1px solid #E0D4C8;
+}
+
+.workshop-image-preview__inner img {
+  display: block;
+  max-width: 220px;
+  max-height: 160px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
 /* Gallery Sections */
 .gallery-upload-section,
 .gallery-list-section {
