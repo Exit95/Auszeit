@@ -1,0 +1,397 @@
+---
+// Modal-Komponente für Workshop-Details und Buchung
+---
+
+<div id="workshopModal" class="modal">
+  <div class="modal__overlay"></div>
+  <div class="modal__content">
+    <button class="modal__close" aria-label="Schließen">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="modal__body">
+      <div class="modal__image-section">
+        <img src="" alt="" class="modal__image" id="workshopModalImage" />
+        <div class="modal__badge" id="workshopModalBadge"></div>
+      </div>
+
+      <div class="modal__info-section">
+        <h3 class="modal__title" id="workshopModalTitle"></h3>
+        
+        <div class="modal__meta" id="workshopModalMeta">
+          <!-- Meta-Infos werden hier eingefügt -->
+        </div>
+
+        <p class="modal__description" id="workshopModalDescription"></p>
+
+        <div class="modal__booking-section" id="workshopModalBooking">
+          <h4>Workshop buchen</h4>
+          <form id="workshopBookingForm" class="booking-form">
+            <input type="hidden" id="bookingWorkshopId" name="workshopId" />
+            <input type="hidden" id="bookingWorkshopTitle" name="workshopTitle" />
+
+            <div class="form-group">
+              <label for="bookingName">Name *</label>
+              <input
+                type="text"
+                id="bookingName"
+                name="name"
+                required
+                placeholder="Ihr Name"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="bookingEmail">E-Mail *</label>
+              <input
+                type="email"
+                id="bookingEmail"
+                name="email"
+                required
+                placeholder="ihre@email.de"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="bookingPhone">Telefon *</label>
+              <input
+                type="tel"
+                id="bookingPhone"
+                name="phone"
+                required
+                placeholder="Ihre Telefonnummer"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="bookingParticipants">Anzahl Personen *</label>
+              <select id="bookingParticipants" name="participants" required>
+                <option value="1">1 Person</option>
+                <option value="2">2 Personen</option>
+                <option value="3">3 Personen</option>
+                <option value="4">4 Personen</option>
+                <option value="5">5 Personen</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="bookingMessage">Nachricht (optional)</label>
+              <textarea
+                id="bookingMessage"
+                name="message"
+                rows="3"
+                placeholder="Anmerkungen, Fragen..."
+              ></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+              Jetzt verbindlich anfragen
+            </button>
+
+            <p class="form-note">
+              Sie erhalten zeitnah eine Bestätigung per E-Mail.
+            </p>
+          </form>
+
+          <div id="bookingMessageDiv" class="message hidden"></div>
+        </div>
+
+        <div class="modal__closed-section hidden" id="workshopModalClosed">
+          <!-- Wird angezeigt, wenn Buchung nicht möglich -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+  }
+
+  .modal.active {
+    display: flex;
+  }
+
+  .modal__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .modal__content {
+    position: relative;
+    background-color: var(--color-background);
+    border-radius: var(--radius);
+    max-width: 1000px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .modal__close {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    background: var(--color-terracotta);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--duration-normal) var(--easing);
+    z-index: 10;
+  }
+
+  .modal__close:hover {
+    background: var(--color-clay-brown);
+    transform: rotate(90deg);
+  }
+
+  .modal__body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 768px) {
+    .modal__body {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .modal__image-section {
+    position: relative;
+  }
+
+  .modal__image {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    object-fit: cover;
+    max-height: 400px;
+  }
+
+  .modal__badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .modal__badge.sold {
+    background: #dc2626;
+    color: white;
+  }
+
+  .modal__badge.available {
+    background: #16a34a;
+    color: white;
+  }
+
+  .modal__info-section {
+    padding: var(--space-6);
+  }
+
+  .modal__title {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    font-size: 1.75rem;
+    margin-bottom: var(--space-4);
+  }
+
+  .modal__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .modal__meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary);
+  }
+
+  .modal__meta-item.price {
+    color: var(--color-terracotta);
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+
+  .modal__description {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-6);
+  }
+
+  .modal__booking-section h4 {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    margin-bottom: var(--space-4);
+  }
+
+  .booking-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-group label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    transition: border-color var(--duration-normal);
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-terracotta);
+  }
+
+  .btn {
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--duration-normal);
+    font-size: 0.9375rem;
+  }
+
+  .btn-primary {
+    background: var(--color-terracotta);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--color-clay-brown);
+  }
+
+  .btn-block {
+    width: 100%;
+  }
+
+  .form-note {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .message {
+    margin-top: var(--space-4);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: 0.9375rem;
+  }
+
+  .message.hidden {
+    display: none;
+  }
+
+  .message.success {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .message.error {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  .modal__closed-section {
+    padding: var(--space-5);
+    background: var(--color-soft-cream);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    color: var(--color-text-secondary);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+</style>
+

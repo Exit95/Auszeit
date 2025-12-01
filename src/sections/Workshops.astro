@@ -1,5 +1,6 @@
 ---
 import WorkshopCard from "../components/WorkshopCard.astro";
+import WorkshopModal from "../components/WorkshopModal.astro";
 import { getWorkshops } from "../lib/storage";
 
 const workshops = await getWorkshops();
@@ -29,7 +30,9 @@ const activeWorkshops = workshops.filter((w) => w.active);
   </div>
 </section>
 
+<WorkshopModal />
 
+<script src="../scripts/workshop-modal.js"></script>
 
 <style>
   .workshops {
