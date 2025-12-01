@@ -1020,21 +1020,27 @@ export const prerender = false;
     // Workshop löschen
     async function deleteWorkshop(id: string) {
       try {
-        const response = await fetch(`/api/admin/workshops?id=${id}`, {
+        console.log('Deleting workshop:', id);
+        const response = await fetch(`/api/admin/workshops?id=${encodeURIComponent(id)}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Basic ${authCredentials}`
           }
         });
 
+        console.log('Delete response status:', response.status);
+
         if (response.ok) {
+          alert('Workshop erfolgreich gelöscht!');
           await loadWorkshops();
         } else {
-          alert('Fehler beim Löschen des Workshops');
+          const error = await response.json();
+          console.error('Delete error:', error);
+          alert(`Fehler beim Löschen: ${error.error || 'Unbekannter Fehler'}`);
         }
       } catch (error) {
         console.error('Error deleting workshop:', error);
-        alert('Fehler beim Löschen des Workshops');
+        alert('Fehler beim Löschen des Workshops: ' + error);
       }
     }
 
@@ -1538,6 +1544,7 @@ export const prerender = false;
     // Bild löschen
     async function deleteImage(filename: string) {
       try {
+        console.log('Deleting image:', filename);
         const response = await fetch(`/api/images?filename=${encodeURIComponent(filename)}`, {
           method: 'DELETE',
           headers: {
@@ -1545,16 +1552,20 @@ export const prerender = false;
           }
         });
 
+        console.log('Delete image response status:', response.status);
+
         if (response.ok) {
+          alert('Bild erfolgreich gelöscht!');
           await loadImageMetadata();
           await loadGallery();
         } else {
           const error = await response.json();
-          alert(error.error || 'Fehler beim Löschen des Bildes');
+          console.error('Delete image error:', error);
+          alert(`Fehler beim Löschen: ${error.error || 'Unbekannter Fehler'}`);
         }
       } catch (error) {
         console.error('Error deleting image:', error);
-        alert('Fehler beim Löschen des Bildes');
+        alert('Fehler beim Löschen des Bildes: ' + error);
       }
     }
 
