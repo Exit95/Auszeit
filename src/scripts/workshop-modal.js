@@ -44,8 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Titel setzen
     modalTitle.textContent = workshop.title;
 
-    // Beschreibung setzen
-    modalDescription.textContent = workshop.description;
+    // Beschreibung setzen (ausführliche Beschreibung bevorzugen, sonst Kurzbeschreibung)
+    modalDescription.textContent = workshop.detailedDescription || workshop.description;
 
     // Verfügbarkeit berechnen
     const currentParticipants = workshop.currentParticipants ?? 0;

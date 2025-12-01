@@ -154,8 +154,14 @@ export const prerender = false;
               </div>
             </div>
             <div class="form-group">
-              <label for="workshop-description">Beschreibung</label>
-              <textarea id="workshop-description" name="description" rows="4" required></textarea>
+              <label for="workshop-description">Kurzbeschreibung (für Karte)</label>
+              <textarea id="workshop-description" name="description" rows="2" required placeholder="Kurze Beschreibung für die Workshop-Karte"></textarea>
+              <small class="form-hint">Wird auf der Workshop-Karte angezeigt (max. 2 Zeilen)</small>
+            </div>
+            <div class="form-group">
+              <label for="workshop-detailed-description">Ausführliche Beschreibung (für Modal)</label>
+              <textarea id="workshop-detailed-description" name="detailedDescription" rows="6" placeholder="Detaillierte Beschreibung, die im Modal angezeigt wird"></textarea>
+              <small class="form-hint">Wird im Detail-Modal angezeigt (optional)</small>
             </div>
             <div class="form-group">
               <label for="workshop-image">Titelbild (optional)</label>
@@ -200,17 +206,6 @@ export const prerender = false;
         <section class="gallery-upload-section">
           <h2>Bild hochladen</h2>
           <div class="upload-area">
-            <div class="form-group">
-              <label for="upload-category-select">Kategorie auswählen</label>
-              <select id="upload-category-select" class="category-select">
-                <option value="">-- Kategorie wählen --</option>
-                <option value="tassen">Tassen</option>
-                <option value="teller">Teller</option>
-                <option value="spardosen">Spardosen & Krüge & Boxen</option>
-                <option value="anhaenger">Weihnachtsanhänger</option>
-              </select>
-              <small class="form-hint">Das Bild wird in den Ordner public/products/[kategorie]/ hochgeladen</small>
-            </div>
             <input type="file" id="gallery-file-input" accept="image/*" style="display: none;">
             <button type="button" class="btn btn-primary" id="select-file-btn">Bild auswählen</button>
             <button type="button" class="btn btn-success hidden" id="upload-file-btn">Upload starten</button>
@@ -888,6 +883,7 @@ export const prerender = false;
       const data = {
         title: formData.get('title'),
         description: formData.get('description'),
+        detailedDescription: formData.get('detailedDescription') || undefined,
         date: formData.get('date'),
         time: formData.get('time'),
         price: formData.get('price'),
@@ -1016,13 +1012,17 @@ export const prerender = false;
               ? '<span class="status-badge status-active">Aktiv</span>'
               : '<span class="status-badge status-inactive">Inaktiv</span>';
 
+            const detailedDesc = workshop.detailedDescription
+              ? `<br><small><strong>Ausführlich:</strong> ${workshop.detailedDescription}</small>`
+              : '';
+
             card.innerHTML = `
               <div class="slot-info">
                 <div class="slot-date">${formattedDate}</div>
                 <div class="slot-time">${workshop.time} Uhr</div>
                 <div class="slot-capacity">
                   <strong>${workshop.title}</strong><br>
-                  ${workshop.description}<br>
+                  <strong>Kurz:</strong> ${workshop.description}${detailedDesc}<br>
                   Preis: ${workshop.price} | Max. ${workshop.maxParticipants} Teilnehmer
                 </div>
                 ${statusBadge}
@@ -1095,6 +1095,7 @@ export const prerender = false;
 
       (document.getElementById('workshop-title') as HTMLInputElement).value = workshop.title;
       (document.getElementById('workshop-description') as HTMLTextAreaElement).value = workshop.description;
+      (document.getElementById('workshop-detailed-description') as HTMLTextAreaElement).value = workshop.detailedDescription || '';
       (document.getElementById('workshop-date') as HTMLInputElement).value = workshop.date;
       (document.getElementById('workshop-time') as HTMLInputElement).value = workshop.time;
       (document.getElementById('workshop-price') as HTMLInputElement).value = workshop.price;
@@ -1157,15 +1158,6 @@ export const prerender = false;
     document.getElementById('upload-file-btn')?.addEventListener('click', async () => {
       if (!selectedFile) return;
 
-      // Kategorie prüfen
-      const categorySelect = document.getElementById('upload-category-select') as HTMLSelectElement;
-      const category = categorySelect?.value;
-
-      if (!category) {
-        alert('Bitte wähle zuerst eine Kategorie aus!');
-        return;
-      }
-
       const progressContainer = document.getElementById('upload-progress-container');
       const progressFill = document.getElementById('upload-progress-fill');
       const progressText = document.getElementById('upload-progress-text');
@@ -1175,12 +1167,12 @@ export const prerender = false;
       if (uploadBtn) uploadBtn.disabled = true;
 
       try {
-        await uploadFileInChunks(selectedFile, category, (progress) => {
+        await uploadFileInChunks(selectedFile, (progress) => {
           if (progressFill) progressFill.style.width = `${progress}%`;
           if (progressText) progressText.textContent = `${Math.round(progress)}%`;
         });
 
-        alert(`Upload erfolgreich! Bild wurde in Kategorie "${category}" gespeichert.`);
+        alert('Upload erfolgreich!');
 
         // Reset
         selectedFile = null;
@@ -1206,12 +1198,11 @@ export const prerender = false;
     });
 
     // Chunk-Upload-Funktion - ALLE Chunks in EINEM Request
-    async function uploadFileInChunks(file: File, category: string, onProgress: (progress: number) => void) {
+    async function uploadFileInChunks(file: File, onProgress: (progress: number) => void) {
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
       const uniqueFilename = `${Date.now()}_${file.name}`;
 
       console.log(`📦 Starting upload: ${file.name}`);
-      console.log(`   Category: ${category}`);
       console.log(`   Size: ${formatFileSize(file.size)}`);
       console.log(`   Chunks: ${totalChunks}`);
       console.log(`   Unique filename: ${uniqueFilename}`);
@@ -1220,7 +1211,6 @@ export const prerender = false;
 
       // WICHTIG: Metadaten ZUERST anhängen!
       formData.append('filename', uniqueFilename);
-      formData.append('category', category);
       formData.append('totalChunks', String(totalChunks));
       formData.append('fileSize', String(file.size));
 

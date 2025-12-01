@@ -34,6 +34,7 @@ export interface Workshop {
   id: string;
   title: string;
   description: string;
+  detailedDescription?: string; // Ausführliche Beschreibung für Hauptseite/Modal
   date: string; // YYYY-MM-DD
   time: string; // HH:MM
   price: string; // z.B. "45€" oder "45€ pro Person"
