@@ -310,7 +310,8 @@
     width: 100%;
     height: 220px;
     overflow: hidden;
-    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    /* Zurückhaltender, warmer Hintergrund wie bei den Produktkarten */
+    background: var(--color-warm-beige);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -436,23 +437,43 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    /* Gleicher, warmer Verlauf wie bei den anderen Modals */
+    background: linear-gradient(
+      135deg,
+      rgba(139, 111, 71, 0.85) 0%,
+      rgba(193, 123, 92, 0.85) 100%
+    );
+    backdrop-filter: blur(8px);
+    animation: workshopModalFadeIn 0.3s ease;
   }
 
   .workshop-modal__content {
     position: relative;
-    background: white;
-    border-radius: 16px;
-    max-width: 700px;
+    background: linear-gradient(
+      to bottom,
+      var(--color-off-white) 0%,
+      #faf8f3 100%
+    );
+    border-radius: var(--radius);
+    border: 2px solid var(--color-warm-beige);
+    max-width: 720px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: modalSlideIn 0.3s ease;
+    box-shadow: 0 20px 60px rgba(139, 111, 71, 0.3);
+    animation: workshopModalSlideIn 0.3s ease;
   }
 
-  @keyframes modalSlideIn {
+  @keyframes workshopModalFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes workshopModalSlideIn {
     from {
       opacity: 0;
       transform: translateY(-20px);
@@ -517,8 +538,8 @@
   }
 
   .workshop-detail__availability {
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: var(--color-warm-beige);
+    color: var(--color-clay-brown);
     padding: var(--space-2) var(--space-4);
     border-radius: 20px;
     font-weight: 600;
@@ -526,10 +547,12 @@
   }
 
   .workshop-detail__info {
-    background: #f8f9fa;
+    background: var(--color-off-white);
     padding: var(--space-6);
     margin: 0 var(--space-6) var(--space-6);
     border-radius: 12px;
+    border: 1px solid var(--color-warm-beige);
+    box-shadow: var(--shadow-sm);
   }
 
   .workshop-detail__info-item {
@@ -558,36 +581,60 @@
 
   .workshop-detail__actions {
     padding: var(--space-6);
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--color-warm-beige);
+  }
+  /* Button-Styles angelehnt an die globale Button-Komponente */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-weight: 600;
+    border-radius: var(--radius);
+    border: 2px solid transparent;
+    transition: all var(--duration-normal) var(--easing);
+    text-decoration: none;
+    white-space: nowrap;
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    position: relative;
+    overflow: hidden;
   }
 
-  .btn {
-    display: inline-block;
-    padding: var(--space-4) var(--space-8);
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
+  .btn::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition:
+      width 0.6s,
+      height 0.6s;
+  }
+
+  .btn:hover::before {
+    width: 300px;
+    height: 300px;
   }
 
   .btn-primary {
-    background: var(--color-terracotta);
-    color: white;
+    background-color: var(--color-terracotta);
+    color: var(--color-off-white);
     width: 100%;
   }
 
   .btn-primary:hover {
-    background: var(--color-clay-brown);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: var(--color-clay-brown);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
   }
 
   .btn-book-workshop {
     font-size: 1.125rem;
-    padding: var(--space-5) var(--space-8);
   }
 
   /* Mobile Optimierungen */
