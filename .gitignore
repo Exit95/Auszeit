@@ -20,6 +20,9 @@ pnpm-debug.log*
 # data files (bookings and time slots)
 data/
 
+# uploads (images for gallery)
+uploads/
+
 # macOS-specific files
 .DS_Store
 

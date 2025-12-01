@@ -4,6 +4,7 @@ import path from 'path';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const SLOTS_FILE = path.join(DATA_DIR, 'time-slots.json');
 const BOOKINGS_FILE = path.join(DATA_DIR, 'bookings.json');
+const WORKSHOPS_FILE = path.join(DATA_DIR, 'workshops.json');
 
 export interface TimeSlot {
 	id: string;
@@ -25,6 +26,18 @@ export interface Booking {
   notes?: string;
   createdAt: string;
   status: 'pending' | 'confirmed' | 'cancelled';
+}
+
+export interface Workshop {
+  id: string;
+  title: string;
+  description: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  price: string; // z.B. "45€" oder "45€ pro Person"
+  maxParticipants: number;
+  active: boolean; // Nur aktive Workshops werden auf der Hauptseite angezeigt
+  createdAt: string;
 }
 
 // Sicherstellen, dass das Data-Verzeichnis existiert
@@ -203,5 +216,51 @@ export async function cancelBooking(id: string): Promise<boolean> {
 	  await saveBookings(bookings);
 	  return updated;
 	}
-	
-	
+
+// Workshops
+export async function getWorkshops(): Promise<Workshop[]> {
+  await ensureDataDir();
+  await ensureFile(WORKSHOPS_FILE, []);
+  const data = await fs.readFile(WORKSHOPS_FILE, 'utf-8');
+  return JSON.parse(data);
+}
+
+export async function saveWorkshops(workshops: Workshop[]): Promise<void> {
+  await ensureDataDir();
+  await fs.writeFile(WORKSHOPS_FILE, JSON.stringify(workshops, null, 2));
+}
+
+export async function addWorkshop(workshop: Omit<Workshop, 'id' | 'createdAt'>): Promise<Workshop> {
+  const workshops = await getWorkshops();
+  const newWorkshop: Workshop = {
+    ...workshop,
+    id: `workshop_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+    createdAt: new Date().toISOString(),
+  };
+  workshops.push(newWorkshop);
+  await saveWorkshops(workshops);
+  return newWorkshop;
+}
+
+export async function updateWorkshop(id: string, updates: Partial<Workshop>): Promise<Workshop | null> {
+  const workshops = await getWorkshops();
+  const index = workshops.findIndex(w => w.id === id);
+  if (index === -1) return null;
+
+  const updated: Workshop = {
+    ...workshops[index],
+    ...updates,
+  };
+
+  workshops[index] = updated;
+  await saveWorkshops(workshops);
+  return updated;
+}
+
+export async function deleteWorkshop(id: string): Promise<boolean> {
+  const workshops = await getWorkshops();
+  const filtered = workshops.filter(w => w.id !== id);
+  if (filtered.length === workshops.length) return false;
+  await saveWorkshops(filtered);
+  return true;
+}
