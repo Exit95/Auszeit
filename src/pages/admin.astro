@@ -1156,12 +1156,19 @@ export const prerender = false;
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
       const uniqueFilename = `${Date.now()}_${file.name}`;
 
+      console.log(`📦 Starting upload: ${file.name}`);
+      console.log(`   Size: ${formatFileSize(file.size)}`);
+      console.log(`   Chunks: ${totalChunks}`);
+      console.log(`   Unique filename: ${uniqueFilename}`);
+
       const formData = new FormData();
 
       // WICHTIG: Metadaten ZUERST anhängen!
       formData.append('filename', uniqueFilename);
       formData.append('totalChunks', String(totalChunks));
       formData.append('fileSize', String(file.size));
+
+      console.log('📝 Metadata added to FormData');
 
       // Dann alle Chunks anhängen
       for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
@@ -1177,11 +1184,19 @@ export const prerender = false;
         onProgress(progress);
       }
 
+      console.log(`✅ All ${totalChunks} chunks prepared`);
+      console.log('🚀 Starting upload to /api/upload...');
+
       // Upload mit Timeout (20 Minuten)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1200000); // 20 Min
+      const timeoutId = setTimeout(() => {
+        console.error('⏱️ Upload timeout after 20 minutes!');
+        controller.abort();
+      }, 1200000); // 20 Min
 
       try {
+        onProgress(55); // Zeige dass Upload startet
+
         const response = await fetch('/api/upload', {
           method: 'POST',
           headers: {
@@ -1193,16 +1208,33 @@ export const prerender = false;
 
         clearTimeout(timeoutId);
 
+        console.log(`📡 Response received: ${response.status} ${response.statusText}`);
+
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Upload failed');
+          const errorText = await response.text();
+          console.error('❌ Upload failed:', errorText);
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: errorText };
+          }
+          throw new Error(errorData.error || 'Upload failed');
         }
+
+        const result = await response.json();
+        console.log('✅ Upload successful:', result);
 
         onProgress(100); // Upload abgeschlossen
 
-        return await response.json();
+        return result;
       } catch (error) {
         clearTimeout(timeoutId);
+        console.error('❌ Upload error:', error);
+        if (error instanceof Error) {
+          console.error('   Message:', error.message);
+          console.error('   Stack:', error.stack);
+        }
         throw error;
       }
     }
