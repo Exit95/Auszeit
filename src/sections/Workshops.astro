@@ -237,48 +237,63 @@
 
           <div class="workshop-detail__booking">
             <h3>Workshop buchen</h3>
+            <p class="workshop-detail__booking-intro">
+              Reservieren Sie Ihren Platz für diesen Termin. Sie erhalten im Anschluss eine persönliche Bestätigung per E-Mail.
+            </p>
+
             <form id="workshop-booking-form" class="workshop-booking-form">
-              <div class="form-group">
-                <label for="workshop-name">Name *</label>
-                <input type="text" id="workshop-name" name="name" required />
+              <div class="workshop-booking-form__grid">
+                <div class="form-group">
+                  <label for="workshop-name">Name *</label>
+                  <input type="text" id="workshop-name" name="name" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="workshop-email">E-Mail *</label>
+                  <input type="email" id="workshop-email" name="email" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="workshop-phone">Telefon</label>
+                  <input type="tel" id="workshop-phone" name="phone" />
+                </div>
+
+                <div class="form-group">
+                  <label for="workshop-participants">Anzahl Personen *</label>
+                  <input
+                    type="number"
+                    id="workshop-participants"
+                    name="participants"
+                    min="1"
+                    max="${availableSpots}"
+                    value="1"
+                    required
+                  />
+                </div>
               </div>
 
-              <div class="form-group">
-                <label for="workshop-email">E-Mail *</label>
-                <input type="email" id="workshop-email" name="email" required />
+              <div class="form-group form-group--full">
+                <label for="workshop-notes">Anmerkungen (optional)</label>
+                <textarea
+                  id="workshop-notes"
+                  name="notes"
+                  rows="3"
+                  placeholder="Zum Beispiel: Anlass, besondere Wünsche oder Fragen"
+                ></textarea>
               </div>
 
-              <div class="form-group">
-                <label for="workshop-phone">Telefon</label>
-                <input type="tel" id="workshop-phone" name="phone" />
+              <div class="workshop-booking-form__actions">
+                <button type="submit" class="btn btn-primary" ${isFull ? "disabled" : ""}>
+                  ${isFull ? "Leider ausgebucht" : "Jetzt verbindlich anfragen"}
+                </button>
               </div>
 
-              <div class="form-group">
-                <label for="workshop-participants">Anzahl Personen *</label>
-                <input
-                  type="number"
-                  id="workshop-participants"
-                  name="participants"
-                  min="1"
-                  max="${availableSpots}"
-                  value="1"
-                  required
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="workshop-notes">Anmerkungen</label>
-                <textarea id="workshop-notes" name="notes" rows="3"></textarea>
-              </div>
-
-              <button type="submit" class="btn btn-primary" ${isFull ? "disabled" : ""}>
-                ${isFull ? "Leider ausgebucht" : "Jetzt verbindlich buchen"}
-              </button>
-              <p class="form-hint">
-                Ihre Anfrage wird an uns per E-Mail übermittelt. Sie erhalten eine Bestätigung.
+              <p class="workshop-booking-form__hint">
+                Ihre Anfrage wird an uns übermittelt. Die Buchung ist erst nach unserer Bestätigung verbindlich.
               </p>
             </form>
-            <div id="workshop-booking-message" class="message hidden"></div>
+
+            <div id="workshop-booking-message" class="workshop-booking-message hidden"></div>
           </div>
         </div>
       </div>
@@ -301,7 +316,7 @@
 
         if (!submitBtn) return;
 
-        const originalText = submitBtn.textContent || "Jetzt verbindlich buchen";
+        const originalText = submitBtn.textContent || "Jetzt verbindlich anfragen";
         submitBtn.disabled = true;
         submitBtn.textContent = "Wird gesendet...";
 
@@ -316,7 +331,7 @@
         };
 
         messageEl.classList.remove("hidden");
-        messageEl.className = "message";
+        messageEl.className = "workshop-booking-message";
 
         try {
           const response = await fetch("/api/workshops/book", {
@@ -332,20 +347,20 @@
           if (response.ok && result.success) {
             messageEl.textContent =
               "Vielen Dank! Ihre Buchungsanfrage wurde übermittelt. Sie erhalten in Kürze eine Bestätigung per E-Mail.";
-            messageEl.classList.add("success");
+            messageEl.classList.add("workshop-booking-message--success");
             bookingForm.reset();
           } else {
             const errorMessage =
               result.error ||
               "Die Buchung konnte nicht durchgeführt werden. Bitte versuchen Sie es später erneut.";
             messageEl.textContent = errorMessage;
-            messageEl.classList.add("error");
+            messageEl.classList.add("workshop-booking-message--error");
           }
         } catch (error) {
           console.error("Error booking workshop:", error);
           messageEl.textContent =
             "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns direkt.";
-          messageEl.classList.add("error");
+          messageEl.classList.add("workshop-booking-message--error");
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
@@ -418,8 +433,9 @@
 
   .workshops__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: var(--space-8);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 360px));
+    gap: var(--space-6);
+    justify-content: center;
   }
 
   .workshops__loading,
@@ -823,6 +839,33 @@
 
   .form-group--full {
     grid-column: 1 / -1;
+  }
+
+  .form-group {
+    margin-bottom: var(--space-3);
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: 500;
+    color: var(--color-clay-brown);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: var(--space-3);
+    border: 2px solid var(--color-warm-beige);
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    transition: border-color var(--duration-normal) var(--easing);
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-clay-brown);
   }
 
   .workshop-booking-form__actions {
