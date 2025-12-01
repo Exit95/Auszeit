@@ -574,6 +574,15 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
+/* Form Hints */
+.form-hint {
+  display: block;
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
 /* Mobile Optimierungen für neue Elemente */
 @media (max-width: 768px) {
   .admin-nav {
@@ -603,5 +612,191 @@ input[type="checkbox"] {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+}
+
+/* Kategorien-Verwaltung */
+.categories-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.categories-controls {
+  margin-bottom: 1.5rem;
+}
+
+.form-group-inline {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.form-group-inline input {
+  flex: 1;
+  max-width: 400px;
+}
+
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.category-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.category-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+}
+
+/* Galerie-Erweiterungen */
+.gallery-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.category-filter {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.category-filter:focus {
+  outline: none;
+  border-color: #C17B5C;
+}
+
+.gallery-item__categories {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: #C17B5C;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.no-category {
+  color: #999;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.gallery-item__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Modal für Kategorien-Zuordnung */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+  margin-bottom: 1.5rem;
+  color: #8B6F47;
+}
+
+.category-checkboxes {
+  margin-bottom: 1.5rem;
+}
+
+.category-checkboxes label {
+  display: block;
+  padding: 0.5rem 0;
+  cursor: pointer;
+}
+
+.category-checkboxes label:hover {
+  background: #f8f9fa;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+/* Mobile Optimierungen für neue Elemente */
+@media (max-width: 768px) {
+  .form-group-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-group-inline input {
+    max-width: none;
+  }
+
+  .category-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .gallery-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-filter {
+    width: 100%;
+  }
+
+  .gallery-item__actions {
+    flex-direction: column;
   }
 }

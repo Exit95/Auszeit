@@ -157,6 +157,13 @@ export const prerender = false;
               <label for="workshop-description">Beschreibung</label>
               <textarea id="workshop-description" name="description" rows="4" required></textarea>
             </div>
+            <div class="form-group">
+              <label for="workshop-image">Titelbild (optional)</label>
+              <select id="workshop-image" name="imageFilename">
+                <option value="">Kein Bild</option>
+              </select>
+              <small class="form-hint">Wählen Sie ein Bild aus der Galerie</small>
+            </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary" id="workshop-submit-btn">Workshop hinzufügen</button>
               <button type="button" class="btn btn-secondary hidden" id="cancel-workshop-edit-btn">Bearbeitung abbrechen</button>
@@ -175,6 +182,20 @@ export const prerender = false;
 
       <!-- Tab: Galerie -->
       <div id="tab-galerie" class="admin-tab hidden">
+        <!-- Kategorien-Verwaltung -->
+        <section class="categories-section">
+          <h2>Kategorien verwalten</h2>
+          <div class="categories-controls">
+            <div class="form-group-inline">
+              <input type="text" id="new-category-name" placeholder="Neue Kategorie..." maxlength="50">
+              <button type="button" class="btn btn-primary" id="add-category-btn">Kategorie hinzufügen</button>
+            </div>
+          </div>
+          <div id="categories-loading" class="loading">Lade Kategorien...</div>
+          <div id="categories-list" class="categories-list hidden"></div>
+          <div id="no-categories" class="no-data hidden">Keine Kategorien vorhanden</div>
+        </section>
+
         <section class="gallery-upload-section">
           <h2>Bild hochladen</h2>
           <div class="upload-area">
@@ -194,7 +215,12 @@ export const prerender = false;
         <section class="gallery-list-section">
           <div class="gallery-header">
             <h2>Galerie</h2>
-            <button type="button" class="btn btn-secondary" id="reload-gallery-btn">Neu laden</button>
+            <div class="gallery-controls">
+              <select id="category-filter" class="category-filter">
+                <option value="">Alle Bilder</option>
+              </select>
+              <button type="button" class="btn btn-secondary" id="reload-gallery-btn">Neu laden</button>
+            </div>
           </div>
           <div id="gallery-loading" class="loading">Lade Bilder...</div>
           <div id="gallery-grid" class="gallery-grid hidden"></div>
@@ -208,6 +234,13 @@ export const prerender = false;
 	  <script>
 	    let authCredentials = '';
 	    let editingSlotId: string | null = null;
+
+    // Hilfsfunktion: HTML escapen
+    function escapeHtml(text: string): string {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
     // Login-Handler
     document.getElementById('login-form')?.addEventListener('submit', async (e) => {
@@ -799,8 +832,11 @@ export const prerender = false;
 
           // Lade Daten wenn Tab gewechselt wird
           if (tabName === 'workshops') {
+            loadWorkshopImageOptions();
             loadWorkshops();
           } else if (tabName === 'galerie') {
+            loadCategories();
+            loadImageMetadata();
             loadGallery();
           }
         }
@@ -816,6 +852,8 @@ export const prerender = false;
       const form = e.target as HTMLFormElement;
       const formData = new FormData(form);
 
+      const imageFilename = formData.get('imageFilename') as string;
+
       const data = {
         title: formData.get('title'),
         description: formData.get('description'),
@@ -823,7 +861,8 @@ export const prerender = false;
         time: formData.get('time'),
         price: formData.get('price'),
         maxParticipants: formData.get('maxParticipants'),
-        active: (document.getElementById('workshop-active') as HTMLInputElement)?.checked || false
+        active: (document.getElementById('workshop-active') as HTMLInputElement)?.checked || false,
+        imageFilename: imageFilename || undefined
       };
 
       try {
@@ -859,6 +898,38 @@ export const prerender = false;
       (document.getElementById('add-workshop-form') as HTMLFormElement)?.reset();
       resetWorkshopFormState();
     });
+
+    // Bilder-Dropdown für Workshop-Formular laden
+    async function loadWorkshopImageOptions() {
+      const selectEl = document.getElementById('workshop-image') as HTMLSelectElement;
+      if (!selectEl) return;
+
+      try {
+        const response = await fetch('/api/images', {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+
+        if (response.ok) {
+          const images = await response.json();
+          const currentValue = selectEl.value;
+
+          selectEl.innerHTML = '<option value="">Kein Bild</option>';
+
+          images.forEach((img: any) => {
+            const option = document.createElement('option');
+            option.value = img.filename;
+            option.textContent = img.filename;
+            selectEl.appendChild(option);
+          });
+
+          if (currentValue) {
+            selectEl.value = currentValue;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading images for workshop:', error);
+      }
+    }
 
     // Workshops laden
     async function loadWorkshops() {
@@ -978,6 +1049,7 @@ export const prerender = false;
       (document.getElementById('workshop-price') as HTMLInputElement).value = workshop.price;
       (document.getElementById('workshop-max-participants') as HTMLInputElement).value = String(workshop.maxParticipants);
       (document.getElementById('workshop-active') as HTMLInputElement).checked = workshop.active;
+      (document.getElementById('workshop-image') as HTMLSelectElement).value = workshop.imageFilename || '';
 
       const titleEl = document.getElementById('workshop-form-title');
       const submitBtn = document.getElementById('workshop-submit-btn');
@@ -1103,11 +1175,190 @@ export const prerender = false;
       }
     }
 
+    // ========== KATEGORIEN VERWALTUNG ==========
+    let allCategories: any[] = [];
+    let allImageMetadata: any[] = [];
+
+    // Kategorien laden
+    async function loadCategories() {
+      const loadingEl = document.getElementById('categories-loading');
+      const listEl = document.getElementById('categories-list');
+      const noDataEl = document.getElementById('no-categories');
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (listEl) listEl.classList.add('hidden');
+      if (noDataEl) noDataEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/gallery/categories', {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load categories');
+
+        allCategories = await response.json();
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        if (allCategories.length === 0) {
+          if (noDataEl) noDataEl.classList.remove('hidden');
+          return;
+        }
+
+        if (listEl) {
+          listEl.classList.remove('hidden');
+          listEl.innerHTML = '';
+
+          allCategories.forEach((cat: any) => {
+            const item = document.createElement('div');
+            item.className = 'category-item';
+            item.innerHTML = `
+              <span class="category-name">${escapeHtml(cat.name)}</span>
+              <div class="category-actions">
+                <button class="btn btn-sm btn-secondary" onclick="renameCategory('${cat.id}', '${escapeHtml(cat.name)}')">Umbenennen</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteCategory('${cat.id}')">Löschen</button>
+              </div>
+            `;
+            listEl.appendChild(item);
+          });
+        }
+
+        // Update category filter dropdown
+        updateCategoryFilter();
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+        alert('Fehler beim Laden der Kategorien');
+      }
+    }
+
+    // Kategorie hinzufügen
+    document.getElementById('add-category-btn')?.addEventListener('click', async () => {
+      const input = document.getElementById('new-category-name') as HTMLInputElement;
+      const name = input?.value.trim();
+
+      if (!name) {
+        alert('Bitte einen Kategorienamen eingeben');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/gallery/categories', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name })
+        });
+
+        if (response.ok) {
+          if (input) input.value = '';
+          await loadCategories();
+        } else {
+          const error = await response.json();
+          alert(error.error || 'Fehler beim Erstellen der Kategorie');
+        }
+      } catch (error) {
+        console.error('Error adding category:', error);
+        alert('Fehler beim Erstellen der Kategorie');
+      }
+    });
+
+    // Kategorie umbenennen
+    (window as any).renameCategory = async (id: string, currentName: string) => {
+      const newName = prompt('Neuer Name:', currentName);
+      if (!newName || newName.trim() === currentName) return;
+
+      try {
+        const response = await fetch('/api/gallery/categories', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id, name: newName.trim() })
+        });
+
+        if (response.ok) {
+          await loadCategories();
+        } else {
+          const error = await response.json();
+          alert(error.error || 'Fehler beim Umbenennen der Kategorie');
+        }
+      } catch (error) {
+        console.error('Error renaming category:', error);
+        alert('Fehler beim Umbenennen der Kategorie');
+      }
+    };
+
+    // Kategorie löschen
+    (window as any).deleteCategory = async (id: string) => {
+      if (!confirm('Kategorie wirklich löschen? Die Zuordnung zu Bildern wird entfernt.')) return;
+
+      try {
+        const response = await fetch(`/api/gallery/categories?id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+
+        if (response.ok) {
+          await loadCategories();
+          await loadImageMetadata();
+        } else {
+          alert('Fehler beim Löschen der Kategorie');
+        }
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        alert('Fehler beim Löschen der Kategorie');
+      }
+    };
+
+    // Bild-Metadaten laden
+    async function loadImageMetadata() {
+      try {
+        const response = await fetch('/api/gallery/image-categories', {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+
+        if (response.ok) {
+          allImageMetadata = await response.json();
+        }
+      } catch (error) {
+        console.error('Error loading image metadata:', error);
+      }
+    }
+
+    // Category filter dropdown aktualisieren
+    function updateCategoryFilter() {
+      const filterEl = document.getElementById('category-filter') as HTMLSelectElement;
+      if (!filterEl) return;
+
+      const currentValue = filterEl.value;
+      filterEl.innerHTML = '<option value="">Alle Bilder</option>';
+
+      allCategories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        filterEl.appendChild(option);
+      });
+
+      filterEl.value = currentValue;
+    }
+
+    // Category filter change handler
+    document.getElementById('category-filter')?.addEventListener('change', () => {
+      loadGallery();
+    });
+
     // Galerie laden
     async function loadGallery() {
       const loadingEl = document.getElementById('gallery-loading');
       const gridEl = document.getElementById('gallery-grid');
       const noImagesEl = document.getElementById('no-images');
+      const filterEl = document.getElementById('category-filter') as HTMLSelectElement;
+      const selectedCategoryId = filterEl?.value || '';
 
       if (loadingEl) loadingEl.classList.remove('hidden');
       if (gridEl) gridEl.classList.add('hidden');
@@ -1122,7 +1373,15 @@ export const prerender = false;
 
         if (!response.ok) throw new Error('Failed to load images');
 
-        const images = await response.json();
+        let images = await response.json();
+
+        // Filter nach Kategorie
+        if (selectedCategoryId) {
+          images = images.filter((img: any) => {
+            const metadata = allImageMetadata.find(m => m.filename === img.filename);
+            return metadata && metadata.categories.includes(selectedCategoryId);
+          });
+        }
 
         if (loadingEl) loadingEl.classList.add('hidden');
 
@@ -1136,19 +1395,43 @@ export const prerender = false;
           gridEl.innerHTML = '';
 
           images.forEach((img: any) => {
+            const metadata = allImageMetadata.find(m => m.filename === img.filename);
+            const imageCategoryIds = metadata?.categories || [];
+            const imageCategoryNames = imageCategoryIds
+              .map((id: string) => allCategories.find(c => c.id === id)?.name)
+              .filter(Boolean);
+
             const card = document.createElement('div');
             card.className = 'gallery-item';
 
             card.innerHTML = `
-              <img src="/uploads/${img.filename}" alt="${img.filename}" loading="lazy">
+              <img src="/uploads/${img.filename}" alt="${escapeHtml(img.filename)}" loading="lazy">
               <div class="gallery-item__info">
-                <div class="gallery-item__name">${img.filename}</div>
+                <div class="gallery-item__name">${escapeHtml(img.filename)}</div>
                 <div class="gallery-item__size">${formatFileSize(img.size)}</div>
+                <div class="gallery-item__categories">
+                  ${imageCategoryNames.length > 0
+                    ? imageCategoryNames.map((name: string) => `<span class="category-badge">${escapeHtml(name)}</span>`).join(' ')
+                    : '<span class="no-category">Keine Kategorie</span>'}
+                </div>
               </div>
-              <button class="btn btn-danger btn-delete-image" data-filename="${img.filename}">Löschen</button>
+              <div class="gallery-item__actions">
+                <button class="btn btn-sm btn-secondary btn-manage-categories" data-filename="${escapeHtml(img.filename)}">Kategorien</button>
+                <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}">Löschen</button>
+              </div>
             `;
 
             gridEl.appendChild(card);
+          });
+
+          // Event Listener für Kategorien-Buttons
+          document.querySelectorAll('.btn-manage-categories').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const filename = btn.getAttribute('data-filename');
+              if (filename) {
+                await manageCategoriesForImage(filename);
+              }
+            });
           });
 
           // Event Listener für Löschen-Buttons
@@ -1165,6 +1448,67 @@ export const prerender = false;
         console.error('Error loading gallery:', error);
         if (loadingEl) loadingEl.classList.add('hidden');
       }
+    }
+
+    // Kategorien für ein Bild verwalten
+    async function manageCategoriesForImage(filename: string) {
+      const metadata = allImageMetadata.find(m => m.filename === filename);
+      const currentCategoryIds = metadata?.categories || [];
+
+      // Erstelle Checkbox-Liste
+      const checkboxes = allCategories.map(cat => {
+        const checked = currentCategoryIds.includes(cat.id) ? 'checked' : '';
+        return `<label><input type="checkbox" value="${cat.id}" ${checked}> ${escapeHtml(cat.name)}</label>`;
+      }).join('<br>');
+
+      const dialog = document.createElement('div');
+      dialog.className = 'modal-overlay';
+      dialog.innerHTML = `
+        <div class="modal-content">
+          <h3>Kategorien für "${escapeHtml(filename)}"</h3>
+          <div class="category-checkboxes">
+            ${checkboxes || '<p>Keine Kategorien vorhanden. Bitte erst Kategorien erstellen.</p>'}
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" id="save-categories-btn">Speichern</button>
+            <button class="btn btn-secondary" id="cancel-categories-btn">Abbrechen</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(dialog);
+
+      // Event Listeners
+      document.getElementById('save-categories-btn')?.addEventListener('click', async () => {
+        const selectedIds = Array.from(dialog.querySelectorAll('input[type="checkbox"]:checked'))
+          .map((cb: any) => cb.value);
+
+        try {
+          const response = await fetch('/api/gallery/image-categories', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${authCredentials}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ filename, categoryIds: selectedIds })
+          });
+
+          if (response.ok) {
+            await loadImageMetadata();
+            await loadGallery();
+            document.body.removeChild(dialog);
+          } else {
+            alert('Fehler beim Speichern der Kategorien');
+          }
+        } catch (error) {
+          console.error('Error saving categories:', error);
+          alert('Fehler beim Speichern der Kategorien');
+        }
+      });
+
+      document.getElementById('cancel-categories-btn')?.addEventListener('click', () => {
+        document.body.removeChild(dialog);
+      });
     }
 
     // Bild löschen

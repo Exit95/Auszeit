@@ -5,6 +5,8 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const SLOTS_FILE = path.join(DATA_DIR, 'time-slots.json');
 const BOOKINGS_FILE = path.join(DATA_DIR, 'bookings.json');
 const WORKSHOPS_FILE = path.join(DATA_DIR, 'workshops.json');
+const CATEGORIES_FILE = path.join(DATA_DIR, 'gallery-categories.json');
+const IMAGE_METADATA_FILE = path.join(DATA_DIR, 'image-metadata.json');
 
 export interface TimeSlot {
 	id: string;
@@ -36,8 +38,22 @@ export interface Workshop {
   time: string; // HH:MM
   price: string; // z.B. "45€" oder "45€ pro Person"
   maxParticipants: number;
+  currentParticipants?: number; // Anzahl der aktuellen Buchungen
   active: boolean; // Nur aktive Workshops werden auf der Hauptseite angezeigt
+  imageFilename?: string; // Optionales Titelbild aus der Galerie
   createdAt: string;
+}
+
+export interface GalleryCategory {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface ImageMetadata {
+  filename: string;
+  categories: string[]; // Array von Kategorie-IDs
+  uploadedAt: string;
 }
 
 // Sicherstellen, dass das Data-Verzeichnis existiert
@@ -263,4 +279,143 @@ export async function deleteWorkshop(id: string): Promise<boolean> {
   if (filtered.length === workshops.length) return false;
   await saveWorkshops(filtered);
   return true;
+}
+
+// Gallery Categories
+export async function getCategories(): Promise<GalleryCategory[]> {
+  await ensureDataDir();
+  await ensureFile(CATEGORIES_FILE, []);
+  const data = await fs.readFile(CATEGORIES_FILE, 'utf-8');
+  return JSON.parse(data);
+}
+
+export async function saveCategories(categories: GalleryCategory[]): Promise<void> {
+  await ensureDataDir();
+  await fs.writeFile(CATEGORIES_FILE, JSON.stringify(categories, null, 2));
+}
+
+export async function addCategory(name: string): Promise<GalleryCategory> {
+  const categories = await getCategories();
+
+  // Prüfe ob Name bereits existiert
+  if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+    throw new Error('CATEGORY_EXISTS');
+  }
+
+  const newCategory: GalleryCategory = {
+    id: `cat_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+    name,
+    createdAt: new Date().toISOString(),
+  };
+
+  categories.push(newCategory);
+  await saveCategories(categories);
+  return newCategory;
+}
+
+export async function renameCategory(id: string, newName: string): Promise<GalleryCategory | null> {
+  const categories = await getCategories();
+  const index = categories.findIndex(c => c.id === id);
+  if (index === -1) return null;
+
+  // Prüfe ob neuer Name bereits existiert (außer bei gleicher Kategorie)
+  if (categories.some(c => c.id !== id && c.name.toLowerCase() === newName.toLowerCase())) {
+    throw new Error('CATEGORY_EXISTS');
+  }
+
+  categories[index].name = newName;
+  await saveCategories(categories);
+  return categories[index];
+}
+
+export async function deleteCategory(id: string): Promise<boolean> {
+  const categories = await getCategories();
+  const filtered = categories.filter(c => c.id !== id);
+  if (filtered.length === categories.length) return false;
+
+  // Entferne Kategorie auch aus allen Bild-Metadaten
+  const metadata = await getImageMetadata();
+  const updatedMetadata = metadata.map(m => ({
+    ...m,
+    categories: m.categories.filter(catId => catId !== id)
+  }));
+  await saveImageMetadata(updatedMetadata);
+
+  await saveCategories(filtered);
+  return true;
+}
+
+// Image Metadata
+export async function getImageMetadata(): Promise<ImageMetadata[]> {
+  await ensureDataDir();
+  await ensureFile(IMAGE_METADATA_FILE, []);
+  const data = await fs.readFile(IMAGE_METADATA_FILE, 'utf-8');
+  return JSON.parse(data);
+}
+
+export async function saveImageMetadata(metadata: ImageMetadata[]): Promise<void> {
+  await ensureDataDir();
+  await fs.writeFile(IMAGE_METADATA_FILE, JSON.stringify(metadata, null, 2));
+}
+
+export async function getImageMetadataByFilename(filename: string): Promise<ImageMetadata | null> {
+  const metadata = await getImageMetadata();
+  return metadata.find(m => m.filename === filename) || null;
+}
+
+export async function setImageCategories(filename: string, categoryIds: string[]): Promise<ImageMetadata> {
+  const metadata = await getImageMetadata();
+  const index = metadata.findIndex(m => m.filename === filename);
+
+  if (index === -1) {
+    // Erstelle neuen Eintrag
+    const newMetadata: ImageMetadata = {
+      filename,
+      categories: categoryIds,
+      uploadedAt: new Date().toISOString(),
+    };
+    metadata.push(newMetadata);
+    await saveImageMetadata(metadata);
+    return newMetadata;
+  } else {
+    // Aktualisiere bestehenden Eintrag
+    metadata[index].categories = categoryIds;
+    await saveImageMetadata(metadata);
+    return metadata[index];
+  }
+}
+
+export async function addImageToCategory(filename: string, categoryId: string): Promise<ImageMetadata> {
+  const metadata = await getImageMetadata();
+  const index = metadata.findIndex(m => m.filename === filename);
+
+  if (index === -1) {
+    // Erstelle neuen Eintrag
+    const newMetadata: ImageMetadata = {
+      filename,
+      categories: [categoryId],
+      uploadedAt: new Date().toISOString(),
+    };
+    metadata.push(newMetadata);
+    await saveImageMetadata(metadata);
+    return newMetadata;
+  } else {
+    // Füge Kategorie hinzu, falls noch nicht vorhanden
+    if (!metadata[index].categories.includes(categoryId)) {
+      metadata[index].categories.push(categoryId);
+      await saveImageMetadata(metadata);
+    }
+    return metadata[index];
+  }
+}
+
+export async function removeImageFromCategory(filename: string, categoryId: string): Promise<ImageMetadata | null> {
+  const metadata = await getImageMetadata();
+  const index = metadata.findIndex(m => m.filename === filename);
+
+  if (index === -1) return null;
+
+  metadata[index].categories = metadata[index].categories.filter(id => id !== categoryId);
+  await saveImageMetadata(metadata);
+  return metadata[index];
 }
