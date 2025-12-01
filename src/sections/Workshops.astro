@@ -1,4 +1,9 @@
 ---
+import WorkshopCard from "../components/WorkshopCard.astro";
+import { getWorkshops } from "../lib/storage";
+
+const workshops = await getWorkshops();
+const activeWorkshops = workshops.filter((w) => w.active);
 ---
 
 <section id="workshops" class="workshops animate-on-scroll">
@@ -8,175 +13,23 @@
       Entdecken Sie unsere kreativen Keramik-Workshops
     </p>
 
-    <div id="workshops-container" class="workshops__grid">
-      <div class="workshops__loading">Lade Workshops...</div>
-    </div>
-
-    <div id="no-workshops" class="workshops__empty hidden">
-      Aktuell sind keine Workshops verfügbar.
-    </div>
+    {
+      activeWorkshops.length > 0 ? (
+        <div class="workshops__grid">
+          {activeWorkshops.map((workshop) => (
+            <WorkshopCard workshop={workshop} />
+          ))}
+        </div>
+      ) : (
+        <div class="workshops__empty">
+          Aktuell sind keine Workshops verfügbar.
+        </div>
+      )
+    }
   </div>
 </section>
 
-<script>
-  type Workshop = {
-    id: string;
-    title: string;
-    description: string;
-    date: string;
-    time: string;
-    price: string;
-    maxParticipants: number;
-    currentParticipants?: number;
-    availableSpots?: number;
-    imageFilename?: string;
-  };
 
-  function formatDate(date: string): string {
-    try {
-      return new Date(date + "T00:00:00").toLocaleDateString("de-DE", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return date;
-    }
-  }
-
-  function escapeHtml(text: string): string {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  function createWorkshopCard(workshop: Workshop): HTMLElement {
-    const card = document.createElement("a");
-    card.className = "workshop-card";
-    card.href = `/workshops/${encodeURIComponent(workshop.id)}`;
-    card.setAttribute("data-workshop-id", workshop.id);
-
-    const formattedDate = formatDate(workshop.date);
-    const shortDescription =
-      workshop.description.length > 140
-        ? workshop.description.substring(0, 140) + "…"
-        : workshop.description;
-
-    const availableSpots =
-      typeof workshop.availableSpots === "number"
-        ? workshop.availableSpots
-        : Math.max(
-            0,
-            (workshop.maxParticipants || 0) -
-              (workshop.currentParticipants || 0),
-          );
-
-    const isFull = availableSpots <= 0;
-    const isAlmostFull = availableSpots > 0 && availableSpots <= 3;
-
-    let availabilityText = `${availableSpots} Plätze frei`;
-    let availabilityClass = "";
-
-    if (isFull) {
-      availabilityText = "Ausgebucht";
-      availabilityClass = "availability-full";
-    } else if (isAlmostFull) {
-      availabilityText = `Nur noch ${availableSpots} Plätze`;
-      availabilityClass = "availability-low";
-    }
-
-    const imageHtml = workshop.imageFilename
-      ? `<div class="workshop-card__image">
-           <img src="/uploads/${workshop.imageFilename}" alt="${escapeHtml(
-             workshop.title,
-           )}" loading="lazy">
-           ${
-             isFull
-               ? '<div class="workshop-card__badge">Ausgebucht</div>'
-               : ""
-           }
-         </div>`
-      : "";
-
-    card.innerHTML = `
-      ${imageHtml}
-      <div class="workshop-card__content">
-        <h3 class="workshop-card__title">${escapeHtml(workshop.title)}</h3>
-        <div class="workshop-card__meta">
-          <div class="meta-item">
-            <span class="icon">📅</span>
-            <span class="text">${formattedDate}</span>
-          </div>
-          <div class="meta-item">
-            <span class="icon">⏰</span>
-            <span class="text">${workshop.time} Uhr</span>
-          </div>
-          <div class="meta-item meta-item--price">
-            <span class="icon">💶</span>
-            <span class="text">${escapeHtml(workshop.price)}</span>
-          </div>
-        </div>
-        <p class="workshop-card__description">${escapeHtml(
-          shortDescription,
-        )}</p>
-        <div class="workshop-card__footer">
-          <div class="workshop-card__spots ${availabilityClass}">
-            <span class="status-dot"></span>
-            ${availabilityText}
-          </div>
-          <span class="workshop-card__cta">Details &amp; Buchen →</span>
-        </div>
-      </div>
-    `;
-
-    return card;
-  }
-
-  async function loadWorkshops() {
-    const container = document.getElementById(
-      "workshops-container",
-    ) as HTMLDivElement | null;
-    const noWorkshops = document.getElementById(
-      "no-workshops",
-    ) as HTMLDivElement | null;
-
-    if (!container || !noWorkshops) return;
-
-    try {
-      const response = await fetch("/api/workshops");
-      if (!response.ok) throw new Error("Failed to load workshops");
-
-      const workshops: Workshop[] = await response.json();
-
-      container.innerHTML = "";
-
-      if (!workshops.length) {
-        container.classList.add("hidden");
-        noWorkshops.classList.remove("hidden");
-        return;
-      }
-
-      noWorkshops.classList.add("hidden");
-      container.classList.remove("hidden");
-
-      workshops.forEach((workshop) => {
-        const card = createWorkshopCard(workshop);
-        container.appendChild(card);
-      });
-    } catch (error) {
-      console.error("Error loading workshops:", error);
-      container.innerHTML =
-        '<p class="workshops__error">Fehler beim Laden der Workshops.</p>';
-    }
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadWorkshops);
-  } else {
-    loadWorkshops();
-  }
-</script>
 
 <style>
   .workshops {
@@ -206,174 +59,14 @@
 
   .workshops__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: var(--space-6);
-    justify-content: center;
-  }
-
-  .workshops__loading,
-  .workshops__error {
-    text-align: center;
-    color: var(--color-text-secondary);
-    padding: var(--space-8);
-    grid-column: 1 / -1;
   }
 
   .workshops__empty {
     text-align: center;
     color: var(--color-text-secondary);
     padding: var(--space-8);
-  }
-
-  .hidden {
-    display: none !important;
-  }
-
-  .workshop-card {
-    display: flex;
-    flex-direction: column;
-    background-color: var(--color-background);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(0, 0, 0, 0.03);
-    text-decoration: none;
-    color: inherit;
-    transition: transform var(--duration-normal) var(--easing),
-      box-shadow var(--duration-normal) var(--easing);
-  }
-
-  .workshop-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .workshop-card__image {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
-    background: var(--color-warm-beige);
-  }
-
-  .workshop-card__image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-  }
-
-  .workshop-card:hover .workshop-card__image img {
-    transform: scale(1.05);
-  }
-
-  .workshop-card__badge {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-full);
-    font-size: 0.875rem;
-    font-weight: 600;
-    background-color: rgba(255, 255, 255, 0.95);
-    color: #dc3545;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .workshop-card__content {
-    padding: var(--space-6);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    flex: 1;
-  }
-
-  .workshop-card__title {
-    font-family: var(--font-serif);
-    color: var(--color-clay-brown);
-    font-size: 1.35rem;
-    margin: 0;
-  }
-
-  .workshop-card__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-  }
-
-  .meta-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .meta-item .icon {
-    font-size: 1.2rem;
-  }
-
-  .meta-item--price {
-    color: var(--color-accent);
-    font-weight: var(--font-weight-bold);
-  }
-
-  .workshop-card__description {
-    color: var(--color-text-secondary);
-    line-height: 1.6;
-    font-size: 0.95rem;
-  }
-
-  .workshop-card__footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--color-off-white);
-  }
-
-  .workshop-card__spots {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-  }
-
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #4caf50;
-  }
-
-  .availability-full .status-dot {
-    background-color: #dc3545;
-  }
-
-  .availability-full {
-    color: #dc3545;
-  }
-
-  .availability-low .status-dot {
-    background-color: #ff9800;
-  }
-
-  .availability-low {
-    color: #ff9800;
-  }
-
-  .workshop-card__cta {
-    color: var(--color-terracotta);
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: transform 0.2s ease;
-  }
-
-  .workshop-card:hover .workshop-card__cta {
-    transform: translateX(4px);
   }
 
   @media (max-width: 639px) {
@@ -385,8 +78,8 @@
       font-size: 2rem;
     }
 
-    .workshop-card__content {
-      padding: var(--space-5);
+    .workshops__grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>
