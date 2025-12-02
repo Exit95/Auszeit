@@ -120,22 +120,6 @@ export const POST: APIRoute = async ({ request }) => {
           return;
         }
 
-        if (!category) {
-          resolve(new Response(JSON.stringify({ error: 'Missing category' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-          }));
-          return;
-        }
-
-        if (!VALID_CATEGORIES.includes(category)) {
-          resolve(new Response(JSON.stringify({ error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-          }));
-          return;
-        }
-
         if (chunks.length === 0) {
           resolve(new Response(JSON.stringify({ error: 'No chunks received' }), {
             status: 400,
@@ -150,21 +134,40 @@ export const POST: APIRoute = async ({ request }) => {
         // Alle Chunks zu einem Buffer zusammenfügen
         const finalBuffer = Buffer.concat(chunks.map(c => c.buffer));
 
-        // Kategorie-Verzeichnis sicherstellen
-        const categoryDir = ensureCategoryDir(category);
+        let filepath: string;
+        let resultPath: string;
 
-        // Datei in Kategorie-Ordner speichern
-        const filepath = path.join(categoryDir, filename);
+        // Wenn Kategorie angegeben: in products/[kategorie]/ speichern
+        if (category) {
+          if (!VALID_CATEGORIES.includes(category)) {
+            resolve(new Response(JSON.stringify({ error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' }
+            }));
+            return;
+          }
+
+          const categoryDir = ensureCategoryDir(category);
+          filepath = path.join(categoryDir, filename);
+          resultPath = `/products/${category}/${filename}`;
+          console.log(`Upload complete: ${filename} → ${category}/ (${finalBuffer.length} bytes, ${chunks.length} chunks)`);
+        } else {
+          // Ohne Kategorie: in uploads/ speichern
+          ensureUploadDir();
+          filepath = path.join(UPLOAD_DIR, filename);
+          resultPath = `/uploads/${filename}`;
+          console.log(`Upload complete: ${filename} → uploads/ (${finalBuffer.length} bytes, ${chunks.length} chunks)`);
+        }
+
+        // Datei speichern
         fs.writeFileSync(filepath, finalBuffer);
-
-        console.log(`Upload complete: ${filename} → ${category}/ (${finalBuffer.length} bytes, ${chunks.length} chunks)`);
 
         resolve(new Response(JSON.stringify({
           success: true,
           message: 'Upload complete',
           filename: filename,
-          category: category,
-          path: `/products/${category}/${filename}`,
+          category: category || 'uploads',
+          path: resultPath,
           size: finalBuffer.length,
           chunks: chunks.length
         }), {
