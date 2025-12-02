@@ -1,0 +1,1670 @@
+---
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Terminverwaltung | Atelier Auszeit</title>
+  <link rel="stylesheet" href="/admin-styles.css">
+</head>
+<body>
+  <div id="login-screen" class="login-container">
+    <div class="login-box">
+      <h1>🎨 Admin Login</h1>
+      <p>Atelier Auszeit</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">Benutzername</label>
+          <input type="text" id="username" name="username" value="admin" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Passwort</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Anmelden</button>
+        <div id="login-error" class="error-message hidden"></div>
+      </form>
+    </div>
+  </div>
+
+	  <div id="admin-panel" class="admin-container hidden">
+	    <header class="admin-header">
+	      <h1>🎨 Admin Panel</h1>
+	      <button id="logout-btn" class="btn btn-secondary">Abmelden</button>
+	    </header>
+
+    <nav class="admin-nav">
+      <button class="admin-nav__btn active" data-tab="termine">Termine</button>
+      <button class="admin-nav__btn" data-tab="workshops">Workshops</button>
+      <button class="admin-nav__btn" data-tab="galerie">Galerie</button>
+    </nav>
+
+	    		<main class="admin-main">
+      <!-- Tab: Termine -->
+      <div id="tab-termine" class="admin-tab active">
+			      <section class="dashboard-section">
+			        <h2>Übersicht</h2>
+			        <div class="dashboard-grid">
+			          <div class="dashboard-card">
+			            <div class="dashboard-label">Termine heute</div>
+			            <div class="dashboard-value" id="dashboard-today-count">-</div>
+			          </div>
+			          <div class="dashboard-card">
+			            <div class="dashboard-label">Neue Anfragen</div>
+			            <div class="dashboard-value" id="dashboard-new-count">-</div>
+			          </div>
+			          <div class="dashboard-card">
+			            <div class="dashboard-label">Bestätigt</div>
+			            <div class="dashboard-value" id="dashboard-confirmed-count">-</div>
+			          </div>
+			          <div class="dashboard-card">
+			            <div class="dashboard-label">Offene Stornierungen</div>
+			            <div class="dashboard-value" id="dashboard-cancelled-count">-</div>
+			          </div>
+			          <div class="dashboard-card">
+			            <div class="dashboard-label">Nächste 7 Tage</div>
+			            <div class="dashboard-value" id="dashboard-next7-count">-</div>
+			          </div>
+			        </div>
+			      </section>
+			      <section class="add-slot-section">
+		        <h2 id="slot-form-title">Neuen Termin hinzufügen</h2>
+		        <form id="add-slot-form">
+		          <div class="form-row">
+		            <div class="form-group">
+		              <label for="slot-date">Datum</label>
+		              <input type="date" id="slot-date" name="date" required>
+		            </div>
+		            <div class="form-group">
+		              <label for="slot-start-time">Beginn</label>
+		              <input type="time" id="slot-start-time" name="startTime" required>
+		            </div>
+		            <div class="form-group">
+		              <label for="slot-end-time">Ende</label>
+		              <input type="time" id="slot-end-time" name="endTime" required>
+		            </div>
+		            <div class="form-group">
+		              <label for="slot-capacity">Max. Personen</label>
+		              <input type="number" id="slot-capacity" name="maxCapacity" min="1" max="20" value="15" required>
+		            </div>
+		            <div class="form-group">
+		              <label for="slot-initial-booked">Bereits gebuchte Plätze</label>
+		              <input type="number" id="slot-initial-booked" name="initialBooked" min="0" max="20" value="0">
+		            </div>
+		          </div>
+		          <div class="form-actions">
+		            <button type="submit" class="btn btn-primary" id="slot-submit-btn">Termin hinzufügen</button>
+		            <button type="button" class="btn btn-secondary hidden" id="cancel-edit-btn">Bearbeitung abbrechen</button>
+		          </div>
+		        </form>
+		      </section>
+
+	      <section class="slots-section">
+	        <h2>Verfügbare Termine</h2>
+	        <div id="slots-loading" class="loading">Lade Termine...</div>
+	        <div id="slots-list" class="slots-list hidden"></div>
+	        <div id="no-slots" class="no-data hidden">Keine Termine vorhanden</div>
+	      </section>
+
+	      <section class="bookings-section">
+	        <h2>Buchungen</h2>
+	        <div id="bookings-loading" class="loading">Lade Buchungen...</div>
+	        <div id="bookings-list" class="slots-list hidden"></div>
+	        <div id="no-bookings" class="no-data hidden">Keine Buchungen vorhanden</div>
+	      </section>
+      </div>
+      <!-- Ende Tab: Termine -->
+
+      <!-- Tab: Workshops -->
+      <div id="tab-workshops" class="admin-tab hidden">
+        <section class="add-workshop-section">
+          <h2 id="workshop-form-title">Neuen Workshop hinzufügen</h2>
+          <form id="add-workshop-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="workshop-title">Titel</label>
+                <input type="text" id="workshop-title" name="title" required>
+              </div>
+              <div class="form-group">
+                <label for="workshop-date">Datum</label>
+                <input type="date" id="workshop-date" name="date" required>
+              </div>
+              <div class="form-group">
+                <label for="workshop-time">Uhrzeit</label>
+                <input type="time" id="workshop-time" name="time" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="workshop-price">Preis</label>
+                <input type="text" id="workshop-price" name="price" placeholder="z.B. 45€ pro Person" required>
+              </div>
+              <div class="form-group">
+                <label for="workshop-max-participants">Max. Teilnehmer</label>
+                <input type="number" id="workshop-max-participants" name="maxParticipants" min="1" max="50" value="10" required>
+              </div>
+              <div class="form-group">
+                <label for="workshop-active">
+                  <input type="checkbox" id="workshop-active" name="active" checked>
+                  Aktiv (auf Hauptseite anzeigen)
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="workshop-description">Kurzbeschreibung (für Karte)</label>
+              <textarea id="workshop-description" name="description" rows="2" required placeholder="Kurze Beschreibung für die Workshop-Karte"></textarea>
+              <small class="form-hint">Wird auf der Workshop-Karte angezeigt (max. 2 Zeilen)</small>
+            </div>
+            <div class="form-group">
+              <label for="workshop-detailed-description">Ausführliche Beschreibung (für Modal)</label>
+              <textarea id="workshop-detailed-description" name="detailedDescription" rows="6" placeholder="Detaillierte Beschreibung, die im Modal angezeigt wird"></textarea>
+              <small class="form-hint">Wird im Detail-Modal angezeigt (optional)</small>
+            </div>
+            <div class="form-group">
+              <label for="workshop-image">Titelbild (optional)</label>
+              <select id="workshop-image" name="imageFilename">
+                <option value="">Kein Bild</option>
+              </select>
+              <small class="form-hint">Wählen Sie ein Bild aus der Galerie</small>
+              <div id="workshop-image-preview" class="workshop-image-preview"></div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="workshop-submit-btn">Workshop hinzufügen</button>
+              <button type="button" class="btn btn-secondary hidden" id="cancel-workshop-edit-btn">Bearbeitung abbrechen</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="workshops-list-section">
+          <h2>Workshops</h2>
+          <div id="workshops-loading" class="loading">Lade Workshops...</div>
+          <div id="workshops-list" class="slots-list hidden"></div>
+          <div id="no-workshops-admin" class="no-data hidden">Keine Workshops vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Workshops -->
+
+      <!-- Tab: Galerie -->
+      <div id="tab-galerie" class="admin-tab hidden">
+        <!-- Kategorien-Verwaltung -->
+        <section class="categories-section">
+          <h2>Kategorien verwalten</h2>
+          <div class="categories-controls">
+            <div class="form-group-inline">
+              <input type="text" id="new-category-name" placeholder="Neue Kategorie..." maxlength="50">
+              <button type="button" class="btn btn-primary" id="add-category-btn">Kategorie hinzufügen</button>
+            </div>
+          </div>
+          <div id="categories-loading" class="loading">Lade Kategorien...</div>
+          <div id="categories-list" class="categories-list hidden"></div>
+          <div id="no-categories" class="no-data hidden">Keine Kategorien vorhanden</div>
+        </section>
+
+        <section class="gallery-upload-section">
+          <h2>Bild hochladen</h2>
+          <div class="upload-area">
+            <input type="file" id="gallery-file-input" accept="image/*" style="display: none;">
+            <button type="button" class="btn btn-primary" id="select-file-btn">Bild auswählen</button>
+            <button type="button" class="btn btn-success hidden" id="upload-file-btn">Upload starten</button>
+            <div id="selected-file-name" class="selected-file-name"></div>
+            <div id="upload-progress-container" class="upload-progress-container hidden">
+              <div class="upload-progress-bar">
+                <div id="upload-progress-fill" class="upload-progress-fill"></div>
+              </div>
+              <div id="upload-progress-text" class="upload-progress-text">0%</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="gallery-list-section">
+          <div class="gallery-header">
+            <h2>Galerie</h2>
+            <div class="gallery-controls">
+              <select id="category-filter" class="category-filter">
+                <option value="">Alle Bilder</option>
+              </select>
+              <button type="button" class="btn btn-secondary" id="reload-gallery-btn">Neu laden</button>
+            </div>
+          </div>
+          <div id="gallery-loading" class="loading">Lade Bilder...</div>
+          <div id="gallery-grid" class="gallery-grid hidden"></div>
+          <div id="no-images" class="no-data hidden">Keine Bilder vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Galerie -->
+	    </main>
+  </div>
+
+	  <script>
+	    let authCredentials = '';
+	    let editingSlotId: string | null = null;
+
+    // Hilfsfunktion: HTML escapen
+    function escapeHtml(text: string): string {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function updateWorkshopImagePreview(filename: string | null) {
+      const previewEl = document.getElementById('workshop-image-preview') as HTMLDivElement | null;
+      if (!previewEl) return;
+
+      if (!filename) {
+        previewEl.innerHTML = '';
+        return;
+      }
+
+      const escapedFilename = escapeHtml(filename);
+      previewEl.innerHTML = `
+        <div class="workshop-image-preview__inner">
+          <img src="/uploads/${escapedFilename}" alt="Ausgewähltes Titelbild" loading="lazy">
+        </div>
+      `;
+    }
+
+    // Login-Handler
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target as HTMLFormElement);
+      const username = formData.get('username');
+      const password = formData.get('password');
+
+      authCredentials = btoa(`${username}:${password}`);
+
+      try {
+        const response = await fetch('/api/admin/slots', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (response.ok) {
+          document.getElementById('login-screen')?.classList.add('hidden');
+          document.getElementById('admin-panel')?.classList.remove('hidden');
+	          loadSlots();
+	          loadBookings();
+        } else {
+          const errorEl = document.getElementById('login-error');
+          if (errorEl) {
+            errorEl.textContent = 'Ungültige Anmeldedaten';
+            errorEl.classList.remove('hidden');
+          }
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+      }
+    });
+
+    // Logout
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      authCredentials = '';
+      document.getElementById('admin-panel')?.classList.add('hidden');
+      document.getElementById('login-screen')?.classList.remove('hidden');
+      (document.getElementById('login-form') as HTMLFormElement)?.reset();
+    });
+
+	    // Termin hinzufügen / bearbeiten
+	    document.getElementById('add-slot-form')?.addEventListener('submit', async (e) => {
+	      e.preventDefault();
+	      const form = e.target as HTMLFormElement;
+	      const formData = new FormData(form);
+
+	      const baseData = {
+	        date: formData.get('date'),
+	        startTime: formData.get('startTime'),
+	        endTime: formData.get('endTime'),
+	        maxCapacity: formData.get('maxCapacity')
+	      };
+
+	      try {
+	        let response: Response;
+
+	        if (editingSlotId) {
+	          // Vorhandenen Termin aktualisieren
+	          const updatePayload = {
+	            id: editingSlotId,
+	            ...baseData
+	          };
+
+	          response = await fetch('/api/admin/slots', {
+	            method: 'PUT',
+	            headers: {
+	              'Authorization': `Basic ${authCredentials}`,
+	              'Content-Type': 'application/json'
+	            },
+	            body: JSON.stringify(updatePayload)
+	          });
+	        } else {
+	          // Neuen Termin anlegen
+	          const data = {
+	            ...baseData,
+	            initialBooked: formData.get('initialBooked') || '0'
+	          };
+
+	          response = await fetch('/api/admin/slots', {
+	            method: 'POST',
+	            headers: {
+	              'Authorization': `Basic ${authCredentials}`,
+	              'Content-Type': 'application/json'
+	            },
+	            body: JSON.stringify(data)
+	          });
+	        }
+
+	        if (response.ok) {
+	          form.reset();
+	          resetSlotFormState();
+	          loadSlots();
+	        } else {
+	          const errorText = await response.text().catch(() => '');
+	          console.error('Error saving slot:', errorText);
+	          alert('Fehler beim Speichern des Termins');
+	        }
+	      } catch (error) {
+	        console.error('Error saving slot:', error);
+	        alert('Fehler beim Speichern des Termins');
+	      }
+	    });
+
+	    // Bearbeitung abbrechen
+	    document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
+	      const form = document.getElementById('add-slot-form') as HTMLFormElement | null;
+	      if (form) {
+	        form.reset();
+	      }
+	      resetSlotFormState();
+	    });
+
+    // Termine laden
+    async function loadSlots() {
+      const loadingEl = document.getElementById('slots-loading');
+      const listEl = document.getElementById('slots-list');
+      const noSlotsEl = document.getElementById('no-slots');
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (listEl) listEl.classList.add('hidden');
+      if (noSlotsEl) noSlotsEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/admin/slots', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load slots');
+
+        const slots = await response.json();
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        if (slots.length === 0) {
+          if (noSlotsEl) noSlotsEl.classList.remove('hidden');
+          return;
+        }
+
+	        if (listEl) {
+	          listEl.innerHTML = slots.map((slot: any) => `
+	            <div class="slot-card" data-id="${slot.id}">
+	              <div class="slot-info">
+	                <div class="slot-date">${formatDate(slot.date)}</div>
+	                <div class="slot-time">${slot.time}${slot.endTime ? ' - ' + slot.endTime : ''} Uhr</div>
+	                <div class="slot-capacity">
+	                  ${slot.available} / ${slot.maxCapacity} Plätze frei
+	                </div>
+	              </div>
+	              <div class="slot-actions">
+	                <button class="btn btn-secondary btn-edit" data-id="${slot.id}">Bearbeiten</button>
+	                <button class="btn btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
+	              </div>
+	            </div>
+	          `).join('');
+          listEl.classList.remove('hidden');
+
+          // Delete-Handler
+          listEl.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = (e.target as HTMLElement).dataset.id;
+              if (confirm('Termin wirklich löschen?')) {
+                await deleteSlot(id!);
+              }
+            });
+          });
+
+	          // Edit-Handler
+	          listEl.querySelectorAll('.btn-edit').forEach(btn => {
+	            btn.addEventListener('click', (e) => {
+	              const id = (e.target as HTMLElement).dataset.id;
+	              const slot = (slots as any[]).find(s => s.id === id);
+	              if (slot) {
+	                startEditSlot(slot);
+	              }
+	            });
+	          });
+        }
+      } catch (error) {
+        console.error('Error loading slots:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+      }
+    }
+
+		    // Dashboard-Kennzahlen aktualisieren
+		    function updateDashboard(bookings: any[]) {
+		      const today = new Date();
+		      today.setHours(0, 0, 0, 0);
+		      const todayStr = today.toISOString().split('T')[0];
+		      const sevenDaysAhead = new Date(today);
+		      sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
+
+		      let todayCount = 0;
+		      let newCount = 0;
+		      let confirmedCount = 0;
+		      let cancelledCount = 0;
+		      let next7Count = 0;
+
+		      (bookings as any[]).forEach((b) => {
+		        if (!b.slotDate) return;
+		        const slotDate = new Date(b.slotDate + 'T00:00:00');
+		        const status = b.status || 'confirmed';
+
+		        const isToday = b.slotDate === todayStr;
+		        const isFutureOrToday = slotDate >= today;
+		        const isWithinNext7 = slotDate >= today && slotDate <= sevenDaysAhead;
+
+		        if (isToday && status !== 'cancelled') {
+		          todayCount += 1;
+		        }
+
+		        if (isFutureOrToday) {
+		          if (status === 'pending') newCount += 1;
+		          if (status === 'confirmed') confirmedCount += 1;
+		          if (status === 'cancelled') cancelledCount += 1;
+		        }
+
+		        if (isWithinNext7 && status !== 'cancelled') {
+		          next7Count += 1;
+		        }
+		      });
+
+		      const todayEl = document.getElementById('dashboard-today-count');
+		      if (todayEl) todayEl.textContent = String(todayCount);
+
+		      const newEl = document.getElementById('dashboard-new-count');
+		      if (newEl) newEl.textContent = String(newCount);
+
+		      const confirmedEl = document.getElementById('dashboard-confirmed-count');
+		      if (confirmedEl) confirmedEl.textContent = String(confirmedCount);
+
+		      const cancelledEl = document.getElementById('dashboard-cancelled-count');
+		      if (cancelledEl) cancelledEl.textContent = String(cancelledCount);
+
+		      const next7El = document.getElementById('dashboard-next7-count');
+		      if (next7El) next7El.textContent = String(next7Count);
+		    }
+
+		    // Buchungen laden
+		    async function loadBookings() {
+	      const loadingEl = document.getElementById('bookings-loading');
+	      const listEl = document.getElementById('bookings-list');
+	      const noBookingsEl = document.getElementById('no-bookings');
+
+	      if (loadingEl) loadingEl.classList.remove('hidden');
+	      if (listEl) listEl.classList.add('hidden');
+	      if (noBookingsEl) noBookingsEl.classList.add('hidden');
+
+		      try {
+		        const response = await fetch('/api/admin/bookings', {
+		          headers: {
+		            'Authorization': `Basic ${authCredentials}`,
+		          },
+		        });
+		
+		        if (!response.ok) throw new Error('Failed to load bookings');
+		
+		        const bookings = await response.json();
+		
+		        // Dashboard aktualisieren (auch wenn es keine aktiven Buchungen mehr gibt)
+		        updateDashboard(bookings as any[]);
+		
+		        if (loadingEl) loadingEl.classList.add('hidden');
+		
+		        // Nur wirklich gesetzte, zukünftige Buchungen anzeigen.
+		        // Falls der zugehörige Slot nicht mehr existiert (z.B. Termin gelöscht),
+		        // zeigen wir die Buchung trotzdem an, damit nichts "verschwindet".
+		        const today = new Date();
+		        today.setHours(0, 0, 0, 0);
+		
+		        const activeBookings = (bookings as any[])
+		          .filter((b) => {
+		            if (b.status === 'cancelled') return false;
+		
+		            if (b.slotDate) {
+		              const slotDate = new Date(b.slotDate + 'T00:00:00');
+		              return slotDate >= today;
+		            }
+		
+		            // Fallback: Wenn kein Slot mehr gefunden wird, Buchung trotzdem anzeigen
+		            return true;
+		          })
+		          .sort((a, b) => {
+		            const aDateBase = a.slotDate || (a.createdAt ? String(a.createdAt).split('T')[0] : '');
+		            const bDateBase = b.slotDate || (b.createdAt ? String(b.createdAt).split('T')[0] : '');
+		
+		            if (!aDateBase || !bDateBase) return 0;
+		
+		            const aDate = new Date(`${aDateBase}T${a.slotTime || '00:00'}:00`);
+		            const bDate = new Date(`${bDateBase}T${b.slotTime || '00:00'}:00`);
+		            return aDate.getTime() - bDate.getTime();
+		          });
+
+	        if (activeBookings.length === 0) {
+	          if (noBookingsEl) noBookingsEl.classList.remove('hidden');
+	          return;
+	        }
+
+		        if (listEl) {
+		          listEl.innerHTML = activeBookings
+		            .map((booking: any) => {
+		              const dateLabel = booking.slotDate
+		                ? formatDate(booking.slotDate)
+		                : 'Kein Datum';
+		              const timeLabel = booking.slotTime
+		                ? `${booking.slotTime}${booking.slotEndTime ? ' - ' + booking.slotEndTime : ''} Uhr`
+		                : '';
+
+		              const status = booking.status || 'confirmed';
+		              let statusLabel = 'Bestätigt';
+		              let statusClass = 'booking-status--confirmed';
+		              if (status === 'pending') {
+		                statusLabel = 'Neu / unbestätigt';
+		                statusClass = 'booking-status--pending';
+		              } else if (status === 'cancelled') {
+		                statusLabel = 'Abgesagt';
+		                statusClass = 'booking-status--cancelled';
+		              }
+
+		              const showConfirm = status === 'pending';
+		              const showCancel = status !== 'cancelled';
+
+		              return `
+		                <div class="slot-card booking-card" data-id="${booking.id}">
+		                  <div class="slot-info booking-info">
+		                    <div class="booking-main">
+		                      <div>
+		                        <div class="slot-date">${dateLabel}</div>
+		                        <div class="slot-time">${timeLabel}</div>
+		                      </div>
+		                      <div class="booking-status ${statusClass}">${statusLabel}</div>
+		                    </div>
+		                    <div class="booking-customer">
+		                      <div><strong>${booking.name}</strong>${booking.email ? ` (${booking.email})` : ''}</div>
+		                      <div>${booking.participants} Person(en)</div>
+		                    </div>
+		                  </div>
+		                  <div class="slot-actions booking-actions">
+		                    ${showConfirm ? `<button class="btn btn-success btn-confirm-booking" data-id="${booking.id}">✓ Bestätigen</button>` : ''}
+		                    ${showCancel ? `<button class="btn btn-danger btn-cancel-booking" data-id="${booking.id}">✕ Absagen</button>` : ''}
+		                    <button class="btn btn-secondary btn-edit-booking" data-id="${booking.id}">✎ Bearbeiten</button>
+		                  </div>
+		                </div>
+		              `;
+		            })
+		            .join('');
+		
+		          listEl.classList.remove('hidden');
+		
+		          // Cancel-Handler
+		          listEl.querySelectorAll('.btn-cancel-booking').forEach((btn) => {
+		            btn.addEventListener('click', async (e) => {
+		              const id = (e.target as HTMLElement).dataset.id;
+		              if (id && confirm('Buchung wirklich stornieren?')) {
+		                await cancelBookingAdmin(id);
+		              }
+		            });
+		          });
+		
+		          // Confirm-Handler
+		          listEl.querySelectorAll('.btn-confirm-booking').forEach((btn) => {
+		            btn.addEventListener('click', async (e) => {
+		              const id = (e.target as HTMLElement).dataset.id;
+		              if (id && confirm('Buchung als bestätigt markieren?')) {
+		                await confirmBookingAdmin(id);
+		              }
+		            });
+		          });
+		
+		          // Edit-Handler (Teilnehmerzahl & Notizen mit einfachen Prompts bearbeiten)
+		          listEl.querySelectorAll('.btn-edit-booking').forEach((btn) => {
+		            btn.addEventListener('click', async (e) => {
+		              const id = (e.target as HTMLElement).dataset.id;
+		              if (!id) return;
+
+		              const booking = (activeBookings as any[]).find((b) => b.id === id);
+		              if (!booking) return;
+
+		              const participantsInput = prompt('Anzahl Personen', String(booking.participants || 1));
+		              if (participantsInput === null) return;
+		              const participants = parseInt(participantsInput, 10);
+		              if (!Number.isFinite(participants) || participants <= 0) {
+		                alert('Bitte eine gültige Personenzahl eingeben.');
+		                return;
+		              }
+
+		              const notesInput = prompt('Notizen (optional)', booking.notes || '');
+		              try {
+		                const response = await fetch('/api/admin/bookings', {
+		                  method: 'PUT',
+		                  headers: {
+		                    'Authorization': `Basic ${authCredentials}`,
+		                    'Content-Type': 'application/json',
+		                  },
+		                  body: JSON.stringify({
+		                    id,
+		                    participants,
+		                    notes: notesInput ?? '',
+		                  }),
+		                });
+		
+		                if (response.ok) {
+		                  await loadBookings();
+		                  await loadSlots();
+		                } else {
+		                  const result = await response.json().catch(() => null);
+		                  const message = result?.error || 'Fehler beim Aktualisieren der Buchung';
+		                  alert(message);
+		                }
+		              } catch (error) {
+		                console.error('Error updating booking:', error);
+		                alert('Fehler beim Aktualisieren der Buchung');
+		              }
+		            });
+		          });
+		        }
+	      } catch (error) {
+	        console.error('Error loading bookings:', error);
+	        if (loadingEl) loadingEl.classList.add('hidden');
+	      }
+	    }
+
+    // Termin löschen
+    async function deleteSlot(id: string) {
+      try {
+        const response = await fetch('/api/admin/slots', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ id })
+        });
+
+        if (response.ok) {
+          loadSlots();
+        } else {
+          alert('Fehler beim Löschen');
+        }
+      } catch (error) {
+        console.error('Error deleting slot:', error);
+      }
+    }
+
+		    // Buchung stornieren
+		    async function cancelBookingAdmin(id: string) {
+	      try {
+	        const response = await fetch('/api/admin/bookings', {
+	          method: 'POST',
+	          headers: {
+	            'Authorization': `Basic ${authCredentials}`,
+	            'Content-Type': 'application/json',
+	          },
+	          body: JSON.stringify({ id }),
+	        });
+
+	        if (response.ok) {
+	          // Buchungen neu laden und Slots aktualisieren, damit Plätze wieder sichtbar sind
+	          await loadBookings();
+	          await loadSlots();
+	        } else {
+	          alert('Fehler beim Stornieren der Buchung');
+	        }
+	      } catch (error) {
+	        console.error('Error cancelling booking:', error);
+	        alert('Fehler beim Stornieren der Buchung');
+	      }
+	    }
+
+		    // Buchung als bestätigt markieren
+		    async function confirmBookingAdmin(id: string) {
+		      try {
+		        const response = await fetch('/api/admin/bookings', {
+		          method: 'POST',
+		          headers: {
+		            'Authorization': `Basic ${authCredentials}`,
+		            'Content-Type': 'application/json',
+		          },
+		          body: JSON.stringify({ id, action: 'confirm' }),
+		        });
+		
+		        if (response.ok) {
+		          await loadBookings();
+		        } else {
+		          alert('Fehler beim Bestätigen der Buchung');
+		        }
+		      } catch (error) {
+		        console.error('Error confirming booking:', error);
+		        alert('Fehler beim Bestätigen der Buchung');
+		      }
+		    }
+
+	    // Formular in Bearbeitungsmodus versetzen
+	    function startEditSlot(slot: any) {
+	      editingSlotId = slot.id;
+
+	      const dateInput = document.getElementById('slot-date') as HTMLInputElement | null;
+	      const startInput = document.getElementById('slot-start-time') as HTMLInputElement | null;
+	      const endInput = document.getElementById('slot-end-time') as HTMLInputElement | null;
+	      const capacityInput = document.getElementById('slot-capacity') as HTMLInputElement | null;
+	      const initialBookedInput = document.getElementById('slot-initial-booked') as HTMLInputElement | null;
+	      const titleEl = document.getElementById('slot-form-title');
+	      const submitBtn = document.getElementById('slot-submit-btn') as HTMLButtonElement | null;
+	      const cancelBtn = document.getElementById('cancel-edit-btn');
+
+	      if (dateInput) dateInput.value = slot.date;
+	      if (startInput) startInput.value = slot.time;
+	      if (endInput) endInput.value = slot.endTime || '';
+	      if (capacityInput) capacityInput.value = String(slot.maxCapacity);
+
+	      // Bereits gebuchte Plätze nur anzeigen, nicht bearbeitbar
+	      const bookedCount = slot.maxCapacity - slot.available;
+	      if (initialBookedInput) {
+	        initialBookedInput.value = String(bookedCount);
+	        initialBookedInput.disabled = true;
+	      }
+
+	      if (titleEl) titleEl.textContent = 'Termin bearbeiten';
+	      if (submitBtn) submitBtn.textContent = 'Termin aktualisieren';
+	      if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+	      const formEl = document.getElementById('add-slot-form') as HTMLElement | null;
+	      if (formEl && 'scrollIntoView' in formEl) {
+	        formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	      }
+	    }
+
+	    // Formular-Zustand zurücksetzen (Neuen-Termin-Modus)
+	    function resetSlotFormState() {
+	      editingSlotId = null;
+
+	      const initialBookedInput = document.getElementById('slot-initial-booked') as HTMLInputElement | null;
+	      const titleEl = document.getElementById('slot-form-title');
+	      const submitBtn = document.getElementById('slot-submit-btn') as HTMLButtonElement | null;
+	      const cancelBtn = document.getElementById('cancel-edit-btn');
+
+	      if (initialBookedInput) {
+	        initialBookedInput.disabled = false;
+	        if (!initialBookedInput.value) {
+	          initialBookedInput.value = '0';
+	        }
+	      }
+
+	      if (titleEl) titleEl.textContent = 'Neuen Termin hinzufügen';
+	      if (submitBtn) submitBtn.textContent = 'Termin hinzufügen';
+	      if (cancelBtn && !cancelBtn.classList.contains('hidden')) {
+	        cancelBtn.classList.add('hidden');
+	      }
+	    }
+
+	    // Datum formatieren
+	    function formatDate(dateStr: string) {
+	      const date = new Date(dateStr + 'T00:00:00');
+	      return date.toLocaleDateString('de-DE', {
+	        weekday: 'long',
+	        year: 'numeric',
+	        month: 'long',
+	        day: 'numeric'
+	      });
+	    }
+
+	    // Setze Mindestdatum auf heute
+	    const dateInput = document.getElementById('slot-date') as HTMLInputElement;
+	    if (dateInput) {
+	      const today = new Date().toISOString().split('T')[0];
+	      dateInput.min = today;
+	    }
+
+    // ========== TAB NAVIGATION ==========
+    const tabButtons = document.querySelectorAll('.admin-nav__btn');
+    const tabContents = document.querySelectorAll('.admin-tab');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.getAttribute('data-tab');
+
+        // Deaktiviere alle Tabs
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(t => t.classList.add('hidden'));
+
+        // Aktiviere gewählten Tab
+        btn.classList.add('active');
+        const targetTab = document.getElementById(`tab-${tabName}`);
+        if (targetTab) {
+          targetTab.classList.remove('hidden');
+
+          // Lade Daten wenn Tab gewechselt wird
+          if (tabName === 'workshops') {
+            loadWorkshopImageOptions();
+            loadWorkshops();
+          } else if (tabName === 'galerie') {
+            loadCategories();
+            loadImageMetadata();
+            loadGallery();
+          }
+        }
+      });
+    });
+
+    // ========== WORKSHOPS VERWALTUNG ==========
+    let editingWorkshopId: string | null = null;
+    let workshopImagePreviewInitialized = false;
+
+    // Workshop-Formular absenden
+    document.getElementById('add-workshop-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+
+      const imageFilename = formData.get('imageFilename') as string;
+
+      const data = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        detailedDescription: formData.get('detailedDescription') || undefined,
+        date: formData.get('date'),
+        time: formData.get('time'),
+        price: formData.get('price'),
+        maxParticipants: formData.get('maxParticipants'),
+        active: (document.getElementById('workshop-active') as HTMLInputElement)?.checked || false,
+        imageFilename: imageFilename || undefined
+      };
+
+      try {
+        const url = editingWorkshopId ? '/api/admin/workshops' : '/api/admin/workshops';
+        const method = editingWorkshopId ? 'PUT' : 'POST';
+        const body = editingWorkshopId ? { ...data, id: editingWorkshopId } : data;
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+          form.reset();
+          (document.getElementById('workshop-active') as HTMLInputElement).checked = true;
+          resetWorkshopFormState();
+          await loadWorkshops();
+        } else {
+          alert('Fehler beim Speichern des Workshops');
+        }
+      } catch (error) {
+        console.error('Error saving workshop:', error);
+        alert('Fehler beim Speichern des Workshops');
+      }
+    });
+
+    // Workshop bearbeiten abbrechen
+    document.getElementById('cancel-workshop-edit-btn')?.addEventListener('click', () => {
+      (document.getElementById('add-workshop-form') as HTMLFormElement)?.reset();
+      resetWorkshopFormState();
+    });
+
+    // Bilder-Dropdown für Workshop-Formular laden
+    async function loadWorkshopImageOptions() {
+      const selectEl = document.getElementById('workshop-image') as HTMLSelectElement;
+      if (!selectEl) return;
+
+      try {
+        const response = await fetch('/api/images', {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+
+        if (response.ok) {
+          const images = await response.json();
+          const currentValue = selectEl.value;
+
+          selectEl.innerHTML = '<option value="">Kein Bild</option>';
+
+          images.forEach((img: any) => {
+            const option = document.createElement('option');
+            option.value = img.filename;
+            option.textContent = img.filename;
+            selectEl.appendChild(option);
+          });
+
+          if (currentValue) {
+            selectEl.value = currentValue;
+          }
+
+          ensureWorkshopImagePreviewListener();
+          updateWorkshopImagePreview(selectEl.value || null);
+        }
+      } catch (error) {
+        console.error('Error loading images for workshop:', error);
+      }
+    }
+
+    function ensureWorkshopImagePreviewListener() {
+      if (workshopImagePreviewInitialized) return;
+      const selectEl = document.getElementById('workshop-image') as HTMLSelectElement | null;
+      if (!selectEl) return;
+      workshopImagePreviewInitialized = true;
+      selectEl.addEventListener('change', () => {
+        updateWorkshopImagePreview(selectEl.value || null);
+      });
+    }
+
+    // Workshops laden
+    async function loadWorkshops() {
+      const loadingEl = document.getElementById('workshops-loading');
+      const listEl = document.getElementById('workshops-list');
+      const noWorkshopsEl = document.getElementById('no-workshops-admin');
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (listEl) listEl.classList.add('hidden');
+      if (noWorkshopsEl) noWorkshopsEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/admin/workshops', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load workshops');
+
+        const workshops = await response.json();
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        if (workshops.length === 0) {
+          if (noWorkshopsEl) noWorkshopsEl.classList.remove('hidden');
+          return;
+        }
+
+        if (listEl) {
+          listEl.classList.remove('hidden');
+          listEl.innerHTML = '';
+
+          workshops.forEach((workshop: any) => {
+            const card = document.createElement('div');
+            card.className = 'slot-card';
+
+            const formattedDate = formatDate(workshop.date);
+            const statusBadge = workshop.active
+              ? '<span class="status-badge status-active">Aktiv</span>'
+              : '<span class="status-badge status-inactive">Inaktiv</span>';
+
+            const detailedDesc = workshop.detailedDescription
+              ? `<br><small><strong>Ausführlich:</strong> ${workshop.detailedDescription}</small>`
+              : '';
+
+            card.innerHTML = `
+              <div class="slot-info">
+                <div class="slot-date">${formattedDate}</div>
+                <div class="slot-time">${workshop.time} Uhr</div>
+                <div class="slot-capacity">
+                  <strong>${workshop.title}</strong><br>
+                  <strong>Kurz:</strong> ${workshop.description}${detailedDesc}<br>
+                  Preis: ${workshop.price} | Max. ${workshop.maxParticipants} Teilnehmer
+                </div>
+                ${statusBadge}
+              </div>
+              <div class="slot-actions">
+                <button class="btn btn-secondary btn-edit-workshop" data-id="${workshop.id}">Bearbeiten</button>
+                <button class="btn btn-danger btn-delete-workshop" data-id="${workshop.id}">Löschen</button>
+              </div>
+            `;
+
+            listEl.appendChild(card);
+          });
+
+          // Event Listener für Bearbeiten-Buttons
+          document.querySelectorAll('.btn-edit-workshop').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.getAttribute('data-id');
+              const workshop = workshops.find((w: any) => w.id === id);
+              if (workshop) startEditWorkshop(workshop);
+            });
+          });
+
+          // Event Listener für Löschen-Buttons
+          document.querySelectorAll('.btn-delete-workshop').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-id');
+              if (confirm('Workshop wirklich löschen?')) {
+                await deleteWorkshop(id!);
+              }
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error loading workshops:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+      }
+    }
+
+    // Workshop löschen
+    async function deleteWorkshop(id: string) {
+      try {
+        console.log('Deleting workshop:', id);
+        const response = await fetch(`/api/admin/workshops?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        console.log('Delete response status:', response.status);
+
+        if (response.ok) {
+          alert('Workshop erfolgreich gelöscht!');
+          await loadWorkshops();
+        } else {
+          const error = await response.json();
+          console.error('Delete error:', error);
+          alert(`Fehler beim Löschen: ${error.error || 'Unbekannter Fehler'}`);
+        }
+      } catch (error) {
+        console.error('Error deleting workshop:', error);
+        alert('Fehler beim Löschen des Workshops: ' + error);
+      }
+    }
+
+    // Workshop bearbeiten
+    function startEditWorkshop(workshop: any) {
+      editingWorkshopId = workshop.id;
+
+      (document.getElementById('workshop-title') as HTMLInputElement).value = workshop.title;
+      (document.getElementById('workshop-description') as HTMLTextAreaElement).value = workshop.description;
+      (document.getElementById('workshop-detailed-description') as HTMLTextAreaElement).value = workshop.detailedDescription || '';
+      (document.getElementById('workshop-date') as HTMLInputElement).value = workshop.date;
+      (document.getElementById('workshop-time') as HTMLInputElement).value = workshop.time;
+      (document.getElementById('workshop-price') as HTMLInputElement).value = workshop.price;
+      (document.getElementById('workshop-max-participants') as HTMLInputElement).value = String(workshop.maxParticipants);
+      (document.getElementById('workshop-active') as HTMLInputElement).checked = workshop.active;
+      (document.getElementById('workshop-image') as HTMLSelectElement).value = workshop.imageFilename || '';
+      updateWorkshopImagePreview(workshop.imageFilename || null);
+
+      const titleEl = document.getElementById('workshop-form-title');
+      const submitBtn = document.getElementById('workshop-submit-btn');
+      const cancelBtn = document.getElementById('cancel-workshop-edit-btn');
+
+      if (titleEl) titleEl.textContent = 'Workshop bearbeiten';
+      if (submitBtn) submitBtn.textContent = 'Workshop aktualisieren';
+      if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+      document.getElementById('add-workshop-form')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Workshop-Formular zurücksetzen
+    function resetWorkshopFormState() {
+      editingWorkshopId = null;
+
+      const titleEl = document.getElementById('workshop-form-title');
+      const submitBtn = document.getElementById('workshop-submit-btn');
+      const cancelBtn = document.getElementById('cancel-workshop-edit-btn');
+
+      if (titleEl) titleEl.textContent = 'Neuen Workshop hinzufügen';
+      if (submitBtn) submitBtn.textContent = 'Workshop hinzufügen';
+      if (cancelBtn) cancelBtn.classList.add('hidden');
+      updateWorkshopImagePreview(null);
+    }
+
+    // ========== GALERIE VERWALTUNG ==========
+    const CHUNK_SIZE = 128 * 1024; // 128 KB
+    let selectedFile: File | null = null;
+
+    // Datei auswählen
+    document.getElementById('select-file-btn')?.addEventListener('click', () => {
+      document.getElementById('gallery-file-input')?.click();
+    });
+
+    document.getElementById('gallery-file-input')?.addEventListener('change', (e) => {
+      const input = e.target as HTMLInputElement;
+      if (input.files && input.files.length > 0) {
+        selectedFile = input.files[0];
+        const fileNameEl = document.getElementById('selected-file-name');
+        const uploadBtn = document.getElementById('upload-file-btn');
+
+        if (fileNameEl) {
+          fileNameEl.textContent = `Ausgewählt: ${selectedFile.name} (${formatFileSize(selectedFile.size)})`;
+        }
+        if (uploadBtn) {
+          uploadBtn.classList.remove('hidden');
+        }
+      }
+    });
+
+    // Upload starten
+    document.getElementById('upload-file-btn')?.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      const progressContainer = document.getElementById('upload-progress-container');
+      const progressFill = document.getElementById('upload-progress-fill');
+      const progressText = document.getElementById('upload-progress-text');
+      const uploadBtn = document.getElementById('upload-file-btn') as HTMLButtonElement;
+
+      if (progressContainer) progressContainer.classList.remove('hidden');
+      if (uploadBtn) uploadBtn.disabled = true;
+
+      try {
+        await uploadFileInChunks(selectedFile, (progress) => {
+          if (progressFill) progressFill.style.width = `${progress}%`;
+          if (progressText) progressText.textContent = `${Math.round(progress)}%`;
+        });
+
+        alert('Upload erfolgreich!');
+
+        // Reset
+        selectedFile = null;
+        (document.getElementById('gallery-file-input') as HTMLInputElement).value = '';
+        const fileNameEl = document.getElementById('selected-file-name');
+        if (fileNameEl) fileNameEl.textContent = '';
+        if (uploadBtn) {
+          uploadBtn.classList.add('hidden');
+          uploadBtn.disabled = false;
+        }
+        if (progressContainer) progressContainer.classList.add('hidden');
+        if (progressFill) progressFill.style.width = '0%';
+        if (progressText) progressText.textContent = '0%';
+
+        // Galerie neu laden
+        await loadImageMetadata();
+        await loadGallery();
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Upload fehlgeschlagen!');
+        if (uploadBtn) uploadBtn.disabled = false;
+      }
+    });
+
+    // Chunk-Upload-Funktion - ALLE Chunks in EINEM Request
+    async function uploadFileInChunks(file: File, onProgress: (progress: number) => void) {
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      const uniqueFilename = `${Date.now()}_${file.name}`;
+
+      console.log(`📦 Starting upload: ${file.name}`);
+      console.log(`   Size: ${formatFileSize(file.size)}`);
+      console.log(`   Chunks: ${totalChunks}`);
+      console.log(`   Unique filename: ${uniqueFilename}`);
+
+      const formData = new FormData();
+
+      // WICHTIG: Metadaten ZUERST anhängen!
+      formData.append('filename', uniqueFilename);
+      formData.append('totalChunks', String(totalChunks));
+      formData.append('fileSize', String(file.size));
+
+      console.log('📝 Metadata added to FormData');
+
+      // Dann alle Chunks anhängen
+      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        const start = chunkIndex * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+
+        // Chunks als chunk_0, chunk_1, etc.
+        formData.append(`chunk_${chunkIndex}`, chunk, `chunk_${chunkIndex}`);
+
+        // Progress während des Chunk-Erstellens
+        const progress = ((chunkIndex + 1) / totalChunks) * 50; // 50% für Vorbereitung
+        onProgress(progress);
+      }
+
+      console.log(`✅ All ${totalChunks} chunks prepared`);
+      console.log('🚀 Starting upload to /api/upload...');
+
+      // Upload mit Timeout (20 Minuten)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.error('⏱️ Upload timeout after 20 minutes!');
+        controller.abort();
+      }, 1200000); // 20 Min
+
+      try {
+        onProgress(55); // Zeige dass Upload startet
+
+        const response = await fetch('/api/images', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          },
+          body: formData,
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log(`📡 Response received: ${response.status} ${response.statusText}`);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Upload failed:', errorText);
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: errorText };
+          }
+          throw new Error(errorData.error || 'Upload failed');
+        }
+
+        const result = await response.json();
+        console.log('✅ Upload successful:', result);
+
+        onProgress(100); // Upload abgeschlossen
+
+        return result;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error('❌ Upload error:', error);
+        if (error instanceof Error) {
+          console.error('   Message:', error.message);
+          console.error('   Stack:', error.stack);
+        }
+        throw error;
+      }
+    }
+
+    // ========== KATEGORIEN VERWALTUNG ==========
+    let allCategories: any[] = [];
+    let allImageMetadata: any[] = [];
+
+    // Kategorien laden
+    async function loadCategories() {
+      const loadingEl = document.getElementById('categories-loading');
+      const listEl = document.getElementById('categories-list');
+      const noDataEl = document.getElementById('no-categories');
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (listEl) listEl.classList.add('hidden');
+      if (noDataEl) noDataEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/gallery/categories', {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load categories');
+
+        allCategories = await response.json();
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        if (allCategories.length === 0) {
+          if (noDataEl) noDataEl.classList.remove('hidden');
+          return;
+        }
+
+        if (listEl) {
+          listEl.classList.remove('hidden');
+          listEl.innerHTML = '';
+
+          allCategories.forEach((cat: any) => {
+            const item = document.createElement('div');
+            item.className = 'category-item';
+            item.innerHTML = `
+              <span class="category-name">${escapeHtml(cat.name)}</span>
+              <div class="category-actions">
+                <button class="btn btn-sm btn-secondary" onclick="renameCategory('${cat.id}', '${escapeHtml(cat.name)}')">Umbenennen</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteCategory('${cat.id}')">Löschen</button>
+              </div>
+            `;
+            listEl.appendChild(item);
+          });
+        }
+
+        // Update category filter dropdown
+        updateCategoryFilter();
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+        alert('Fehler beim Laden der Kategorien');
+      }
+    }
+
+    // Kategorie hinzufügen
+    document.getElementById('add-category-btn')?.addEventListener('click', async () => {
+      const input = document.getElementById('new-category-name') as HTMLInputElement;
+      const name = input?.value.trim();
+
+      if (!name) {
+        alert('Bitte einen Kategorienamen eingeben');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/gallery/categories', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name })
+        });
+
+        if (response.ok) {
+          if (input) input.value = '';
+          await loadCategories();
+        } else {
+          const error = await response.json();
+          alert(error.error || 'Fehler beim Erstellen der Kategorie');
+        }
+      } catch (error) {
+        console.error('Error adding category:', error);
+        alert('Fehler beim Erstellen der Kategorie');
+      }
+    });
+
+    // Kategorie umbenennen
+    (window as any).renameCategory = async (id: string, currentName: string) => {
+      const newName = prompt('Neuer Name:', currentName);
+      if (!newName || newName.trim() === currentName) return;
+
+      try {
+        const response = await fetch('/api/gallery/categories', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id, name: newName.trim() })
+        });
+
+        if (response.ok) {
+          await loadCategories();
+        } else {
+          const error = await response.json();
+          alert(error.error || 'Fehler beim Umbenennen der Kategorie');
+        }
+      } catch (error) {
+        console.error('Error renaming category:', error);
+        alert('Fehler beim Umbenennen der Kategorie');
+      }
+    };
+
+    // Kategorie löschen
+    (window as any).deleteCategory = async (id: string) => {
+      if (!confirm('Kategorie wirklich löschen? Die Zuordnung zu Bildern wird entfernt.')) return;
+
+      try {
+        const response = await fetch(`/api/gallery/categories?id=${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (response.ok) {
+          await loadCategories();
+          await loadImageMetadata();
+        } else {
+          alert('Fehler beim Löschen der Kategorie');
+        }
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        alert('Fehler beim Löschen der Kategorie');
+      }
+    };
+
+    // Bild-Metadaten laden
+    async function loadImageMetadata() {
+      try {
+        const response = await fetch('/api/gallery/image-categories', {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+
+        if (response.ok) {
+          allImageMetadata = await response.json();
+        }
+      } catch (error) {
+        console.error('Error loading image metadata:', error);
+      }
+    }
+
+    // Category filter dropdown aktualisieren
+    function updateCategoryFilter() {
+      const filterEl = document.getElementById('category-filter') as HTMLSelectElement;
+      if (!filterEl) return;
+
+      const currentValue = filterEl.value;
+      filterEl.innerHTML = '<option value="">Alle Bilder</option>';
+
+      allCategories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        filterEl.appendChild(option);
+      });
+
+      filterEl.value = currentValue;
+    }
+
+    // Category filter change handler
+    document.getElementById('category-filter')?.addEventListener('change', () => {
+      loadGallery();
+    });
+
+    // Galerie laden
+    async function loadGallery() {
+      const loadingEl = document.getElementById('gallery-loading');
+      const gridEl = document.getElementById('gallery-grid');
+      const noImagesEl = document.getElementById('no-images');
+      const filterEl = document.getElementById('category-filter') as HTMLSelectElement;
+      const selectedCategoryId = filterEl?.value || '';
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (gridEl) gridEl.classList.add('hidden');
+      if (noImagesEl) noImagesEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/images', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load images');
+
+        let images = await response.json();
+
+        // Filter nach Kategorie
+        if (selectedCategoryId) {
+          images = images.filter((img: any) => {
+            const metadata = allImageMetadata.find(m => m.filename === img.filename);
+            return metadata && metadata.categories.includes(selectedCategoryId);
+          });
+        }
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        if (images.length === 0) {
+          if (noImagesEl) noImagesEl.classList.remove('hidden');
+          return;
+        }
+
+        if (gridEl) {
+          gridEl.classList.remove('hidden');
+          gridEl.innerHTML = '';
+
+          images.forEach((img: any) => {
+            const metadata = allImageMetadata.find(m => m.filename === img.filename);
+            const imageCategoryIds = metadata?.categories || [];
+            const imageCategoryNames = imageCategoryIds
+              .map((id: string) => allCategories.find(c => c.id === id)?.name)
+              .filter(Boolean);
+
+            const card = document.createElement('div');
+            card.className = 'gallery-item';
+
+            card.innerHTML = `
+              <img src="/uploads/${img.filename}" alt="${escapeHtml(img.filename)}" loading="lazy">
+              <div class="gallery-item__info">
+                <div class="gallery-item__name">${escapeHtml(img.filename)}</div>
+                <div class="gallery-item__size">${formatFileSize(img.size)}</div>
+                <div class="gallery-item__categories">
+                  ${imageCategoryNames.length > 0
+                    ? imageCategoryNames.map((name: string) => `<span class="category-badge">${escapeHtml(name)}</span>`).join(' ')
+                    : '<span class="no-category">Keine Kategorie</span>'}
+                </div>
+              </div>
+              <div class="gallery-item__actions">
+                <button class="btn btn-sm btn-secondary btn-manage-categories" data-filename="${escapeHtml(img.filename)}">Kategorien</button>
+                <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}">Löschen</button>
+              </div>
+            `;
+
+            gridEl.appendChild(card);
+          });
+
+          // Event Listener für Kategorien-Buttons
+          document.querySelectorAll('.btn-manage-categories').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const filename = btn.getAttribute('data-filename');
+              if (filename) {
+                await manageCategoriesForImage(filename);
+              }
+            });
+          });
+
+          // Event Listener für Löschen-Buttons
+          document.querySelectorAll('.btn-delete-image').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const filename = btn.getAttribute('data-filename');
+              if (confirm(`Bild "${filename}" wirklich löschen?`)) {
+                await deleteImage(filename!);
+              }
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error loading gallery:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+      }
+    }
+
+    // Kategorien für ein Bild verwalten
+    async function manageCategoriesForImage(filename: string) {
+      const metadata = allImageMetadata.find(m => m.filename === filename);
+      const currentCategoryIds = metadata?.categories || [];
+
+      // Erstelle Checkbox-Liste
+      const checkboxes = allCategories.map(cat => {
+        const checked = currentCategoryIds.includes(cat.id) ? 'checked' : '';
+        return `<label><input type="checkbox" value="${cat.id}" ${checked}> ${escapeHtml(cat.name)}</label>`;
+      }).join('<br>');
+
+      const dialog = document.createElement('div');
+      dialog.className = 'modal-overlay';
+      dialog.innerHTML = `
+        <div class="modal-content">
+          <h3>Kategorien für "${escapeHtml(filename)}"</h3>
+          <div class="category-checkboxes">
+            ${checkboxes || '<p>Keine Kategorien vorhanden. Bitte erst Kategorien erstellen.</p>'}
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" id="save-categories-btn">Speichern</button>
+            <button class="btn btn-secondary" id="cancel-categories-btn">Abbrechen</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(dialog);
+
+      // Event Listeners
+      document.getElementById('save-categories-btn')?.addEventListener('click', async () => {
+        const selectedIds = Array.from(dialog.querySelectorAll('input[type="checkbox"]:checked'))
+          .map((cb: any) => cb.value);
+
+        try {
+          const response = await fetch('/api/gallery/image-categories', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${authCredentials}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ filename, categoryIds: selectedIds })
+          });
+
+          if (response.ok) {
+            await loadImageMetadata();
+            await loadGallery();
+            document.body.removeChild(dialog);
+          } else {
+            alert('Fehler beim Speichern der Kategorien');
+          }
+        } catch (error) {
+          console.error('Error saving categories:', error);
+          alert('Fehler beim Speichern der Kategorien');
+        }
+      });
+
+      document.getElementById('cancel-categories-btn')?.addEventListener('click', () => {
+        document.body.removeChild(dialog);
+      });
+    }
+
+    // Bild löschen
+    async function deleteImage(filename: string) {
+      try {
+        console.log('Deleting image:', filename);
+        const response = await fetch(`/api/images?filename=${encodeURIComponent(filename)}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        console.log('Delete image response status:', response.status);
+
+        if (response.ok) {
+          alert('Bild erfolgreich gelöscht!');
+          await loadImageMetadata();
+          await loadGallery();
+        } else {
+          const error = await response.json();
+          console.error('Delete image error:', error);
+          alert(`Fehler beim Löschen: ${error.error || 'Unbekannter Fehler'}`);
+        }
+      } catch (error) {
+        console.error('Error deleting image:', error);
+        alert('Fehler beim Löschen des Bildes: ' + error);
+      }
+    }
+
+    // Galerie neu laden Button
+    document.getElementById('reload-gallery-btn')?.addEventListener('click', () => {
+      loadGallery();
+    });
+
+    // Hilfsfunktion: Dateigröße formatieren
+    function formatFileSize(bytes: number): string {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+  </script>
+</body>
+</html>
+

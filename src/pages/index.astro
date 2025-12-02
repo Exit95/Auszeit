@@ -1,0 +1,23 @@
+---
+export const prerender = true;
+
+import MainLayout from '../layouts/MainLayout.astro';
+import Hero from '../sections/Hero.astro';
+import BookingCalendar from '../components/BookingCalendar.astro';
+import Workshops from '../sections/Workshops.astro';
+import FAQ from '../sections/FAQ.astro';
+import Offerings from '../sections/Offerings.astro';
+import Contact from '../sections/Contact.astro';
+---
+
+<MainLayout
+  title="Atelier Auszeit – Keramik Malatelier in Gronau | Irena Woschkowiak"
+  description="Keramik bemalen in ruhiger Atmosphäre. Jetzt Termin sichern bei Irena Woschkowiak."
+>
+  <Hero />
+  <BookingCalendar title="Termin buchen" />
+  <Workshops />
+  <FAQ />
+  <Offerings />
+  <Contact />
+</MainLayout>

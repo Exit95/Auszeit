@@ -1,0 +1,238 @@
+---
+import Modal from "../components/Modal.astro";
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const url = Astro.site || "https://auszeit-keramik.de";
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={url} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={`${url}/og-image.jpg`} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={url} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`${url}/og-image.jpg`} />
+
+    <link rel="canonical" href={url} />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "Atelier Auszeit",
+        "description": "Keramik bemalen in ruhiger Atmosphäre. Termine nach Vereinbarung.",
+        "url": "https://auszeit-keramik.de",
+        "telephone": "+49 176 34255005",
+        "owner": {
+          "@type": "Person",
+          "name": "Irena Woschkowiak"
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Feldstiege 6a",
+          "addressLocality": "Gronau",
+          "postalCode": "48599",
+          "addressCountry": "DE"
+        },
+        "priceRange": "€€"
+      }
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>
+	    <main id="main-content">
+      <slot />
+    </main>
+    <script src="../scripts/scroll-animations.js"></script>
+    <script src="../scripts/modal.js"></script>
+    <footer class="footer">
+      <div class="footer__container">
+        <div class="footer__links">
+          <a href="#" data-modal-trigger="impressum-modal">Impressum</a>
+          <span class="footer__separator">·</span>
+          <a href="#" data-modal-trigger="datenschutz-modal">Datenschutz</a>
+        </div>
+        <p class="footer__copyright">© 2025 Auszeit Keramik Malatelier</p>
+      </div>
+    </footer>
+
+    <!-- Impressum Modal -->
+    <Modal id="impressum-modal" title="Impressum">
+      <h3>Angaben gemäß § 5 TMG</h3>
+      <p>
+        Atelier Auszeit<br />
+        Irena Woschkowiak<br />
+        Feldstiege 6a<br />
+        48599 Gronau
+      </p>
+
+      <h3>Kontakt</h3>
+      <p>
+        Telefon: +49 (0) 176 34255005<br />
+        E-Mail: keramik-auszeit@web.de
+      </p>
+
+      <h3>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h3>
+      <p>
+        Irena Woschkowiak<br />
+        Feldstiege 6a<br />
+        48599 Gronau
+      </p>
+
+      <h3>Haftungsausschluss</h3>
+      <p>
+        Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die
+        Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir
+        jedoch keine Gewähr übernehmen.
+      </p>
+    </Modal>
+
+    <!-- Datenschutz Modal -->
+    <Modal id="datenschutz-modal" title="Datenschutzerklärung">
+      <h3>1. Datenschutz auf einen Blick</h3>
+      <p>
+        Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit
+        Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen.
+      </p>
+
+      <h3>2. Allgemeine Hinweise und Pflichtinformationen</h3>
+      <p>
+        Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten
+        sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und
+        entsprechend der gesetzlichen Datenschutzvorschriften sowie dieser
+        Datenschutzerklärung.
+      </p>
+
+      <h3>3. Datenerfassung auf dieser Website</h3>
+      <p>
+        Die Datenverarbeitung auf dieser Website erfolgt durch den
+        Websitebetreiber. Dessen Kontaktdaten können Sie dem Impressum dieser
+        Website entnehmen.
+      </p>
+
+      <h3>4. Cookies</h3>
+      <p>
+        Diese Website verwendet keine Cookies zur Speicherung von Nutzerdaten.
+      </p>
+
+      <h3>5. Ihre Rechte</h3>
+      <p>
+        Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre
+        gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger und
+        den Zweck der Datenverarbeitung sowie ein Recht auf Berichtigung oder
+        Löschung dieser Daten.
+      </p>
+    </Modal>
+  </body>
+</html>
+
+	  <style is:global>
+	    @import "../styles/global.css";
+	  </style>
+
+	  <style>
+	    .skip-link {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background-color: var(--color-clay-brown);
+    color: var(--color-off-white);
+    padding: var(--space-2) var(--space-4);
+    text-decoration: none;
+    z-index: 100;
+  }
+
+  .skip-link:focus {
+    top: 0;
+  }
+
+  .footer {
+    background-color: var(--color-clay-brown);
+    color: var(--color-off-white);
+    padding: var(--space-4) var(--gutter);
+  }
+
+  .footer__container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .footer__links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+    font-size: 0.9rem;
+  }
+
+  .footer__links a {
+    color: var(--color-off-white);
+    text-decoration: underline;
+    transition: opacity var(--duration-normal) var(--easing);
+  }
+
+  .footer__links a:hover {
+    opacity: 0.8;
+  }
+
+  .footer__separator {
+    opacity: 0.5;
+  }
+
+  .footer__copyright {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin: 0;
+  }
+
+  /* Mobile Optimierungen */
+  @media (max-width: 374px) {
+    .footer {
+      padding: var(--space-3) var(--gutter);
+    }
+
+    .footer__links {
+      font-size: 0.8125rem;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+    }
+
+    .footer__copyright {
+      font-size: 0.75rem;
+      margin-top: var(--space-1);
+    }
+  }
+
+  @media (min-width: 375px) and (max-width: 639px) {
+    .footer {
+      padding: var(--space-3) var(--gutter);
+    }
+
+    .footer__links {
+      font-size: 0.875rem;
+    }
+  }
+</style>

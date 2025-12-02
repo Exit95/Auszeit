@@ -1,0 +1,69 @@
+---
+import FAQItem from "../components/FAQItem.astro";
+import { content } from "../data/content";
+---
+
+<section class="faq">
+  <div class="container">
+    <h2 class="faq__title">{content.faq.title}</h2>
+    <div class="faq__list">
+      {
+        content.faq.items.map((item) => (
+          <FAQItem question={item.question} answer={item.answer} />
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq {
+    padding: var(--space-12) var(--gutter);
+    background-color: var(--color-warm-beige);
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .faq__title {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    text-align: center;
+    margin-bottom: var(--space-8);
+  }
+
+  .faq__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  /* Mobile Optimierungen */
+  @media (max-width: 374px) {
+    .faq {
+      padding: var(--space-8) var(--gutter);
+    }
+
+    .faq__title {
+      font-size: 1.75rem;
+      margin-bottom: var(--space-6);
+    }
+
+    .faq__list {
+      gap: var(--space-2);
+    }
+  }
+
+  @media (min-width: 375px) and (max-width: 639px) {
+    .faq {
+      padding: var(--space-10) var(--gutter);
+    }
+
+    .faq__title {
+      font-size: 1.875rem;
+      margin-bottom: var(--space-6);
+    }
+  }
+</style>

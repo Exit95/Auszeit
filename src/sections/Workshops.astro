@@ -1,0 +1,98 @@
+---
+import WorkshopCard from "../components/WorkshopCard.astro";
+import WorkshopModal from "../components/WorkshopModal.astro";
+import { getWorkshops } from "../lib/storage";
+
+const workshops = await getWorkshops();
+const activeWorkshops = workshops.filter((w) => w.active);
+---
+
+<section id="workshops" class="workshops animate-on-scroll">
+  <div class="container">
+    <h2 class="workshops__title">Workshops</h2>
+    <p class="workshops__subtitle">
+      Entdecken Sie unsere kreativen Keramik-Workshops
+    </p>
+
+    <div id="workshops-container">
+      {
+        activeWorkshops.length > 0 ? (
+          <div class="workshops__grid">
+            {activeWorkshops.map((workshop) => (
+              <WorkshopCard workshop={workshop} />
+            ))}
+          </div>
+        ) : (
+          <div class="workshops__empty">
+            Aktuell sind keine Workshops verfügbar.
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<WorkshopModal />
+
+<script src="../scripts/workshop-modal.js"></script>
+
+<style>
+  .workshops {
+    padding: var(--space-12) var(--gutter);
+    background-color: var(--color-soft-cream);
+  }
+
+  .workshops .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .workshops__title {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    text-align: center;
+    margin-bottom: var(--space-2);
+    font-size: 2.5rem;
+  }
+
+  .workshops__subtitle {
+    text-align: center;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-8);
+    font-size: 1rem;
+  }
+
+  .workshops__empty {
+    text-align: center;
+    color: var(--color-text-secondary);
+    padding: var(--space-8);
+  }
+
+  .workshops__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 640px) {
+    .workshops__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .workshops__grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 639px) {
+    .workshops {
+      padding: var(--space-8) var(--gutter);
+    }
+
+    .workshops__title {
+      font-size: 2rem;
+    }
+  }
+</style>

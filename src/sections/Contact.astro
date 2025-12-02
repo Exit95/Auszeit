@@ -1,0 +1,214 @@
+---
+import WhatsAppLink from "../components/WhatsAppLink.astro";
+import { content } from "../data/content";
+---
+
+<section class="contact">
+  <div class="container">
+    <h2 class="contact__title">{content.contact.title}</h2>
+    <div class="contact__grid">
+      <div class="contact__info">
+        <div class="contact__block">
+          <h3>Adresse</h3>
+          <p>{content.contact.address.street}</p>
+          <p>{content.contact.address.city}</p>
+        </div>
+          <div class="contact__block">
+            <h3>Parkmöglichkeiten</h3>
+            <p>Es gibt keine Parkmöglichkeiten direkt vor dem Atelier. Bitte umliegend parken.</p>
+          </div>
+        <div class="contact__block">
+          <h3>Termine</h3>
+          <p>Termine lege ich in der Regel vorab fest, und wenn etwas Individuelles nötig ist, spreche ich das gern persönlich mit dir ab.</p>
+        </div>
+        <div class="contact__block">
+          <h3>Kontakt</h3>
+          <p>
+            <a href={`tel:${content.contact.phone}`}>{content.contact.phone}</a>
+          </p>
+          <p>
+            <a href={`mailto:${content.contact.email}`}
+              >{content.contact.email}</a
+            >
+          </p>
+          <div class="contact__whatsapp">
+            <WhatsAppLink
+              phone={content.contact.whatsapp}
+              message={content.contact.whatsappMessage}
+              text="WhatsApp"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="contact__map">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2444.9517364026356!2d7.039116876952842!3d52.20792455928731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47b83e5bd7ba24d9%3A0xe587407671767893!2sFeldstiege%206A%2C%2048599%20Gronau%20(Westfalen)!5e0!3m2!1sde!2sde!4v1764054745840!5m2!1sde!2sde"
+          width="100%"
+          height="100%"
+          style="border:0;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Google Maps - Atelier Auszeit, Feldstiege 6a, 48599 Gronau"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact {
+    padding: var(--space-12) var(--gutter);
+    background-color: var(--color-background);
+  }
+
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .contact__title {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    text-align: center;
+    margin-bottom: var(--space-8);
+  }
+
+  .contact__grid {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  @media (min-width: 768px) {
+    .contact__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .contact__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .contact__block h3 {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    margin-bottom: var(--space-2);
+    font-size: 1.125rem;
+  }
+
+  .contact__block p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-1);
+  }
+
+  .contact__block a {
+    color: var(--color-terracotta);
+    text-decoration: underline;
+    transition: color var(--duration-normal) var(--easing);
+  }
+
+  .contact__block a:hover {
+    color: var(--color-clay-brown);
+  }
+
+  .contact__whatsapp {
+    margin-top: var(--space-3);
+  }
+
+  .contact__map {
+    min-height: 400px;
+  }
+
+  .map-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    background-color: var(--color-warm-beige);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    color: var(--color-clay-brown);
+  }
+
+  .map-placeholder svg {
+    width: 64px;
+    height: 64px;
+    opacity: 0.5;
+  }
+
+  .map-placeholder p {
+    font-size: 0.875rem;
+    opacity: 0.7;
+  }
+
+  /* Mobile Optimierungen */
+  @media (max-width: 374px) {
+    .contact {
+      padding: var(--space-8) var(--gutter);
+    }
+
+    .contact__title {
+      font-size: 1.75rem;
+      margin-bottom: var(--space-6);
+    }
+
+    .contact__grid {
+      gap: var(--space-6);
+    }
+
+    .contact__info {
+      gap: var(--space-4);
+    }
+
+    .contact__block h3 {
+      font-size: 1rem;
+    }
+
+    .contact__block p {
+      font-size: 0.9375rem;
+    }
+
+    .contact__map {
+      min-height: 300px;
+    }
+
+    .map-placeholder {
+      min-height: 300px;
+    }
+  }
+
+  @media (min-width: 375px) and (max-width: 639px) {
+    .contact {
+      padding: var(--space-10) var(--gutter);
+    }
+
+    .contact__title {
+      font-size: 1.875rem;
+      margin-bottom: var(--space-6);
+    }
+
+    .contact__grid {
+      gap: var(--space-6);
+    }
+
+    .contact__map {
+      min-height: 350px;
+    }
+
+    .map-placeholder {
+      min-height: 350px;
+    }
+  }
+
+  @media (min-width: 640px) and (max-width: 767px) {
+    .contact__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

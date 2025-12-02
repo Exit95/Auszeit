@@ -1,0 +1,138 @@
+---
+interface Props {
+  href?: string;
+  variant?: "primary" | "secondary";
+  size?: "small" | "medium" | "large";
+  type?: "button" | "submit" | "reset";
+  ariaLabel?: string;
+}
+
+const {
+  href,
+  variant = "primary",
+  size = "medium",
+  type = "button",
+  ariaLabel,
+} = Astro.props;
+
+const Tag = href ? "a" : "button";
+---
+
+<Tag
+  href={href}
+  type={!href ? type : undefined}
+  class={`btn btn--${variant} btn--${size}`}
+  aria-label={ariaLabel}
+>
+  <slot />
+</Tag>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-weight: 600;
+    border-radius: var(--radius);
+    border: 2px solid transparent;
+    transition: all var(--duration-normal) var(--easing);
+    text-decoration: none;
+    white-space: nowrap;
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition:
+      width 0.6s,
+      height 0.6s;
+  }
+
+  .btn:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .btn--small {
+    font-size: 0.875rem;
+    padding: 0 var(--space-3);
+    min-height: 36px;
+  }
+
+  .btn--medium {
+    font-size: 1rem;
+  }
+
+  .btn--large {
+    font-size: 1.125rem;
+    padding: 0 var(--space-5);
+    min-height: 52px;
+  }
+
+  .btn--primary {
+    background-color: var(--color-terracotta);
+    color: var(--color-off-white);
+  }
+
+  .btn--primary:hover {
+    background-color: var(--color-clay-brown);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .btn--primary:active {
+    transform: translateY(0);
+  }
+
+  .btn--secondary {
+    background-color: transparent;
+    color: var(--color-clay-brown);
+    border-color: var(--color-clay-brown);
+  }
+
+  .btn--secondary:hover {
+    background-color: var(--color-clay-brown);
+    color: var(--color-off-white);
+    transform: translateY(-1px);
+  }
+
+  .btn--secondary:active {
+    transform: translateY(0);
+  }
+
+  /* Mobile Optimierungen */
+  @media (max-width: 639px) {
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn--large {
+      min-height: 48px; /* Größeres Touch-Target */
+    }
+  }
+
+  @media (max-width: 374px) {
+    .btn {
+      font-size: 0.9375rem;
+      padding: 0 var(--space-3);
+    }
+
+    .btn--large {
+      font-size: 1rem;
+      padding: 0 var(--space-4);
+    }
+  }
+</style>
