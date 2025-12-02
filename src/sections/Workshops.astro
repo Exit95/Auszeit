@@ -37,6 +37,7 @@ const activeWorkshops = workshops.filter((w) => w.active);
 <script>
   // Auto-Reload: Nur den Workshop-Container alle 10 Sekunden aktualisieren
   let isReloading = false;
+  let lastHTML = "";
 
   async function reloadWorkshops() {
     if (isReloading) return;
@@ -54,15 +55,26 @@ const activeWorkshops = workshops.filter((w) => w.active);
 
       const html = await response.text();
 
-      // Nur aktualisieren, wenn sich der Inhalt geändert hat
-      if (container.innerHTML.trim() !== html.trim()) {
+      // Nur aktualisieren, wenn sich der Inhalt wirklich geändert hat
+      if (lastHTML !== html) {
+        console.log("Workshops updated");
         container.innerHTML = html;
+        lastHTML = html;
+
+        // Event-Listener für Modal müssen nicht neu gesetzt werden,
+        // da workshop-modal.js Event Delegation verwendet
       }
     } catch (error) {
       console.error("Error reloading workshops:", error);
     } finally {
       isReloading = false;
     }
+  }
+
+  // Initial HTML speichern
+  const container = document.getElementById("workshops-container");
+  if (container) {
+    lastHTML = container.innerHTML;
   }
 
   // Alle 10 Sekunden neu laden
