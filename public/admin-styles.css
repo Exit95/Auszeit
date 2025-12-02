@@ -469,6 +469,24 @@ body {
   align-items: flex-start;
 }
 
+.workshop-upload-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.file-name-display {
+  color: #666;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 200px;
+}
+
 .selected-file-name {
   color: #666;
   font-size: 0.9rem;
