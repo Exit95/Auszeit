@@ -1338,6 +1338,9 @@ export const prerender = false;
 
         const response = await fetch('/api/upload', {
           method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          },
           body: formData,
           signal: controller.signal
         });
