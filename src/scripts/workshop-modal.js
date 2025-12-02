@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById("workshopModal");
   const overlay = modal?.querySelector(".modal__overlay");
   const closeBtn = modal?.querySelector(".modal__close");
-  const workshopCards = document.querySelectorAll(".workshop-card");
 
   // Elemente im Modal
   const modalImage = document.getElementById("workshopModalImage");
@@ -139,15 +138,16 @@ document.addEventListener("DOMContentLoaded", () => {
     bookingMessageDiv.classList.add("hidden");
   }
 
-  // Event Listeners
-  workshopCards.forEach((card) => {
-    card.addEventListener("click", (e) => {
+  // Event Listeners - Event Delegation für dynamisch geladene Karten
+  document.addEventListener("click", (e) => {
+    const card = e.target.closest(".workshop-card");
+    if (card) {
       e.preventDefault();
       const workshopId = card.getAttribute("data-workshop-id");
       if (workshopId) {
         openModal(workshopId);
       }
-    });
+    }
   });
 
   closeBtn?.addEventListener("click", closeModal);
