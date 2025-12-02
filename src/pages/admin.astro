@@ -1539,20 +1539,24 @@ export const prerender = false;
             const card = document.createElement('div');
             card.className = 'gallery-item';
 
+            const imagePath = img.path || `/uploads/${img.filename}`;
+            const categoryLabel = img.category || 'uploads';
+
             card.innerHTML = `
-              <img src="/uploads/${img.filename}" alt="${escapeHtml(img.filename)}" loading="lazy">
+              <img src="${imagePath}" alt="${escapeHtml(img.filename)}" loading="lazy">
               <div class="gallery-item__info">
                 <div class="gallery-item__name">${escapeHtml(img.filename)}</div>
                 <div class="gallery-item__size">${formatFileSize(img.size)}</div>
                 <div class="gallery-item__categories">
+                  <span class="category-badge">${escapeHtml(categoryLabel)}</span>
                   ${imageCategoryNames.length > 0
                     ? imageCategoryNames.map((name: string) => `<span class="category-badge">${escapeHtml(name)}</span>`).join(' ')
-                    : '<span class="no-category">Keine Kategorie</span>'}
+                    : ''}
                 </div>
               </div>
               <div class="gallery-item__actions">
                 <button class="btn btn-sm btn-secondary btn-manage-categories" data-filename="${escapeHtml(img.filename)}">Kategorien</button>
-                <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}">Löschen</button>
+                <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}" data-category="${escapeHtml(categoryLabel)}">Löschen</button>
               </div>
             `;
 
@@ -1573,8 +1577,9 @@ export const prerender = false;
           document.querySelectorAll('.btn-delete-image').forEach(btn => {
             btn.addEventListener('click', async () => {
               const filename = btn.getAttribute('data-filename');
+              const category = btn.getAttribute('data-category');
               if (confirm(`Bild "${filename}" wirklich löschen?`)) {
-                await deleteImage(filename!);
+                await deleteImage(filename!, category || undefined);
               }
             });
           });
@@ -1647,10 +1652,16 @@ export const prerender = false;
     }
 
     // Bild löschen
-    async function deleteImage(filename: string) {
+    async function deleteImage(filename: string, category?: string) {
       try {
-        console.log('Deleting image:', filename);
-        const response = await fetch(`/api/images?filename=${encodeURIComponent(filename)}`, {
+        console.log('Deleting image:', filename, 'from category:', category);
+
+        let url = `/api/images?filename=${encodeURIComponent(filename)}`;
+        if (category) {
+          url += `&category=${encodeURIComponent(category)}`;
+        }
+
+        const response = await fetch(url, {
           method: 'DELETE',
           headers: {
             'Authorization': `Basic ${authCredentials}`,
