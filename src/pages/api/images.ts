@@ -43,7 +43,7 @@ function checkAuth(request: Request): boolean {
   return username === 'admin' && password === adminPassword;
 }
 
-// GET - Liste aller Bilder abrufen
+// GET - Liste aller Bilder abrufen (aus allen Kategorien)
 export const GET: APIRoute = async ({ request }) => {
   if (!checkAuth(request)) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -53,30 +53,60 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   try {
-    if (!fs.existsSync(UPLOAD_DIR)) {
-      return new Response(JSON.stringify([]), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    const imageFiles: any[] = [];
+
+    // Durchsuche alle Kategorie-Ordner
+    for (const category of VALID_CATEGORIES) {
+      const categoryDir = path.join(PRODUCTS_DIR, category);
+
+      if (fs.existsSync(categoryDir)) {
+        const files = fs.readdirSync(categoryDir);
+
+        // Filtere nur Bilddateien
+        const categoryImages = files.filter(file => {
+          const ext = path.extname(file).toLowerCase();
+          return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+        }).map(file => {
+          const filePath = path.join(categoryDir, file);
+          const stats = fs.statSync(filePath);
+
+          return {
+            filename: file,
+            category: category,
+            path: `/products/${category}/${file}`,
+            size: stats.size,
+            created: stats.birthtime,
+            modified: stats.mtime
+          };
+        });
+
+        imageFiles.push(...categoryImages);
+      }
     }
 
-    const files = fs.readdirSync(UPLOAD_DIR);
-    
-    // Filtere nur Bilddateien und ignoriere temp-Ordner
-    const imageFiles = files.filter(file => {
-      const ext = path.extname(file).toLowerCase();
-      return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext) && file !== 'temp';
-    }).map(file => {
-      const filePath = path.join(UPLOAD_DIR, file);
-      const stats = fs.statSync(filePath);
-      
-      return {
-        filename: file,
-        size: stats.size,
-        created: stats.birthtime,
-        modified: stats.mtime
-      };
-    });
+    // Auch alte Bilder aus uploads/ Ordner einbeziehen (falls vorhanden)
+    if (fs.existsSync(UPLOAD_DIR)) {
+      const files = fs.readdirSync(UPLOAD_DIR);
+
+      const uploadImages = files.filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext) && file !== 'temp';
+      }).map(file => {
+        const filePath = path.join(UPLOAD_DIR, file);
+        const stats = fs.statSync(filePath);
+
+        return {
+          filename: file,
+          category: 'uploads',
+          path: `/uploads/${file}`,
+          size: stats.size,
+          created: stats.birthtime,
+          modified: stats.mtime
+        };
+      });
+
+      imageFiles.push(...uploadImages);
+    }
 
     // Sortiere nach Erstellungsdatum (neueste zuerst)
     imageFiles.sort((a, b) => b.created.getTime() - a.created.getTime());
@@ -257,7 +287,7 @@ export const POST: APIRoute = async ({ request }) => {
   });
 };
 
-// DELETE - Bild löschen
+// DELETE - Bild löschen (aus Kategorie-Ordnern oder uploads/)
 export const DELETE: APIRoute = async ({ request }) => {
   if (!checkAuth(request)) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -269,6 +299,7 @@ export const DELETE: APIRoute = async ({ request }) => {
   try {
     const url = new URL(request.url);
     const filename = url.searchParams.get('filename');
+    const category = url.searchParams.get('category');
 
     if (!filename) {
       return new Response(JSON.stringify({ error: 'Missing filename' }), {
@@ -279,7 +310,40 @@ export const DELETE: APIRoute = async ({ request }) => {
 
     // Sicherheitscheck: Verhindere Directory Traversal
     const safeName = path.basename(filename);
-    const filePath = path.join(UPLOAD_DIR, safeName);
+
+    let filePath: string | null = null;
+
+    // Bestimme den richtigen Pfad basierend auf der Kategorie
+    if (category && VALID_CATEGORIES.includes(category)) {
+      filePath = path.join(PRODUCTS_DIR, category, safeName);
+    } else if (category === 'uploads') {
+      filePath = path.join(UPLOAD_DIR, safeName);
+    } else {
+      // Fallback: Suche in allen Kategorien
+      for (const cat of VALID_CATEGORIES) {
+        const testPath = path.join(PRODUCTS_DIR, cat, safeName);
+        if (fs.existsSync(testPath)) {
+          filePath = testPath;
+          break;
+        }
+      }
+
+      if (!filePath) {
+        // Versuche uploads/ Ordner
+        const uploadPath = path.join(UPLOAD_DIR, safeName);
+        if (fs.existsSync(uploadPath)) {
+          filePath = uploadPath;
+        }
+      }
+    }
+
+    // Wenn Datei nicht gefunden wurde
+    if (!filePath) {
+      return new Response(JSON.stringify({ error: 'File not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Prüfe ob Datei existiert
     if (!fs.existsSync(filePath)) {
@@ -300,6 +364,8 @@ export const DELETE: APIRoute = async ({ request }) => {
 
     // Lösche die Datei
     fs.unlinkSync(filePath);
+
+    console.log(`Deleted: ${filePath}`);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
