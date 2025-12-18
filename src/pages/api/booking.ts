@@ -68,8 +68,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
 		    // E-Mail-Adressen aus Environment-Variablen
-		    const bookingEmail = import.meta.env.BOOKING_EMAIL || 'keramik-auszeit@web.de';
-		    const fromEmail = import.meta.env.FROM_EMAIL || 'buchungen@auszeit-keramik.de';
+		    const bookingEmail = import.meta.env.BOOKING_EMAIL || 'info@keramik-auszeit.de';
+		    const fromEmail = import.meta.env.FROM_EMAIL || 'info@keramik-auszeit.de';
 
 	    // Anzeigeformat für die Uhrzeit (mit optionaler Endzeit)
 	    const timeDisplay = slot.endTime ? `${slot.time} - ${slot.endTime}` : slot.time;
