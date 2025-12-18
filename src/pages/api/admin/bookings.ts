@@ -97,7 +97,7 @@ export const POST: APIRoute = async ({ request }) => {
 						? (slot.endTime ? `${slot.time} - ${slot.endTime}` : slot.time)
 						: '';
 
-					const fromEmail = import.meta.env.FROM_EMAIL || 'buchungen@auszeit-keramik.de';
+					const fromEmail = import.meta.env.FROM_EMAIL || 'info@keramik-auszeit.de';
 
 					const customerSubject = date && timeDisplay
 						? `Dein Termin wurde bestätigt - Atelier Auszeit am ${date} um ${timeDisplay} Uhr`

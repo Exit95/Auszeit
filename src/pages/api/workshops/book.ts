@@ -140,8 +140,8 @@ export const POST: APIRoute = async ({ request }) => {
 	    await saveWorkshopBookings(bookings);
 
 	    // E-Mail-Adressen wie bei /api/booking.ts
-	    const bookingEmail = import.meta.env.BOOKING_EMAIL || 'keramik-auszeit@web.de';
-	    const fromEmail = import.meta.env.FROM_EMAIL || 'buchungen@auszeit-keramik.de';
+	    const bookingEmail = import.meta.env.BOOKING_EMAIL || 'info@keramik-auszeit.de';
+	    const fromEmail = import.meta.env.FROM_EMAIL || 'info@keramik-auszeit.de';
 
 	    // E-Mail-Inhalte vorbereiten
 	    const adminSubject = `Neue Workshop-Buchung: ${workshop.title} - ${name}`;
