@@ -134,6 +134,16 @@ async function sendReviewNotificationEmail(review: Review) {
   const bookingEmail = import.meta.env.BOOKING_EMAIL || 'info@keramik-auszeit.de';
   const fromEmail = import.meta.env.FROM_EMAIL || 'info@keramik-auszeit.de';
 
+  console.log('📧 Versuche Bewertungs-E-Mail zu senden...');
+  console.log('SMTP Config:', {
+    host: import.meta.env.SMTP_HOST,
+    port: import.meta.env.SMTP_PORT,
+    user: import.meta.env.SMTP_USER,
+    hasPassword: !!import.meta.env.SMTP_PASS,
+    to: bookingEmail,
+    from: fromEmail
+  });
+
   if (!import.meta.env.SMTP_HOST || !import.meta.env.SMTP_USER || !import.meta.env.SMTP_PASS) {
     console.log('⚠️ SMTP nicht konfiguriert - E-Mail-Benachrichtigung wird übersprungen');
     return;
@@ -152,6 +162,11 @@ async function sendReviewNotificationEmail(review: Review) {
         rejectUnauthorized: false
       }
     });
+
+    // Verbindung testen
+    console.log('🔍 Teste SMTP-Verbindung...');
+    await transporter.verify();
+    console.log('✅ SMTP-Verbindung erfolgreich');
 
     const stars = '⭐'.repeat(review.rating);
     const emailHtml = `
@@ -236,8 +251,13 @@ Feldstiege 6a, 48599 Gronau
     });
 
     console.log('✅ Bewertungs-Benachrichtigung erfolgreich gesendet an:', bookingEmail);
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Fehler beim Senden der Bewertungs-Benachrichtigung:', error);
+    console.error('Fehler-Details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response
+    });
     // Fehler nicht weiterwerfen, damit die Bewertung trotzdem gespeichert wird
   }
 }
