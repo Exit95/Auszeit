@@ -407,6 +407,9 @@ const { title = "Termin buchen" } = Astro.props;
 	    maxCapacity: number;
 	    available: number;
 	    id: string;
+	    eventType?: string;
+	    isBlocked?: boolean;
+	    blockedReason?: string;
 	  }
 
 	  interface BookedSlot {
@@ -418,6 +421,8 @@ const { title = "Termin buchen" } = Astro.props;
 	    maxCapacity: number;
 	    isFull: boolean;
 	    slotId: string;
+	    isBlocked?: boolean;
+	    blockedReason?: string;
 	  }
 
   // Declare BookingCalendar from external script
@@ -454,7 +459,9 @@ const { title = "Termin buchen" } = Astro.props;
 	      available: slot.available,
 	      maxCapacity: slot.maxCapacity,
 	      isFull: slot.available === 0,
-	      slotId: slot.id
+	      slotId: slot.id,
+	      isBlocked: slot.isBlocked || false,
+	      blockedReason: slot.blockedReason || undefined
 	    }));
 
     // Kalender initialisieren

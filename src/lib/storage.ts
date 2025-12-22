@@ -8,6 +8,9 @@ const WORKSHOPS_FILE = path.join(DATA_DIR, 'workshops.json');
 const CATEGORIES_FILE = path.join(DATA_DIR, 'gallery-categories.json');
 const IMAGE_METADATA_FILE = path.join(DATA_DIR, 'image-metadata.json');
 
+// Event-Typen für Termine
+export type EventType = 'normal' | 'kindergeburtstag' | 'stammtisch';
+
 export interface TimeSlot {
 	id: string;
 	date: string; // YYYY-MM-DD
@@ -16,6 +19,8 @@ export interface TimeSlot {
 	maxCapacity: number;
 	available: number;
 	createdAt: string;
+	eventType?: EventType; // Art des Events (normal, kindergeburtstag, stammtisch)
+	eventDuration?: number; // Dauer in Stunden (z.B. 3 für 3 Stunden)
 }
 
 export interface Booking {
