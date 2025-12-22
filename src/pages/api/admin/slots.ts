@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
 
 	try {
 		const data = await request.json();
-		const { date, time, startTime, endTime, maxCapacity, initialBooked } = data as any;
+		const { date, time, startTime, endTime, maxCapacity, initialBooked, eventType } = data as any;
 
 		// Unterstützt sowohl altes Format (time) als auch neues Format (startTime/endTime)
 		const slotTime = startTime || time;
@@ -84,12 +84,17 @@ export const POST: APIRoute = async ({ request }) => {
 
 		const available = totalCapacity - alreadyBooked;
 
+		// Event-Typ validieren (normal, kindergeburtstag, stammtisch)
+		const validEventTypes = ['normal', 'kindergeburtstag', 'stammtisch'];
+		const slotEventType = validEventTypes.includes(eventType) ? eventType : 'normal';
+
 		const newSlot = await addTimeSlot({
 			date,
 			time: slotTime,
 			endTime: endTime || undefined,
 			maxCapacity: totalCapacity,
 			available,
+			eventType: slotEventType,
 		});
 
 		return new Response(JSON.stringify(newSlot), {
@@ -155,7 +160,7 @@ export const PUT: APIRoute = async ({ request }) => {
 
 	try {
 		const body = await request.json();
-		const { id, date, time, startTime, endTime, maxCapacity } = body as any;
+		const { id, date, time, startTime, endTime, maxCapacity, eventType } = body as any;
 
 		if (!id) {
 			return new Response(JSON.stringify({ error: 'Missing slot ID' }), {
@@ -188,6 +193,14 @@ export const PUT: APIRoute = async ({ request }) => {
 
 		if (typeof endTime !== 'undefined') {
 			updates.endTime = endTime || undefined;
+		}
+
+		// Event-Typ aktualisieren
+		if (typeof eventType !== 'undefined') {
+			const validEventTypes = ['normal', 'kindergeburtstag', 'stammtisch'];
+			if (validEventTypes.includes(eventType)) {
+				updates.eventType = eventType;
+			}
 		}
 
 		if (typeof maxCapacity !== 'undefined' && maxCapacity !== null) {

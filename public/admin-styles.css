@@ -157,6 +157,32 @@ body {
   border-color: #C17B5C;
 }
 
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #E8D5C4;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  background: white;
+  cursor: pointer;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #C17B5C;
+}
+
+.event-type-hint {
+  background: #FFF3CD;
+  border: 1px solid #FFEEBA;
+  color: #856404;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -238,6 +264,35 @@ body {
   border-color: #C17B5C;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Spezielle Events (Kindergeburtstag, Stammtisch) */
+.slot-special-event {
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+  border-color: #FFB74D;
+}
+
+.slot-special-event:hover {
+  border-color: #FF9800;
+}
+
+.event-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.event-kindergeburtstag {
+  background: #FFE0B2;
+  color: #E65100;
+}
+
+.event-stammtisch {
+  background: #E1BEE7;
+  color: #7B1FA2;
 }
 
 .slot-info {

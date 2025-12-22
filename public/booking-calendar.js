@@ -199,7 +199,16 @@ class BookingCalendar {
                 slotElement.appendChild(capacityText);
             }
 
-	            if (slot.booked || (slot.capacity && slot.capacity.available === 0)) {
+	            if (slot.isBlocked) {
+                // Kindergeburtstag oder Stammtisch - speziell markieren
+                slotElement.classList.add('booked', 'blocked-event');
+                slotElement.title = slot.blockedReason || 'Belegt';
+                // Zeige den Grund im Button an
+                if (slot.blockedReason) {
+                    const reasonIcon = slot.blockedReason === 'Kindergeburtstag' ? '🎂' : '🍷';
+                    slotElement.innerHTML = `<span class="blocked-label">${reasonIcon} ${slot.blockedReason}</span>`;
+                }
+            } else if (slot.booked || (slot.capacity && slot.capacity.available === 0)) {
                 slotElement.classList.add('booked');
                 slotElement.title = 'Ausgebucht';
             } else if (slot.disabled) {
@@ -243,7 +252,9 @@ class BookingCalendar {
 	                booked: capacity.available === 0,
 	                disabled: false,
 	                capacity: capacity,
-	                slotId: slot.slotId
+	                slotId: slot.slotId,
+	                isBlocked: slot.isBlocked || false,
+	                blockedReason: slot.blockedReason || null
 	            });
         });
 

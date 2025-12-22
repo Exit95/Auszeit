@@ -76,6 +76,14 @@ export const prerender = false;
 		        <form id="add-slot-form">
 		          <div class="form-row">
 		            <div class="form-group">
+		              <label for="slot-event-type">Event-Typ</label>
+		              <select id="slot-event-type" name="eventType">
+		                <option value="normal">Normaler Termin</option>
+		                <option value="kindergeburtstag">🎂 Kindergeburtstag</option>
+		                <option value="stammtisch">🍷 Stammtisch</option>
+		              </select>
+		            </div>
+		            <div class="form-group">
 		              <label for="slot-date">Datum</label>
 		              <input type="date" id="slot-date" name="date" required>
 		            </div>
@@ -91,11 +99,14 @@ export const prerender = false;
 		              <label for="slot-capacity">Max. Personen</label>
 		              <input type="number" id="slot-capacity" name="maxCapacity" min="1" max="20" value="15" required>
 		            </div>
-		            <div class="form-group">
+		            <div class="form-group" id="initial-booked-group">
 		              <label for="slot-initial-booked">Bereits gebuchte Plätze</label>
 		              <input type="number" id="slot-initial-booked" name="initialBooked" min="0" max="20" value="0">
 		            </div>
 		          </div>
+		          <p id="event-type-hint" class="event-type-hint hidden">
+		            ℹ️ Dieses Zeitfenster wird im Kalender als belegt angezeigt. Andere Zeitfenster am selben Tag bleiben buchbar.
+		          </p>
 		          <div class="form-actions">
 		            <button type="submit" class="btn btn-primary" id="slot-submit-btn">Termin hinzufügen</button>
 		            <button type="button" class="btn btn-secondary hidden" id="cancel-edit-btn">Bearbeitung abbrechen</button>
@@ -370,17 +381,41 @@ export const prerender = false;
       (document.getElementById('login-form') as HTMLFormElement)?.reset();
     });
 
+	    // Event-Typ Change Handler - zeigt Hinweis bei Kindergeburtstag/Stammtisch
+	    const eventTypeSelect = document.getElementById('slot-event-type') as HTMLSelectElement | null;
+	    const eventTypeHint = document.getElementById('event-type-hint');
+	    const initialBookedGroup = document.getElementById('initial-booked-group');
+
+	    eventTypeSelect?.addEventListener('change', () => {
+	      const eventType = eventTypeSelect.value;
+	      const isSpecialEvent = eventType === 'kindergeburtstag' || eventType === 'stammtisch';
+
+	      // Hinweis anzeigen/verstecken
+	      if (eventTypeHint) {
+	        eventTypeHint.classList.toggle('hidden', !isSpecialEvent);
+	      }
+
+	      // Bei Kindergeburtstag/Stammtisch: "Bereits gebucht" ausblenden und auf max setzen
+	      if (initialBookedGroup) {
+	        initialBookedGroup.classList.toggle('hidden', isSpecialEvent);
+	      }
+	    });
+
 	    // Termin hinzufügen / bearbeiten
 	    document.getElementById('add-slot-form')?.addEventListener('submit', async (e) => {
 	      e.preventDefault();
 	      const form = e.target as HTMLFormElement;
 	      const formData = new FormData(form);
 
+	      const eventType = formData.get('eventType') || 'normal';
+	      const isSpecialEvent = eventType === 'kindergeburtstag' || eventType === 'stammtisch';
+
 	      const baseData = {
 	        date: formData.get('date'),
 	        startTime: formData.get('startTime'),
 	        endTime: formData.get('endTime'),
-	        maxCapacity: formData.get('maxCapacity')
+	        maxCapacity: formData.get('maxCapacity'),
+	        eventType: eventType
 	      };
 
 	      try {
@@ -403,9 +438,12 @@ export const prerender = false;
 	          });
 	        } else {
 	          // Neuen Termin anlegen
+	          // Bei Kindergeburtstag/Stammtisch: Tag ist komplett ausgebucht (available = 0)
 	          const data = {
 	            ...baseData,
-	            initialBooked: formData.get('initialBooked') || '0'
+	            initialBooked: isSpecialEvent
+	              ? formData.get('maxCapacity') // Alles gebucht
+	              : (formData.get('initialBooked') || '0')
 	          };
 
 	          response = await fetch('/api/admin/slots', {
@@ -421,6 +459,9 @@ export const prerender = false;
 	        if (response.ok) {
 	          form.reset();
 	          resetSlotFormState();
+	          // Hinweis wieder verstecken nach Reset
+	          if (eventTypeHint) eventTypeHint.classList.add('hidden');
+	          if (initialBookedGroup) initialBookedGroup.classList.remove('hidden');
 	          loadSlots();
 	        } else {
 	          const errorText = await response.text().catch(() => '');
@@ -471,21 +512,33 @@ export const prerender = false;
         }
 
 	        if (listEl) {
-	          listEl.innerHTML = slots.map((slot: any) => `
-	            <div class="slot-card" data-id="${slot.id}">
-	              <div class="slot-info">
-	                <div class="slot-date">${formatDate(slot.date)}</div>
-	                <div class="slot-time">${slot.time}${slot.endTime ? ' - ' + slot.endTime : ''} Uhr</div>
-	                <div class="slot-capacity">
-	                  ${slot.available} / ${slot.maxCapacity} Plätze frei
+	          listEl.innerHTML = slots.map((slot: any) => {
+	            // Event-Typ Badge
+	            let eventBadge = '';
+	            if (slot.eventType === 'kindergeburtstag') {
+	              eventBadge = '<span class="event-badge event-kindergeburtstag">🎂 Kindergeburtstag</span>';
+	            } else if (slot.eventType === 'stammtisch') {
+	              eventBadge = '<span class="event-badge event-stammtisch">🍷 Stammtisch</span>';
+	            }
+
+	            return `
+	              <div class="slot-card ${slot.eventType !== 'normal' && slot.eventType ? 'slot-special-event' : ''}" data-id="${slot.id}">
+	                <div class="slot-info">
+	                  <div class="slot-date">${formatDate(slot.date)} ${eventBadge}</div>
+	                  <div class="slot-time">${slot.time}${slot.endTime ? ' - ' + slot.endTime : ''} Uhr</div>
+	                  <div class="slot-capacity">
+	                    ${slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch'
+	                      ? '<strong>Zeitfenster belegt</strong>'
+	                      : `${slot.available} / ${slot.maxCapacity} Plätze frei`}
+	                  </div>
+	                </div>
+	                <div class="slot-actions">
+	                  <button class="btn btn-secondary btn-edit" data-id="${slot.id}">Bearbeiten</button>
+	                  <button class="btn btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
 	                </div>
 	              </div>
-	              <div class="slot-actions">
-	                <button class="btn btn-secondary btn-edit" data-id="${slot.id}">Bearbeiten</button>
-	                <button class="btn btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
-	              </div>
-	            </div>
-	          `).join('');
+	            `;
+	          }).join('');
           listEl.classList.remove('hidden');
 
           // Delete-Handler
@@ -833,6 +886,9 @@ export const prerender = false;
 	      const endInput = document.getElementById('slot-end-time') as HTMLInputElement | null;
 	      const capacityInput = document.getElementById('slot-capacity') as HTMLInputElement | null;
 	      const initialBookedInput = document.getElementById('slot-initial-booked') as HTMLInputElement | null;
+	      const eventTypeSelect = document.getElementById('slot-event-type') as HTMLSelectElement | null;
+	      const eventTypeHint = document.getElementById('event-type-hint');
+	      const initialBookedGroup = document.getElementById('initial-booked-group');
 	      const titleEl = document.getElementById('slot-form-title');
 	      const submitBtn = document.getElementById('slot-submit-btn') as HTMLButtonElement | null;
 	      const cancelBtn = document.getElementById('cancel-edit-btn');
@@ -841,6 +897,16 @@ export const prerender = false;
 	      if (startInput) startInput.value = slot.time;
 	      if (endInput) endInput.value = slot.endTime || '';
 	      if (capacityInput) capacityInput.value = String(slot.maxCapacity);
+
+	      // Event-Typ setzen
+	      if (eventTypeSelect) {
+	        eventTypeSelect.value = slot.eventType || 'normal';
+	      }
+
+	      // Hinweis und Felder entsprechend Event-Typ anzeigen/verstecken
+	      const isSpecialEvent = slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch';
+	      if (eventTypeHint) eventTypeHint.classList.toggle('hidden', !isSpecialEvent);
+	      if (initialBookedGroup) initialBookedGroup.classList.toggle('hidden', isSpecialEvent);
 
 	      // Bereits gebuchte Plätze nur anzeigen, nicht bearbeitbar
 	      const bookedCount = slot.maxCapacity - slot.available;
