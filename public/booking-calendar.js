@@ -203,10 +203,14 @@ class BookingCalendar {
                 // Kindergeburtstag oder Stammtisch - speziell markieren
                 slotElement.classList.add('booked', 'blocked-event');
                 slotElement.title = slot.blockedReason || 'Belegt';
-                // Zeige den Grund im Button an
+                // Zeige Zeit + Grund im Button an
                 if (slot.blockedReason) {
                     const reasonIcon = slot.blockedReason === 'Kindergeburtstag' ? '🎂' : '🍷';
-                    slotElement.innerHTML = `<span class="blocked-label">${reasonIcon} ${slot.blockedReason}</span>`;
+                    const timeRange = slot.endTime ? `${slot.time} - ${slot.endTime} Uhr` : `${slot.time} Uhr`;
+                    slotElement.innerHTML = `
+                        <span class="blocked-time">${timeRange}</span>
+                        <span class="blocked-label">${reasonIcon} ${slot.blockedReason}</span>
+                    `;
                 }
             } else if (slot.booked || (slot.capacity && slot.capacity.available === 0)) {
                 slotElement.classList.add('booked');
