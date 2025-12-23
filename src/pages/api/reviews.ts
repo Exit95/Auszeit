@@ -115,9 +115,9 @@ export const POST: APIRoute = async ({ request }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
-    const reviews: Review[] = JSON.parse(fs.readFileSync(REVIEWS_FILE, 'utf-8'));
-    
+
+    const reviews = await getReviews();
+
     const newReview: Review = {
       id: Date.now().toString(),
       name,
@@ -126,9 +126,9 @@ export const POST: APIRoute = async ({ request }) => {
       date: new Date().toISOString(),
       approved: false
     };
-    
+
     reviews.push(newReview);
-    fs.writeFileSync(REVIEWS_FILE, JSON.stringify(reviews, null, 2));
+    await saveReviews(reviews);
 
     // E-Mail-Benachrichtigung an Admin senden
     await sendReviewNotificationEmail(newReview);
@@ -303,20 +303,20 @@ export const PATCH: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
     const { id, approved } = body;
-    
-    const reviews: Review[] = JSON.parse(fs.readFileSync(REVIEWS_FILE, 'utf-8'));
+
+    const reviews = await getReviews();
     const reviewIndex = reviews.findIndex(r => r.id === id);
-    
+
     if (reviewIndex === -1) {
       return new Response(JSON.stringify({ error: 'Bewertung nicht gefunden' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
+
     reviews[reviewIndex].approved = approved;
-    fs.writeFileSync(REVIEWS_FILE, JSON.stringify(reviews, null, 2));
-    
+    await saveReviews(reviews);
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
