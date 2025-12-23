@@ -3,13 +3,58 @@ import { content } from '../data/content';
 import ProductModal from '../components/ProductModal.astro';
 import fs from 'fs';
 import path from 'path';
+import { isS3Configured, listS3Objects, getS3Key } from '../lib/s3-storage';
 
-// Funktion zum automatischen Laden aller Bilder aus einem Ordner
+// Kategorie-Mapping für Produkte
+const categoryMapping: Record<string, { folder: string; mainImage: string }> = {
+  'Tassen': { folder: 'tassen', mainImage: '/becher.jpeg' },
+  'Teller': { folder: 'teller', mainImage: '/teller.jpeg' },
+  'Spardosen & Krüge & Boxen': { folder: 'spardosen', mainImage: '/spardose.jpeg' },
+  'Weihnachtsanhänger': { folder: 'anhaenger', mainImage: '/anhänger.png' },
+};
+
+// Funktion zum Laden der Bilder aus S3
+async function getImagesFromS3(category: string): Promise<string[]> {
+  const config = categoryMapping[category];
+  if (!config) return [];
+
+  const images: string[] = [config.mainImage];
+
+  try {
+    const s3Key = getS3Key(`products/${config.folder}/`);
+    const s3Objects = await listS3Objects(s3Key);
+
+    const imageFiles = s3Objects
+      .filter(obj => {
+        const ext = obj.key.split('.').pop()?.toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'webp'].includes(ext || '');
+      })
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map(obj => {
+        // Verwende lokale Proxy-Route statt direkte S3-URL
+        const filename = obj.key.split('/').pop() || '';
+        return `/products/${config.folder}/${filename}`;
+      });
+
+    images.push(...imageFiles);
+  } catch (error) {
+    console.warn(`Konnte S3-Ordner für ${category} nicht lesen:`, error);
+  }
+
+  return images;
+}
+
+// Funktion zum Laden der Bilder aus dem lokalen Ordner (Fallback)
 function getImagesFromFolder(folderPath: string, mainImage: string): string[] {
   const publicDir = path.join(process.cwd(), 'public');
-  const fullPath = path.join(publicDir, folderPath);
+  const distClientDir = path.join(process.cwd(), 'dist', 'client');
 
-  // Hauptbild immer zuerst
+  // Versuche zuerst public, dann dist/client (für Docker)
+  let fullPath = path.join(publicDir, folderPath);
+  if (!fs.existsSync(fullPath)) {
+    fullPath = path.join(distClientDir, folderPath);
+  }
+
   const images = [mainImage];
 
   try {
@@ -17,8 +62,8 @@ function getImagesFromFolder(folderPath: string, mainImage: string): string[] {
       const files = fs.readdirSync(fullPath);
       const imageFiles = files
         .filter(file => /\.(jpeg|jpg|png|webp)$/i.test(file))
-        .sort() // Alphabetisch sortiert
-        .map(file => `${folderPath}/${file}`);
+        .sort()
+        .map(file => `/${folderPath}/${file}`);
 
       images.push(...imageFiles);
     }
@@ -29,18 +74,31 @@ function getImagesFromFolder(folderPath: string, mainImage: string): string[] {
   return images;
 }
 
-// Produktgalerien - Bilder werden automatisch aus den Ordnern geladen
-// Um neue Bilder hinzuzufügen, lege sie einfach in den entsprechenden Ordner:
-// - Tassen: public/products/tassen/
-// - Teller: public/products/teller/
-// - Spardosen: public/products/spardosen/
-// - Weihnachtsanhänger: public/products/anhaenger/
-const productGalleries: Record<string, string[]> = {
-  'Tassen': getImagesFromFolder('products/tassen', '/becher.jpeg'),
-  'Teller': getImagesFromFolder('products/teller', '/teller.jpeg'),
-  'Spardosen & Krüge & Boxen': getImagesFromFolder('products/spardosen', '/spardose.jpeg'),
-  'Weihnachtsanhänger': getImagesFromFolder('products/anhaenger', '/anhänger.png'),
-};
+// Produktgalerien laden - aus S3 wenn konfiguriert, sonst lokal
+let productGalleries: Record<string, string[]> = {};
+
+if (isS3Configured()) {
+  // S3 Modus: Lade Bilder aus S3
+  const categories = Object.keys(categoryMapping);
+  const results = await Promise.all(
+    categories.map(async (category) => ({
+      category,
+      images: await getImagesFromS3(category)
+    }))
+  );
+
+  for (const result of results) {
+    productGalleries[result.category] = result.images;
+  }
+} else {
+  // Lokaler Modus: Lade Bilder aus dem Dateisystem
+  productGalleries = {
+    'Tassen': getImagesFromFolder('products/tassen', '/becher.jpeg'),
+    'Teller': getImagesFromFolder('products/teller', '/teller.jpeg'),
+    'Spardosen & Krüge & Boxen': getImagesFromFolder('products/spardosen', '/spardose.jpeg'),
+    'Weihnachtsanhänger': getImagesFromFolder('products/anhaenger', '/anhänger.png'),
+  };
+}
 ---
 
 <section class="offerings" id="angebote" aria-labelledby="offerings-title">
