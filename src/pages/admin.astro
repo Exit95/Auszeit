@@ -180,25 +180,8 @@ export const prerender = false;
               <select id="workshop-image" name="imageFilename">
                 <option value="">Kein Bild</option>
               </select>
-              <small class="form-hint">Wählen Sie ein Bild aus der Galerie oder laden Sie ein neues hoch</small>
+              <small class="form-hint">Wählen Sie ein Bild aus der Galerie (nicht zugeordnete Bilder)</small>
               <div id="workshop-image-preview" class="workshop-image-preview"></div>
-            </div>
-
-            <div class="form-group">
-              <label>Oder neues Bild hochladen</label>
-              <div class="workshop-upload-area">
-                <input type="file" id="workshop-image-file" accept="image/*" style="display: none;">
-                <button type="button" class="btn btn-secondary" id="workshop-select-file-btn">Bild auswählen</button>
-                <span id="workshop-file-name" class="file-name-display"></span>
-                <button type="button" class="btn btn-primary hidden" id="workshop-upload-btn">Hochladen</button>
-                <div id="workshop-upload-progress" class="upload-progress hidden">
-                  <div class="progress-bar">
-                    <div class="progress-fill" id="workshop-progress-fill"></div>
-                  </div>
-                  <span class="progress-text" id="workshop-progress-text">0%</span>
-                </div>
-              </div>
-              <small class="form-hint">Das Bild wird in den Ordner public/uploads/ hochgeladen und steht dann zur Auswahl</small>
             </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary" id="workshop-submit-btn">Workshop hinzufügen</button>
@@ -295,6 +278,9 @@ export const prerender = false;
       return div.innerHTML;
     }
 
+    // Speichert die URL für das ausgewählte Bild (für Vorschau)
+    let workshopImageUrlMap: Record<string, string> = {};
+
     function updateWorkshopImagePreview(filename: string | null) {
       const previewEl = document.getElementById('workshop-image-preview') as HTMLDivElement | null;
       if (!previewEl) return;
@@ -304,10 +290,16 @@ export const prerender = false;
         return;
       }
 
-      const escapedFilename = escapeHtml(filename);
+      // URL aus der Map holen (S3-URL)
+      const imageUrl = workshopImageUrlMap[filename] || '';
+      if (!imageUrl) {
+        previewEl.innerHTML = '';
+        return;
+      }
+
       previewEl.innerHTML = `
         <div class="workshop-image-preview__inner">
-          <img src="/uploads/${escapedFilename}" alt="Ausgewähltes Titelbild" loading="lazy">
+          <img src="${escapeHtml(imageUrl)}" alt="Ausgewähltes Titelbild" loading="lazy">
         </div>
       `;
     }
@@ -1030,27 +1022,45 @@ export const prerender = false;
       resetWorkshopFormState();
     });
 
-    // Bilder-Dropdown für Workshop-Formular laden
+    // Bilder-Dropdown für Workshop-Formular laden (aus Galerie - nicht zugeordnete Bilder)
     async function loadWorkshopImageOptions() {
       const selectEl = document.getElementById('workshop-image') as HTMLSelectElement;
       if (!selectEl) return;
 
       try {
-        const response = await fetch('/api/images', {
-          headers: { 'Authorization': `Basic ${authCredentials}` }
-        });
+        // Lade Galerie-Bilder und Metadaten
+        const [galleryRes, metadataRes] = await Promise.all([
+          fetch('/api/gallery'),
+          fetch('/api/gallery-metadata')
+        ]);
 
-        if (response.ok) {
-          const images = await response.json();
+        if (galleryRes.ok && metadataRes.ok) {
+          const allImages = await galleryRes.json();
+          const { metadata } = await metadataRes.json();
           const currentValue = selectEl.value;
+
+          // Reset URL-Map
+          workshopImageUrlMap = {};
+
+          // Filtere nur nicht zugeordnete Bilder (aus gallery/ ohne Kategorie)
+          const unassignedImages = allImages.filter((img: any) => {
+            // Bilder aus gallery/ die keine Kategorie haben
+            if (img.source === 'gallery') {
+              const imgMeta = metadata[img.filename];
+              return !imgMeta || !imgMeta.category;
+            }
+            return false;
+          });
 
           selectEl.innerHTML = '<option value="">Kein Bild</option>';
 
-          images.forEach((img: any) => {
+          unassignedImages.forEach((img: any) => {
             const option = document.createElement('option');
-            option.value = img.filename;
+            option.value = img.url; // Speichere die volle URL als Wert
             option.textContent = img.filename;
             selectEl.appendChild(option);
+            // URL in Map speichern für Vorschau
+            workshopImageUrlMap[img.url] = img.url;
           });
 
           if (currentValue) {
@@ -1074,73 +1084,6 @@ export const prerender = false;
         updateWorkshopImagePreview(selectEl.value || null);
       });
     }
-
-    // Workshop-Bild Upload
-    let selectedWorkshopFile: File | null = null;
-
-    document.getElementById('workshop-select-file-btn')?.addEventListener('click', () => {
-      document.getElementById('workshop-image-file')?.click();
-    });
-
-    document.getElementById('workshop-image-file')?.addEventListener('change', (e) => {
-      const input = e.target as HTMLInputElement;
-      const file = input.files?.[0];
-
-      if (file) {
-        selectedWorkshopFile = file;
-        const fileNameEl = document.getElementById('workshop-file-name');
-        const uploadBtn = document.getElementById('workshop-upload-btn');
-
-        if (fileNameEl) {
-          fileNameEl.textContent = `Ausgewählt: ${file.name} (${formatFileSize(file.size)})`;
-        }
-        if (uploadBtn) {
-          uploadBtn.classList.remove('hidden');
-        }
-      }
-    });
-
-    document.getElementById('workshop-upload-btn')?.addEventListener('click', async () => {
-      if (!selectedWorkshopFile) return;
-
-      const progressEl = document.getElementById('workshop-upload-progress');
-      const progressFill = document.getElementById('workshop-progress-fill');
-      const progressText = document.getElementById('workshop-progress-text');
-      const uploadBtn = document.getElementById('workshop-upload-btn') as HTMLButtonElement | null;
-
-      if (progressEl) progressEl.classList.remove('hidden');
-      if (uploadBtn) uploadBtn.disabled = true;
-
-      try {
-        // Upload ohne Kategorie (geht in uploads/ Ordner)
-        await uploadFileToUploads(selectedWorkshopFile, (progress: number) => {
-          if (progressFill) progressFill.style.width = `${progress}%`;
-          if (progressText) progressText.textContent = `${Math.round(progress)}%`;
-        });
-
-        alert('Upload erfolgreich! Bild steht jetzt zur Auswahl.');
-
-        // Bilder-Dropdown neu laden
-        await loadWorkshopImageOptions();
-
-        // Reset
-        selectedWorkshopFile = null;
-        const fileNameEl = document.getElementById('workshop-file-name');
-        if (fileNameEl) fileNameEl.textContent = '';
-        if (uploadBtn) {
-          uploadBtn.classList.add('hidden');
-          uploadBtn.disabled = false;
-        }
-        if (progressEl) progressEl.classList.add('hidden');
-        if (progressFill) progressFill.style.width = '0%';
-        if (progressText) progressText.textContent = '0%';
-
-      } catch (error) {
-        console.error('Workshop image upload error:', error);
-        alert('Fehler beim Upload: ' + error);
-        if (uploadBtn) uploadBtn.disabled = false;
-      }
-    });
 
     // Workshops laden
     async function loadWorkshops() {
@@ -1368,29 +1311,6 @@ export const prerender = false;
         uploadStatus.className = 'upload-status error';
         uploadStatus.textContent = `✗ Fehler: ${error instanceof Error ? error.message : 'Unbekannt'}`;
       }
-    }
-
-    // Workshop-Bild Upload (einfach)
-    async function uploadFileToUploads(file: File, onProgress: (progress: number) => void) {
-      const formData = new FormData();
-      formData.append('filename', `${Date.now()}_${file.name}`);
-      formData.append('file', file);
-
-      onProgress(50);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Basic ${authCredentials}` },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
-
-      onProgress(100);
-      return await response.json();
     }
 
     // Galerie-Daten laden (Bilder + Metadaten)
