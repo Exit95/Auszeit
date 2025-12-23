@@ -12,8 +12,9 @@ const currentParticipants = workshop.currentParticipants ?? 0;
 const isFull = currentParticipants >= workshop.maxParticipants;
 const availableSpots = workshop.maxParticipants - currentParticipants;
 
+// Prüfe ob imageFilename eine URL oder ein lokaler Dateiname ist
 const imageUrl = workshop.imageFilename
-  ? `/uploads/${workshop.imageFilename}`
+  ? (workshop.imageFilename.startsWith('http') ? workshop.imageFilename : `/uploads/${workshop.imageFilename}`)
   : "/becher.jpeg";
 
 const location =
