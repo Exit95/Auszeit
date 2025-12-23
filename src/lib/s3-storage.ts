@@ -140,3 +140,36 @@ export async function writeJsonToS3<T>(filename: string, data: T): Promise<void>
   await s3Client.send(command);
 }
 
+// Bild aus S3 lesen
+export async function getImageFromS3(key: string): Promise<Buffer | null> {
+  if (!isS3Configured()) {
+    return null;
+  }
+
+  try {
+    const command = new GetObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    });
+
+    const response = await s3Client.send(command);
+
+    if (!response.Body) {
+      return null;
+    }
+
+    // Body in Buffer konvertieren
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of response.Body as any) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  } catch (error: any) {
+    if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
+      return null;
+    }
+    console.error('Error reading image from S3:', error);
+    return null;
+  }
+}
+

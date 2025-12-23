@@ -2,9 +2,11 @@ import type { APIRoute } from 'astro';
 import { getWorkshops } from '../../lib/storage';
 import fs from 'fs/promises';
 import path from 'path';
+import { isS3Configured, readJsonFromS3 } from '../../lib/s3-storage';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILE = path.join(DATA_DIR, 'workshop-bookings.json');
+const WORKSHOP_BOOKINGS_FILENAME = 'workshop-bookings.json';
 
 interface WorkshopBooking {
   id: string;
@@ -14,6 +16,9 @@ interface WorkshopBooking {
 }
 
 async function getWorkshopBookings(): Promise<WorkshopBooking[]> {
+  if (isS3Configured()) {
+    return await readJsonFromS3<WorkshopBooking[]>(WORKSHOP_BOOKINGS_FILENAME, []);
+  }
   try {
     await fs.access(WORKSHOP_BOOKINGS_FILE);
     const data = await fs.readFile(WORKSHOP_BOOKINGS_FILE, 'utf-8');
