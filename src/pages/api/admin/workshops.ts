@@ -4,7 +4,8 @@ import { getWorkshops, addWorkshop, updateWorkshop, deleteWorkshop } from '../..
 // Authentifizierung (gleiche Logik wie bei admin/slots)
 function checkAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
-  const adminPassword = import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+  // Wichtig: process.env zur Laufzeit lesen, nicht import.meta.env (wird zur Build-Zeit eingebettet)
+  const adminPassword = process.env.ADMIN_PASSWORD || '';
 
   if (!authHeader) return false;
 

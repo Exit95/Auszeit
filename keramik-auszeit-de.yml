@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  web:
+    image: "[2a01:4f8:202:1129:2447:2447:1:900]:5000/keramik-auszeit-de:latest"
+    environment:
+      - ADMIN_PASSWORD=ichliebedich0112
+      - SMTP_HOST=mail.danapfel-digital.de
+      - SMTP_PORT=587
+      - SMTP_USER=info@keramik-auszeit.de
+      - SMTP_PASS=eatEnt,49,%
+      - BOOKING_EMAIL=info@keramik-auszeit.de
+      - FROM_EMAIL=info@keramik-auszeit.de
+      - S3_ENDPOINT=https://nbg1.your-objectstorage.com
+      - S3_BUCKET=danapfel-digital
+      - S3_ACCESS_KEY_ID=EJM7QHG4BX98EEPUYR5W
+      - S3_SECRET_ACCESS_KEY=hCXXaEoNo9Xrgr7oJ9LfAgmWG68wmrnj1SrLpT6W
+      - S3_REGION=eu-central
+      - S3_PREFIX=Auszeit/
+    networks:
+      - public-ingress
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.keramik-auszeit-de.rule=Host(`keramik-auszeit.de`) || Host(`www.keramik-auszeit.de`)"
+        - "traefik.http.routers.keramik-auszeit-de.entrypoints=websecure"
+        - "traefik.http.routers.keramik-auszeit-de.tls.certresolver=myresolver"
+        - "traefik.http.services.keramik-auszeit-de.loadbalancer.server.port=3000"
+
+networks:
+  public-ingress:
+    external: true
+

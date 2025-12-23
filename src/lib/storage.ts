@@ -93,31 +93,41 @@ async function ensureFile(filePath: string, defaultData: any) {
 // Time Slots
 export async function getTimeSlots(): Promise<TimeSlot[]> {
   if (isS3Configured()) {
-    return await readJsonFromS3<TimeSlot[]>(SLOTS_FILENAME, []);
+    const slots = await readJsonFromS3<TimeSlot[]>(SLOTS_FILENAME, []);
+    console.log(`[Storage] getTimeSlots from S3: ${slots.length} slots loaded`);
+    return slots;
   }
   await ensureDataDir();
   await ensureFile(SLOTS_FILE, []);
   const data = await fs.readFile(SLOTS_FILE, 'utf-8');
-  return JSON.parse(data);
+  const slots = JSON.parse(data);
+  console.log(`[Storage] getTimeSlots from file: ${slots.length} slots loaded`);
+  return slots;
 }
 
 export async function saveTimeSlots(slots: TimeSlot[]): Promise<void> {
+  console.log(`[Storage] saveTimeSlots: saving ${slots.length} slots`);
   if (isS3Configured()) {
     await writeJsonToS3(SLOTS_FILENAME, slots);
+    console.log(`[Storage] saveTimeSlots to S3: done`);
     return;
   }
   await ensureDataDir();
   await fs.writeFile(SLOTS_FILE, JSON.stringify(slots, null, 2));
+  console.log(`[Storage] saveTimeSlots to file: done`);
 }
 
 export async function addTimeSlot(slot: Omit<TimeSlot, 'id' | 'createdAt'>): Promise<TimeSlot> {
+  console.log(`[Storage] addTimeSlot: loading existing slots...`);
   const slots = await getTimeSlots();
+  console.log(`[Storage] addTimeSlot: ${slots.length} existing slots found`);
   const newSlot: TimeSlot = {
     ...slot,
-    id: `slot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `slot_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
     createdAt: new Date().toISOString(),
   };
   slots.push(newSlot);
+  console.log(`[Storage] addTimeSlot: saving ${slots.length} total slots`);
   await saveTimeSlots(slots);
   return newSlot;
 }

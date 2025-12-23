@@ -4,7 +4,10 @@ import { getTimeSlots, addTimeSlot, deleteTimeSlot, updateTimeSlot, type TimeSlo
 // Einfache Authentifizierung (später durch besseres System ersetzen)
 function checkAuth(request: Request): boolean {
 	const authHeader = request.headers.get('Authorization');
-	const adminPassword = import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+	// Wichtig: process.env zur Laufzeit lesen, nicht import.meta.env (wird zur Build-Zeit eingebettet)
+	const adminPassword = process.env.ADMIN_PASSWORD || '';
+
+	console.log('[DEBUG] ADMIN_PASSWORD from env:', adminPassword);
 
 	if (!authHeader) return false;
 
@@ -13,6 +16,9 @@ function checkAuth(request: Request): boolean {
 
 	const decoded = Buffer.from(credentials, 'base64').toString();
 	const [username, password] = decoded.split(':');
+
+	console.log('[DEBUG] Received password:', password);
+	console.log('[DEBUG] Match:', password === adminPassword);
 
 	return username === 'admin' && password === adminPassword;
 }

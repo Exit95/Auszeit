@@ -218,60 +218,32 @@ export const prerender = false;
 
       <!-- Tab: Galerie -->
       <div id="tab-galerie" class="admin-tab hidden">
-        <!-- Kategorien-Verwaltung -->
-        <section class="categories-section">
-          <h2>Kategorien verwalten</h2>
-          <div class="categories-controls">
-            <div class="form-group-inline">
-              <input type="text" id="new-category-name" placeholder="Neue Kategorie..." maxlength="50">
-              <button type="button" class="btn btn-primary" id="add-category-btn">Kategorie hinzufügen</button>
-            </div>
-          </div>
-          <div id="categories-loading" class="loading">Lade Kategorien...</div>
-          <div id="categories-list" class="categories-list hidden"></div>
-          <div id="no-categories" class="no-data hidden">Keine Kategorien vorhanden</div>
-        </section>
-
+        <!-- Bild hochladen -->
         <section class="gallery-upload-section">
           <h2>Bild hochladen</h2>
-          <div class="upload-area">
-            <div class="form-group">
-              <label for="upload-category-select">Kategorie auswählen</label>
-              <select id="upload-category-select" class="category-select">
-                <option value="">-- Kategorie wählen --</option>
-                <option value="tassen">Tassen</option>
-                <option value="teller">Teller</option>
-                <option value="spardosen">Spardosen & Krüge & Boxen</option>
-                <option value="anhaenger">Weihnachtsanhänger</option>
-              </select>
-              <small class="form-hint">Das Bild wird in den Ordner public/products/[kategorie]/ hochgeladen</small>
-            </div>
-            <input type="file" id="gallery-file-input" accept="image/*" style="display: none;">
-            <button type="button" class="btn btn-primary" id="select-file-btn">Bild auswählen</button>
-            <button type="button" class="btn btn-success hidden" id="upload-file-btn">Upload starten</button>
-            <div id="selected-file-name" class="selected-file-name"></div>
-            <div id="upload-progress-container" class="upload-progress-container hidden">
-              <div class="upload-progress-bar">
-                <div id="upload-progress-fill" class="upload-progress-fill"></div>
-              </div>
-              <div id="upload-progress-text" class="upload-progress-text">0%</div>
-            </div>
+          <div class="upload-area" id="upload-drop-area">
+            <div class="upload-icon">📤</div>
+            <p class="upload-text">Klicken oder Datei hierher ziehen</p>
+            <p class="upload-hint">Max. 50MB | JPG, PNG, GIF, WebP</p>
+            <input type="file" id="gallery-file-input" accept="image/*" hidden>
           </div>
+          <div id="upload-status" class="upload-status"></div>
         </section>
 
+        <!-- Bilder mit Kategorien -->
         <section class="gallery-list-section">
           <div class="gallery-header">
-            <h2>Galerie</h2>
-            <div class="gallery-controls">
-              <select id="category-filter" class="category-filter">
-                <option value="">Alle Bilder</option>
-              </select>
-              <button type="button" class="btn btn-secondary" id="reload-gallery-btn">Neu laden</button>
-            </div>
+            <h2>Bilder für Hauptseite (mit Kategorie)</h2>
+            <button type="button" class="btn btn-secondary" id="reload-gallery-btn">🔄 Neu laden</button>
           </div>
-          <div id="gallery-loading" class="loading">Lade Bilder...</div>
-          <div id="gallery-grid" class="gallery-grid hidden"></div>
-          <div id="no-images" class="no-data hidden">Keine Bilder vorhanden</div>
+          <div id="gallery-categorized" class="gallery-categories"></div>
+        </section>
+
+        <!-- Bilder ohne Kategorie -->
+        <section class="gallery-uncategorized-section">
+          <h2>Nicht zugeordnete Bilder</h2>
+          <p class="hint">Diese Bilder werden nicht auf der Hauptseite angezeigt. Weise ihnen eine Kategorie zu.</p>
+          <div id="gallery-uncategorized" class="gallery-grid"></div>
         </section>
       </div>
       <!-- Ende Tab: Galerie -->
@@ -992,9 +964,7 @@ export const prerender = false;
             loadWorkshopImageOptions();
             loadWorkshops();
           } else if (tabName === 'galerie') {
-            loadCategories();
-            loadImageMetadata();
-            loadGallery();
+            loadGalleryData();
           } else if (tabName === 'bewertungen') {
             loadReviews();
           }
@@ -1330,626 +1300,245 @@ export const prerender = false;
       updateWorkshopImagePreview(null);
     }
 
-    // ========== GALERIE VERWALTUNG ==========
-    const CHUNK_SIZE = 128 * 1024; // 128 KB
-    let selectedFile: File | null = null;
+    // ========== GALERIE VERWALTUNG (S3) ==========
+    const GALLERY_CATEGORIES = [
+      { id: 'tassen', name: 'Tassen' },
+      { id: 'teller', name: 'Teller' },
+      { id: 'spardosen', name: 'Spardosen & Krüge & Boxen' },
+      { id: 'anhaenger', name: 'Weihnachtsanhänger' },
+    ];
 
-    // Datei auswählen
-    document.getElementById('select-file-btn')?.addEventListener('click', () => {
-      document.getElementById('gallery-file-input')?.click();
+    let galleryImages: any[] = [];
+    let galleryMetadata: Record<string, { category: string | null }> = {};
+
+    // Upload-Bereich initialisieren
+    const uploadArea = document.getElementById('upload-drop-area');
+    const fileInput = document.getElementById('gallery-file-input') as HTMLInputElement;
+    const uploadStatus = document.getElementById('upload-status');
+
+    uploadArea?.addEventListener('click', () => fileInput?.click());
+
+    uploadArea?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('drag-over');
     });
 
-    document.getElementById('gallery-file-input')?.addEventListener('change', (e) => {
-      const input = e.target as HTMLInputElement;
-      if (input.files && input.files.length > 0) {
-        selectedFile = input.files[0];
-        const fileNameEl = document.getElementById('selected-file-name');
-        const uploadBtn = document.getElementById('upload-file-btn');
-
-        if (fileNameEl) {
-          fileNameEl.textContent = `Ausgewählt: ${selectedFile.name} (${formatFileSize(selectedFile.size)})`;
-        }
-        if (uploadBtn) {
-          uploadBtn.classList.remove('hidden');
-        }
-      }
+    uploadArea?.addEventListener('dragleave', () => {
+      uploadArea?.classList.remove('drag-over');
     });
 
-    // Upload starten
-    document.getElementById('upload-file-btn')?.addEventListener('click', async () => {
-      if (!selectedFile) return;
+    uploadArea?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea?.classList.remove('drag-over');
+      const files = (e as DragEvent).dataTransfer?.files;
+      if (files?.[0]) uploadGalleryFile(files[0]);
+    });
 
-      // Kategorie prüfen
-      const categorySelect = document.getElementById('upload-category-select') as HTMLSelectElement;
-      const category = categorySelect?.value;
+    fileInput?.addEventListener('change', () => {
+      if (fileInput.files?.[0]) uploadGalleryFile(fileInput.files[0]);
+    });
 
-      if (!category) {
-        alert('Bitte wähle zuerst eine Kategorie aus!');
-        return;
-      }
-
-      const progressContainer = document.getElementById('upload-progress-container');
-      const progressFill = document.getElementById('upload-progress-fill');
-      const progressText = document.getElementById('upload-progress-text');
-      const uploadBtn = document.getElementById('upload-file-btn') as HTMLButtonElement;
-
-      if (progressContainer) progressContainer.classList.remove('hidden');
-      if (uploadBtn) uploadBtn.disabled = true;
+    async function uploadGalleryFile(file: File) {
+      if (!uploadStatus) return;
+      uploadStatus.className = 'upload-status uploading';
+      uploadStatus.textContent = `Uploading ${file.name}...`;
 
       try {
-        await uploadFileInChunks(selectedFile, category, (progress: number) => {
-          if (progressFill) progressFill.style.width = `${progress}%`;
-          if (progressText) progressText.textContent = `${Math.round(progress)}%`;
+        const formData = new FormData();
+        formData.append('filename', file.name);
+        formData.append('file', file);
+
+        const response = await fetch('/api/gallery', {
+          method: 'POST',
+          headers: { 'Authorization': `Basic ${authCredentials}` },
+          body: formData,
         });
 
-        alert(`Upload erfolgreich! Bild wurde in Kategorie "${category}" gespeichert.`);
-
-        // Reset
-        selectedFile = null;
-        (document.getElementById('gallery-file-input') as HTMLInputElement).value = '';
-        const fileNameEl = document.getElementById('selected-file-name');
-        if (fileNameEl) fileNameEl.textContent = '';
-        if (uploadBtn) {
-          uploadBtn.classList.add('hidden');
-          uploadBtn.disabled = false;
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
         }
-        if (progressContainer) progressContainer.classList.add('hidden');
-        if (progressFill) progressFill.style.width = '0%';
-        if (progressText) progressText.textContent = '0%';
 
-        // Galerie neu laden
-        await loadImageMetadata();
-        await loadGallery();
+        const result = await response.json();
+        uploadStatus.className = 'upload-status success';
+        uploadStatus.textContent = `✓ Hochgeladen: ${result.filename}`;
+        fileInput.value = '';
+        await loadGalleryData();
       } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload fehlgeschlagen!');
-        if (uploadBtn) uploadBtn.disabled = false;
+        uploadStatus.className = 'upload-status error';
+        uploadStatus.textContent = `✗ Fehler: ${error instanceof Error ? error.message : 'Unbekannt'}`;
       }
-    });
+    }
 
-    // Upload-Funktion für Workshop-Bilder (ohne Kategorie, geht in uploads/)
+    // Workshop-Bild Upload (einfach)
     async function uploadFileToUploads(file: File, onProgress: (progress: number) => void) {
-      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-      const uniqueFilename = `${Date.now()}_${file.name}`;
-
-      console.log(`📦 Starting workshop image upload: ${file.name}`);
-      console.log(`   Size: ${formatFileSize(file.size)}`);
-      console.log(`   Chunks: ${totalChunks}`);
-      console.log(`   Unique filename: ${uniqueFilename}`);
-
       const formData = new FormData();
+      formData.append('filename', `${Date.now()}_${file.name}`);
+      formData.append('file', file);
 
-      // Metadaten
-      formData.append('filename', uniqueFilename);
-      formData.append('totalChunks', String(totalChunks));
-      formData.append('fileSize', String(file.size));
+      onProgress(50);
 
-      // Alle Chunks anhängen
-      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-        const start = chunkIndex * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size);
-        const chunk = file.slice(start, end);
-        formData.append(`chunk_${chunkIndex}`, chunk, `chunk_${chunkIndex}`);
-        const progress = ((chunkIndex + 1) / totalChunks) * 50;
-        onProgress(progress);
-      }
-
-      console.log(`✅ All ${totalChunks} chunks prepared`);
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1200000);
-
-      try {
-        onProgress(55);
-
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${authCredentials}`
-          },
-          body: formData,
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          let errorData;
-          try {
-            errorData = JSON.parse(errorText);
-          } catch {
-            errorData = { error: errorText };
-          }
-          throw new Error(errorData.error || 'Upload failed');
-        }
-
-        const result = await response.json();
-        console.log('✅ Workshop image upload successful:', result);
-
-        onProgress(100);
-        return result;
-      } catch (error: any) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-          throw new Error('Upload timeout - Datei zu groß oder Verbindung zu langsam');
-        }
-        throw error;
-      }
-    }
-
-    // Chunk-Upload-Funktion - ALLE Chunks in EINEM Request (für Galerie mit Kategorie)
-    async function uploadFileInChunks(file: File, category: string, onProgress: (progress: number) => void) {
-      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-      const uniqueFilename = `${Date.now()}_${file.name}`;
-
-      console.log(`📦 Starting upload: ${file.name}`);
-      console.log(`   Category: ${category}`);
-      console.log(`   Size: ${formatFileSize(file.size)}`);
-      console.log(`   Chunks: ${totalChunks}`);
-      console.log(`   Unique filename: ${uniqueFilename}`);
-
-      const formData = new FormData();
-
-      // WICHTIG: Metadaten ZUERST anhängen!
-      formData.append('filename', uniqueFilename);
-      formData.append('category', category);
-      formData.append('totalChunks', String(totalChunks));
-      formData.append('fileSize', String(file.size));
-
-      console.log('📝 Metadata added to FormData');
-
-      // Dann alle Chunks anhängen
-      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-        const start = chunkIndex * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size);
-        const chunk = file.slice(start, end);
-
-        // Chunks als chunk_0, chunk_1, etc.
-        formData.append(`chunk_${chunkIndex}`, chunk, `chunk_${chunkIndex}`);
-
-        // Progress während des Chunk-Erstellens
-        const progress = ((chunkIndex + 1) / totalChunks) * 50; // 50% für Vorbereitung
-        onProgress(progress);
-      }
-
-      console.log(`✅ All ${totalChunks} chunks prepared`);
-      console.log('🚀 Starting upload to /api/upload...');
-
-      // Upload mit Timeout (20 Minuten)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.error('⏱️ Upload timeout after 20 minutes!');
-        controller.abort();
-      }, 1200000); // 20 Min
-
-      try {
-        onProgress(55); // Zeige dass Upload startet
-
-        const response = await fetch('/api/images', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${authCredentials}`
-          },
-          body: formData,
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        console.log(`📡 Response received: ${response.status} ${response.statusText}`);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Upload failed:', errorText);
-          let errorData;
-          try {
-            errorData = JSON.parse(errorText);
-          } catch {
-            errorData = { error: errorText };
-          }
-          throw new Error(errorData.error || 'Upload failed');
-        }
-
-        const result = await response.json();
-        console.log('✅ Upload successful:', result);
-
-        onProgress(100); // Upload abgeschlossen
-
-        return result;
-      } catch (error) {
-        clearTimeout(timeoutId);
-        console.error('❌ Upload error:', error);
-        if (error instanceof Error) {
-          console.error('   Message:', error.message);
-          console.error('   Stack:', error.stack);
-        }
-        throw error;
-      }
-    }
-
-    // ========== KATEGORIEN VERWALTUNG ==========
-    let allCategories: any[] = [];
-    let allImageMetadata: any[] = [];
-
-    // Kategorien laden
-    async function loadCategories() {
-      const loadingEl = document.getElementById('categories-loading');
-      const listEl = document.getElementById('categories-list');
-      const noDataEl = document.getElementById('no-categories');
-
-      if (loadingEl) loadingEl.classList.remove('hidden');
-      if (listEl) listEl.classList.add('hidden');
-      if (noDataEl) noDataEl.classList.add('hidden');
-
-      try {
-        const response = await fetch('/api/gallery/categories', {
-          headers: { 'Authorization': `Basic ${authCredentials}` }
-        });
-
-        if (!response.ok) throw new Error('Failed to load categories');
-
-        allCategories = await response.json();
-
-        if (loadingEl) loadingEl.classList.add('hidden');
-
-        if (allCategories.length === 0) {
-          if (noDataEl) noDataEl.classList.remove('hidden');
-          return;
-        }
-
-        if (listEl) {
-          listEl.classList.remove('hidden');
-          listEl.innerHTML = '';
-
-          allCategories.forEach((cat: any) => {
-            const item = document.createElement('div');
-            item.className = 'category-item';
-            item.innerHTML = `
-              <span class="category-name">${escapeHtml(cat.name)}</span>
-              <div class="category-actions">
-                <button class="btn btn-sm btn-secondary" onclick="renameCategory('${cat.id}', '${escapeHtml(cat.name)}')">Umbenennen</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteCategory('${cat.id}')">Löschen</button>
-              </div>
-            `;
-            listEl.appendChild(item);
-          });
-        }
-
-        // Update category filter dropdown
-        updateCategoryFilter();
-      } catch (error) {
-        console.error('Error loading categories:', error);
-        if (loadingEl) loadingEl.classList.add('hidden');
-        alert('Fehler beim Laden der Kategorien');
-      }
-    }
-
-    // Kategorie hinzufügen
-    document.getElementById('add-category-btn')?.addEventListener('click', async () => {
-      const input = document.getElementById('new-category-name') as HTMLInputElement;
-      const name = input?.value.trim();
-
-      if (!name) {
-        alert('Bitte einen Kategorienamen eingeben');
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/gallery/categories', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${authCredentials}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ name })
-        });
-
-        if (response.ok) {
-          if (input) input.value = '';
-          await loadCategories();
-        } else {
-          const error = await response.json();
-          alert(error.error || 'Fehler beim Erstellen der Kategorie');
-        }
-      } catch (error) {
-        console.error('Error adding category:', error);
-        alert('Fehler beim Erstellen der Kategorie');
-      }
-    });
-
-    // Kategorie umbenennen
-    (window as any).renameCategory = async (id: string, currentName: string) => {
-      const newName = prompt('Neuer Name:', currentName);
-      if (!newName || newName.trim() === currentName) return;
-
-      try {
-        const response = await fetch('/api/gallery/categories', {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Basic ${authCredentials}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id, name: newName.trim() })
-        });
-
-        if (response.ok) {
-          await loadCategories();
-        } else {
-          const error = await response.json();
-          alert(error.error || 'Fehler beim Umbenennen der Kategorie');
-        }
-      } catch (error) {
-        console.error('Error renaming category:', error);
-        alert('Fehler beim Umbenennen der Kategorie');
-      }
-    };
-
-    // Kategorie löschen
-    (window as any).deleteCategory = async (id: string) => {
-      if (!confirm('Kategorie wirklich löschen? Die Zuordnung zu Bildern wird entfernt.')) return;
-
-      try {
-        const response = await fetch(`/api/gallery/categories?id=${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Basic ${authCredentials}`,
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        });
-
-        if (response.ok) {
-          await loadCategories();
-          await loadImageMetadata();
-        } else {
-          alert('Fehler beim Löschen der Kategorie');
-        }
-      } catch (error) {
-        console.error('Error deleting category:', error);
-        alert('Fehler beim Löschen der Kategorie');
-      }
-    };
-
-    // Bild-Metadaten laden
-    async function loadImageMetadata() {
-      try {
-        const response = await fetch('/api/gallery/image-categories', {
-          headers: { 'Authorization': `Basic ${authCredentials}` }
-        });
-
-        if (response.ok) {
-          allImageMetadata = await response.json();
-        }
-      } catch (error) {
-        console.error('Error loading image metadata:', error);
-      }
-    }
-
-    // Category filter dropdown aktualisieren
-    function updateCategoryFilter() {
-      const filterEl = document.getElementById('category-filter') as HTMLSelectElement;
-      if (!filterEl) return;
-
-      const currentValue = filterEl.value;
-      filterEl.innerHTML = '<option value="">Alle Bilder</option>';
-
-      allCategories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat.id;
-        option.textContent = cat.name;
-        filterEl.appendChild(option);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Authorization': `Basic ${authCredentials}` },
+        body: formData,
       });
 
-      filterEl.value = currentValue;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      onProgress(100);
+      return await response.json();
     }
 
-    // Category filter change handler
-    document.getElementById('category-filter')?.addEventListener('change', () => {
-      loadGallery();
-    });
-
-    // Galerie laden
-    async function loadGallery() {
-      const loadingEl = document.getElementById('gallery-loading');
-      const gridEl = document.getElementById('gallery-grid');
-      const noImagesEl = document.getElementById('no-images');
-      const filterEl = document.getElementById('category-filter') as HTMLSelectElement;
-      const selectedCategoryId = filterEl?.value || '';
-
-      if (loadingEl) loadingEl.classList.remove('hidden');
-      if (gridEl) gridEl.classList.add('hidden');
-      if (noImagesEl) noImagesEl.classList.add('hidden');
-
+    // Galerie-Daten laden (Bilder + Metadaten)
+    async function loadGalleryData() {
       try {
-        const response = await fetch('/api/images', {
-          headers: {
-            'Authorization': `Basic ${authCredentials}`
-          }
-        });
+        const [imagesRes, metaRes] = await Promise.all([
+          fetch('/api/gallery'),
+          fetch('/api/gallery-metadata'),
+        ]);
 
-        if (!response.ok) throw new Error('Failed to load images');
+        galleryImages = await imagesRes.json();
+        const metaData = await metaRes.json();
+        galleryMetadata = metaData.metadata || {};
 
-        let images = await response.json();
-
-        // Filter nach Kategorie
-        if (selectedCategoryId) {
-          images = images.filter((img: any) => {
-            const metadata = allImageMetadata.find(m => m.filename === img.filename);
-            return metadata && metadata.categories.includes(selectedCategoryId);
-          });
-        }
-
-        if (loadingEl) loadingEl.classList.add('hidden');
-
-        if (images.length === 0) {
-          if (noImagesEl) noImagesEl.classList.remove('hidden');
-          return;
-        }
-
-        if (gridEl) {
-          gridEl.classList.remove('hidden');
-          gridEl.innerHTML = '';
-
-          images.forEach((img: any) => {
-            const metadata = allImageMetadata.find(m => m.filename === img.filename);
-            const imageCategoryIds = metadata?.categories || [];
-            const imageCategoryNames = imageCategoryIds
-              .map((id: string) => allCategories.find(c => c.id === id)?.name)
-              .filter(Boolean);
-
-            const card = document.createElement('div');
-            card.className = 'gallery-item';
-
-            const imagePath = img.path || `/uploads/${img.filename}`;
-            const categoryLabel = img.category || 'uploads';
-
-            card.innerHTML = `
-              <img src="${imagePath}" alt="${escapeHtml(img.filename)}" loading="lazy">
-              <div class="gallery-item__info">
-                <div class="gallery-item__name">${escapeHtml(img.filename)}</div>
-                <div class="gallery-item__size">${formatFileSize(img.size)}</div>
-                <div class="gallery-item__categories">
-                  <span class="category-badge">${escapeHtml(categoryLabel)}</span>
-                  ${imageCategoryNames.length > 0
-                    ? imageCategoryNames.map((name: string) => `<span class="category-badge">${escapeHtml(name)}</span>`).join(' ')
-                    : ''}
-                </div>
-              </div>
-              <div class="gallery-item__actions">
-                <button class="btn btn-sm btn-secondary btn-manage-categories" data-filename="${escapeHtml(img.filename)}">Kategorien</button>
-                <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}" data-category="${escapeHtml(categoryLabel)}">Löschen</button>
-              </div>
-            `;
-
-            gridEl.appendChild(card);
-          });
-
-          // Event Listener für Kategorien-Buttons
-          document.querySelectorAll('.btn-manage-categories').forEach(btn => {
-            btn.addEventListener('click', async () => {
-              const filename = btn.getAttribute('data-filename');
-              if (filename) {
-                await manageCategoriesForImage(filename);
-              }
-            });
-          });
-
-          // Event Listener für Löschen-Buttons
-          document.querySelectorAll('.btn-delete-image').forEach(btn => {
-            btn.addEventListener('click', async () => {
-              const filename = btn.getAttribute('data-filename');
-              const category = btn.getAttribute('data-category');
-              if (confirm(`Bild "${filename}" wirklich löschen?`)) {
-                await deleteImage(filename!, category || undefined);
-              }
-            });
-          });
-        }
+        renderGallery();
       } catch (error) {
         console.error('Error loading gallery:', error);
-        if (loadingEl) loadingEl.classList.add('hidden');
       }
     }
 
-    // Kategorien für ein Bild verwalten
-    async function manageCategoriesForImage(filename: string) {
-      const metadata = allImageMetadata.find(m => m.filename === filename);
-      const currentCategoryIds = metadata?.categories || [];
+    // Galerie rendern
+    function renderGallery() {
+      const categorizedEl = document.getElementById('gallery-categorized');
+      const uncategorizedEl = document.getElementById('gallery-uncategorized');
 
-      // Erstelle Checkbox-Liste
-      const checkboxes = allCategories.map(cat => {
-        const checked = currentCategoryIds.includes(cat.id) ? 'checked' : '';
-        return `<label><input type="checkbox" value="${cat.id}" ${checked}> ${escapeHtml(cat.name)}</label>`;
-      }).join('<br>');
+      if (!categorizedEl || !uncategorizedEl) return;
 
-      const dialog = document.createElement('div');
-      dialog.className = 'modal-overlay';
-      dialog.innerHTML = `
-        <div class="modal-content">
-          <h3>Kategorien für "${escapeHtml(filename)}"</h3>
-          <div class="category-checkboxes">
-            ${checkboxes || '<p>Keine Kategorien vorhanden. Bitte erst Kategorien erstellen.</p>'}
+      // Bilder nach Kategorie gruppieren
+      const categorized: Record<string, any[]> = {};
+      const uncategorized: any[] = [];
+
+      galleryImages.forEach((img: any) => {
+        const meta = galleryMetadata[img.filename];
+        if (meta?.category) {
+          if (!categorized[meta.category]) categorized[meta.category] = [];
+          categorized[meta.category].push(img);
+        } else {
+          uncategorized.push(img);
+        }
+      });
+
+      // Kategorisierte Bilder rendern
+      categorizedEl.innerHTML = '';
+      GALLERY_CATEGORIES.forEach(cat => {
+        const images = categorized[cat.id] || [];
+        if (images.length === 0) return;
+
+        const section = document.createElement('div');
+        section.className = 'category-section';
+        section.innerHTML = `
+          <h3>${escapeHtml(cat.name)} (${images.length})</h3>
+          <div class="gallery-grid">
+            ${images.map((img: any) => renderImageCard(img, cat.id)).join('')}
           </div>
-          <div class="modal-actions">
-            <button class="btn btn-primary" id="save-categories-btn">Speichern</button>
-            <button class="btn btn-secondary" id="cancel-categories-btn">Abbrechen</button>
+        `;
+        categorizedEl.appendChild(section);
+      });
+
+      if (categorizedEl.innerHTML === '') {
+        categorizedEl.innerHTML = '<p class="hint">Noch keine Bilder mit Kategorien.</p>';
+      }
+
+      // Nicht kategorisierte Bilder rendern
+      uncategorizedEl.innerHTML = uncategorized.length > 0
+        ? uncategorized.map((img: any) => renderImageCard(img, null)).join('')
+        : '<p class="hint">Alle Bilder sind kategorisiert.</p>';
+
+      // Event Listener hinzufügen
+      attachGalleryEventListeners();
+    }
+
+    function renderImageCard(img: any, category: string | null): string {
+      return `
+        <div class="gallery-item">
+          <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.filename)}" loading="lazy">
+          <div class="gallery-item__info">
+            <div class="gallery-item__name">${escapeHtml(img.filename)}</div>
+            <div class="gallery-item__size">${formatFileSize(img.size)}</div>
+          </div>
+          <div class="gallery-item__actions">
+            <select class="category-select" data-filename="${escapeHtml(img.filename)}">
+              <option value="">-- Keine Kategorie --</option>
+              ${GALLERY_CATEGORIES.map(c =>
+                `<option value="${c.id}" ${category === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+              ).join('')}
+            </select>
+            <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}">🗑️</button>
           </div>
         </div>
       `;
-
-      document.body.appendChild(dialog);
-
-      // Event Listeners
-      document.getElementById('save-categories-btn')?.addEventListener('click', async () => {
-        const selectedIds = Array.from(dialog.querySelectorAll('input[type="checkbox"]:checked'))
-          .map((cb: any) => cb.value);
-
-        try {
-          const response = await fetch('/api/gallery/image-categories', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Basic ${authCredentials}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ filename, categoryIds: selectedIds })
-          });
-
-          if (response.ok) {
-            await loadImageMetadata();
-            await loadGallery();
-            document.body.removeChild(dialog);
-          } else {
-            alert('Fehler beim Speichern der Kategorien');
-          }
-        } catch (error) {
-          console.error('Error saving categories:', error);
-          alert('Fehler beim Speichern der Kategorien');
-        }
-      });
-
-      document.getElementById('cancel-categories-btn')?.addEventListener('click', () => {
-        document.body.removeChild(dialog);
-      });
     }
 
-    // Bild löschen
-    async function deleteImage(filename: string, category?: string) {
-      try {
-        console.log('Deleting image:', filename, 'from category:', category);
+    function attachGalleryEventListeners() {
+      // Kategorie-Änderung
+      document.querySelectorAll('.category-select').forEach(select => {
+        select.addEventListener('change', async (e) => {
+          const el = e.target as HTMLSelectElement;
+          const filename = el.dataset.filename;
+          const category = el.value || null;
 
-        let url = `/api/images?filename=${encodeURIComponent(filename)}`;
-        if (category) {
-          url += `&category=${encodeURIComponent(category)}`;
-        }
+          try {
+            const response = await fetch('/api/gallery-metadata', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Basic ${authCredentials}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ filename, category }),
+            });
 
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Basic ${authCredentials}`,
-            'X-Requested-With': 'XMLHttpRequest'
+            if (response.ok) {
+              await loadGalleryData();
+            } else {
+              alert('Fehler beim Speichern der Kategorie');
+            }
+          } catch (error) {
+            console.error('Error updating category:', error);
           }
         });
+      });
 
-        console.log('Delete image response status:', response.status);
+      // Löschen
+      document.querySelectorAll('.btn-delete-image').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const filename = (btn as HTMLElement).dataset.filename;
+          if (!filename || !confirm(`Bild "${filename}" wirklich löschen?`)) return;
 
-        if (response.ok) {
-          alert('Bild erfolgreich gelöscht!');
-          await loadImageMetadata();
-          await loadGallery();
-        } else {
-          const error = await response.json();
-          console.error('Delete image error:', error);
-          alert(`Fehler beim Löschen: ${error.error || 'Unbekannter Fehler'}`);
-        }
-      } catch (error) {
-        console.error('Error deleting image:', error);
-        alert('Fehler beim Löschen des Bildes: ' + error);
-      }
+          try {
+            const response = await fetch(`/api/gallery?filename=${encodeURIComponent(filename)}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Basic ${authCredentials}` },
+            });
+
+            if (response.ok) {
+              await loadGalleryData();
+            } else {
+              alert('Fehler beim Löschen');
+            }
+          } catch (error) {
+            console.error('Error deleting image:', error);
+          }
+        });
+      });
     }
 
     // Galerie neu laden Button
     document.getElementById('reload-gallery-btn')?.addEventListener('click', () => {
-      loadGallery();
+      loadGalleryData();
     });
 
     // Hilfsfunktion: Dateigröße formatieren

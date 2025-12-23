@@ -1,39 +1,79 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 
 // Hetzner Object Storage Konfiguration
-const s3Client = new S3Client({
-  endpoint: process.env.S3_ENDPOINT || import.meta.env.S3_ENDPOINT,
-  region: process.env.S3_REGION || import.meta.env.S3_REGION || 'eu-central',
-  credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY || import.meta.env.S3_ACCESS_KEY || '',
-    secretAccessKey: process.env.S3_SECRET_KEY || import.meta.env.S3_SECRET_KEY || '',
-  },
-  forcePathStyle: true, // Wichtig für Hetzner
-});
+// Unterstützt beide Varianten: S3_ACCESS_KEY/S3_SECRET_KEY und S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY
+const getAccessKey = () => process.env.S3_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY || import.meta.env.S3_ACCESS_KEY_ID || import.meta.env.S3_ACCESS_KEY || '';
+const getSecretKey = () => process.env.S3_SECRET_ACCESS_KEY || process.env.S3_SECRET_KEY || import.meta.env.S3_SECRET_ACCESS_KEY || import.meta.env.S3_SECRET_KEY || '';
+const getEndpoint = () => process.env.S3_ENDPOINT || import.meta.env.S3_ENDPOINT || '';
+const getRegion = () => process.env.S3_REGION || import.meta.env.S3_REGION || 'eu-central';
+const getBucket = () => process.env.S3_BUCKET || import.meta.env.S3_BUCKET || '';
+const getPrefix = () => process.env.S3_PREFIX || import.meta.env.S3_PREFIX || 'Auszeit/';
 
-const BUCKET = process.env.S3_BUCKET || import.meta.env.S3_BUCKET || '';
+// Lazy initialization - S3Client wird erst bei Bedarf erstellt
+let _s3Client: S3Client | null = null;
 
-// Projekt-Präfix in S3 (alle Dateien unter diesem Ordner)
-const S3_PROJECT_PREFIX = process.env.S3_PREFIX || import.meta.env.S3_PREFIX || 'Auszeit/';
+function getS3Client(): S3Client {
+  if (!_s3Client) {
+    const endpoint = getEndpoint();
+    const accessKey = getAccessKey();
+    const secretKey = getSecretKey();
+    const region = getRegion();
 
-// JSON-Dateien Pfade in S3
-const S3_DATA_PREFIX = `${S3_PROJECT_PREFIX}data/`;
+    console.log('[S3] Creating S3Client with config:', {
+      endpoint: endpoint ? endpoint.substring(0, 40) : 'MISSING',
+      region,
+      hasAccessKey: !!accessKey,
+      hasSecretKey: !!secretKey,
+    });
+
+    _s3Client = new S3Client({
+      endpoint: endpoint,
+      region: region,
+      credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
+      },
+      forcePathStyle: true, // Wichtig für Hetzner
+    });
+  }
+  return _s3Client;
+}
+
+// Lazy getter für Bucket und Prefix
+function getBucketName(): string {
+  return getBucket();
+}
+
+function getDataPrefix(): string {
+  return `${getPrefix()}data/`;
+}
 
 // S3-Key mit Projekt-Präfix erstellen
 export function getS3Key(path: string): string {
+  const prefix = getPrefix();
   // Wenn der Pfad bereits mit dem Präfix beginnt, nicht nochmal hinzufügen
-  if (path.startsWith(S3_PROJECT_PREFIX)) {
+  if (path.startsWith(prefix)) {
     return path;
   }
-  return `${S3_PROJECT_PREFIX}${path}`;
+  return `${prefix}${path}`;
 }
 
 // Prüfen ob S3 konfiguriert ist
 export function isS3Configured(): boolean {
-  const endpoint = process.env.S3_ENDPOINT || import.meta.env.S3_ENDPOINT;
-  const accessKey = process.env.S3_ACCESS_KEY || import.meta.env.S3_ACCESS_KEY;
-  const secretKey = process.env.S3_SECRET_KEY || import.meta.env.S3_SECRET_KEY;
-  const bucket = process.env.S3_BUCKET || import.meta.env.S3_BUCKET;
+  const endpoint = getEndpoint();
+  const accessKey = getAccessKey();
+  const secretKey = getSecretKey();
+  const bucket = getBucket();
+
+  console.log('[S3] Config check:', {
+    hasEndpoint: !!endpoint,
+    hasAccessKey: !!accessKey,
+    hasSecretKey: !!secretKey,
+    hasBucket: !!bucket,
+    endpoint: endpoint ? endpoint.substring(0, 30) + '...' : 'MISSING',
+    bucket: bucket || 'MISSING'
+  });
+
   return !!(endpoint && accessKey && secretKey && bucket);
 }
 
@@ -43,29 +83,29 @@ export async function uploadToS3(
   key: string,
   contentType: string
 ): Promise<string> {
+  const bucket = getBucketName();
   const command = new PutObjectCommand({
-    Bucket: BUCKET,
+    Bucket: bucket,
     Key: key,
     Body: buffer,
     ContentType: contentType,
     ACL: 'public-read',
   });
 
-  await s3Client.send(command);
+  await getS3Client().send(command);
 
   // Öffentliche URL zurückgeben
-  const endpoint = process.env.S3_ENDPOINT || import.meta.env.S3_ENDPOINT;
-  return `${endpoint}/${BUCKET}/${key}`;
+  return `${getEndpoint()}/${bucket}/${key}`;
 }
 
 // Bild löschen
 export async function deleteFromS3(key: string): Promise<void> {
   const command = new DeleteObjectCommand({
-    Bucket: BUCKET,
+    Bucket: getBucketName(),
     Key: key,
   });
 
-  await s3Client.send(command);
+  await getS3Client().send(command);
 }
 
 // Alle Bilder in einem Ordner auflisten
@@ -75,17 +115,17 @@ export async function listS3Objects(prefix: string): Promise<{
   size: number;
   lastModified: Date;
 }[]> {
+  const bucket = getBucketName();
   const command = new ListObjectsV2Command({
-    Bucket: BUCKET,
+    Bucket: bucket,
     Prefix: prefix,
   });
 
-  const response = await s3Client.send(command);
-  const endpoint = process.env.S3_ENDPOINT || import.meta.env.S3_ENDPOINT;
+  const response = await getS3Client().send(command);
 
   return (response.Contents || []).map((obj) => ({
     key: obj.Key || '',
-    url: `${endpoint}/${BUCKET}/${obj.Key}`,
+    url: `${getEndpoint()}/${bucket}/${obj.Key}`,
     size: obj.Size || 0,
     lastModified: obj.LastModified || new Date(),
   }));
@@ -115,11 +155,11 @@ export async function readJsonFromS3<T>(filename: string, defaultValue: T): Prom
 
   try {
     const command = new GetObjectCommand({
-      Bucket: BUCKET,
-      Key: `${S3_DATA_PREFIX}${filename}`,
+      Bucket: getBucketName(),
+      Key: `${getDataPrefix()}${filename}`,
     });
 
-    const response = await s3Client.send(command);
+    const response = await getS3Client().send(command);
     const bodyString = await response.Body?.transformToString();
 
     if (!bodyString) {
@@ -143,13 +183,13 @@ export async function writeJsonToS3<T>(filename: string, data: T): Promise<void>
   }
 
   const command = new PutObjectCommand({
-    Bucket: BUCKET,
-    Key: `${S3_DATA_PREFIX}${filename}`,
+    Bucket: getBucketName(),
+    Key: `${getDataPrefix()}${filename}`,
     Body: JSON.stringify(data, null, 2),
     ContentType: 'application/json',
   });
 
-  await s3Client.send(command);
+  await getS3Client().send(command);
 }
 
 // Bild aus S3 lesen
@@ -160,11 +200,11 @@ export async function getImageFromS3(key: string): Promise<Buffer | null> {
 
   try {
     const command = new GetObjectCommand({
-      Bucket: BUCKET,
+      Bucket: getBucketName(),
       Key: key,
     });
 
-    const response = await s3Client.send(command);
+    const response = await getS3Client().send(command);
 
     if (!response.Body) {
       return null;

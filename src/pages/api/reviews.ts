@@ -3,6 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../lib/s3-storage';
+import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
+
+// Admin-Passwort zur Laufzeit lesen
+function getAdminPassword(): string {
+  return process.env.ADMIN_PASSWORD || '';
+}
 
 const REVIEWS_FILE = path.join(process.cwd(), 'data', 'reviews.json');
 const REVIEWS_FILENAME = 'reviews.json';
@@ -67,7 +73,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
       const [username, password] = credentials.split(':');
       
-      if (username !== 'admin' || password !== import.meta.env.ADMIN_PASSWORD) {
+      if (username !== 'admin' || password !== getAdminPassword()) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { 'Content-Type': 'application/json' }
@@ -148,32 +154,32 @@ export const POST: APIRoute = async ({ request }) => {
 
 // Hilfsfunktion: E-Mail-Benachrichtigung senden
 async function sendReviewNotificationEmail(review: Review) {
-  const bookingEmail = import.meta.env.BOOKING_EMAIL || 'info@keramik-auszeit.de';
-  const fromEmail = import.meta.env.FROM_EMAIL || 'info@keramik-auszeit.de';
+  const bookingEmail = BOOKING_EMAIL;
+  const fromEmail = FROM_EMAIL;
 
   console.log('📧 Versuche Bewertungs-E-Mail zu senden...');
   console.log('SMTP Config:', {
-    host: import.meta.env.SMTP_HOST,
-    port: import.meta.env.SMTP_PORT,
-    user: import.meta.env.SMTP_USER,
-    hasPassword: !!import.meta.env.SMTP_PASS,
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    user: SMTP_USER,
+    hasPassword: !!SMTP_PASS,
     to: bookingEmail,
     from: fromEmail
   });
 
-  if (!import.meta.env.SMTP_HOST || !import.meta.env.SMTP_USER || !import.meta.env.SMTP_PASS) {
+  if (!isSmtpConfigured()) {
     console.log('⚠️ SMTP nicht konfiguriert - E-Mail-Benachrichtigung wird übersprungen');
     return;
   }
 
   try {
     const transporter = nodemailer.createTransport({
-      host: import.meta.env.SMTP_HOST,
-      port: parseInt(import.meta.env.SMTP_PORT || '465'),
-      secure: import.meta.env.SMTP_PORT === '465',
+      host: SMTP_HOST,
+      port: parseInt(SMTP_PORT),
+      secure: SMTP_PORT === '465',
       auth: {
-        user: import.meta.env.SMTP_USER,
-        pass: import.meta.env.SMTP_PASS,
+        user: SMTP_USER,
+        pass: SMTP_PASS,
       },
       tls: {
         rejectUnauthorized: false
@@ -293,13 +299,13 @@ export const PATCH: APIRoute = async ({ request }) => {
   const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
   const [username, password] = credentials.split(':');
   
-  if (username !== 'admin' || password !== import.meta.env.ADMIN_PASSWORD) {
+  if (username !== 'admin' || password !== getAdminPassword()) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
     });
   }
-  
+
   try {
     const body = await request.json();
     const { id, approved } = body;
@@ -344,7 +350,7 @@ export const DELETE: APIRoute = async ({ request, url }) => {
   const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
   const [username, password] = credentials.split(':');
 
-  if (username !== 'admin' || password !== import.meta.env.ADMIN_PASSWORD) {
+  if (username !== 'admin' || password !== getAdminPassword()) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
@@ -384,4 +390,3 @@ export const DELETE: APIRoute = async ({ request, url }) => {
     });
   }
 };
-

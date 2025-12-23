@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-storage';
+import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILE = path.join(DATA_DIR, 'workshop-bookings.json');
@@ -153,9 +154,9 @@ export const POST: APIRoute = async ({ request }) => {
 	    bookings.push(newBooking);
 	    await saveWorkshopBookings(bookings);
 
-	    // E-Mail-Adressen wie bei /api/booking.ts
-	    const bookingEmail = import.meta.env.BOOKING_EMAIL || 'info@keramik-auszeit.de';
-	    const fromEmail = import.meta.env.FROM_EMAIL || 'info@keramik-auszeit.de';
+	    // E-Mail-Adressen aus zentraler Config
+	    const bookingEmail = BOOKING_EMAIL;
+	    const fromEmail = FROM_EMAIL;
 
 	    // E-Mail-Inhalte vorbereiten
 	    const adminSubject = `Neue Workshop-Buchung: ${workshop.title} - ${name}`;
@@ -208,7 +209,7 @@ export const POST: APIRoute = async ({ request }) => {
 
 	        <p>Bei Fragen oder &Auml;nderungsw&uuml;nschen k&ouml;nnen Sie uns gerne kontaktieren:</p>
 	        <p>
-	          4e7 E-Mail: ${bookingEmail}<br />
+	          📧 E-Mail: ${bookingEmail}<br />
 	        </p>
 
 	        <p style="margin-top: 30px;">Herzliche Gr&uuml;&szlig;e,<br />
@@ -241,15 +242,15 @@ export const POST: APIRoute = async ({ request }) => {
 	    `;
 
 	    // E-Mail-Versand nur, wenn SMTP konfiguriert ist
-	    if (import.meta.env.SMTP_HOST && import.meta.env.SMTP_USER && import.meta.env.SMTP_PASS) {
+	    if (isSmtpConfigured()) {
 	      try {
 	        const transporter = nodemailer.createTransport({
-	          host: import.meta.env.SMTP_HOST,
-	          port: parseInt(import.meta.env.SMTP_PORT || '587'),
-	          secure: import.meta.env.SMTP_PORT === '465',
+	          host: SMTP_HOST,
+	          port: parseInt(SMTP_PORT),
+	          secure: SMTP_PORT === '465',
 	          auth: {
-	            user: import.meta.env.SMTP_USER,
-	            pass: import.meta.env.SMTP_PASS,
+	            user: SMTP_USER,
+	            pass: SMTP_PASS,
 	          },
 	          tls: {
 	            rejectUnauthorized: false,
@@ -278,6 +279,8 @@ export const POST: APIRoute = async ({ request }) => {
 	      } catch (mailError) {
 	        console.error('Error sending workshop booking emails:', mailError);
 	      }
+	    } else {
+	      console.warn('⚠️ SMTP nicht konfiguriert - Workshop-Buchungs-E-Mails werden nicht gesendet');
 	    }
 
 	    return new Response(JSON.stringify({ 
@@ -295,4 +298,3 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 };
-
