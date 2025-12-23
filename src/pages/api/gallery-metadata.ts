@@ -10,12 +10,16 @@ let _s3Client: S3Client | null = null;
 
 function getS3Client(): S3Client {
   if (!_s3Client) {
+    // Unterstützt beide Varianten der Umgebungsvariablen
+    const accessKey = process.env.S3_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY || '';
+    const secretKey = process.env.S3_SECRET_ACCESS_KEY || process.env.S3_SECRET_KEY || '';
+
     _s3Client = new S3Client({
       endpoint: process.env.S3_ENDPOINT || 'https://nbg1.your-objectstorage.com',
       region: process.env.S3_REGION || 'eu-central',
       credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY || '',
-        secretAccessKey: process.env.S3_SECRET_KEY || '',
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
       },
       forcePathStyle: true,
     });
