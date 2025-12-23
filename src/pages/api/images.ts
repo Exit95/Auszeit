@@ -66,14 +66,18 @@ export const GET: APIRoute = async ({ request }) => {
             const ext = obj.key.split('.').pop()?.toLowerCase();
             return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
           })
-          .map(obj => ({
-            filename: obj.key.split('/').pop() || '',
-            category: category,
-            path: obj.url,
-            size: obj.size,
-            created: obj.lastModified,
-            modified: obj.lastModified
-          }));
+          .map(obj => {
+            const filename = obj.key.split('/').pop() || '';
+            return {
+              filename: filename,
+              category: category,
+              // Verwende lokale Proxy-Route statt direkte S3-URL
+              path: `/products/${category}/${filename}`,
+              size: obj.size,
+              created: obj.lastModified,
+              modified: obj.lastModified
+            };
+          });
         imageFiles.push(...categoryImages);
       }
 
@@ -84,14 +88,18 @@ export const GET: APIRoute = async ({ request }) => {
           const ext = obj.key.split('.').pop()?.toLowerCase();
           return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
         })
-        .map(obj => ({
-          filename: obj.key.split('/').pop() || '',
-          category: 'uploads',
-          path: obj.url,
-          size: obj.size,
-          created: obj.lastModified,
-          modified: obj.lastModified
-        }));
+        .map(obj => {
+          const filename = obj.key.split('/').pop() || '';
+          return {
+            filename: filename,
+            category: 'uploads',
+            // Verwende lokale Proxy-Route statt direkte S3-URL
+            path: `/uploads/${filename}`,
+            size: obj.size,
+            created: obj.lastModified,
+            modified: obj.lastModified
+          };
+        });
       imageFiles.push(...uploadImages);
 
     } else {
