@@ -33,9 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const workshop = await loadWorkshopData(workshopId);
     if (!workshop) return;
 
-    // Bild setzen
+    // Bild setzen - prüfe ob URL oder lokaler Dateiname
     const imageUrl = workshop.imageFilename
-      ? `/uploads/${workshop.imageFilename}`
+      ? (workshop.imageFilename.startsWith('http') ? workshop.imageFilename : `/uploads/${workshop.imageFilename}`)
       : "/becher.jpeg";
     modalImage.src = imageUrl;
     modalImage.alt = workshop.title;

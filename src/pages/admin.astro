@@ -281,17 +281,21 @@ export const prerender = false;
     // Speichert die URL für das ausgewählte Bild (für Vorschau)
     let workshopImageUrlMap: Record<string, string> = {};
 
-    function updateWorkshopImagePreview(filename: string | null) {
+    function updateWorkshopImagePreview(imageValue: string | null) {
       const previewEl = document.getElementById('workshop-image-preview') as HTMLDivElement | null;
       if (!previewEl) return;
 
-      if (!filename) {
+      if (!imageValue) {
         previewEl.innerHTML = '';
         return;
       }
 
-      // URL aus der Map holen (S3-URL)
-      const imageUrl = workshopImageUrlMap[filename] || '';
+      // Wenn es bereits eine URL ist (beginnt mit http), direkt verwenden
+      // Sonst aus der Map holen
+      const imageUrl = imageValue.startsWith('http')
+        ? imageValue
+        : (workshopImageUrlMap[imageValue] || '');
+
       if (!imageUrl) {
         previewEl.innerHTML = '';
         return;
