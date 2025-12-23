@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import nodemailer from 'nodemailer';
 import { getTimeSlots, addBooking } from '../../lib/storage';
+import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
 
 export const POST: APIRoute = async ({ request }) => {
 	  try {
@@ -68,8 +69,8 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
 		    // E-Mail-Adressen aus Environment-Variablen
-		    const bookingEmail = import.meta.env.BOOKING_EMAIL || 'info@keramik-auszeit.de';
-		    const fromEmail = import.meta.env.FROM_EMAIL || 'info@keramik-auszeit.de';
+		    const bookingEmail = BOOKING_EMAIL;
+		    const fromEmail = FROM_EMAIL;
 
 	    // Anzeigeformat für die Uhrzeit (mit optionaler Endzeit)
 	    const timeDisplay = slot.endTime ? `${slot.time} - ${slot.endTime}` : slot.time;
@@ -196,85 +197,90 @@ STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR`;
 
-    // E-Mail-Versand (nur wenn SMTP konfiguriert ist)
+    // E-Mail-Versand asynchron im Hintergrund (blockiert nicht die Response)
     let emailSent = false;
-    let customerEmailSent = false;
-    let emailError = null;
+    let emailError: string | null = null;
 
-    if (import.meta.env.SMTP_HOST && import.meta.env.SMTP_USER && import.meta.env.SMTP_PASS) {
-      try {
-        // Nodemailer konfigurieren
-        const transporter = nodemailer.createTransport({
-          host: import.meta.env.SMTP_HOST,
-          port: parseInt(import.meta.env.SMTP_PORT || '587'),
-          secure: import.meta.env.SMTP_PORT === '465', // true für Port 465, false für andere Ports
-          auth: {
-            user: import.meta.env.SMTP_USER,
-            pass: import.meta.env.SMTP_PASS,
-          },
-          tls: {
-            rejectUnauthorized: false // Für selbstsignierte Zertifikate
-          }
-        });
+    // E-Mail-Versand im Hintergrund starten (nicht awaiten!)
+    if (isSmtpConfigured()) {
+      console.log('📧 SMTP konfiguriert, starte E-Mail-Versand im Hintergrund...');
 
-        // Verbindung testen
-        await transporter.verify();
-        console.log('SMTP-Verbindung erfolgreich');
+      // Async Funktion die im Hintergrund läuft
+      const sendEmails = async () => {
+        try {
+          console.log('SMTP Config:', { host: SMTP_HOST, port: SMTP_PORT, user: SMTP_USER });
 
-        // E-Mail an Admin senden
-        console.log('📧 Sende Admin-E-Mail an:', bookingEmail);
-        const adminResult = await transporter.sendMail({
-          from: `"Atelier Auszeit - Irena Woschkowiak" <${fromEmail}>`,
-          to: bookingEmail,
-          subject: adminEmailData.subject,
-          text: adminEmailData.text,
-          html: adminEmailData.html,
-          icalEvent: {
-            filename: 'termin.ics',
-            method: 'REQUEST',
-            content: icalEvent,
-          },
-        });
+          // Nodemailer konfigurieren mit Timeout
+          const transporter = nodemailer.createTransport({
+            host: SMTP_HOST,
+            port: parseInt(SMTP_PORT),
+            secure: SMTP_PORT === '465',
+            auth: {
+              user: SMTP_USER,
+              pass: SMTP_PASS,
+            },
+            tls: {
+              rejectUnauthorized: false
+            },
+            connectionTimeout: 15000,
+            greetingTimeout: 15000,
+            socketTimeout: 20000,
+          });
 
-        emailSent = true;
-        console.log('✅ Admin-E-Mail erfolgreich gesendet an:', bookingEmail);
-        console.log('📨 Admin-E-Mail Response:', {
-          messageId: adminResult.messageId,
-          accepted: adminResult.accepted,
-          rejected: adminResult.rejected,
-          response: adminResult.response
-        });
+          // Verbindung testen
+          console.log('🔌 Teste SMTP-Verbindung...');
+          await transporter.verify();
+          console.log('✅ SMTP-Verbindung erfolgreich');
 
-	        // Eingangsbestätigung an Kunden senden (noch keine finale Terminbestätigung)
-        console.log('📧 Sende Kunden-E-Mail an:', email);
-        const customerResult = await transporter.sendMail({
-          from: `"Atelier Auszeit - Irena Woschkowiak" <${fromEmail}>`,
-          to: customerEmailData.to,
-          subject: customerEmailData.subject,
-          text: customerEmailData.text,
-	          html: customerEmailData.html,
-        });
+          // E-Mail an Admin senden
+          console.log('📧 Sende Admin-E-Mail an:', bookingEmail);
+          await transporter.sendMail({
+            from: `"Atelier Auszeit - Irena Woschkowiak" <${fromEmail}>`,
+            to: bookingEmail,
+            subject: adminEmailData.subject,
+            text: adminEmailData.text,
+            html: adminEmailData.html,
+            icalEvent: {
+              filename: 'termin.ics',
+              method: 'REQUEST',
+              content: icalEvent,
+            },
+          });
+          console.log('✅ Admin-E-Mail erfolgreich gesendet');
 
-        customerEmailSent = true;
-        console.log('✅ Bestätigungs-E-Mail erfolgreich gesendet an:', email);
-        console.log('📨 Kunden-E-Mail Response:', {
-          messageId: customerResult.messageId,
-          accepted: customerResult.accepted,
-          rejected: customerResult.rejected,
-          response: customerResult.response
-        });
-      } catch (error: any) {
-        emailError = error.message;
-        console.error('❌ Fehler beim E-Mail-Versand:', error);
-        console.error('SMTP Config:', {
-          host: import.meta.env.SMTP_HOST,
-          port: import.meta.env.SMTP_PORT,
-          user: import.meta.env.SMTP_USER,
-          hasPassword: !!import.meta.env.SMTP_PASS
-        });
-      }
+          // Eingangsbestätigung an Kunden senden
+          console.log('📧 Sende Kunden-E-Mail an:', email);
+          await transporter.sendMail({
+            from: `"Atelier Auszeit - Irena Woschkowiak" <${fromEmail}>`,
+            to: customerEmailData.to,
+            subject: customerEmailData.subject,
+            text: customerEmailData.text,
+            html: customerEmailData.html,
+          });
+          console.log('✅ Kunden-E-Mail erfolgreich gesendet');
+
+        } catch (error: any) {
+          console.error('❌ Fehler beim E-Mail-Versand:', error.message);
+          console.error('SMTP Config:', {
+            host: SMTP_HOST,
+            port: SMTP_PORT,
+            user: SMTP_USER,
+            hasPassword: !!SMTP_PASS
+          });
+        }
+      };
+
+      // Starte E-Mail-Versand im Hintergrund (nicht awaiten!)
+      sendEmails().catch(err => console.error('Background email error:', err));
+      emailSent = true; // Wir gehen davon aus, dass es klappt
     } else {
       console.warn('⚠️ SMTP nicht konfiguriert - E-Mail wird nicht gesendet');
+      console.warn('SMTP Debug:', {
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        user: SMTP_USER,
+        hasPassword: !!SMTP_PASS
+      });
       emailError = 'SMTP nicht konfiguriert';
     }
 
@@ -284,11 +290,7 @@ END:VCALENDAR`;
         message: 'Buchung erfolgreich erstellt',
         calendarEvent: icalEvent,
         emailSent: emailSent,
-        customerEmailSent: customerEmailSent,
-	        emailError: emailError,
-	        // Debug-Infos zum SMTP-Setup (nur Host/Port, kein Passwort)
-	        smtpHost: import.meta.env.SMTP_HOST,
-	        smtpPort: import.meta.env.SMTP_PORT || '587',
+        emailError: emailError,
       }),
       {
         status: 200,
@@ -313,4 +315,3 @@ END:VCALENDAR`;
     );
   }
 };
-

@@ -1,11 +1,13 @@
 import type { APIRoute } from 'astro';
 import nodemailer from 'nodemailer';
 import { getBookings, getTimeSlots, cancelBooking, updateBooking } from '../../../lib/storage';
+import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
 
 // Einfache Authentifizierung (gleiche Logik wie bei admin/slots)
 function checkAuth(request: Request): boolean {
 	const authHeader = request.headers.get('Authorization');
-	const adminPassword = import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
+	// Wichtig: process.env zur Laufzeit lesen, nicht import.meta.env (wird zur Build-Zeit eingebettet)
+	const adminPassword = process.env.ADMIN_PASSWORD || '';
 
 	if (!authHeader) return false;
 
@@ -97,7 +99,7 @@ export const POST: APIRoute = async ({ request }) => {
 						? (slot.endTime ? `${slot.time} - ${slot.endTime}` : slot.time)
 						: '';
 
-					const fromEmail = import.meta.env.FROM_EMAIL || 'info@keramik-auszeit.de';
+					const fromEmail = FROM_EMAIL;
 
 					const customerSubject = date && timeDisplay
 						? `Dein Termin wurde bestätigt - Atelier Auszeit am ${date} um ${timeDisplay} Uhr`
@@ -178,14 +180,14 @@ END:VEVENT
 END:VCALENDAR`;
 					}
 
-					if (import.meta.env.SMTP_HOST && import.meta.env.SMTP_USER && import.meta.env.SMTP_PASS) {
+					if (isSmtpConfigured()) {
 						const transporter = nodemailer.createTransport({
-							host: import.meta.env.SMTP_HOST,
-							port: parseInt(import.meta.env.SMTP_PORT || '587'),
-							secure: import.meta.env.SMTP_PORT === '465',
+							host: SMTP_HOST,
+							port: parseInt(SMTP_PORT),
+							secure: SMTP_PORT === '465',
 							auth: {
-								user: import.meta.env.SMTP_USER,
-								pass: import.meta.env.SMTP_PASS,
+								user: SMTP_USER,
+								pass: SMTP_PASS,
 							},
 							tls: {
 								rejectUnauthorized: false,
