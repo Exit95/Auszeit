@@ -2,22 +2,39 @@ import type { APIRoute } from 'astro';
 import nodemailer from 'nodemailer';
 import { getTimeSlots, addBooking } from '../../lib/storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
+import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeDate, sanitizeTime } from '../../lib/sanitize';
 
 export const POST: APIRoute = async ({ request }) => {
 	  try {
 	    const data = await request.json();
-	    const { name, email, phone, participants, date, time, notes } = data;
+
+	    // Sanitize all inputs
+	    const name = sanitizeText(data.name);
+	    const email = sanitizeEmail(data.email);
+	    const phone = sanitizePhone(data.phone);
+	    const participants = sanitizeNumber(data.participants, 1, 20);
+	    const date = sanitizeDate(data.date);
+	    const time = sanitizeTime(data.time);
+	    const notes = sanitizeText(data.notes);
+
+	    // Validate required fields
+	    if (!name || !email || !date || !time) {
+	      return new Response(
+	        JSON.stringify({
+	          success: false,
+	          message: 'Bitte füllen Sie alle Pflichtfelder korrekt aus',
+	        }),
+	        {
+	          status: 400,
+	          headers: { 'Content-Type': 'application/json' }
+	        }
+	      );
+	    }
 
 		    // Finde den passenden Slot
 		    const slots = await getTimeSlots();
-		    // Das Frontend sendet das Datum bereits im Format "YYYY-MM-DD".
-		    // Wir vermeiden hier eine Umwandlung mit new Date(...), weil dadurch durch
-		    // Zeitzonenverschiebungen (z.B. +01:00) der Vortag herauskommen kann und
-		    // der Slot dann nicht gefunden wird.
-		    const dateStr = typeof date === 'string'
-		      ? (date.includes('T') ? date.split('T')[0] : date)
-		      : new Date(date).toISOString().split('T')[0];
-		    const slot = slots.find(s => s.date === dateStr && s.time === time);
+		    // date is already sanitized to YYYY-MM-DD format
+		    const slot = slots.find(s => s.date === date && s.time === time);
 
     if (!slot) {
       return new Response(
@@ -32,7 +49,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-	    if (slot.available < parseInt(participants, 10)) {
+	    if (slot.available < participants) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -49,9 +66,9 @@ export const POST: APIRoute = async ({ request }) => {
 	    const booking = await addBooking({
 	      slotId: slot.id,
 	      name,
-	      email,
+	      email: email!,
 	      phone: phone || '',
-	      participants: parseInt(participants, 10),
+	      participants,
 	      notes: notes || '',
 	    });
 

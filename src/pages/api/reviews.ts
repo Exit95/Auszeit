@@ -4,6 +4,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../lib/s3-storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
+import { sanitizeText, sanitizeNumber } from '../../lib/sanitize';
 
 // Admin-Passwort zur Laufzeit lesen
 function getAdminPassword(): string {
@@ -106,17 +107,14 @@ export const GET: APIRoute = async ({ request, url }) => {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { name, rating, comment } = body;
-    
-    if (!name || !rating || !comment) {
+
+    // Sanitize inputs
+    const name = sanitizeText(body.name);
+    const rating = sanitizeNumber(body.rating, 1, 5);
+    const comment = sanitizeText(body.comment);
+
+    if (!name || !comment) {
       return new Response(JSON.stringify({ error: 'Fehlende Felder' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    
-    if (rating < 1 || rating > 5) {
-      return new Response(JSON.stringify({ error: 'Bewertung muss zwischen 1 und 5 sein' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -127,7 +125,7 @@ export const POST: APIRoute = async ({ request }) => {
     const newReview: Review = {
       id: Date.now().toString(),
       name,
-      rating: parseInt(rating),
+      rating,
       comment,
       date: new Date().toISOString(),
       approved: false
