@@ -4,6 +4,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
+import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeId } from '../../../lib/sanitize';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILE = path.join(DATA_DIR, 'workshop-bookings.json');
@@ -62,27 +63,18 @@ async function saveWorkshopBookings(bookings: WorkshopBooking[]): Promise<void> 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { workshopId, name, email, phone, participants, notes } = body;
+
+    // Sanitize all inputs
+    const workshopId = sanitizeId(body.workshopId);
+    const name = sanitizeText(body.name);
+    const email = sanitizeEmail(body.email);
+    const phone = sanitizePhone(body.phone);
+    const participants = sanitizeNumber(body.participants, 1, 10);
+    const notes = sanitizeText(body.notes);
 
     // Validierung
-    if (!workshopId || !name || !email || !participants) {
+    if (!workshopId || !name || !email) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (participants < 1) {
-      return new Response(JSON.stringify({ error: 'Invalid number of participants' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // E-Mail-Validierung
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return new Response(JSON.stringify({ error: 'Invalid email address' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -138,15 +130,15 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-	    // Erstelle Buchung
+	    // Erstelle Buchung (inputs are already sanitized)
 	    const newBooking: WorkshopBooking = {
 	      id: `wb_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
 	      workshopId,
-	      name: name.trim(),
-	      email: email.trim().toLowerCase(),
-	      phone: phone?.trim(),
+	      name,
+	      email,
+	      phone: phone || undefined,
 	      participants,
-	      notes: notes?.trim(),
+	      notes: notes || undefined,
 	      createdAt: new Date().toISOString(),
 	      status: 'pending',
 	    };

@@ -4,6 +4,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
+import { sanitizeId } from '../../../lib/sanitize';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILENAME = 'workshop-bookings.json';
@@ -122,7 +123,11 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const { id, action } = await request.json();
+    const body = await request.json();
+
+    // Sanitize inputs
+    const id = sanitizeId(body.id);
+    const action = body.action === 'confirm' ? 'confirm' : body.action === 'cancel' ? 'cancel' : null;
 
     if (!id) {
       return new Response(JSON.stringify({ error: 'Missing booking ID' }), {

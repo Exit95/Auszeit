@@ -7,6 +7,7 @@ import {
   DeleteObjectCommand,
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
+import { sanitizeFilename, isPathSafe } from '../../lib/sanitize';
 
 // S3 Client (Lazy-loaded)
 let _s3Client: S3Client | null = null;
@@ -172,9 +173,30 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       try {
-        const ext = originalFilename.split('.').pop() || 'jpg';
+        // Sanitize filename and validate extension
+        const safeOriginalName = sanitizeFilename(originalFilename);
+        const ext = safeOriginalName.split('.').pop()?.toLowerCase() || 'jpg';
+
+        // Only allow image extensions
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!allowedExtensions.includes(ext)) {
+          resolve(new Response(JSON.stringify({ error: 'Invalid file type' }), {
+            status: 400, headers: { 'Content-Type': 'application/json' },
+          }));
+          return;
+        }
+
         const filename = `${Date.now()}.${ext}`;
         const key = `${PREFIX}/${filename}`;
+
+        // Validate path safety
+        if (!isPathSafe(key)) {
+          resolve(new Response(JSON.stringify({ error: 'Invalid path' }), {
+            status: 400, headers: { 'Content-Type': 'application/json' },
+          }));
+          return;
+        }
+
         const mimeTypes: Record<string, string> = {
           jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
           gif: 'image/gif', webp: 'image/webp',
@@ -184,7 +206,7 @@ export const POST: APIRoute = async ({ request }) => {
           Bucket: getBucket(),
           Key: key,
           Body: fileBuffer,
-          ContentType: mimeTypes[ext.toLowerCase()] || 'application/octet-stream',
+          ContentType: mimeTypes[ext] || 'application/octet-stream',
           ACL: 'public-read',
         }));
 
@@ -216,10 +238,19 @@ export const DELETE: APIRoute = async ({ request }) => {
 
   try {
     const url = new URL(request.url);
-    const filename = url.searchParams.get('filename');
+    const rawFilename = url.searchParams.get('filename');
 
-    if (!filename) {
+    if (!rawFilename) {
       return new Response(JSON.stringify({ error: 'Missing filename' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Sanitize filename to prevent path traversal
+    const filename = sanitizeFilename(rawFilename);
+    if (!filename || !isPathSafe(filename)) {
+      return new Response(JSON.stringify({ error: 'Invalid filename' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
