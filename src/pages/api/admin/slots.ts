@@ -7,8 +7,6 @@ function checkAuth(request: Request): boolean {
 	// Wichtig: process.env zur Laufzeit lesen, nicht import.meta.env (wird zur Build-Zeit eingebettet)
 	const adminPassword = process.env.ADMIN_PASSWORD || '';
 
-	console.log('[DEBUG] ADMIN_PASSWORD from env:', adminPassword);
-
 	if (!authHeader) return false;
 
 	const [type, credentials] = authHeader.split(' ');
@@ -16,9 +14,6 @@ function checkAuth(request: Request): boolean {
 
 	const decoded = Buffer.from(credentials, 'base64').toString();
 	const [username, password] = decoded.split(':');
-
-	console.log('[DEBUG] Received password:', password);
-	console.log('[DEBUG] Match:', password === adminPassword);
 
 	return username === 'admin' && password === adminPassword;
 }

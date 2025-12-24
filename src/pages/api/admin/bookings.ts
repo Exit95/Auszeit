@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro';
 import nodemailer from 'nodemailer';
 import { getBookings, getTimeSlots, cancelBooking, updateBooking } from '../../../lib/storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
+import { logAuditEvent } from '../../../lib/audit-log';
 
 // Einfache Authentifizierung (gleiche Logik wie bei admin/slots)
 function checkAuth(request: Request): boolean {
@@ -58,7 +60,24 @@ export const GET: APIRoute = async ({ request }) => {
 
 // POST - Buchung stornieren oder bestätigen
 export const POST: APIRoute = async ({ request }) => {
+	// Rate limiting for admin actions
+	const clientId = getClientIdentifier(request);
+	const rateLimit = checkRateLimit(clientId, RATE_LIMITS.ADMIN);
+	if (!rateLimit.allowed) {
+		await logAuditEvent('RATE_LIMIT_EXCEEDED', request, {
+			resource: '/api/admin/bookings',
+			action: 'Admin rate limit exceeded',
+			success: false,
+		});
+		return rateLimitResponse(rateLimit);
+	}
+
 	if (!checkAuth(request)) {
+		await logAuditEvent('UNAUTHORIZED_ACCESS', request, {
+			resource: '/api/admin/bookings',
+			action: 'Unauthorized admin access attempt',
+			success: false,
+		});
 		return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 			status: 401,
 			headers: { 'Content-Type': 'application/json' },
@@ -85,6 +104,15 @@ export const POST: APIRoute = async ({ request }) => {
 						headers: { 'Content-Type': 'application/json' },
 					});
 				}
+
+				// Log admin action
+				await logAuditEvent('ADMIN_ACTION', request, {
+					username: 'admin',
+					resource: '/api/admin/bookings',
+					action: `Booking confirmed: ${id}`,
+					success: true,
+					extra: { bookingId: id, customerEmail: updated.email },
+				});
 
 				// Nach Bestätigung: Zusätzliche Benachrichtigung an Kund:in schicken
 				let customerEmailSent = false;

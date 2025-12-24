@@ -5,6 +5,8 @@ import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
 import { sanitizeId } from '../../../lib/sanitize';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
+import { logAuditEvent } from '../../../lib/audit-log';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILENAME = 'workshop-bookings.json';
@@ -115,7 +117,24 @@ export const GET: APIRoute = async ({ request }) => {
 
 // POST - Workshop-Buchung bestätigen oder stornieren
 export const POST: APIRoute = async ({ request }) => {
+  // Rate limiting for admin actions
+  const clientId = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.ADMIN);
+  if (!rateLimit.allowed) {
+    await logAuditEvent('RATE_LIMIT_EXCEEDED', request, {
+      resource: '/api/admin/workshop-bookings',
+      action: 'Admin rate limit exceeded',
+      success: false,
+    });
+    return rateLimitResponse(rateLimit);
+  }
+
   if (!checkAuth(request)) {
+    await logAuditEvent('UNAUTHORIZED_ACCESS', request, {
+      resource: '/api/admin/workshop-bookings',
+      action: 'Unauthorized admin access attempt',
+      success: false,
+    });
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -153,6 +172,15 @@ export const POST: APIRoute = async ({ request }) => {
     if (action === 'confirm') {
       bookings[bookingIndex].status = 'confirmed';
       await saveWorkshopBookings(bookings);
+
+      // Log admin action
+      await logAuditEvent('ADMIN_ACTION', request, {
+        username: 'admin',
+        resource: '/api/admin/workshop-bookings',
+        action: `Workshop booking confirmed: ${id}`,
+        success: true,
+        extra: { bookingId: id, workshopId: booking.workshopId, customerEmail: booking.email },
+      });
 
       let customerEmailSent = false;
       let emailError: string | null = null;
