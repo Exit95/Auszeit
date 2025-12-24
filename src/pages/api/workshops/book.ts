@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
 import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeId } from '../../../lib/sanitize';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILE = path.join(DATA_DIR, 'workshop-bookings.json');
@@ -61,6 +62,13 @@ async function saveWorkshopBookings(bookings: WorkshopBooking[]): Promise<void> 
 
 // POST - Workshop buchen
 export const POST: APIRoute = async ({ request }) => {
+  // Rate limiting for booking submissions
+  const clientId = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.BOOKING);
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit);
+  }
+
   try {
     const body = await request.json();
 

@@ -3,8 +3,16 @@ import nodemailer from 'nodemailer';
 import { getTimeSlots, addBooking } from '../../lib/storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
 import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeDate, sanitizeTime } from '../../lib/sanitize';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
 
 export const POST: APIRoute = async ({ request }) => {
+	  // Rate limiting
+	  const clientId = getClientIdentifier(request);
+	  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.BOOKING);
+	  if (!rateLimit.allowed) {
+	    return rateLimitResponse(rateLimit);
+	  }
+
 	  try {
 	    const data = await request.json();
 

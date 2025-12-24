@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../lib/s3-storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
 import { sanitizeText, sanitizeNumber } from '../../lib/sanitize';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
 
 // Admin-Passwort zur Laufzeit lesen
 function getAdminPassword(): string {
@@ -105,6 +106,13 @@ export const GET: APIRoute = async ({ request, url }) => {
 
 // POST - Neue Bewertung erstellen
 export const POST: APIRoute = async ({ request }) => {
+  // Rate limiting for review submissions
+  const clientId = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.REVIEW);
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit);
+  }
+
   try {
     const body = await request.json();
 
