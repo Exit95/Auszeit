@@ -7,81 +7,74 @@ import { content } from "../data/content";
 
 <section class="hero" aria-label="Willkommen bei Atelier Auszeit">
   <div class="hero__content">
-	    <div class="hero__logo-card">
-	      <div class="hero__logo-card-inner">
-	        <img
-		          src="/auszeit2.png"
-	          alt="Atelier Auszeit – Keramik Malatelier Logo in Gronau, Nordrhein-Westfalen"
-	          class="hero__logo-image"
-	          width="400"
-	          height="400"
-	          loading="eager"
-	        />
-	      </div>
-	    </div>
+    <div class="hero__logo-card">
+      <div class="hero__logo-card-inner">
+        <img
+          src="/auszeit2.png"
+          alt="Atelier Auszeit – Keramik Malatelier Logo in Gronau, Nordrhein-Westfalen"
+          class="hero__logo-image"
+          width="400"
+          height="400"
+          loading="eager"
+        />
+      </div>
+    </div>
     <nav class="hero__actions" aria-label="Hauptaktionen">
+      <Button href="#calendar-section" variant="primary" size="large">
+        {content.hero.ctaPrimary}
+      </Button>
+      <Button href="#gutschein-section" variant="secondary" size="large">
+        🎁 Gutschein kaufen
+      </Button>
+    </nav>
+    <div class="hero__social">
       <WhatsAppLink
         phone={content.contact.whatsapp}
         message={content.contact.whatsappMessage}
         text={content.hero.ctaSecondary}
       />
-      <Button href="#calendar-section" variant="primary" size="large">
-        {content.hero.ctaPrimary}
-      </Button>
       <InstagramLink
         url="https://www.instagram.com/auszeit_keramik_malatelier?igsh=MW90eGY0cGxlemt5cw=="
         text={content.hero.ctaTertiary}
       />
-    </nav>
+    </div>
   </div>
 </section>
 
 <style>
-	  .hero {
-	    display: flex;
-	    align-items: center;
-	    justify-content: center;
-	    background: linear-gradient(
-	      135deg,
-	      var(--color-clay-brown) 0%,
-	      var(--color-warm-beige) 100%
-	    );
-	    padding: var(--space-2) var(--gutter);
-	    text-align: center;
-	    position: relative;
-	    overflow: hidden;
-	  }
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.58);
+    border-bottom: 1px solid rgba(66, 52, 48, 0.10);
+    padding: var(--space-4) var(--gutter);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
 
-	  .hero__logo-card {
-	    display: flex;
-	    justify-content: center;
-	    margin-bottom: var(--space-1);
-	  }
+  .hero__logo-card {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--space-2);
+  }
 
-	  .hero__logo-card-inner {
-	    background: transparent;
-	    padding: var(--space-3) var(--space-4);
-	    border-radius: 20px;
-	    box-shadow: none;
-	    border: 0;
-	    max-width: min(440px, 85vw);
-	    backdrop-filter: none;
-	  }
+  .hero__logo-card-inner {
+    background: rgba(255, 255, 255, 0.62);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(66, 52, 48, 0.10);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    max-width: min(380px, 85vw);
+  }
 
-	  .hero__logo-image {
-	    width: 100%;
-	    height: auto;
-	    display: block;
-	    margin: 0 auto;
-	    border-radius: 14px;
-	  }
-
-  .hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.5;
+  .hero__logo-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 14px;
   }
 
   .hero__content {
@@ -92,53 +85,60 @@ import { content } from "../data/content";
     animation: fadeIn var(--duration-slow) var(--easing);
   }
 
-  .hero__claim {
-    font-size: 1.125rem;
-    color: var(--color-off-white);
-	    margin-top: 0;
-	    margin-bottom: var(--space-5);
-    font-weight: 500;
-    line-height: 1.6;
-  }
-
   .hero__actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-3);
+    gap: 12px;
+    margin-bottom: var(--space-3);
+  }
+
+  .hero__social {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
   }
 
   /* Sehr kleine Bildschirme (< 375px) */
-	  @media (max-width: 374px) {
-	    .hero {
-	      padding: var(--space-2) var(--gutter);
-	    }
+  @media (max-width: 374px) {
+    .hero {
+      padding: var(--space-2) var(--gutter);
+    }
 
-	    .hero__logo-card-inner {
-	      padding: var(--space-3) var(--space-3);
-	      border-radius: 18px;
-	    }
-
-    .hero__claim {
-      font-size: 1rem;
-      margin-top: var(--space-3);
-      margin-bottom: var(--space-4);
+    .hero__logo-card-inner {
+      padding: var(--space-2) var(--space-2);
+      border-radius: 16px;
     }
 
     .hero__actions {
+      flex-direction: column;
       width: 100%;
-      gap: var(--space-2);
-      margin: 0 auto;
+      gap: 10px;
+    }
+
+    .hero__social {
+      flex-direction: column;
+      width: 100%;
+      gap: 10px;
     }
   }
 
   /* Kleine Smartphones (375px - 479px) */
   @media (min-width: 375px) and (max-width: 479px) {
-	    .hero__claim {
-	      font-size: 1.2rem;
-	    }
+    .hero__actions {
+      flex-direction: column;
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto var(--space-3);
+    }
 
-	    .hero__actions {
+    .hero__social {
+      flex-direction: column;
       width: 100%;
       max-width: 320px;
       margin: 0 auto;
@@ -147,18 +147,18 @@ import { content } from "../data/content";
 
   /* Größere Smartphones (480px - 639px) */
   @media (min-width: 480px) and (max-width: 639px) {
-    .hero__claim {
-      font-size: 1.3rem;
+    .hero__actions {
+      max-width: 400px;
+      margin: 0 auto var(--space-3);
     }
 
-    .hero__actions {
+    .hero__social {
       max-width: 400px;
       margin: 0 auto;
     }
   }
 
-	  @media (min-width: 640px) {
-
+  @media (min-width: 640px) {
     .hero__actions {
       flex-direction: row;
       justify-content: center;

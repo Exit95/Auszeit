@@ -118,60 +118,67 @@ const { title = "Termin buchen" } = Astro.props;
 
 <style>
   .booking-section {
-    padding: var(--space-12) var(--gutter);
-    background-color: var(--color-background);
+    padding: var(--space-8) var(--gutter);
   }
 
   .booking-container {
     max-width: 1400px;
     margin: 0 auto;
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    border-radius: 18px;
+    padding: var(--space-5);
+    box-shadow: 0 10px 26px rgba(66, 52, 48, 0.08);
   }
 
   .booking-title {
     font-family: var(--font-serif);
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso, #423430);
     text-align: center;
-    margin-bottom: var(--space-8);
-    font-size: 2rem;
+    margin-bottom: var(--space-5);
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
   }
 
-	  .booking-grid {
-	    display: grid;
-	    gap: var(--space-8);
-	    grid-template-columns: 1fr;
-	    position: relative;
-	  }
+  .booking-grid {
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: 1fr;
+    position: relative;
+  }
 
-	  @media (min-width: 1024px) {
-	    .booking-grid {
-	      grid-template-columns: 1fr 380px;
-	      align-items: start;
-	    }
-	  }
+  @media (min-width: 1024px) {
+    .booking-grid {
+      grid-template-columns: 1fr 360px;
+      align-items: start;
+    }
+  }
 
   .booking-calendar {
-    background: var(--color-off-white);
-    border-radius: var(--radius);
-    padding: var(--space-6);
-    box-shadow: var(--shadow-md);
+    background: rgba(255, 255, 255, 0.62);
+    border-radius: 14px;
+    padding: var(--space-5);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    box-shadow: 0 6px 16px rgba(66, 52, 48, 0.06);
   }
 
   /* Profil-Karte */
   .profile-card {
-    background: var(--color-off-white);
-    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.62);
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    box-shadow: 0 6px 16px rgba(66, 52, 48, 0.06);
     position: sticky;
-    top: var(--space-6);
+    top: var(--space-4);
   }
 
-	  /* Profil während des Buchungsvorgangs auf kleineren Bildschirmen ausblenden */
-	  @media (max-width: 1023px) {
-	    .profile-card--hide-during-booking {
-	      display: none;
-	    }
-	  }
+  /* Profil während des Buchungsvorgangs auf kleineren Bildschirmen ausblenden */
+  @media (max-width: 1023px) {
+    .profile-card--hide-during-booking {
+      display: none;
+    }
+  }
 
   .profile-card__image {
     width: 100%;
@@ -187,21 +194,22 @@ const { title = "Termin buchen" } = Astro.props;
   }
 
   .profile-card__content {
-    padding: var(--space-6);
+    padding: var(--space-5);
   }
 
   .profile-card__content h3 {
     font-family: var(--font-serif);
-    color: var(--color-clay-brown);
-    margin-bottom: var(--space-3);
-    font-size: 1.5rem;
+    color: var(--brand-espresso, #423430);
+    margin-bottom: var(--space-2);
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
   }
 
   .profile-card__intro {
     color: var(--color-text-secondary);
     line-height: 1.6;
-    margin-bottom: var(--space-4);
-    font-size: 0.9375rem;
+    margin-bottom: var(--space-3);
+    font-size: 0.9rem;
   }
 
   .profile-card__facts {
@@ -210,79 +218,87 @@ const { title = "Termin buchen" } = Astro.props;
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
 
   .profile-card__facts li {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    color: var(--color-clay-brown);
-    font-size: 0.9375rem;
+    color: var(--brand-espresso, #423430);
+    font-size: 0.875rem;
   }
 
   .profile-card__facts svg {
     flex-shrink: 0;
-    color: var(--color-terracotta);
+    color: var(--accent-terra, #D96C4A);
   }
 
   .booking-form {
-    background: var(--color-off-white);
-    border-radius: var(--radius);
-    padding: var(--space-6);
-    box-shadow: var(--shadow-md);
-    margin-top: var(--space-6);
+    background: rgba(255, 255, 255, 0.62);
+    border-radius: 14px;
+    padding: var(--space-5);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    box-shadow: 0 6px 16px rgba(66, 52, 48, 0.06);
+    margin-top: var(--space-5);
   }
 
   .booking-form h3 {
     font-family: var(--font-serif);
-    color: var(--color-clay-brown);
-    margin-bottom: var(--space-4);
+    color: var(--brand-espresso, #423430);
+    margin-bottom: var(--space-3);
+    font-size: 1.15rem;
   }
 
   .booking-details {
-    background: var(--color-warm-beige);
-    padding: var(--space-4);
-    border-radius: var(--radius);
-    margin-bottom: var(--space-6);
+    background: rgba(242, 235, 229, 0.55);
+    padding: var(--space-3);
+    border-radius: 12px;
+    margin-bottom: var(--space-4);
+    border: 1px solid rgba(66, 52, 48, 0.08);
   }
 
   .booking-details p {
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-1);
+    font-size: 0.9rem;
   }
 
   .form-group {
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-3);
   }
 
   .form-group label {
     display: block;
-    margin-bottom: var(--space-2);
-    font-weight: 500;
-    color: var(--color-clay-brown);
+    margin-bottom: var(--space-1);
+    font-weight: 550;
+    font-size: 0.875rem;
+    color: var(--brand-espresso, #423430);
   }
 
   .form-group input,
   .form-group textarea {
     width: 100%;
     padding: var(--space-3);
-    border: 2px solid var(--color-warm-beige);
-    border-radius: var(--radius);
+    border: 1px solid rgba(66, 52, 48, 0.14);
+    border-radius: 10px;
     font-family: var(--font-sans);
-    transition: border-color var(--duration-normal) var(--easing);
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.7);
+    transition: border-color 0.14s ease, box-shadow 0.14s ease;
   }
 
   .form-group input:focus,
   .form-group textarea:focus {
     outline: none;
-    border-color: var(--color-clay-brown);
+    border-color: var(--accent-terra, #D96C4A);
+    box-shadow: 0 0 0 3px rgba(217, 108, 74, 0.12);
   }
 
   .form-actions {
     display: flex;
-    gap: var(--space-3);
+    gap: var(--space-2);
     justify-content: flex-end;
-    margin-top: var(--space-6);
+    margin-top: var(--space-4);
   }
 
   .hidden {
@@ -290,20 +306,23 @@ const { title = "Termin buchen" } = Astro.props;
   }
 
   .message {
-    margin-top: var(--space-6);
-    padding: var(--space-4);
-    border-radius: var(--radius);
+    margin-top: var(--space-4);
+    padding: var(--space-3);
+    border-radius: 12px;
     text-align: center;
+    font-size: 0.9rem;
   }
 
   .message.success {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: rgba(74, 124, 89, 0.12);
+    color: #4A7C59;
+    border: 1px solid rgba(74, 124, 89, 0.2);
   }
 
   .message.error {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: rgba(185, 74, 72, 0.1);
+    color: #B94A48;
+    border: 1px solid rgba(185, 74, 72, 0.2);
   }
 
   /* Mobile Optimierungen */
