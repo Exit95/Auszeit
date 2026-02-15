@@ -1,0 +1,110 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import Button from "../components/Button.astro";
+export const prerender = false;
+---
+
+<MainLayout title="Gutschein erfolgreich gekauft | Atelier Auszeit">
+  <section class="success">
+    <div class="success__card">
+      <div class="success__icon">✓</div>
+      <h1 class="success__title">Vielen Dank für deinen Kauf!</h1>
+      <p class="success__text">
+        Dein Gutschein wurde erfolgreich bezahlt. Du erhältst in Kürze eine 
+        Bestätigung per E-Mail mit allen Details.
+      </p>
+      <p class="success__info">
+        Irena wird sich bei dir melden, um den personalisierten Gutschein 
+        für dich auszustellen.
+      </p>
+      <div class="success__actions">
+        <Button href="/" variant="primary" size="large">
+          Zurück zur Startseite
+        </Button>
+      </div>
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+  .success {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8) var(--gutter);
+    background: linear-gradient(
+      135deg,
+      var(--color-clay-brown) 0%,
+      var(--color-warm-beige) 100%
+    );
+  }
+
+  .success__card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 18px;
+    padding: var(--space-8);
+    text-align: center;
+    max-width: 500px;
+    box-shadow: 0 20px 40px rgba(66, 52, 48, 0.15);
+  }
+
+  .success__icon {
+    width: 80px;
+    height: 80px;
+    background: #4CAF50;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-4);
+  }
+
+  .success__title {
+    color: var(--brand-espresso, #423430);
+    font-size: 1.75rem;
+    margin-bottom: var(--space-3);
+  }
+
+  .success__text {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: var(--space-3);
+  }
+
+  .success__info {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    background: rgba(242, 235, 229, 0.55);
+    padding: var(--space-3);
+    border-radius: 10px;
+    margin-bottom: var(--space-5);
+  }
+
+  .success__actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  @media (max-width: 639px) {
+    .success__card {
+      padding: var(--space-5);
+    }
+
+    .success__title {
+      font-size: 1.5rem;
+    }
+
+    .success__icon {
+      width: 60px;
+      height: 60px;
+      font-size: 2rem;
+    }
+  }
+</style>
+
