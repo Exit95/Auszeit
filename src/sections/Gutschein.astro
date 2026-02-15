@@ -1,5 +1,4 @@
 ---
-import Button from "../components/Button.astro";
 ---
 
 <section id="gutschein-section" class="gutschein">
@@ -7,35 +6,109 @@ import Button from "../components/Button.astro";
     <div class="gutschein__card">
       <h2 class="gutschein__title">Gutschein verschenken</h2>
       <p class="gutschein__text">
-        Ein Geschenk, das sich persönlich anfühlt und wirklich genutzt wird. 
+        Ein Geschenk, das sich persönlich anfühlt und wirklich genutzt wird.
         Perfekt für Geburtstage, Weihnachten oder einfach als kreative Überraschung.
       </p>
-      
+
       <div class="gutschein__options">
-        <div class="gutschein__option">
+        <button class="gutschein__option" data-voucher="voucher-25" type="button">
           <span class="gutschein__value">25 €</span>
           <span class="gutschein__label">Schnupper-Gutschein</span>
-        </div>
-        <div class="gutschein__option gutschein__option--popular">
+        </button>
+        <button class="gutschein__option gutschein__option--popular" data-voucher="voucher-50" type="button">
           <span class="gutschein__badge">Beliebt</span>
           <span class="gutschein__value">50 €</span>
           <span class="gutschein__label">Standard-Gutschein</span>
-        </div>
-        <div class="gutschein__option">
+        </button>
+        <button class="gutschein__option" data-voucher="voucher-custom" type="button" id="custom-voucher-btn">
           <span class="gutschein__value">Frei</span>
           <span class="gutschein__label">Wunschbetrag</span>
-        </div>
+        </button>
       </div>
 
-      <div class="gutschein__contact">
-        <p>Für Gutscheine kontaktiere mich gerne direkt:</p>
-        <Button href="https://wa.me/4917634255005?text=Hallo%20Irena%2C%20ich%20möchte%20gerne%20einen%20Gutschein%20bestellen." variant="primary" size="large">
-          Gutschein anfragen
-        </Button>
+      <!-- Custom Amount Input (hidden by default) -->
+      <div class="gutschein__custom-amount" id="custom-amount-container" style="display: none;">
+        <label for="custom-amount">Wunschbetrag (5€ - 500€):</label>
+        <div class="gutschein__custom-input-wrapper">
+          <input type="number" id="custom-amount" min="5" max="500" placeholder="z.B. 75" />
+          <span class="gutschein__currency">€</span>
+        </div>
+        <button class="gutschein__buy-btn" id="buy-custom-voucher" type="button">
+          Gutschein kaufen
+        </button>
       </div>
+
+      <div class="gutschein__loading" id="loading-indicator" style="display: none;">
+        <span class="spinner"></span> Weiterleitung zu Stripe...
+      </div>
+
+      <p class="gutschein__hint">Sichere Zahlung über Stripe (Kreditkarte, Giropay, Sofort)</p>
     </div>
   </div>
 </section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const options = document.querySelectorAll('.gutschein__option[data-voucher]');
+    const customContainer = document.getElementById('custom-amount-container');
+    const customAmountInput = document.getElementById('custom-amount') as HTMLInputElement;
+    const buyCustomBtn = document.getElementById('buy-custom-voucher');
+    const loadingIndicator = document.getElementById('loading-indicator');
+
+    const handleVoucherPurchase = async (voucherId: string, customAmount?: string) => {
+      if (loadingIndicator) loadingIndicator.style.display = 'flex';
+
+      try {
+        const response = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ voucherId, customAmount }),
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert(data.error || 'Fehler beim Erstellen der Checkout-Session');
+          if (loadingIndicator) loadingIndicator.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Checkout error:', error);
+        alert('Fehler beim Verbinden mit dem Zahlungsdienst');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+      }
+    };
+
+    options.forEach(option => {
+      option.addEventListener('click', () => {
+        const voucherId = (option as HTMLElement).dataset.voucher;
+
+        if (voucherId === 'voucher-custom') {
+          // Show custom amount input
+          if (customContainer) {
+            customContainer.style.display = customContainer.style.display === 'none' ? 'block' : 'none';
+          }
+        } else if (voucherId) {
+          // Direct purchase for fixed amounts
+          handleVoucherPurchase(voucherId);
+        }
+      });
+    });
+
+    // Handle custom amount purchase
+    if (buyCustomBtn) {
+      buyCustomBtn.addEventListener('click', () => {
+        const amount = customAmountInput?.value;
+        if (!amount || parseFloat(amount) < 5 || parseFloat(amount) > 500) {
+          alert('Bitte gib einen Betrag zwischen 5€ und 500€ ein.');
+          return;
+        }
+        handleVoucherPurchase('voucher-custom', amount);
+      });
+    }
+  });
+</script>
 
 <style>
   .gutschein {
@@ -88,11 +161,28 @@ import Button from "../components/Button.astro";
     border-radius: 14px;
     padding: var(--space-3);
     position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    font-family: inherit;
+  }
+
+  .gutschein__option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(66, 52, 48, 0.12);
+    border-color: var(--accent-terra, #D96C4A);
+  }
+
+  .gutschein__option:active {
+    transform: translateY(0);
   }
 
   .gutschein__option--popular {
     background: rgba(207, 168, 116, 0.18);
     border-color: rgba(207, 168, 116, 0.35);
+  }
+
+  .gutschein__option--popular:hover {
+    border-color: var(--accent-terra, #D96C4A);
   }
 
   .gutschein__badge {
@@ -123,10 +213,95 @@ import Button from "../components/Button.astro";
     color: var(--color-text-secondary);
   }
 
-  .gutschein__contact p {
+  .gutschein__hint {
     color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    margin-top: var(--space-3);
+  }
+
+  .gutschein__custom-amount {
+    background: rgba(242, 235, 229, 0.55);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    border-radius: 14px;
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .gutschein__custom-amount label {
+    display: block;
+    color: var(--brand-espresso, #423430);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+  }
+
+  .gutschein__custom-input-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
     margin-bottom: var(--space-3);
-    font-size: 0.9rem;
+  }
+
+  .gutschein__custom-amount input {
+    width: 120px;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid rgba(66, 52, 48, 0.20);
+    border-radius: 8px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--brand-espresso, #423430);
+  }
+
+  .gutschein__custom-amount input:focus {
+    outline: none;
+    border-color: var(--accent-terra, #D96C4A);
+  }
+
+  .gutschein__currency {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--brand-espresso, #423430);
+  }
+
+  .gutschein__buy-btn {
+    background: var(--accent-terra, #D96C4A);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: var(--space-2) var(--space-4);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    font-family: inherit;
+  }
+
+  .gutschein__buy-btn:hover {
+    background: #c55a3a;
+    transform: translateY(-1px);
+  }
+
+  .gutschein__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    color: var(--brand-espresso, #423430);
+    padding: var(--space-3);
+  }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(66, 52, 48, 0.2);
+    border-top-color: var(--accent-terra, #D96C4A);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   @media (max-width: 639px) {

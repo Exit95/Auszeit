@@ -19,6 +19,8 @@ services:
       - S3_SECRET_ACCESS_KEY=hCXXaEoNo9Xrgr7oJ9LfAgmWG68wmrnj1SrLpT6W
       - S3_REGION=eu-central
       - S3_PREFIX=Auszeit/
+      - STRIPE_SECRET_KEY=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
+      - STRIPE_PUBLISHABLE_KEY=pk_live_51T1DtzFnSCRtGxvlQFbNr4M4srzrh7rLnHMX6i3aegBAdWINDfkkk3Pl1Ypz8sHDUOUr9Tw4ogHog3B1eMqgXKcD00zARsULHi
     networks:
       - public-ingress
     deploy:
