@@ -1,0 +1,147 @@
+---
+import Button from "../components/Button.astro";
+---
+
+<section id="gutschein-section" class="gutschein">
+  <div class="container">
+    <div class="gutschein__card">
+      <div class="gutschein__icon">🎁</div>
+      <h2 class="gutschein__title">Gutschein verschenken</h2>
+      <p class="gutschein__text">
+        Ein Geschenk, das sich persönlich anfühlt und wirklich genutzt wird. 
+        Perfekt für Geburtstage, Weihnachten oder einfach als kreative Überraschung.
+      </p>
+      
+      <div class="gutschein__options">
+        <div class="gutschein__option">
+          <span class="gutschein__value">25 €</span>
+          <span class="gutschein__label">Schnupper-Gutschein</span>
+        </div>
+        <div class="gutschein__option gutschein__option--popular">
+          <span class="gutschein__badge">Beliebt</span>
+          <span class="gutschein__value">50 €</span>
+          <span class="gutschein__label">Standard-Gutschein</span>
+        </div>
+        <div class="gutschein__option">
+          <span class="gutschein__value">Frei</span>
+          <span class="gutschein__label">Wunschbetrag</span>
+        </div>
+      </div>
+
+      <div class="gutschein__contact">
+        <p>Für Gutscheine kontaktiere mich gerne direkt:</p>
+        <Button href="https://wa.me/4917634255005?text=Hallo%20Irena%2C%20ich%20möchte%20gerne%20einen%20Gutschein%20bestellen." variant="primary" size="large">
+          Gutschein anfragen
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .gutschein {
+    padding: var(--space-8) var(--gutter);
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .gutschein__card {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    border-radius: 18px;
+    padding: var(--space-6);
+    text-align: center;
+    box-shadow: 0 10px 24px rgba(66, 52, 48, 0.10);
+  }
+
+  .gutschein__icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .gutschein__title {
+    color: var(--brand-espresso, #423430);
+    margin-bottom: var(--space-2);
+    font-size: 1.75rem;
+  }
+
+  .gutschein__text {
+    color: var(--color-text-secondary);
+    max-width: 50ch;
+    margin: 0 auto var(--space-5);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .gutschein__options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: var(--space-5);
+  }
+
+  .gutschein__option {
+    background: rgba(242, 235, 229, 0.55);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    border-radius: 14px;
+    padding: var(--space-3);
+    position: relative;
+  }
+
+  .gutschein__option--popular {
+    background: rgba(207, 168, 116, 0.18);
+    border-color: rgba(207, 168, 116, 0.35);
+  }
+
+  .gutschein__badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-terra, #D96C4A);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .gutschein__value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brand-espresso, #423430);
+    margin-bottom: 4px;
+  }
+
+  .gutschein__label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+  }
+
+  .gutschein__contact p {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-3);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 639px) {
+    .gutschein__options {
+      grid-template-columns: 1fr;
+    }
+
+    .gutschein__card {
+      padding: var(--space-4);
+    }
+
+    .gutschein__title {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+

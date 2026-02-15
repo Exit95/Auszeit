@@ -2,26 +2,25 @@
 
 /* Überschreibe die Standard-Farben mit den Auszeit-Farben */
 .booking-calendar {
-  --primary-color: #6B5B53;
-  /* clay-brown */
-  --primary-hover: #5a4b44;
-  --secondary-color: #D9C9B9;
-  /* warm-beige */
-  --success-color: #B1735C;
-  /* terracotta */
-  --danger-color: #c45a3f;
-  --background: #F6F2ED;
-  /* off-white */
-  --surface: #FFFFFF;
-  --border-color: #D9C9B9;
-  --text-primary: #2B2B2B;
-  /* charcoal */
-  --text-secondary: #6B5B53;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --radius: 16px;
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --primary-color: #D96C4A;
+  /* accent-terra */
+  --primary-hover: #cf6041;
+  --secondary-color: #E3D5CA;
+  /* bg-sand */
+  --success-color: #4A7C59;
+  --danger-color: #B94A48;
+  --background: #F2EBE5;
+  /* bg-cream */
+  --surface: rgba(255, 255, 255, 0.62);
+  --border-color: rgba(66, 52, 48, 0.10);
+  --text-primary: #423430;
+  /* brand-espresso */
+  --text-secondary: #5D4E43;
+  --shadow-sm: 0 2px 4px rgba(66, 52, 48, 0.06);
+  --shadow-md: 0 6px 12px rgba(66, 52, 48, 0.10);
+  --shadow-lg: 0 10px 24px rgba(66, 52, 48, 0.12);
+  --radius: 14px;
+  --transition: all 0.14s ease;
 }
 
 /* Calendar Header */
@@ -29,32 +28,33 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .booking-calendar .calendar-header h2 {
   font-family: 'Cinzel', serif;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .booking-calendar .calendar-nav {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
 .booking-calendar .calendar-nav button {
-  background: var(--surface);
-  border: 2px solid var(--border-color);
-  color: var(--primary-color);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 1.5rem;
+  background: rgba(66, 52, 48, 0.04);
+  border: 1px solid rgba(66, 52, 48, 0.14);
+  color: var(--text-primary);
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: 1.25rem;
   cursor: pointer;
   transition: var(--transition);
   display: flex;
@@ -66,13 +66,14 @@
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
+  transform: translateY(-1px);
 }
 
 .booking-calendar .calendar-month-year {
   font-family: 'Cinzel', serif;
   font-weight: 600;
-  font-size: 1.125rem;
-  min-width: 200px;
+  font-size: 1rem;
+  min-width: 180px;
   text-align: center;
   color: var(--text-primary);
 }
@@ -81,18 +82,19 @@
 .booking-calendar .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 2rem;
+  gap: 6px;
+  margin-bottom: 1.5rem;
 }
 
 .booking-calendar .calendar-weekday {
   text-align: center;
   font-family: 'Inter', sans-serif;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  padding: 0.75rem;
+  padding: 0.5rem;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .booking-calendar .calendar-day {
@@ -100,31 +102,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius);
+  border-radius: 10px;
   cursor: pointer;
   transition: var(--transition);
   font-weight: 500;
-  border: 2px solid transparent;
-  background: var(--background);
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+  background: rgba(242, 235, 229, 0.55);
   color: var(--text-primary);
 }
 
 .booking-calendar .calendar-day:hover:not(.disabled):not(.blocked) {
   background: var(--primary-color);
   color: white;
-  transform: scale(1.05);
+  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
 .booking-calendar .calendar-day.today {
   border-color: var(--primary-color);
-  font-weight: 600;
+  font-weight: 700;
+  background: rgba(217, 108, 74, 0.12);
 }
 
 .booking-calendar .calendar-day.selected {
   background: var(--primary-color);
   color: white;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 16px rgba(217, 108, 74, 0.22);
 }
 
 .booking-calendar .calendar-day.disabled {
@@ -134,49 +138,48 @@
 }
 
 .booking-calendar .calendar-day.blocked {
-  background: repeating-linear-gradient(45deg,
-      #f3f4f6,
-      #f3f4f6 10px,
-      #e5e7eb 10px,
-      #e5e7eb 20px);
+  background: rgba(66, 52, 48, 0.06);
   color: var(--text-secondary);
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .booking-calendar .calendar-day.other-month {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
 /* Time Slots */
 .booking-calendar .time-slots-container {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 2px solid var(--border-color);
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .booking-calendar .time-slots-header {
   font-family: 'Cinzel', serif;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
 }
 
 .booking-calendar .time-slots-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
 }
 
 .booking-calendar .time-slot {
-  padding: 1rem;
-  background: var(--background);
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius);
+  padding: 0.875rem;
+  background: rgba(242, 235, 229, 0.55);
+  border: 1px solid rgba(66, 52, 48, 0.10);
+  border-radius: 12px;
   text-align: center;
   cursor: pointer;
   transition: var(--transition);
-  font-weight: 500;
+  font-weight: 550;
+  font-size: 0.9rem;
   color: var(--text-primary);
 }
 
@@ -184,42 +187,43 @@
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(217, 108, 74, 0.22);
 }
 
 .booking-calendar .time-slot.selected {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 16px rgba(217, 108, 74, 0.22);
 }
 
 .booking-calendar .time-slot.booked {
-  background: var(--secondary-color);
+  background: rgba(66, 52, 48, 0.06);
   color: var(--text-secondary);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .booking-calendar .time-slot.full {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(185, 74, 72, 0.1);
+  color: #B94A48;
   cursor: not-allowed;
-  border-color: #fecaca;
+  border-color: rgba(185, 74, 72, 0.2);
 }
 
 .booking-calendar .time-slot .capacity-info {
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-  opacity: 0.8;
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
+  opacity: 0.75;
 }
 
 /* Buttons */
 .booking-calendar .btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius);
-  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: var(--transition);
   border: none;
@@ -229,23 +233,24 @@
 .booking-calendar .btn-primary {
   background: var(--primary-color);
   color: white;
+  box-shadow: 0 8px 16px rgba(217, 108, 74, 0.2);
 }
 
 .booking-calendar .btn-primary:hover {
   background: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(217, 108, 74, 0.25);
 }
 
 .booking-calendar .btn-secondary {
-  background: var(--secondary-color);
+  background: rgba(66, 52, 48, 0.04);
   color: var(--text-primary);
+  border: 1px solid rgba(66, 52, 48, 0.14);
 }
 
 .booking-calendar .btn-secondary:hover {
-  background: #c9b9a9;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  background: rgba(66, 52, 48, 0.08);
+  transform: translateY(-1px);
 }
 
 /* Responsive Design */

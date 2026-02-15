@@ -32,64 +32,45 @@ const Tag = href ? "a" : "button";
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2);
-    font-weight: 600;
-    border-radius: var(--radius);
-    border: 2px solid transparent;
-    transition: all var(--duration-normal) var(--easing);
+    gap: 10px;
+    font-weight: 650;
+    font-size: 14px;
+    border-radius: 14px;
+    border: 0;
+    cursor: pointer;
+    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, color 140ms ease, border-color 140ms ease;
     text-decoration: none;
     white-space: nowrap;
     min-height: 44px;
-    padding: 0 var(--space-4);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition:
-      width 0.6s,
-      height 0.6s;
-  }
-
-  .btn:hover::before {
-    width: 300px;
-    height: 300px;
+    padding: 12px 16px;
   }
 
   .btn--small {
     font-size: 0.875rem;
-    padding: 0 var(--space-3);
+    padding: 10px 14px;
     min-height: 36px;
   }
 
   .btn--medium {
-    font-size: 1rem;
+    font-size: 14px;
   }
 
   .btn--large {
-    font-size: 1.125rem;
-    padding: 0 var(--space-5);
+    font-size: 15px;
+    padding: 14px 20px;
     min-height: 52px;
   }
 
   .btn--primary {
-    background-color: var(--color-terracotta);
-    color: var(--color-off-white);
+    background: var(--accent-terra, #D96C4A);
+    color: #fff;
+    box-shadow: 0 12px 22px rgba(217, 108, 74, 0.22);
   }
 
   .btn--primary:hover {
-    background-color: var(--color-clay-brown);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 14px 26px rgba(217, 108, 74, 0.28);
+    background: #cf6041;
   }
 
   .btn--primary:active {
@@ -97,15 +78,15 @@ const Tag = href ? "a" : "button";
   }
 
   .btn--secondary {
-    background-color: transparent;
-    color: var(--color-clay-brown);
-    border-color: var(--color-clay-brown);
+    background: rgba(66, 52, 48, 0.04);
+    color: var(--brand-espresso, #423430);
+    border: 1px solid rgba(66, 52, 48, 0.14);
   }
 
   .btn--secondary:hover {
-    background-color: var(--color-clay-brown);
-    color: var(--color-off-white);
     transform: translateY(-1px);
+    background: rgba(66, 52, 48, 0.07);
+    border-color: rgba(66, 52, 48, 0.18);
   }
 
   .btn--secondary:active {
@@ -120,19 +101,19 @@ const Tag = href ? "a" : "button";
     }
 
     .btn--large {
-      min-height: 48px; /* Größeres Touch-Target */
+      min-height: 48px;
     }
   }
 
   @media (max-width: 374px) {
     .btn {
-      font-size: 0.9375rem;
-      padding: 0 var(--space-3);
+      font-size: 14px;
+      padding: 12px 16px;
     }
 
     .btn--large {
-      font-size: 1rem;
-      padding: 0 var(--space-4);
+      font-size: 14px;
+      padding: 12px 18px;
     }
   }
 </style>
