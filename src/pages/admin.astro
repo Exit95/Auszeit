@@ -30,10 +30,34 @@ export const prerender = false;
     </div>
   </div>
 
+  <!-- 2FA Verification Screen -->
+  <div id="twofa-screen" class="login-container hidden">
+    <div class="login-box">
+      <h1>🔐 2-Faktor-Authentifizierung</h1>
+      <p>Bitte geben Sie den Code aus Ihrer Authenticator-App ein</p>
+      <form id="twofa-form">
+        <div class="form-group">
+          <label for="twofa-code">6-stelliger Code</label>
+          <input type="text" id="twofa-code" name="code"
+                 pattern="[0-9]{6}" maxlength="6"
+                 inputmode="numeric" autocomplete="one-time-code"
+                 placeholder="000000" required
+                 style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
+        </div>
+        <button type="submit" class="btn btn-primary">Bestätigen</button>
+        <button type="button" id="twofa-cancel" class="btn btn-secondary" style="margin-top: 0.5rem;">Abbrechen</button>
+        <div id="twofa-error" class="error-message hidden"></div>
+      </form>
+    </div>
+  </div>
+
 	  <div id="admin-panel" class="admin-container hidden">
 	    <header class="admin-header">
 	      <h1>🎨 Admin Panel</h1>
-	      <button id="logout-btn" class="btn btn-secondary">Abmelden</button>
+	      <div class="admin-header-buttons">
+	        <button id="setup-2fa-btn" class="btn btn-secondary hidden" title="2FA für Admin einrichten">🔐 2FA Setup</button>
+	        <button id="logout-btn" class="btn btn-secondary">Abmelden</button>
+	      </div>
 	    </header>
 
     <nav class="admin-nav">
@@ -315,45 +339,153 @@ export const prerender = false;
       `;
     }
 
-    // Login-Handler
+    // Pending 2FA Session für Admin-Login
+    let pending2FASessionId = '';
+
+    // Login-Handler mit 2FA-Unterstützung
     document.getElementById('login-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target as HTMLFormElement);
       const username = formData.get('username');
       const password = formData.get('password');
 
-      authCredentials = btoa(`${username}:${password}`);
+      const credentials = btoa(`${username}:${password}`);
 
       try {
-        const response = await fetch('/api/admin/slots', {
-          headers: {
-            'Authorization': `Basic ${authCredentials}`
-          }
+        // Step 1: Verify password and check if 2FA is required
+        const response = await fetch('/api/admin/verify-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'init', credentials })
         });
 
-        if (response.ok) {
-          document.getElementById('login-screen')?.classList.add('hidden');
-          document.getElementById('admin-panel')?.classList.remove('hidden');
-	          loadSlots();
-	          loadBookings();
-        } else {
+        const result = await response.json();
+
+        if (!result.success) {
           const errorEl = document.getElementById('login-error');
           if (errorEl) {
-            errorEl.textContent = 'Ungültige Anmeldedaten';
+            errorEl.textContent = result.message || 'Ungültige Anmeldedaten';
             errorEl.classList.remove('hidden');
           }
+          return;
         }
+
+        // Superuser oder Admin ohne 2FA - direkter Login
+        if (!result.requires2FA) {
+          authCredentials = result.credentials;
+          document.getElementById('login-screen')?.classList.add('hidden');
+          document.getElementById('admin-panel')?.classList.remove('hidden');
+
+          // Zeige 2FA-Setup-Button nur für Superuser
+          if (result.userType === 'superuser') {
+            document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+          }
+
+          loadSlots();
+          loadBookings();
+          return;
+        }
+
+        // Admin mit 2FA - zeige 2FA-Screen
+        pending2FASessionId = result.sessionId;
+        authCredentials = credentials; // Temporär speichern
+        document.getElementById('login-screen')?.classList.add('hidden');
+        document.getElementById('twofa-screen')?.classList.remove('hidden');
+        (document.getElementById('twofa-code') as HTMLInputElement)?.focus();
+
       } catch (error) {
         console.error('Login error:', error);
+        const errorEl = document.getElementById('login-error');
+        if (errorEl) {
+          errorEl.textContent = 'Verbindungsfehler';
+          errorEl.classList.remove('hidden');
+        }
       }
+    });
+
+    // 2FA Code Verification
+    document.getElementById('twofa-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = (document.getElementById('twofa-code') as HTMLInputElement)?.value;
+
+      try {
+        const response = await fetch('/api/admin/verify-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'verify',
+            sessionId: pending2FASessionId,
+            code
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          authCredentials = result.credentials;
+          document.getElementById('twofa-screen')?.classList.add('hidden');
+          document.getElementById('admin-panel')?.classList.remove('hidden');
+
+          // Zeige 2FA-Setup-Button für Superuser
+          if (result.userType === 'superuser') {
+            document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+          }
+
+          loadSlots();
+          loadBookings();
+        } else {
+          const errorEl = document.getElementById('twofa-error');
+          if (errorEl) {
+            errorEl.textContent = result.message || 'Ungültiger Code';
+            errorEl.classList.remove('hidden');
+          }
+          (document.getElementById('twofa-code') as HTMLInputElement).value = '';
+          (document.getElementById('twofa-code') as HTMLInputElement)?.focus();
+        }
+      } catch (error) {
+        console.error('2FA verification error:', error);
+      }
+    });
+
+    // 2FA Cancel - zurück zum Login
+    document.getElementById('twofa-cancel')?.addEventListener('click', () => {
+      pending2FASessionId = '';
+      authCredentials = '';
+      document.getElementById('twofa-screen')?.classList.add('hidden');
+      document.getElementById('login-screen')?.classList.remove('hidden');
+      (document.getElementById('twofa-code') as HTMLInputElement).value = '';
+      (document.getElementById('login-form') as HTMLFormElement)?.reset();
     });
 
     // Logout
     document.getElementById('logout-btn')?.addEventListener('click', () => {
       authCredentials = '';
+      pending2FASessionId = '';
       document.getElementById('admin-panel')?.classList.add('hidden');
+      document.getElementById('twofa-screen')?.classList.add('hidden');
+      document.getElementById('setup-2fa-btn')?.classList.add('hidden');
       document.getElementById('login-screen')?.classList.remove('hidden');
       (document.getElementById('login-form') as HTMLFormElement)?.reset();
+      (document.getElementById('twofa-code') as HTMLInputElement).value = '';
+    });
+
+    // 2FA Setup Button - öffnet Setup-Seite in neuem Tab
+    document.getElementById('setup-2fa-btn')?.addEventListener('click', () => {
+      // Öffne die Setup-Seite mit Basic Auth im neuen Tab
+      const setupUrl = '/api/admin/setup-2fa';
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        // String-Konkatenation statt Template-Literals um Astro-Interpolation zu vermeiden
+        const htmlContent = '<html><head><title>2FA Setup wird geladen...</title></head><body>' +
+          '<script>' +
+          'fetch("' + setupUrl + '", { headers: { "Authorization": "Basic ' + authCredentials + '" } })' +
+          '.then(function(r) { return r.text(); })' +
+          '.then(function(html) { document.open(); document.write(html); document.close(); })' +
+          '.catch(function(e) { document.body.innerHTML = "<h1>Fehler beim Laden</h1><p>" + e.message + "</p>"; });' +
+          '<\/script>' +
+          '<p>Lade 2FA Setup...</p></body></html>';
+        newWindow.document.write(htmlContent);
+      }
     });
 
 	    // Event-Typ Change Handler - zeigt Hinweis bei Kindergeburtstag/Stammtisch

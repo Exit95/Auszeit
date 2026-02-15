@@ -69,6 +69,12 @@ body {
   color: #8B6F47;
 }
 
+.admin-header-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .admin-main {
   display: grid;
   gap: 2rem;

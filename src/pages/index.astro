@@ -8,11 +8,15 @@ import FAQ from '../sections/FAQ.astro';
 import Offerings from '../sections/Offerings.astro';
 import Reviews from '../sections/Reviews.astro';
 import Contact from '../sections/Contact.astro';
+
+// SEO-optimierter Title und Description für lokale Suche
+const seoTitle = "Keramik bemalen Gronau | Atelier Auszeit | Workshops & Kindergeburtstage";
+const seoDescription = "Keramik selbst bemalen in Gronau (Westfalen) ✓ Kreative Workshops ✓ Kindergeburtstage ✓ JGA ✓ Auch für Epe, Ochtrup, Ahaus, Enschede. Jetzt Termin buchen bei Irena Woschkowiak!";
 ---
 
 <MainLayout
-  title="Atelier Auszeit – Keramik Malatelier in Gronau | Irena Woschkowiak"
-  description="Keramik bemalen in ruhiger Atmosphäre. Jetzt Termin sichern bei Irena Woschkowiak."
+  title={seoTitle}
+  description={seoDescription}
 >
   <Hero />
   <BookingCalendar title="Termin buchen" />

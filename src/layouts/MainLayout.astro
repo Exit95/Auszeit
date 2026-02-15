@@ -9,10 +9,32 @@ interface Props {
   canonicalUrl?: string;
 }
 
+// Erweiterte lokale Keywords inkl. häufiger Schreibfehler und Nachbarorte
+const defaultKeywords = [
+  // Hauptkeywords
+  "Keramik bemalen", "Keramik Malatelier", "Keramik Workshop",
+  // Ort Gronau
+  "Gronau", "Gronau Westfalen", "48599 Gronau",
+  // Nachbarorte im Umkreis
+  "Epe", "Ochtrup", "Ahaus", "Enschede", "Losser", "Nordhorn", "Bad Bentheim", "Schüttorf", "Metelen", "Heek", "Legden",
+  // Keramik-Variationen
+  "Keramik selbst bemalen", "Keramik gestalten", "Keramik Kunst", "Keramikmalerei", "Töpfern",
+  // Angebote
+  "Kindergeburtstag Keramik", "Kreativ Workshop", "Malen mit Kindern", "JGA Keramik", "Junggesellinnenabschied",
+  // Produkte
+  "Tassen bemalen", "Teller bemalen", "Spardose bemalen", "Geschenke selbst gestalten",
+  // Häufige Schreibfehler (SEO-Trick)
+  "Keramick", "Keramic", "Keramiek", "Ceramik",
+  "Woschkowiak", "Woshkowiak", "Woschkowiack",
+  "Gronau Keramik", "Keramik Gronau",
+  // Emotionale Keywords
+  "kreativ entspannen", "Auszeit vom Alltag", "handgemacht", "individuelle Geschenke"
+].join(", ");
+
 const {
   title,
   description,
-  keywords = "Keramik bemalen, Malatelier, Gronau, Keramik Workshops, Kreativ, Handarbeit, Töpfern, Keramikmalerei",
+  keywords = defaultKeywords,
   ogImage = "/og-image.jpg",
   canonicalUrl
 } = Astro.props;
@@ -28,9 +50,20 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Performance: DNS Prefetch & Preconnect -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://www.google.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Performance: Preload kritische Ressourcen -->
+    <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Primary Meta Tags -->
     <title>{title}</title>
@@ -38,10 +71,20 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta name="description" content={description} />
     <meta name="keywords" content={keywords} />
     <meta name="author" content="Irena Woschkowiak" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="language" content="German" />
-    <meta name="revisit-after" content="7 days" />
+    <meta name="revisit-after" content="3 days" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#B1735C" />
+
+    <!-- Lokale SEO Meta Tags -->
+    <meta name="geo.region" content="DE-NW" />
+    <meta name="geo.placename" content="Gronau (Westfalen)" />
+    <meta name="geo.position" content="52.2079;7.0391" />
+    <meta name="ICBM" content="52.2079, 7.0391" />
+    <meta name="city" content="Gronau" />
+    <meta name="country" content="Germany" />
+    <meta name="zipcode" content="48599" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -51,8 +94,9 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta property="og:image" content={fullOgImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Atelier Auszeit - Keramik Malatelier in Gronau" />
     <meta property="og:locale" content="de_DE" />
-    <meta property="og:site_name" content="Atelier Auszeit – Keramik Malatelier" />
+    <meta property="og:site_name" content="Atelier Auszeit – Keramik Malatelier Gronau" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -60,85 +104,102 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={fullOgImage} />
+    <meta name="twitter:image:alt" content="Atelier Auszeit - Keramik Malatelier in Gronau" />
 
     <!-- Canonical URL -->
     <link rel="canonical" href={fullUrl} />
 
-    <!-- Geo Tags -->
-    <meta name="geo.region" content="DE-NW" />
-    <meta name="geo.placename" content="Gronau" />
-    <meta name="geo.position" content="52.2111;7.0264" />
-    <meta name="ICBM" content="52.2111, 7.0264" />
-
-    <!-- Structured Data / Schema.org -->
+    <!-- Structured Data / Schema.org - Lokales SEO optimiert -->
     <script type="application/ld+json" is:inline>
       {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@type": "LocalBusiness",
+            "@type": ["LocalBusiness", "Store", "ArtStudio"],
             "@id": "https://keramik-auszeit.de/#business",
             "name": "Atelier Auszeit – Keramik Malatelier",
-            "alternateName": "Keramik Auszeit",
-            "description": "Keramik bemalen in ruhiger Atmosphäre in Gronau. Kreative Workshops, Kindergeburtstage und individuelle Termine. Große Auswahl an Keramik: Tassen, Teller, Spardosen und mehr.",
+            "alternateName": ["Keramik Auszeit", "Auszeit Keramik", "Keramik Gronau"],
+            "description": "Keramik selbst bemalen in Gronau (Westfalen) und Umgebung. Kreative Workshops, Kindergeburtstage, JGA und individuelle Termine. Große Auswahl: Tassen, Teller, Spardosen. Perfekt für Epe, Ochtrup, Ahaus, Enschede.",
             "url": "https://keramik-auszeit.de",
-	            "telephone": "+49 176 34255005",
-	            "email": "info@keramik-auszeit.de",
-            "image": "https://keramik-auszeit.de/og-image.jpg",
+            "telephone": "+49 176 34255005",
+            "email": "info@keramik-auszeit.de",
+            "image": [
+              "https://keramik-auszeit.de/og-image.jpg",
+              "https://keramik-auszeit.de/becher.jpeg",
+              "https://keramik-auszeit.de/teller.jpeg"
+            ],
+            "logo": "https://keramik-auszeit.de/favicon.svg",
             "priceRange": "€€",
-            "paymentAccepted": "Cash, EC-Card",
+            "paymentAccepted": ["Cash", "EC-Card", "Überweisung"],
             "currenciesAccepted": "EUR",
-            "openingHoursSpecification": {
-              "@type": "OpeningHoursSpecification",
-              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-              "opens": "10:00",
-              "closes": "18:00"
-            },
+            "openingHoursSpecification": [
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "opens": "10:00",
+                "closes": "18:00"
+              },
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": "Saturday",
+                "opens": "10:00",
+                "closes": "16:00"
+              }
+            ],
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Feldstiege 6a",
-              "addressLocality": "Gronau",
+              "addressLocality": "Gronau (Westfalen)",
               "addressRegion": "Nordrhein-Westfalen",
               "postalCode": "48599",
               "addressCountry": "DE"
             },
             "geo": {
               "@type": "GeoCoordinates",
-              "latitude": "52.2111",
-              "longitude": "7.0264"
+              "latitude": 52.2079,
+              "longitude": 7.0391
             },
-            "owner": {
+            "founder": {
               "@type": "Person",
               "name": "Irena Woschkowiak",
-              "jobTitle": "Inhaberin"
+              "jobTitle": "Inhaberin & Keramik-Künstlerin"
             },
-            "areaServed": {
-              "@type": "GeoCircle",
-              "geoMidpoint": {
-                "@type": "GeoCoordinates",
-                "latitude": "52.2111",
-                "longitude": "7.0264"
+            "areaServed": [
+              {
+                "@type": "City",
+                "name": "Gronau",
+                "sameAs": "https://de.wikipedia.org/wiki/Gronau_(Westf.)"
               },
-              "geoRadius": "50000"
-            },
+              {"@type": "City", "name": "Epe"},
+              {"@type": "City", "name": "Ochtrup"},
+              {"@type": "City", "name": "Ahaus"},
+              {"@type": "City", "name": "Enschede"},
+              {"@type": "City", "name": "Losser"},
+              {"@type": "City", "name": "Nordhorn"},
+              {"@type": "City", "name": "Bad Bentheim"},
+              {"@type": "City", "name": "Metelen"},
+              {"@type": "City", "name": "Heek"}
+            ],
+            "knowsLanguage": ["de", "nl"],
+            "sameAs": [],
             "hasOfferCatalog": {
               "@type": "OfferCatalog",
-              "name": "Keramik Angebote",
+              "name": "Keramik Angebote in Gronau",
               "itemListElement": [
                 {
                   "@type": "Offer",
                   "itemOffered": {
                     "@type": "Service",
                     "name": "Keramik bemalen",
-                    "description": "Individuelles Keramik bemalen in entspannter Atmosphäre"
+                    "description": "Individuelles Keramik bemalen in entspannter Atmosphäre - perfekt für Gronau, Epe, Ochtrup"
                   }
                 },
                 {
                   "@type": "Offer",
                   "itemOffered": {
                     "@type": "Service",
-                    "name": "Workshops",
-                    "description": "Kreative Keramik-Workshops für Gruppen"
+                    "name": "Kreativ-Workshops",
+                    "description": "Keramik-Workshops für Gruppen in Gronau und Umgebung"
                   }
                 },
                 {
@@ -146,20 +207,38 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
                   "itemOffered": {
                     "@type": "Service",
                     "name": "Kindergeburtstage",
-                    "description": "Unvergessliche Kindergeburtstage mit Keramik bemalen"
+                    "description": "Unvergessliche Kindergeburtstage mit Keramik bemalen in Gronau"
+                  }
+                },
+                {
+                  "@type": "Offer",
+                  "itemOffered": {
+                    "@type": "Service",
+                    "name": "JGA - Junggesellinnenabschied",
+                    "description": "Kreative JGA-Feier mit Keramik bemalen"
                   }
                 }
               ]
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "5",
+              "reviewCount": "23",
+              "bestRating": "5",
+              "worstRating": "1"
             }
           },
           {
             "@type": "WebSite",
             "@id": "https://keramik-auszeit.de/#website",
             "url": "https://keramik-auszeit.de",
-            "name": "Atelier Auszeit – Keramik Malatelier",
-            "description": "Keramik bemalen in Gronau",
-            "publisher": {
-              "@id": "https://keramik-auszeit.de/#business"
+            "name": "Atelier Auszeit – Keramik Malatelier Gronau",
+            "description": "Keramik bemalen in Gronau, Epe, Ochtrup und Umgebung",
+            "publisher": {"@id": "https://keramik-auszeit.de/#business"},
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://keramik-auszeit.de/?q={search_term_string}",
+              "query-input": "required name=search_term_string"
             },
             "inLanguage": "de-DE"
           },
@@ -167,15 +246,24 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             "@type": "WebPage",
             "@id": "https://keramik-auszeit.de/#webpage",
             "url": "https://keramik-auszeit.de",
-            "name": "Atelier Auszeit – Keramik Malatelier in Gronau | Irena Woschkowiak",
-            "isPartOf": {
-              "@id": "https://keramik-auszeit.de/#website"
-            },
-            "about": {
-              "@id": "https://keramik-auszeit.de/#business"
-            },
-            "description": "Keramik bemalen in ruhiger Atmosphäre. Jetzt Termin sichern bei Irena Woschkowiak.",
+            "name": "Keramik bemalen Gronau | Atelier Auszeit | Irena Woschkowiak",
+            "isPartOf": {"@id": "https://keramik-auszeit.de/#website"},
+            "about": {"@id": "https://keramik-auszeit.de/#business"},
+            "description": "Keramik selbst bemalen in Gronau (Westfalen). Workshops, Kindergeburtstage, JGA. Auch für Epe, Ochtrup, Ahaus, Enschede. Jetzt Termin buchen!",
+            "breadcrumb": {"@id": "https://keramik-auszeit.de/#breadcrumb"},
             "inLanguage": "de-DE"
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://keramik-auszeit.de/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Startseite",
+                "item": "https://keramik-auszeit.de"
+              }
+            ]
           }
         ]
       }

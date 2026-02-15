@@ -7,6 +7,7 @@ import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigure
 import { sanitizeId } from '../../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { logAuditEvent } from '../../../lib/audit-log';
+import { validateCredentials } from '../../../lib/totp';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILENAME = 'workshop-bookings.json';
@@ -34,15 +35,16 @@ interface Workshop {
   active: boolean;
 }
 
+// Authentifizierung - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
-  const adminPassword = process.env.ADMIN_PASSWORD || '';
   if (!authHeader) return false;
   const [type, credentials] = authHeader.split(' ');
   if (type !== 'Basic') return false;
   const decoded = Buffer.from(credentials, 'base64').toString();
   const [username, password] = decoded.split(':');
-  return username === 'admin' && password === adminPassword;
+  const validation = validateCredentials(username, password);
+  return validation.valid;
 }
 
 async function getWorkshopBookings(): Promise<WorkshopBooking[]> {
