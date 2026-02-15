@@ -27,9 +27,7 @@ body {
   font-size: 1rem;
   line-height: 1.5;
   color: var(--color-text-primary);
-  background: radial-gradient(1200px 700px at 10% 0%, #ffffff 0%, var(--bg-cream) 55%, var(--bg-sand) 100%);
-  background-attachment: fixed;
-  min-height: 100vh;
+  background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
