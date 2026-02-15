@@ -45,16 +45,18 @@ interface GalleryMetadata {
   };
 }
 
-// Auth check
+import { validateCredentials } from '../../lib/totp';
+
+// Auth check - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
-  const adminPassword = process.env.ADMIN_PASSWORD || '';
   if (!authHeader) return false;
   const [type, credentials] = authHeader.split(' ');
   if (type !== 'Basic') return false;
   const decoded = Buffer.from(credentials, 'base64').toString();
   const [username, password] = decoded.split(':');
-  return username === 'admin' && password === adminPassword;
+  const validation = validateCredentials(username, password);
+  return validation.valid;
 }
 
 // Metadata aus S3 lesen

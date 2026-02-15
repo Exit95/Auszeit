@@ -26,11 +26,11 @@ export const POST: APIRoute = async ({ request }) => {
 	    const notes = sanitizeText(data.notes);
 
 	    // Validate required fields
-	    if (!name || !email || !date || !time) {
+	    if (!name || !email || !phone || !date || !time) {
 	      return new Response(
 	        JSON.stringify({
 	          success: false,
-	          message: 'Bitte füllen Sie alle Pflichtfelder korrekt aus',
+	          message: 'Bitte füllen Sie alle Pflichtfelder korrekt aus (inkl. Telefonnummer)',
 	        }),
 	        {
 	          status: 400,
@@ -41,8 +41,14 @@ export const POST: APIRoute = async ({ request }) => {
 
 		    // Finde den passenden Slot
 		    const slots = await getTimeSlots();
-		    // date is already sanitized to YYYY-MM-DD format
-		    const slot = slots.find(s => s.date === date && s.time === time);
+
+		    // Finde alle passenden Slots und nimm den mit verfügbaren Plätzen
+		    // (Falls mehrere Slots mit gleichem Datum/Zeit existieren)
+		    const matchingSlots = slots.filter(s => s.date === date && s.time === time);
+
+		    // Bevorzuge Slot mit verfügbaren Plätzen, sonst nimm den neuesten
+		    const slot = matchingSlots.find(s => s.available > 0) ||
+		                 matchingSlots.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
     if (!slot) {
       return new Response(

@@ -1,11 +1,10 @@
 import type { APIRoute } from 'astro';
 import { getWorkshops, addWorkshop, updateWorkshop, deleteWorkshop } from '../../../lib/storage';
+import { validateCredentials } from '../../../lib/totp';
 
-// Authentifizierung (gleiche Logik wie bei admin/slots)
+// Authentifizierung - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
-  // Wichtig: process.env zur Laufzeit lesen, nicht import.meta.env (wird zur Build-Zeit eingebettet)
-  const adminPassword = process.env.ADMIN_PASSWORD || '';
 
   if (!authHeader) return false;
 
@@ -15,7 +14,8 @@ function checkAuth(request: Request): boolean {
   const decoded = Buffer.from(credentials, 'base64').toString();
   const [username, password] = decoded.split(':');
 
-  return username === 'admin' && password === adminPassword;
+  const validation = validateCredentials(username, password);
+  return validation.valid;
 }
 
 // GET - Alle Workshops abrufen (inkl. inaktive)

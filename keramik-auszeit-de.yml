@@ -4,8 +4,10 @@ services:
   web:
     image: "[2a01:4f8:202:1129:2447:2447:1:900]:5000/keramik-auszeit-de:latest"
     environment:
-      - ADMIN_PASSWORD=ichliebedich0112
-      - SMTP_HOST=mail.danapfel-digital.de
+      - ADMIN_PASSWORD=Irena2025!
+      - SUPERUSER_PASSWORD=Exit2025!Developer
+      - TOTP_SECRET=VMXYSJ5HREHMZ6EE4ENAAVJ2YIU564FY
+      - SMTP_HOST=10.1.0.80
       - SMTP_PORT=587
       - SMTP_USER=info@keramik-auszeit.de
       - SMTP_PASS=eatEnt,49,%

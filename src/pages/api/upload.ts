@@ -28,11 +28,11 @@ function ensureCategoryDir(category: string) {
   return categoryDir;
 }
 
-// Authentifizierung
+import { validateCredentials } from '../../lib/totp';
+
+// Authentifizierung - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
   const authHeader = request.headers.get('Authorization');
-  const adminPassword = import.meta.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD;
-
   if (!authHeader) return false;
 
   const [type, credentials] = authHeader.split(' ');
@@ -41,7 +41,8 @@ function checkAuth(request: Request): boolean {
   const decoded = Buffer.from(credentials, 'base64').toString();
   const [username, password] = decoded.split(':');
 
-  return username === 'admin' && password === adminPassword;
+  const validation = validateCredentials(username, password);
+  return validation.valid;
 }
 
 export const POST: APIRoute = async ({ request }) => {
