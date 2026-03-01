@@ -1,10 +1,6 @@
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-12-18.acacia',
-});
-
 // Gutschein-Produkte
 const VOUCHER_PRODUCTS: Record<string, { name: string; amount: number; description: string }> = {
   'voucher-25': {
@@ -21,6 +17,20 @@ const VOUCHER_PRODUCTS: Record<string, { name: string; amount: number; descripti
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Stripe-Key aus Umgebungsvariablen lesen (zur Laufzeit)
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+    if (!stripeSecretKey) {
+      console.error('STRIPE_SECRET_KEY nicht konfiguriert');
+      return new Response(
+        JSON.stringify({ error: 'Zahlungssystem nicht konfiguriert' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: '2024-12-18.acacia',
+    });
     const body = await request.json();
     const { voucherId, customAmount, customerEmail } = body;
 
@@ -67,7 +77,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      payment_method_types: ['card', 'giropay', 'sofort'],
+      // Automatisch alle im Stripe-Dashboard aktivierten Zahlungsmethoden anzeigen
       line_items: [lineItem],
       mode: 'payment',
       success_url: `${new URL(request.url).origin}/gutschein-erfolg?session_id={CHECKOUT_SESSION_ID}`,

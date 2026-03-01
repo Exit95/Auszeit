@@ -6,6 +6,7 @@ import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-s
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
 import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeId } from '../../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
+import { getCancelUrl } from '../../../lib/cancel-token';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILE = path.join(DATA_DIR, 'workshop-bookings.json');
@@ -191,12 +192,14 @@ export const POST: APIRoute = async ({ request }) => {
 	Notizen: ${notes || 'Keine'}
 	    `;
 
+	    const cancelUrl = getCancelUrl(newBooking.id, 'workshop');
+
 	    const customerHtml = `
 	      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-	        <h2 style="color: #8B6F47;">Vielen Dank f&uuml;r Ihre Workshop-Buchungsanfrage!</h2>
+	        <h2 style="color: #8B6F47;">Vielen Dank für Ihre Workshop-Buchungsanfrage!</h2>
 	        <p>Liebe/r ${name},</p>
-	        <p>wir haben Ihre Buchungsanfrage f&uuml;r den Workshop <strong>${workshop.title}</strong> erhalten.</p>
-	        <p>Sie erhalten eine <strong>separate E-Mail mit der endg&uuml;ltigen Best&auml;tigung</strong>, sobald wir Ihren Platz best&auml;tigt haben.</p>
+	        <p>wir haben Ihre Buchungsanfrage für den Workshop <strong>${workshop.title}</strong> erhalten.</p>
+	        <p>Sie erhalten eine <strong>separate E-Mail mit der endgültigen Bestätigung</strong>, sobald wir Ihren Platz bestätigt haben.</p>
 
 	        <div style="background-color: #F5F0E8; padding: 20px; border-radius: 8px; margin: 20px 0;">
 	          <h3 style="color: #8B6F47; margin-top: 0;">Ihre Angaben:</h3>
@@ -207,38 +210,46 @@ export const POST: APIRoute = async ({ request }) => {
 	          ${notes ? `<p><strong>Ihre Notizen:</strong> ${notes}</p>` : ''}
 	        </div>
 
-	        <p>Bei Fragen oder &Auml;nderungsw&uuml;nschen k&ouml;nnen Sie uns gerne kontaktieren:</p>
+	        <p>Bei Fragen oder Änderungswünschen können Sie uns gerne kontaktieren:</p>
 	        <p>
 	          📧 E-Mail: ${bookingEmail}<br />
 	        </p>
 
-	        <p style="margin-top: 30px;">Herzliche Gr&uuml;&szlig;e,<br />
+	        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
+	          <p style="font-size: 0.85rem; color: #999;">Falls Sie Ihren Termin nicht wahrnehmen können, können Sie ihn hier stornieren:<br>
+	          <a href="${cancelUrl}" style="color: #dc2626;">Workshop-Buchung stornieren</a></p>
+	        </div>
+
+	        <p style="margin-top: 30px;">Herzliche Grüße,<br />
 	        <strong>Irena Woschkowiak</strong><br />
 	        Atelier Auszeit</p>
 	      </div>
 	    `;
 
 	    const customerText = `
-	Vielen Dank f&uuml;r Ihre Workshop-Buchungsanfrage!
+Vielen Dank für Ihre Workshop-Buchungsanfrage!
 
-	Liebe/r ${name},
+Liebe/r ${name},
 
-	wir haben Ihre Buchungsanfrage f&uuml;r den Workshop "${workshop.title}" erhalten.
-	Sie erhalten eine separate E-Mail mit der endg&uuml;ltigen Best&auml;tigung, sobald wir Ihren Platz best&auml;tigt haben.
+wir haben Ihre Buchungsanfrage für den Workshop "${workshop.title}" erhalten.
+Sie erhalten eine separate E-Mail mit der endgültigen Bestätigung, sobald wir Ihren Platz bestätigt haben.
 
-	Ihre Angaben:
-	  Workshop: ${workshop.title}
-	  Datum: ${workshop.date}
-	  Uhrzeit: ${workshop.time} Uhr
-	  Teilnehmer: ${participants}
-	  ${notes ? `Notizen: ${notes}` : ''}
+Ihre Angaben:
+  Workshop: ${workshop.title}
+  Datum: ${workshop.date}
+  Uhrzeit: ${workshop.time} Uhr
+  Teilnehmer: ${participants}
+  ${notes ? `Notizen: ${notes}` : ''}
 
-	Kontakt:
-	  E-Mail: ${bookingEmail}
+Kontakt:
+  E-Mail: ${bookingEmail}
 
-	Herzliche Gr&uuml;&szlig;e,
-	Irena Woschkowiak
-	Atelier Auszeit
+Falls Sie Ihren Termin nicht wahrnehmen können, können Sie ihn hier stornieren:
+${cancelUrl}
+
+Herzliche Grüße,
+Irena Woschkowiak
+Atelier Auszeit
 	    `;
 
 	    // E-Mail-Versand nur, wenn SMTP konfiguriert ist

@@ -8,6 +8,8 @@ import { sanitizeId } from '../../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { logAuditEvent } from '../../../lib/audit-log';
 import { validateCredentials } from '../../../lib/totp';
+import { createICalEvent } from '../../../lib/ical-helper';
+import { getCancelUrl } from '../../../lib/cancel-token';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const WORKSHOP_BOOKINGS_FILENAME = 'workshop-bookings.json';
@@ -195,6 +197,8 @@ export const POST: APIRoute = async ({ request }) => {
 
         const customerSubject = `Deine Workshop-Buchung wurde bestätigt - ${workshopTitle}`;
 
+        const cancelUrl = getCancelUrl(booking.id, 'workshop');
+
         const customerHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #8B6F47;">Deine Workshop-Buchung ist bestätigt!</h2>
@@ -218,8 +222,13 @@ export const POST: APIRoute = async ({ request }) => {
             </p>
 
             <p>Bei Fragen oder Änderungswünschen erreichst du uns unter:<br/>
-            E-Mail: info@keramik-auszeit.de<br/>
+            E-Mail: keramik-auszeit@web.de<br/>
             Telefon: +49 176 34255005</p>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
+              <p style="font-size: 0.85rem; color: #999;">Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:<br/>
+              <a href="${cancelUrl}" style="color: #dc2626;">Workshop-Buchung stornieren</a></p>
+            </div>
 
             <p style="margin-top: 20px;">Wir freuen uns auf dich!<br/>
             <strong>Dein Atelier Auszeit</strong></p>
@@ -246,36 +255,27 @@ Feldstiege 6a
 48599 Gronau
 
 Bei Fragen oder Änderungswünschen erreichst du uns unter:
-E-Mail: info@keramik-auszeit.de
+E-Mail: keramik-auszeit@web.de
 Telefon: +49 176 34255005
+
+Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:
+${cancelUrl}
 
 Wir freuen uns auf dich!
 Dein Atelier Auszeit
 `;
 
-        // Kalender-Event erstellen
+        // Kalender-Event erstellen (mit korrekter Zeitzone)
         let icalEvent: string | null = null;
         if (workshopDate && workshopTime) {
-          const eventDate = new Date(`${workshopDate}T${workshopTime}:00`);
-          const endDate = new Date(eventDate.getTime() + 3 * 60 * 60 * 1000); // 3 Stunden
-
-          const formatDate = (date: Date) =>
-            date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-          icalEvent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Atelier Auszeit//Workshop//DE
-BEGIN:VEVENT
-UID:${Date.now()}@auszeit-keramik.de
-DTSTAMP:${formatDate(new Date())}
-DTSTART:${formatDate(eventDate)}
-DTEND:${formatDate(endDate)}
-SUMMARY:Workshop: ${workshopTitle}
-DESCRIPTION:Buchung für ${booking.participants} Person(en)\\nE-Mail: ${booking.email}\\nTelefon: ${booking.phone || 'Nicht angegeben'}
-LOCATION:Atelier Auszeit, Feldstiege 6a, 48599 Gronau
-STATUS:CONFIRMED
-END:VEVENT
-END:VCALENDAR`;
+          icalEvent = createICalEvent({
+            summary: `Workshop: ${workshopTitle}`,
+            description: `Buchung für ${booking.participants} Person(en)\nE-Mail: ${booking.email}\nTelefon: ${booking.phone || 'Nicht angegeben'}`,
+            date: workshopDate,
+            startTime: workshopTime,
+            defaultDurationHours: 3,
+            prodId: '-//Atelier Auszeit//Workshop//DE',
+          });
         }
 
         if (isSmtpConfigured()) {

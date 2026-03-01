@@ -1,0 +1,158 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+---
+
+<MainLayout
+  title="Buchung stornieren - Atelier Auszeit"
+  description="Stornieren Sie Ihre Buchung im Atelier Auszeit"
+>
+  <section style="min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+    <div id="cancel-container" style="max-width: 500px; width: 100%; font-family: Arial, sans-serif;">
+      <div id="loading" style="text-align: center; padding: 3rem;">
+        <p style="color: #8B6F47; font-size: 1.2rem;">Buchung wird geladen...</p>
+      </div>
+
+      <div id="error" style="display: none; text-align: center; padding: 3rem;">
+        <h2 style="color: #dc2626;">Fehler</h2>
+        <p id="error-message"></p>
+        <a href="/" style="color: #8B6F47; text-decoration: underline;">Zurück zur Startseite</a>
+      </div>
+
+      <div id="booking-info" style="display: none;">
+        <h2 style="color: #8B6F47; font-family: serif; font-size: 1.75rem; margin-bottom: 1rem;">Buchung stornieren</h2>
+        <div style="background-color: #F5F0E8; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+          <p><strong>Name:</strong> <span id="info-name"></span></p>
+          <p><strong>Teilnehmer:</strong> <span id="info-participants"></span></p>
+          <p id="info-date-row"><strong>Datum:</strong> <span id="info-date"></span></p>
+          <p id="info-time-row"><strong>Uhrzeit:</strong> <span id="info-time"></span></p>
+          <p><strong>Status:</strong> <span id="info-status"></span></p>
+        </div>
+
+        <div id="already-cancelled" style="display: none; background: #fef2f2; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; text-align: center;">
+          <p style="color: #dc2626; font-weight: bold;">Diese Buchung wurde bereits storniert.</p>
+          <a href="/" style="color: #8B6F47; text-decoration: underline; margin-top: 0.5rem; display: inline-block;">Zurück zur Startseite</a>
+        </div>
+
+        <div id="cancel-form" style="display: none;">
+          <p style="margin-bottom: 1rem; color: #666;">Möchten Sie diese Buchung wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+          <button id="cancel-btn" style="width: 100%; padding: 0.875rem; background-color: #dc2626; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+            Buchung stornieren
+          </button>
+          <a href="/" style="display: block; text-align: center; margin-top: 1rem; color: #8B6F47; text-decoration: underline;">Abbrechen &ndash; zurück zur Startseite</a>
+        </div>
+      </div>
+
+      <div id="success" style="display: none; text-align: center; padding: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+        <h2 style="color: #16a34a;">Buchung storniert</h2>
+        <p>Ihre Buchung wurde erfolgreich storniert. Vielen Dank für die rechtzeitige Absage.</p>
+        <a href="/" style="display: inline-block; margin-top: 1.5rem; padding: 0.75rem 2rem; background-color: #8B6F47; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">Zurück zur Startseite</a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const token = params.get('token');
+    const type = params.get('type') || 'booking';
+
+    const loadingEl = document.getElementById('loading')!;
+    const errorEl = document.getElementById('error')!;
+    const errorMsg = document.getElementById('error-message')!;
+    const bookingEl = document.getElementById('booking-info')!;
+    const cancelForm = document.getElementById('cancel-form')!;
+    const alreadyCancelled = document.getElementById('already-cancelled')!;
+    const successEl = document.getElementById('success')!;
+    const cancelBtn = document.getElementById('cancel-btn')!;
+
+    function showError(msg: string) {
+      loadingEl.style.display = 'none';
+      errorMsg.textContent = msg;
+      errorEl.style.display = 'block';
+    }
+
+    function formatStatus(status: string): string {
+      switch (status) {
+        case 'pending': return 'Ausstehend';
+        case 'confirmed': return 'Bestätigt';
+        case 'cancelled': return 'Storniert';
+        default: return status;
+      }
+    }
+
+    async function loadBooking() {
+      if (!id || !token) {
+        showError('Ungültiger Stornierungslink. Bitte verwenden Sie den Link aus Ihrer E-Mail.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/cancel?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}&type=${type}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || 'Buchung konnte nicht geladen werden.');
+          return;
+        }
+
+        loadingEl.style.display = 'none';
+        bookingEl.style.display = 'block';
+
+        document.getElementById('info-name')!.textContent = data.name;
+        document.getElementById('info-participants')!.textContent = data.participants;
+        document.getElementById('info-status')!.textContent = formatStatus(data.status);
+
+        if (data.date) {
+          document.getElementById('info-date')!.textContent = data.date;
+        } else {
+          document.getElementById('info-date-row')!.style.display = 'none';
+        }
+        if (data.time) {
+          const timeDisplay = data.endTime ? `${data.time} - ${data.endTime} Uhr` : `${data.time} Uhr`;
+          document.getElementById('info-time')!.textContent = timeDisplay;
+        } else {
+          document.getElementById('info-time-row')!.style.display = 'none';
+        }
+
+        if (data.status === 'cancelled') {
+          alreadyCancelled.style.display = 'block';
+        } else {
+          cancelForm.style.display = 'block';
+        }
+      } catch {
+        showError('Verbindungsfehler. Bitte versuchen Sie es später erneut.');
+      }
+    }
+
+    cancelBtn.addEventListener('click', async () => {
+      cancelBtn.setAttribute('disabled', 'true');
+      cancelBtn.textContent = 'Wird storniert...';
+
+      try {
+        const res = await fetch('/api/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, token, type }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          bookingEl.style.display = 'none';
+          successEl.style.display = 'block';
+        } else {
+          alert(data.error || 'Stornierung fehlgeschlagen.');
+          cancelBtn.removeAttribute('disabled');
+          cancelBtn.textContent = 'Buchung stornieren';
+        }
+      } catch {
+        alert('Verbindungsfehler. Bitte versuchen Sie es später erneut.');
+        cancelBtn.removeAttribute('disabled');
+        cancelBtn.textContent = 'Buchung stornieren';
+      }
+    });
+
+    loadBooking();
+  </script>
+</MainLayout>
+

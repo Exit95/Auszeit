@@ -17,8 +17,8 @@ export const SMTP_USER = getEnv('SMTP_USER');
 export const SMTP_PASS = getEnv('SMTP_PASS');
 
 // E-Mail-Adressen
-export const BOOKING_EMAIL = getEnv('BOOKING_EMAIL', 'info@keramik-auszeit.de');
-export const FROM_EMAIL = getEnv('FROM_EMAIL', 'info@keramik-auszeit.de');
+export const BOOKING_EMAIL = getEnv('BOOKING_EMAIL', 'keramik-auszeit@web.de');
+export const FROM_EMAIL = getEnv('FROM_EMAIL', 'keramik-auszeit@web.de');
 
 // Admin - als Funktion, damit es zur Laufzeit ausgewertet wird
 export function getAdminPassword(): string {

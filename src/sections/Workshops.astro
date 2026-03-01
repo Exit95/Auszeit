@@ -2,9 +2,48 @@
 import WorkshopCard from "../components/WorkshopCard.astro";
 import WorkshopModal from "../components/WorkshopModal.astro";
 import { getWorkshops } from "../lib/storage";
+import { isS3Configured, readJsonFromS3 } from "../lib/s3-storage";
+import fs from "fs/promises";
+import path from "path";
 
-const workshops = await getWorkshops();
-const activeWorkshops = workshops.filter((w) => w.active);
+interface WorkshopBooking {
+  workshopId: string;
+  participants: number;
+  status: 'pending' | 'confirmed' | 'cancelled';
+}
+
+// Buchungen laden um aktuelle Teilnehmerzahl zu berechnen
+async function getWorkshopBookings(): Promise<WorkshopBooking[]> {
+  if (isS3Configured()) {
+    return await readJsonFromS3<WorkshopBooking[]>('workshop-bookings.json', []);
+  }
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'workshop-bookings.json');
+    const data = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+const [workshops, bookings] = await Promise.all([getWorkshops(), getWorkshopBookings()]);
+
+// Aktive Workshops mit berechneter Teilnehmerzahl
+const activeWorkshops = workshops
+  .filter((w) => w.active)
+  .map((workshop) => {
+    const workshopBookings = bookings.filter(
+      (b) => b.workshopId === workshop.id && b.status !== 'cancelled'
+    );
+    const currentParticipants = workshopBookings.reduce(
+      (sum, b) => sum + b.participants,
+      0
+    );
+    return {
+      ...workshop,
+      currentParticipants,
+    };
+  });
 ---
 
 <section id="workshops" class="workshops animate-on-scroll">

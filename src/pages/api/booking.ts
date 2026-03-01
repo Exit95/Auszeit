@@ -4,6 +4,8 @@ import { getTimeSlots, addBooking } from '../../lib/storage';
 import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
 import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeDate, sanitizeTime } from '../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
+import { createICalEvent } from '../../lib/ical-helper';
+import { getCancelUrl } from '../../lib/cancel-token';
 
 export const POST: APIRoute = async ({ request }) => {
 	  // Rate limiting
@@ -134,6 +136,9 @@ Notizen: ${notes || 'Keine'}
       `
     };
 
+		    // Stornierungslink für den Kunden
+		    const cancelUrl = getCancelUrl(booking.id, 'booking');
+
 		    // Eingangsbestätigung für Kunden vorbereiten (Anfrage, noch nicht final bestätigt)
 		    const customerEmailData = {
 	      to: email,
@@ -145,7 +150,7 @@ Notizen: ${notes || 'Keine'}
 	          <p>Liebe/r ${name},</p>
 	          <p>wir haben Ihre Buchungsanfrage erhalten und prüfen nun, ob wir den Termin bestätigen können.</p>
 	          <p>Sie erhalten eine <strong>separate E-Mail mit der endgültigen Bestätigung</strong>, sobald wir Ihren Termin fest eingeplant haben.</p>
-	
+
 	          <div style="background-color: #F5F0E8; padding: 20px; border-radius: 8px; margin: 20px 0;">
 		            <h3 style="color: #8B6F47; margin-top: 0;">Ihre Angabe:</h3>
 		            <p><strong>Datum:</strong> ${date}</p>
@@ -153,7 +158,7 @@ Notizen: ${notes || 'Keine'}
 	            <p><strong>Anzahl Personen:</strong> ${participants}</p>
 	            ${notes ? `<p><strong>Ihre Notizen:</strong> ${notes}</p>` : ''}
 	          </div>
-	
+
 	          <div style="background-color: #E8DCC8; padding: 20px; border-radius: 8px; margin: 20px 0;">
 	            <h3 style="color: #8B6F47; margin-top: 0;">Veranstaltungsort:</h3>
 	            <p>
@@ -162,13 +167,18 @@ Notizen: ${notes || 'Keine'}
 	              48599 Gronau
 	            </p>
 	          </div>
-	
+
 		          <p>Bei Fragen oder Änderungswünschen können Sie uns gerne kontaktieren:</p>
 		          <p>
 		            📧 E-Mail: keramik-auszeit@web.de<br>
 		            📱 Telefon: +49 176 34255005
 		          </p>
-	
+
+	          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
+	            <p style="font-size: 0.85rem; color: #999;">Falls Sie Ihren Termin nicht wahrnehmen können, können Sie ihn hier stornieren:<br>
+	            <a href="${cancelUrl}" style="color: #dc2626;">Termin stornieren</a></p>
+	          </div>
+
 	          <p style="margin-top: 30px;">Herzliche Grüße,<br>
 	          <strong>Irena Woschkowiak</strong><br>
 	          Atelier Auszeit</p>
@@ -197,36 +207,24 @@ Bei Fragen oder Änderungswünschen können Sie uns gerne kontaktieren:
 E-Mail: keramik-auszeit@web.de
 Telefon: +49 176 34255005
 
+Falls Sie Ihren Termin nicht wahrnehmen können, können Sie ihn hier stornieren:
+${cancelUrl}
+
 Herzliche Grüße,
 Irena Woschkowiak
 Atelier Auszeit
 	      `
 		    };
 
-	    // Kalender-Event erstellen (iCal Format)
-	    const eventDate = new Date(`${slot.date}T${slot.time}:00`);
-	    const endDate = slot.endTime
-	      ? new Date(`${slot.date}T${slot.endTime}:00`)
-	      : new Date(eventDate.getTime() + 2 * 60 * 60 * 1000); // Fallback: 2 Stunden später
-    
-    const formatDate = (date: Date) => {
-      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    };
-
-    const icalEvent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Atelier Auszeit//Booking//DE
-BEGIN:VEVENT
-UID:${Date.now()}@auszeit-keramik.de
-DTSTAMP:${formatDate(new Date())}
-DTSTART:${formatDate(eventDate)}
-DTEND:${formatDate(endDate)}
-SUMMARY:Keramik-Termin: ${name}
-DESCRIPTION:Buchung für ${participants} Person(en)\\nE-Mail: ${email}\\nTelefon: ${phone || 'Nicht angegeben'}\\nNotizen: ${notes || 'Keine'}
-LOCATION:Atelier Auszeit, Feldstiege 6a, 48599 Gronau
-STATUS:CONFIRMED
-END:VEVENT
-END:VCALENDAR`;
+	    // Kalender-Event erstellen (iCal Format mit korrekter Zeitzone)
+    const icalEvent = createICalEvent({
+      summary: `Keramik-Termin: ${name}`,
+      description: `Buchung für ${participants} Person(en)\nE-Mail: ${email}\nTelefon: ${phone || 'Nicht angegeben'}\nNotizen: ${notes || 'Keine'}`,
+      date: slot.date,
+      startTime: slot.time,
+      endTime: slot.endTime || undefined,
+      defaultDurationHours: 2,
+    });
 
     // E-Mail-Versand asynchron im Hintergrund (blockiert nicht die Response)
     let emailSent = false;
