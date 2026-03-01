@@ -5,6 +5,8 @@ import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigure
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { logAuditEvent } from '../../../lib/audit-log';
 import { validateCredentials } from '../../../lib/totp';
+import { createICalEvent } from '../../../lib/ical-helper';
+import { getCancelUrl } from '../../../lib/cancel-token';
 
 // Authentifizierung - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
@@ -133,6 +135,8 @@ export const POST: APIRoute = async ({ request }) => {
 						? `Dein Termin wurde bestätigt - Atelier Auszeit am ${date} um ${timeDisplay} Uhr`
 						: 'Dein Termin im Atelier Auszeit wurde bestätigt';
 
+					const cancelUrl = getCancelUrl(updated.id, 'booking');
+
 					const customerHtml = `
 							  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
 							    <h2 style="color: #8B6F47;">Dein Termin ist jetzt bestätigt</h2>
@@ -153,6 +157,10 @@ export const POST: APIRoute = async ({ request }) => {
 							      E-Mail: keramik-auszeit@web.de<br/>
 							      Telefon: +49 176 34255005
 							    </p>
+							    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
+							      <p style="font-size: 0.85rem; color: #999;">Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:<br/>
+							      <a href="${cancelUrl}" style="color: #dc2626;">Termin stornieren</a></p>
+							    </div>
 							    <p style="margin-top: 20px;">Herzliche Grüße<br/>Dein Atelier Auszeit</p>
 							  </div>
 							`;
@@ -177,6 +185,9 @@ Bei Fragen oder Änderungswünschen erreichst du uns unter:
 E-Mail: keramik-auszeit@web.de
 Telefon: +49 176 34255005
 
+Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:
+${cancelUrl}
+
 Herzliche Grüße
 Dein Atelier Auszeit
 `;
@@ -184,28 +195,14 @@ Dein Atelier Auszeit
 					// Kalender-Event nur mit der finalen Bestätigung mitschicken
 					let icalEvent: string | null = null;
 					if (slot && slot.date && slot.time) {
-						const eventDate = new Date(`${slot.date}T${slot.time}:00`);
-						const endDate = slot.endTime
-							? new Date(`${slot.date}T${slot.endTime}:00`)
-							: new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
-
-						const formatDate = (date: Date) =>
-							date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-						icalEvent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Atelier Auszeit//Booking//DE
-BEGIN:VEVENT
-UID:${Date.now()}@auszeit-keramik.de
-DTSTAMP:${formatDate(new Date())}
-DTSTART:${formatDate(eventDate)}
-DTEND:${formatDate(endDate)}
-SUMMARY:Keramik-Termin: ${updated.name}
-DESCRIPTION:Buchung für ${updated.participants} Person(en)\\nE-Mail: ${updated.email}\\nTelefon: ${updated.phone || 'Nicht angegeben'}\\nNotizen: ${updated.notes || 'Keine'}
-LOCATION:Atelier Auszeit, Feldstiege 6a, 48599 Gronau
-STATUS:CONFIRMED
-END:VEVENT
-END:VCALENDAR`;
+						icalEvent = createICalEvent({
+							summary: `Keramik-Termin: ${updated.name}`,
+							description: `Buchung für ${updated.participants} Person(en)\nE-Mail: ${updated.email}\nTelefon: ${updated.phone || 'Nicht angegeben'}\nNotizen: ${updated.notes || 'Keine'}`,
+							date: slot.date,
+							startTime: slot.time,
+							endTime: slot.endTime || undefined,
+							defaultDurationHours: 2,
+						});
 					}
 
 					if (isSmtpConfigured()) {

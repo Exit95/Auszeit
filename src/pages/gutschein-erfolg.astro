@@ -1,22 +1,141 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 import Button from "../components/Button.astro";
+import { getVoucherBySessionId, createVoucher, formatAmount } from "../lib/voucher-storage";
+import { generateVoucherQRDataUrl } from "../lib/voucher-pdf";
+import { getEnv, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigured } from "../lib/env";
+import Stripe from "stripe";
+import nodemailer from "nodemailer";
 export const prerender = false;
+
+const sessionId = Astro.url.searchParams.get('session_id');
+let voucher = sessionId ? await getVoucherBySessionId(sessionId) : null;
+let qrDataUrl = '';
+let errorMsg = '';
+
+// Wenn noch kein Gutschein existiert, aber eine session_id da ist: direkt erstellen
+if (!voucher && sessionId) {
+  try {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeSecretKey) throw new Error('STRIPE_SECRET_KEY nicht konfiguriert');
+
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-12-18.acacia' as any });
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    // Nur bei erfolgreicher Zahlung
+    if (session.payment_status === 'paid' && session.metadata?.voucher_type) {
+      const customerEmail = session.customer_details?.email || session.customer_email || '';
+
+      if (customerEmail) {
+        voucher = await createVoucher({
+          amount: session.amount_total || 0,
+          customerEmail,
+          customerName: session.customer_details?.name || undefined,
+          stripeSessionId: session.id,
+          stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
+        });
+        console.log(`[Erfolgsseite] Gutschein erstellt: ${voucher.code} für ${customerEmail}`);
+
+        // E-Mail senden
+        if (isSmtpConfigured() && voucher) {
+          try {
+            const siteUrl = getEnv('SITE_URL', 'https://keramik-auszeit.de');
+            const redeemUrl = `${siteUrl}/gutschein/einloesen/${voucher.code}`;
+            const qrImg = await generateVoucherQRDataUrl(redeemUrl);
+            const amountStr = formatAmount(voucher.amount);
+            const transporter = nodemailer.createTransport({
+              host: SMTP_HOST, port: parseInt(SMTP_PORT), secure: SMTP_PORT === '465',
+              auth: { user: SMTP_USER, pass: SMTP_PASS }, tls: { rejectUnauthorized: false },
+            });
+            const html = `
+              <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #faf7f4; border-radius: 16px; overflow: hidden;">
+                <div style="background: linear-gradient(135deg, #423430 0%, #8B6F47 100%); padding: 30px; text-align: center;">
+                  <h1 style="color: #f2ebe5; margin: 0; font-size: 24px;">🎨 Atelier Auszeit</h1>
+                  <p style="color: #CFA874; margin: 8px 0 0;">Gutschein</p>
+                </div>
+                <div style="padding: 30px; text-align: center;">
+                  <p style="color: #423430; font-size: 16px;">Vielen Dank für deinen Kauf!</p>
+                  <div style="background: white; border: 2px dashed #CFA874; border-radius: 12px; padding: 24px; margin: 20px 0;">
+                    <p style="color: #8B6F47; font-size: 14px; margin: 0 0 8px;">Gutschein-Code</p>
+                    <p style="color: #423430; font-size: 28px; font-weight: bold; margin: 0; letter-spacing: 2px;">${voucher.code}</p>
+                    <p style="color: #423430; font-size: 32px; font-weight: bold; margin: 16px 0 0;">${amountStr}</p>
+                  </div>
+                  <div style="margin: 20px 0;">
+                    <img src="${qrImg}" alt="QR-Code" style="width: 180px; height: 180px;" />
+                    <p style="color: #8B6F47; font-size: 12px; margin: 8px 0 0;">QR-Code scannen zum Einlösen</p>
+                  </div>
+                  <p style="color: #666; font-size: 13px; line-height: 1.6;">
+                    Zeige diesen Gutschein einfach im Atelier vor.<br>
+                    Der QR-Code kann direkt gescannt werden.
+                  </p>
+                  <hr style="border: none; border-top: 1px solid #e8e0d8; margin: 20px 0;" />
+                  <p style="color: #999; font-size: 11px;">
+                    Atelier Auszeit · Irena Woschkowiak · Gronau<br>
+                    <a href="${siteUrl}" style="color: #8B6F47;">keramik-auszeit.de</a>
+                  </p>
+                </div>
+              </div>`;
+            await transporter.sendMail({
+              from: `"Atelier Auszeit" <${FROM_EMAIL}>`,
+              to: voucher.customerEmail,
+              subject: `Dein Gutschein über ${amountStr} – Atelier Auszeit`,
+              html,
+            });
+            console.log(`[Erfolgsseite] Gutschein-Mail gesendet an ${voucher.customerEmail}`);
+          } catch (mailErr) {
+            console.error('[Erfolgsseite] Mail-Fehler:', mailErr);
+          }
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error('[Erfolgsseite] Fehler:', err);
+    errorMsg = err.message || 'Unbekannter Fehler';
+  }
+}
+
+if (voucher) {
+  const siteUrl = getEnv('SITE_URL', 'https://keramik-auszeit.de');
+  qrDataUrl = await generateVoucherQRDataUrl(`${siteUrl}/gutschein/einloesen/${voucher.code}`);
+}
 ---
 
-<MainLayout title="Gutschein erfolgreich gekauft | Atelier Auszeit">
+<MainLayout title="Gutschein erfolgreich gekauft | Atelier Auszeit" description="Dein Gutschein für Atelier Auszeit wurde erfolgreich gekauft.">
   <section class="success">
     <div class="success__card">
       <div class="success__icon">✓</div>
       <h1 class="success__title">Vielen Dank für deinen Kauf!</h1>
-      <p class="success__text">
-        Dein Gutschein wurde erfolgreich bezahlt. Du erhältst in Kürze eine 
-        Bestätigung per E-Mail mit allen Details.
-      </p>
-      <p class="success__info">
-        Irena wird sich bei dir melden, um den personalisierten Gutschein 
-        für dich auszustellen.
-      </p>
+
+      {voucher ? (
+        <div class="success__voucher">
+          <p class="success__text">Dein Gutschein ist sofort gültig!</p>
+          <div class="success__voucher-code">
+            <span class="success__voucher-label">Gutschein-Code</span>
+            <span class="success__voucher-value">{voucher.code}</span>
+            <span class="success__voucher-amount">{formatAmount(voucher.amount)}</span>
+          </div>
+          {qrDataUrl && (
+            <div class="success__qr">
+              <img src={qrDataUrl} alt="QR-Code" width="160" height="160" />
+              <p class="success__qr-hint">QR-Code im Atelier vorzeigen</p>
+            </div>
+          )}
+          <p class="success__info">
+            Du erhältst den Gutschein auch per E-Mail. Einfach im Atelier vorzeigen – fertig!
+          </p>
+        </div>
+      ) : (
+        <div>
+          <p class="success__text">
+            Dein Gutschein wurde erfolgreich bezahlt. Du erhältst in Kürze eine
+            E-Mail mit deinem Gutschein-Code und QR-Code.
+          </p>
+          <p class="success__info">
+            Falls die E-Mail nicht ankommt, kontaktiere uns einfach.
+          </p>
+        </div>
+      )}
+
       <div class="success__actions">
         <Button href="/" variant="primary" size="large">
           Zurück zur Startseite
@@ -84,6 +203,46 @@ export const prerender = false;
     padding: var(--space-3);
     border-radius: 10px;
     margin-bottom: var(--space-5);
+  }
+
+  .success__voucher-code {
+    background: white;
+    border: 2px dashed var(--accent-terra, #CFA874);
+    border-radius: 12px;
+    padding: var(--space-4);
+    margin: var(--space-3) 0;
+  }
+  .success__voucher-label {
+    display: block;
+    color: var(--accent-terra, #8B6F47);
+    font-size: 0.85rem;
+    margin-bottom: var(--space-1);
+  }
+  .success__voucher-value {
+    display: block;
+    font-family: monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--brand-espresso, #423430);
+    margin-bottom: var(--space-2);
+  }
+  .success__voucher-amount {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brand-espresso, #423430);
+  }
+  .success__qr {
+    margin: var(--space-3) 0;
+  }
+  .success__qr img {
+    border-radius: 8px;
+  }
+  .success__qr-hint {
+    color: var(--accent-terra, #8B6F47);
+    font-size: 0.8rem;
+    margin-top: var(--space-1);
   }
 
   .success__actions {

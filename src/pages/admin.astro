@@ -65,6 +65,7 @@ export const prerender = false;
       <button class="admin-nav__btn" data-tab="workshops">Workshops</button>
       <button class="admin-nav__btn" data-tab="galerie">Galerie</button>
       <button class="admin-nav__btn" data-tab="bewertungen">Bewertungen</button>
+      <button class="admin-nav__btn" data-tab="gutscheine">🎟️ Gutscheine</button>
     </nav>
 
 	    		<main class="admin-main">
@@ -295,6 +296,56 @@ export const prerender = false;
       </div>
       <!-- Ende Tab: Bewertungen -->
 
+      <!-- Tab: Gutscheine -->
+      <div id="tab-gutscheine" class="admin-tab hidden">
+        <section class="voucher-section">
+          <h2>Gutscheine verwalten</h2>
+
+          <!-- QR-Scanner -->
+          <div class="voucher-scanner-box">
+            <h3>📷 QR-Code scannen</h3>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 1rem;">Kamera auf den QR-Code des Kunden halten</p>
+            <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
+            <button id="start-scanner-btn" class="btn btn-primary" style="margin-top: 1rem;">📷 Scanner starten</button>
+            <button id="stop-scanner-btn" class="btn btn-secondary" style="margin-top: 1rem; display: none;">Scanner stoppen</button>
+          </div>
+
+          <!-- Manuelle Code-Eingabe -->
+          <div class="voucher-manual-box" style="margin-top: 1.5rem;">
+            <h3>✏️ Code manuell eingeben</h3>
+            <div style="display: flex; gap: 0.5rem; max-width: 400px; margin: 0.5rem auto;">
+              <input type="text" id="manual-voucher-code" placeholder="AUSZ-XXXX-XXXX" style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; text-transform: uppercase; font-family: monospace; font-size: 1rem; text-align: center;">
+              <button id="lookup-voucher-btn" class="btn btn-primary">Suchen</button>
+            </div>
+          </div>
+
+          <!-- Scan-Ergebnis -->
+          <div id="voucher-scan-result" style="display: none; margin-top: 1.5rem;"></div>
+
+          <!-- Gutschein-Statistiken -->
+          <div class="voucher-stats" style="margin-top: 2rem;">
+            <div class="stat-card">
+              <div class="stat-label">Aktiv</div>
+              <div class="stat-value" id="voucher-active-count">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Eingelöst</div>
+              <div class="stat-value" id="voucher-redeemed-count">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Gesamt</div>
+              <div class="stat-value" id="voucher-total-count">0</div>
+            </div>
+          </div>
+
+          <!-- Gutschein-Liste -->
+          <div id="voucher-loading" class="loading">Lade Gutscheine...</div>
+          <div id="voucher-list" class="voucher-admin-list hidden"></div>
+          <div id="no-vouchers" class="no-data hidden">Keine Gutscheine vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Gutscheine -->
+
 	    </main>
   </div>
 
@@ -381,8 +432,8 @@ export const prerender = false;
             document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
           }
 
-          loadSlots();
-          loadBookings();
+          // Paralleles Laden für schnellere Ladezeiten
+          Promise.all([loadSlots(), loadBookings()]);
           return;
         }
 
@@ -431,8 +482,8 @@ export const prerender = false;
             document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
           }
 
-          loadSlots();
-          loadBookings();
+          // Paralleles Laden für schnellere Ladezeiten
+          Promise.all([loadSlots(), loadBookings()]);
         } else {
           const errorEl = document.getElementById('twofa-error');
           if (errorEl) {
@@ -1094,11 +1145,9 @@ export const prerender = false;
         if (targetTab) {
           targetTab.classList.remove('hidden');
 
-          // Lade Daten wenn Tab gewechselt wird
+          // Lade Daten wenn Tab gewechselt wird (parallel für Geschwindigkeit)
           if (tabName === 'workshops') {
-            loadWorkshopImageOptions();
-            loadWorkshops();
-            loadWorkshopBookings();
+            Promise.all([loadWorkshopImageOptions(), loadWorkshops(), loadWorkshopBookings()]);
           } else if (tabName === 'galerie') {
             loadGalleryData();
           } else if (tabName === 'bewertungen') {
@@ -1941,6 +1990,217 @@ export const prerender = false;
     (window as any).approveReview = approveReview;
     (window as any).unapproveReview = unapproveReview;
     (window as any).deleteReview = deleteReview;
+
+    // ========== GUTSCHEINE ==========
+    let html5QrCode: any = null;
+    let scannerRunning = false;
+
+    function formatCents(cents: number): string {
+      return (cents / 100).toFixed(2).replace('.', ',') + ' €';
+    }
+
+    function formatVoucherDate(iso: string): string {
+      return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function statusBadge(status: string): string {
+      const map: Record<string, { label: string; color: string }> = {
+        active: { label: 'Aktiv', color: '#16a34a' },
+        redeemed: { label: 'Eingelöst', color: '#dc2626' },
+        expired: { label: 'Abgelaufen', color: '#9ca3af' },
+      };
+      const s = map[status] || { label: status, color: '#666' };
+      return `<span style="background: ${s.color}; color: white; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">${s.label}</span>`;
+    }
+
+    async function loadVouchers() {
+      const loading = document.getElementById('voucher-loading');
+      const list = document.getElementById('voucher-list');
+      const noData = document.getElementById('no-vouchers');
+      if (loading) loading.classList.remove('hidden');
+      if (list) list.classList.add('hidden');
+      if (noData) noData.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          headers: { Authorization: `Basic ${authCredentials}` },
+        });
+        const vouchers = await res.json();
+
+        if (loading) loading.classList.add('hidden');
+
+        if (!Array.isArray(vouchers) || vouchers.length === 0) {
+          if (noData) noData.classList.remove('hidden');
+          return;
+        }
+
+        // Stats
+        const active = vouchers.filter((v: any) => v.status === 'active').length;
+        const redeemed = vouchers.filter((v: any) => v.status === 'redeemed').length;
+        const el = (id: string) => document.getElementById(id);
+        if (el('voucher-active-count')) el('voucher-active-count')!.textContent = String(active);
+        if (el('voucher-redeemed-count')) el('voucher-redeemed-count')!.textContent = String(redeemed);
+        if (el('voucher-total-count')) el('voucher-total-count')!.textContent = String(vouchers.length);
+
+        if (list) {
+          list.innerHTML = vouchers.map((v: any) => `
+            <div class="voucher-card" style="background: white; border: 1px solid #e8e0d8; border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-family: monospace; font-size: 1.1rem; font-weight: 700; letter-spacing: 1px;">${escapeHtml(v.code)}</span>
+                <span style="margin-left: 0.75rem; font-size: 1.1rem; font-weight: 600;">${formatCents(v.amount)}</span>
+                ${statusBadge(v.status)}
+              </div>
+              <div style="font-size: 0.8rem; color: #888;">
+                ${escapeHtml(v.customerEmail || '')} · ${formatVoucherDate(v.createdAt)}
+                ${v.redeemedAt ? ' · Eingelöst: ' + formatVoucherDate(v.redeemedAt) : ''}
+              </div>
+              <div>
+                ${v.status === 'active' ? `<button class="btn btn-sm" onclick="adminRedeemVoucher('${escapeHtml(v.code)}')" style="background: #dc2626; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Einlösen</button>` : ''}
+                ${v.status === 'redeemed' ? `<button class="btn btn-sm" onclick="adminReactivateVoucher('${escapeHtml(v.code)}')" style="background: #8B6F47; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Reaktivieren</button>` : ''}
+              </div>
+            </div>
+          `).join('');
+          list.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Fehler beim Laden der Gutscheine:', err);
+        if (loading) loading.textContent = 'Fehler beim Laden';
+      }
+    }
+
+    function showVoucherScanResult(voucher: any) {
+      const el = document.getElementById('voucher-scan-result');
+      if (!el) return;
+      const isActive = voucher.status === 'active';
+      el.style.display = 'block';
+      el.innerHTML = `
+        <div style="background: ${isActive ? '#f0fdf4' : '#fef2f2'}; border: 2px solid ${isActive ? '#16a34a' : '#dc2626'}; border-radius: 16px; padding: 1.5rem; text-align: center; max-width: 400px; margin: 0 auto;">
+          <div style="font-size: 3rem;">${isActive ? '✅' : '⚠️'}</div>
+          <h3 style="color: ${isActive ? '#16a34a' : '#dc2626'}; margin: 0.5rem 0;">${isActive ? 'Gutschein gültig' : (voucher.status === 'redeemed' ? 'Bereits eingelöst' : 'Abgelaufen')}</h3>
+          <p style="font-family: monospace; font-size: 1.25rem; letter-spacing: 2px; margin: 0.5rem 0;">${escapeHtml(voucher.code)}</p>
+          <p style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">${formatCents(voucher.amount)}</p>
+          <p style="font-size: 0.85rem; color: #666;">${escapeHtml(voucher.customerEmail || '')}${voucher.customerName ? ' (' + escapeHtml(voucher.customerName) + ')' : ''}</p>
+          ${voucher.redeemedAt ? `<p style="font-size: 0.8rem; color: #999;">Eingelöst: ${formatVoucherDate(voucher.redeemedAt)}</p>` : ''}
+          ${isActive ? `<button onclick="adminRedeemVoucher('${escapeHtml(voucher.code)}')" style="margin-top: 1rem; background: #dc2626; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">🎟️ Jetzt einlösen</button>` : ''}
+        </div>`;
+    }
+
+    async function adminRedeemVoucher(code: string) {
+      if (!confirm(`Gutschein ${code} wirklich einlösen?`)) return;
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Basic ${authCredentials}` },
+          body: JSON.stringify({ action: 'redeem', code }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✅ Gutschein erfolgreich eingelöst!');
+          showVoucherScanResult(data.voucher);
+          loadVouchers();
+        } else {
+          alert('❌ ' + (data.error || 'Fehler'));
+          if (data.voucher) showVoucherScanResult(data.voucher);
+        }
+      } catch (err) { alert('Fehler bei der Verbindung'); }
+    }
+
+    async function adminReactivateVoucher(code: string) {
+      if (!confirm(`Gutschein ${code} wieder aktivieren?`)) return;
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Basic ${authCredentials}` },
+          body: JSON.stringify({ action: 'update-status', code, status: 'active' }),
+        });
+        const data = await res.json();
+        if (data.success) { alert('✅ Gutschein reaktiviert'); loadVouchers(); }
+        else { alert('❌ ' + (data.error || 'Fehler')); }
+      } catch (err) { alert('Fehler'); }
+    }
+
+    async function lookupVoucher(code: string) {
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Basic ${authCredentials}` },
+          body: JSON.stringify({ action: 'lookup', code }),
+        });
+        const data = await res.json();
+        if (data.voucher) { showVoucherScanResult(data.voucher); }
+        else { alert('❌ Gutschein nicht gefunden'); }
+      } catch (err) { alert('Fehler'); }
+    }
+
+    // QR-Scanner
+    async function startScanner() {
+      const startBtn = document.getElementById('start-scanner-btn');
+      const stopBtn = document.getElementById('stop-scanner-btn');
+      if (startBtn) startBtn.style.display = 'none';
+      if (stopBtn) stopBtn.style.display = 'inline-block';
+
+      if (!html5QrCode) {
+        // html5-qrcode dynamisch laden
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        document.head.appendChild(script);
+        await new Promise<void>((resolve) => { script.onload = () => resolve(); });
+        html5QrCode = new (window as any).Html5Qrcode('qr-reader');
+      }
+
+      scannerRunning = true;
+      html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText: string) => {
+          // Extrahiere Code aus URL oder verwende direkt
+          let code = decodedText;
+          const match = decodedText.match(/einloesen\/([A-Z0-9-]+)/i);
+          if (match) code = match[1];
+          stopScanner();
+          lookupVoucher(code);
+        },
+        () => {} // ignore errors
+      ).catch((err: any) => { console.error('Scanner error:', err); alert('Kamera konnte nicht gestartet werden'); });
+    }
+
+    function stopScanner() {
+      const startBtn = document.getElementById('start-scanner-btn');
+      const stopBtn = document.getElementById('stop-scanner-btn');
+      if (startBtn) startBtn.style.display = 'inline-block';
+      if (stopBtn) stopBtn.style.display = 'none';
+      if (html5QrCode && scannerRunning) {
+        html5QrCode.stop().catch(() => {});
+        scannerRunning = false;
+      }
+    }
+
+    // Event-Listener
+    document.getElementById('start-scanner-btn')?.addEventListener('click', startScanner);
+    document.getElementById('stop-scanner-btn')?.addEventListener('click', stopScanner);
+    document.getElementById('lookup-voucher-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('manual-voucher-code') as HTMLInputElement;
+      if (input?.value.trim()) lookupVoucher(input.value.trim());
+    });
+    document.getElementById('manual-voucher-code')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const input = e.target as HTMLInputElement;
+        if (input.value.trim()) lookupVoucher(input.value.trim());
+      }
+    });
+
+    // Gutscheine laden wenn Tab aktiv wird
+    const tabBtns = document.querySelectorAll('.admin-nav__btn');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.getAttribute('data-tab') === 'gutscheine') {
+          loadVouchers();
+        }
+      });
+    });
+
+    (window as any).adminRedeemVoucher = adminRedeemVoucher;
+    (window as any).adminReactivateVoucher = adminReactivateVoucher;
   </script>
 </body>
 </html>
