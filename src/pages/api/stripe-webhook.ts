@@ -2,8 +2,8 @@ import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { createVoucher, getVoucherBySessionId, formatAmount } from '../../lib/voucher-storage';
 import { generateVoucherQRDataUrl } from '../../lib/voucher-pdf';
-import { getEnv, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
-import nodemailer from 'nodemailer';
+import { getEnv, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
+import { createSmtpTransporter } from '../../lib/smtp';
 
 export const POST: APIRoute = async ({ request }) => {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -32,8 +32,13 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }
   } else {
-    // Ohne Webhook-Secret: Event direkt parsen (für Entwicklung)
-    console.warn('[Webhook] STRIPE_WEBHOOK_SECRET nicht gesetzt - Signatur wird nicht geprüft');
+    // Produktion: Ohne Webhook-Secret ist der Webhook deaktiviert (fail-closed)
+    if (process.env.NODE_ENV === 'production' || process.env.ALLOW_INSECURE_STRIPE_WEBHOOKS !== 'true') {
+      console.error('[Webhook] STRIPE_WEBHOOK_SECRET nicht gesetzt - Webhook deaktiviert in Produktion');
+      return new Response('Webhook not configured', { status: 503 });
+    }
+    // Nur in Entwicklung: Event direkt parsen ohne Signaturprüfung
+    console.warn('[Webhook] DEV: Signatur wird nicht geprüft');
     const body = await request.text();
     event = JSON.parse(body) as Stripe.Event;
   }
@@ -81,13 +86,7 @@ export const POST: APIRoute = async ({ request }) => {
         const qrDataUrl = await generateVoucherQRDataUrl(redeemUrl);
         const amountStr = formatAmount(voucher.amount);
 
-        const transporter = nodemailer.createTransport({
-          host: SMTP_HOST,
-          port: parseInt(SMTP_PORT),
-          secure: SMTP_PORT === '465',
-          auth: { user: SMTP_USER, pass: SMTP_PASS },
-          tls: { rejectUnauthorized: false },
-        });
+        const transporter = createSmtpTransporter();
 
         const html = `
           <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #faf7f4; border-radius: 16px; overflow: hidden;">

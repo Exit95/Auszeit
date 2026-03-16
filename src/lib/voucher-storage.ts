@@ -1,5 +1,7 @@
 import crypto from 'crypto';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from './s3-storage';
+import { isDbEnabled, isDualWriteEnabled, isJsonFallbackEnabled } from './database';
+import { dbGetVouchers, dbSaveVoucher } from './db-storage';
 
 const VOUCHERS_FILENAME = 'vouchers.json';
 
@@ -36,6 +38,11 @@ function generateVoucherCode(): string {
 
 // Alle Gutscheine laden
 export async function getVouchers(): Promise<Voucher[]> {
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try { return await dbGetVouchers(); } catch (err) {
+      console.error('[VoucherStorage] DB-Lesefehler, Fallback auf JSON:', err);
+    }
+  }
   if (isS3Configured()) {
     return await readJsonFromS3<Voucher[]>(VOUCHERS_FILENAME, []);
   }
@@ -44,13 +51,20 @@ export async function getVouchers(): Promise<Voucher[]> {
 
 // Alle Gutscheine speichern
 export async function saveVouchers(vouchers: Voucher[]): Promise<void> {
+  if (isDbEnabled() && isDualWriteEnabled()) {
+    try {
+      for (const v of vouchers) { await dbSaveVoucher(v); }
+    } catch (err) {
+      console.error('[VoucherStorage] DB-Schreibfehler:', err);
+    }
+  }
   if (isS3Configured()) {
     await writeJsonToS3(VOUCHERS_FILENAME, vouchers);
     return;
   }
 }
 
-// Neuen Gutschein erstellen
+// Neuen Gutschein erstellen (idempotent: bei gleicher stripeSessionId wird der bestehende zurückgegeben)
 export async function createVoucher(data: {
   amount: number;
   customerEmail: string;
@@ -58,6 +72,13 @@ export async function createVoucher(data: {
   stripeSessionId: string;
   stripePaymentIntentId?: string;
 }): Promise<Voucher> {
+  // Idempotenz-Check: Gutschein für diese Stripe-Session bereits vorhanden?
+  const existing = await getVoucherBySessionId(data.stripeSessionId);
+  if (existing) {
+    console.log(`[Voucher] Idempotent: Gutschein für Session ${data.stripeSessionId} existiert bereits: ${existing.code}`);
+    return existing;
+  }
+
   const vouchers = await getVouchers();
 
   // Sicherstellen dass der Code einzigartig ist

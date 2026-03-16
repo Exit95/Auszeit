@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
 import fs from 'fs';
 import path from 'path';
-import nodemailer from 'nodemailer';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../lib/s3-storage';
-import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
+import { BOOKING_EMAIL, FROM_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, isSmtpConfigured } from '../../lib/env';
+import { createSmtpTransporter } from '../../lib/smtp';
 import { sanitizeText, sanitizeNumber } from '../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
 
@@ -179,18 +179,7 @@ async function sendReviewNotificationEmail(review: Review) {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: parseInt(SMTP_PORT),
-      secure: SMTP_PORT === '465',
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+    const transporter = createSmtpTransporter();
 
     // Verbindung testen
     console.log('🔍 Teste SMTP-Verbindung...');

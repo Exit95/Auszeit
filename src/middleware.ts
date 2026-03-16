@@ -10,14 +10,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     response.headers.set('X-XSS-Protection', '1; mode=block');
 
-    // Content Security Policy
+    // Content Security Policy (gehärtet: kein unsafe-eval, externe Domains whitelisted)
     const csp = [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        "script-src 'self' 'unsafe-inline' https://unpkg.com https://js.stripe.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com data:",
         "img-src 'self' data: blob: https://*.your-objectstorage.com https://nbg1.your-objectstorage.com",
-        "connect-src 'self' https://*.your-objectstorage.com",
+        "connect-src 'self' https://*.your-objectstorage.com https://api.stripe.com",
+        "frame-src https://js.stripe.com",
         "frame-ancestors 'self'",
         "form-action 'self'",
         "base-uri 'self'",
@@ -37,7 +38,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const permissionsPolicy = [
         'accelerometer=()',
         'autoplay=()',
-        'camera=()',
+        'camera=(self)',
         'cross-origin-isolated=()',
         'display-capture=()',
         'encrypted-media=()',

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
-import nodemailer from 'nodemailer';
 import { getTimeSlots, addBooking } from '../../lib/storage';
-import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
+import { BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
+import { createSmtpTransporter } from '../../lib/smtp';
 import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeDate, sanitizeTime } from '../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
 import { createICalEvent } from '../../lib/ical-helper';
@@ -237,24 +237,10 @@ Atelier Auszeit
       // Async Funktion die im Hintergrund läuft
       const sendEmails = async () => {
         try {
-          console.log('SMTP Config:', { host: SMTP_HOST, port: SMTP_PORT, user: SMTP_USER });
+          console.log('SMTP: Starte E-Mail-Versand...');
 
           // Nodemailer konfigurieren mit Timeout
-          const transporter = nodemailer.createTransport({
-            host: SMTP_HOST,
-            port: parseInt(SMTP_PORT),
-            secure: SMTP_PORT === '465',
-            auth: {
-              user: SMTP_USER,
-              pass: SMTP_PASS,
-            },
-            tls: {
-              rejectUnauthorized: false
-            },
-            connectionTimeout: 15000,
-            greetingTimeout: 15000,
-            socketTimeout: 20000,
-          });
+          const transporter = createSmtpTransporter();
 
           // Verbindung testen
           console.log('🔌 Teste SMTP-Verbindung...');
@@ -290,12 +276,7 @@ Atelier Auszeit
 
         } catch (error: any) {
           console.error('❌ Fehler beim E-Mail-Versand:', error.message);
-          console.error('SMTP Config:', {
-            host: SMTP_HOST,
-            port: SMTP_PORT,
-            user: SMTP_USER,
-            hasPassword: !!SMTP_PASS
-          });
+          console.error('SMTP: E-Mail-Versand fehlgeschlagen');
         }
       };
 
@@ -304,12 +285,6 @@ Atelier Auszeit
       emailSent = true; // Wir gehen davon aus, dass es klappt
     } else {
       console.warn('⚠️ SMTP nicht konfiguriert - E-Mail wird nicht gesendet');
-      console.warn('SMTP Debug:', {
-        host: SMTP_HOST,
-        port: SMTP_PORT,
-        user: SMTP_USER,
-        hasPassword: !!SMTP_PASS
-      });
       emailError = 'SMTP nicht konfiguriert';
     }
 

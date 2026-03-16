@@ -1,6 +1,14 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from './s3-storage';
+import { isDbEnabled, isDualWriteEnabled, isJsonFallbackEnabled } from './database';
+import {
+  dbGetTimeSlots, dbSaveTimeSlot, dbDeleteTimeSlot, dbUpdateTimeSlot,
+  dbGetBookings, dbSaveBooking, dbUpdateBookingStatus,
+  dbGetWorkshops, dbSaveWorkshop,
+  dbGetCategories, dbSaveCategory,
+  dbGetImageMetadata, dbSaveImageMetadata,
+} from './db-storage';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 
@@ -92,6 +100,17 @@ async function ensureFile(filePath: string, defaultData: any) {
 
 // Time Slots
 export async function getTimeSlots(): Promise<TimeSlot[]> {
+  // DB-Lesen wenn aktiviert und kein JSON-Fallback
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try {
+      const slots = await dbGetTimeSlots();
+      console.log(`[Storage] getTimeSlots from DB: ${slots.length} slots loaded`);
+      return slots;
+    } catch (err) {
+      console.error('[Storage] DB-Lesefehler bei TimeSlots, Fallback auf JSON:', err);
+    }
+  }
+
   if (isS3Configured()) {
     const slots = await readJsonFromS3<TimeSlot[]>(SLOTS_FILENAME, []);
     console.log(`[Storage] getTimeSlots from S3: ${slots.length} slots loaded`);
@@ -107,6 +126,17 @@ export async function getTimeSlots(): Promise<TimeSlot[]> {
 
 export async function saveTimeSlots(slots: TimeSlot[]): Promise<void> {
   console.log(`[Storage] saveTimeSlots: saving ${slots.length} slots`);
+
+  // Dual-Write: auch in DB schreiben
+  if (isDbEnabled() && isDualWriteEnabled()) {
+    try {
+      for (const slot of slots) { await dbSaveTimeSlot(slot); }
+      console.log(`[Storage] saveTimeSlots to DB: done`);
+    } catch (err) {
+      console.error('[Storage] DB-Schreibfehler bei TimeSlots:', err);
+    }
+  }
+
   if (isS3Configured()) {
     await writeJsonToS3(SLOTS_FILENAME, slots);
     console.log(`[Storage] saveTimeSlots to S3: done`);
@@ -133,6 +163,13 @@ export async function addTimeSlot(slot: Omit<TimeSlot, 'id' | 'createdAt'>): Pro
 }
 
 export async function deleteTimeSlot(id: string): Promise<boolean> {
+  // Dual-Write: auch in DB löschen
+  if (isDbEnabled() && isDualWriteEnabled()) {
+    try { await dbDeleteTimeSlot(id); } catch (err) {
+      console.error('[Storage] DB-Löschfehler bei TimeSlot:', err);
+    }
+  }
+
   const slots = await getTimeSlots();
   const filteredSlots = slots.filter(s => s.id !== id);
   if (filteredSlots.length === slots.length) return false;
@@ -151,6 +188,14 @@ export async function updateTimeSlot(id: string, updates: Partial<TimeSlot>): Pr
 
 // Bookings
 export async function getBookings(): Promise<Booking[]> {
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try {
+      return await dbGetBookings();
+    } catch (err) {
+      console.error('[Storage] DB-Lesefehler bei Bookings, Fallback auf JSON:', err);
+    }
+  }
+
   if (isS3Configured()) {
     return await readJsonFromS3<Booking[]>(BOOKINGS_FILENAME, []);
   }
@@ -161,6 +206,14 @@ export async function getBookings(): Promise<Booking[]> {
 }
 
 export async function saveBookings(bookings: Booking[]): Promise<void> {
+  if (isDbEnabled() && isDualWriteEnabled()) {
+    try {
+      for (const b of bookings) { await dbSaveBooking(b); }
+    } catch (err) {
+      console.error('[Storage] DB-Schreibfehler bei Bookings:', err);
+    }
+  }
+
   if (isS3Configured()) {
     await writeJsonToS3(BOOKINGS_FILENAME, bookings);
     return;
@@ -275,6 +328,11 @@ export async function cancelBooking(id: string): Promise<boolean> {
 
 // Workshops
 export async function getWorkshops(): Promise<Workshop[]> {
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try { return await dbGetWorkshops(); } catch (err) {
+      console.error('[Storage] DB-Lesefehler bei Workshops, Fallback auf JSON:', err);
+    }
+  }
   if (isS3Configured()) {
     return await readJsonFromS3<Workshop[]>(WORKSHOPS_FILENAME, []);
   }
@@ -285,6 +343,13 @@ export async function getWorkshops(): Promise<Workshop[]> {
 }
 
 export async function saveWorkshops(workshops: Workshop[]): Promise<void> {
+  if (isDbEnabled() && isDualWriteEnabled()) {
+    try {
+      for (const ws of workshops) { await dbSaveWorkshop(ws); }
+    } catch (err) {
+      console.error('[Storage] DB-Schreibfehler bei Workshops:', err);
+    }
+  }
   if (isS3Configured()) {
     await writeJsonToS3(WORKSHOPS_FILENAME, workshops);
     return;
@@ -330,6 +395,11 @@ export async function deleteWorkshop(id: string): Promise<boolean> {
 
 // Gallery Categories
 export async function getCategories(): Promise<GalleryCategory[]> {
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try { return await dbGetCategories(); } catch (err) {
+      console.error('[Storage] DB-Lesefehler bei Categories, Fallback auf JSON:', err);
+    }
+  }
   if (isS3Configured()) {
     return await readJsonFromS3<GalleryCategory[]>(CATEGORIES_FILENAME, []);
   }
@@ -340,6 +410,13 @@ export async function getCategories(): Promise<GalleryCategory[]> {
 }
 
 export async function saveCategories(categories: GalleryCategory[]): Promise<void> {
+  if (isDbEnabled() && isDualWriteEnabled()) {
+    try {
+      for (const cat of categories) { await dbSaveCategory(cat); }
+    } catch (err) {
+      console.error('[Storage] DB-Schreibfehler bei Categories:', err);
+    }
+  }
   if (isS3Configured()) {
     await writeJsonToS3(CATEGORIES_FILENAME, categories);
     return;
@@ -401,6 +478,11 @@ export async function deleteCategory(id: string): Promise<boolean> {
 
 // Image Metadata
 export async function getImageMetadata(): Promise<ImageMetadata[]> {
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try { return await dbGetImageMetadata(); } catch (err) {
+      console.error('[Storage] DB-Lesefehler bei ImageMetadata, Fallback auf JSON:', err);
+    }
+  }
   if (isS3Configured()) {
     return await readJsonFromS3<ImageMetadata[]>(IMAGE_METADATA_FILENAME, []);
   }
@@ -411,6 +493,13 @@ export async function getImageMetadata(): Promise<ImageMetadata[]> {
 }
 
 export async function saveImageMetadata(metadata: ImageMetadata[]): Promise<void> {
+  if (isDbEnabled() && isDualWriteEnabled()) {
+    try {
+      for (const m of metadata) { await dbSaveImageMetadata(m); }
+    } catch (err) {
+      console.error('[Storage] DB-Schreibfehler bei ImageMetadata:', err);
+    }
+  }
   if (isS3Configured()) {
     await writeJsonToS3(IMAGE_METADATA_FILENAME, metadata);
     return;
