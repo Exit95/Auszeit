@@ -61,7 +61,8 @@ export const prerender = false;
 	    </header>
 
     <nav class="admin-nav">
-      <button class="admin-nav__btn active" data-tab="termine">Termine</button>
+      <button class="admin-nav__btn active" data-tab="uebersicht">📋 Übersicht</button>
+      <button class="admin-nav__btn" data-tab="termine">Termine</button>
       <button class="admin-nav__btn" data-tab="workshops">Workshops</button>
       <button class="admin-nav__btn" data-tab="galerie">Galerie</button>
       <button class="admin-nav__btn" data-tab="bewertungen">Bewertungen</button>
@@ -69,33 +70,70 @@ export const prerender = false;
     </nav>
 
 	    		<main class="admin-main">
+      <!-- Tab: Übersicht (Arbeitszentrale) -->
+      <div id="tab-uebersicht" class="admin-tab active">
+        <section class="overview-section">
+          <div class="overview-header">
+            <h2>📋 Tagesübersicht</h2>
+            <span id="refresh-indicator" class="refresh-indicator"></span>
+          </div>
+
+          <!-- KPI-Karten -->
+          <div class="dashboard-grid overview-kpis">
+            <div class="dashboard-card kpi-highlight">
+              <div class="dashboard-label">🗓️ Termine heute</div>
+              <div class="dashboard-value" id="dashboard-today-count">-</div>
+            </div>
+            <div class="dashboard-card kpi-warning">
+              <div class="dashboard-label">🔔 Neue Anfragen</div>
+              <div class="dashboard-value" id="dashboard-new-count">-</div>
+            </div>
+            <div class="dashboard-card">
+              <div class="dashboard-label">✅ Bestätigt</div>
+              <div class="dashboard-value" id="dashboard-confirmed-count">-</div>
+            </div>
+            <div class="dashboard-card">
+              <div class="dashboard-label">❌ Stornierungen</div>
+              <div class="dashboard-value" id="dashboard-cancelled-count">-</div>
+            </div>
+            <div class="dashboard-card">
+              <div class="dashboard-label">📅 Nächste 7 Tage</div>
+              <div class="dashboard-value" id="dashboard-next7-count">-</div>
+            </div>
+            <div class="dashboard-card kpi-voucher">
+              <div class="dashboard-label">🎟️ Offene Gutscheine</div>
+              <div class="dashboard-value" id="dashboard-voucher-count">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Warnhinweise -->
+        <section class="overview-warnings hidden" id="overview-warnings">
+          <h3>⚠️ Handlungsbedarf</h3>
+          <div id="warnings-list" class="warnings-list"></div>
+        </section>
+
+        <!-- Heutige Termine -->
+        <section class="overview-today">
+          <h3>🕐 Heutige Termine</h3>
+          <div id="today-bookings-loading" class="loading">Lade...</div>
+          <div id="today-bookings-list" class="today-bookings-list hidden"></div>
+          <div id="no-today-bookings" class="no-data hidden">Keine Termine für heute</div>
+        </section>
+
+        <!-- Wochenkalender -->
+        <section class="overview-calendar">
+          <div class="calendar-header">
+            <button id="cal-prev-week" class="btn btn-secondary btn-sm">← Vorherige</button>
+            <h3 id="cal-week-label">Kalenderwoche</h3>
+            <button id="cal-next-week" class="btn btn-secondary btn-sm">Nächste →</button>
+          </div>
+          <div id="week-calendar" class="week-calendar"></div>
+        </section>
+      </div>
+
       <!-- Tab: Termine -->
-      <div id="tab-termine" class="admin-tab active">
-			      <section class="dashboard-section">
-			        <h2>Übersicht</h2>
-			        <div class="dashboard-grid">
-			          <div class="dashboard-card">
-			            <div class="dashboard-label">Termine heute</div>
-			            <div class="dashboard-value" id="dashboard-today-count">-</div>
-			          </div>
-			          <div class="dashboard-card">
-			            <div class="dashboard-label">Neue Anfragen</div>
-			            <div class="dashboard-value" id="dashboard-new-count">-</div>
-			          </div>
-			          <div class="dashboard-card">
-			            <div class="dashboard-label">Bestätigt</div>
-			            <div class="dashboard-value" id="dashboard-confirmed-count">-</div>
-			          </div>
-			          <div class="dashboard-card">
-			            <div class="dashboard-label">Offene Stornierungen</div>
-			            <div class="dashboard-value" id="dashboard-cancelled-count">-</div>
-			          </div>
-			          <div class="dashboard-card">
-			            <div class="dashboard-label">Nächste 7 Tage</div>
-			            <div class="dashboard-value" id="dashboard-next7-count">-</div>
-			          </div>
-			        </div>
-			      </section>
+      <div id="tab-termine" class="admin-tab hidden">
 			      <section class="add-slot-section">
 		        <h2 id="slot-form-title">Neuen Termin hinzufügen</h2>
 		        <form id="add-slot-form">
@@ -148,6 +186,17 @@ export const prerender = false;
 
 	      <section class="bookings-section">
 	        <h2>Buchungen</h2>
+	        <!-- Filter und Suche -->
+	        <div class="bookings-filter-bar">
+	          <input type="text" id="booking-search" class="booking-search-input" placeholder="🔍 Name, E-Mail oder Telefon suchen...">
+	          <div class="bookings-status-filter">
+	            <button class="filter-btn active" data-booking-filter="active">Aktiv</button>
+	            <button class="filter-btn" data-booking-filter="pending">⏳ Offen</button>
+	            <button class="filter-btn" data-booking-filter="confirmed">✅ Bestätigt</button>
+	            <button class="filter-btn" data-booking-filter="cancelled">❌ Storniert</button>
+	            <button class="filter-btn" data-booking-filter="all">Alle</button>
+	          </div>
+	        </div>
 	        <div id="bookings-loading" class="loading">Lade Buchungen...</div>
 	        <div id="bookings-list" class="slots-list hidden"></div>
 	        <div id="no-bookings" class="no-data hidden">Keine Buchungen vorhanden</div>
@@ -304,10 +353,17 @@ export const prerender = false;
           <!-- QR-Scanner -->
           <div class="voucher-scanner-box">
             <h3>📷 QR-Code scannen</h3>
-            <p style="font-size: 0.85rem; color: #666; margin-bottom: 1rem;">Kamera auf den QR-Code des Kunden halten</p>
-            <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto;"></div>
-            <button id="start-scanner-btn" class="btn btn-primary" style="margin-top: 1rem;">📷 Scanner starten</button>
-            <button id="stop-scanner-btn" class="btn btn-secondary" style="margin-top: 1rem; display: none;">Scanner stoppen</button>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kamera auf den QR-Code des Kunden halten</p>
+            <div id="scanner-status" style="display: none; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.85rem; text-align: center;"></div>
+            <div id="camera-select-box" style="display: none; margin-bottom: 0.5rem; text-align: center;">
+              <label for="camera-select" style="font-size: 0.85rem; color: #666;">Kamera wählen: </label>
+              <select id="camera-select" style="padding: 0.4rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.85rem;"></select>
+            </div>
+            <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
+            <div style="text-align: center;">
+              <button id="start-scanner-btn" class="btn btn-primary" style="margin-top: 1rem;">📷 Scanner starten</button>
+              <button id="stop-scanner-btn" class="btn btn-secondary" style="margin-top: 1rem; display: none;">Scanner stoppen</button>
+            </div>
           </div>
 
           <!-- Manuelle Code-Eingabe -->
@@ -352,6 +408,11 @@ export const prerender = false;
 	  <script>
 	    let authCredentials = '';
 	    let editingSlotId: string | null = null;
+
+    // Globale Datenspeicher für Übersicht & Kalender
+    let cachedBookings: any[] = [];
+    let cachedSlots: any[] = [];
+    let calendarWeekOffset = 0; // 0 = aktuelle Woche
 
     // Hilfsfunktion: HTML escapen
     function escapeHtml(text: string): string {
@@ -432,8 +493,11 @@ export const prerender = false;
             document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
           }
 
-          // Paralleles Laden für schnellere Ladezeiten
-          Promise.all([loadSlots(), loadBookings()]);
+          // Paralleles Laden für schnellere Ladezeiten + Übersicht
+          Promise.all([loadSlots(), loadBookings()]).then(() => {
+            renderOverview();
+            renderWeekCalendar();
+          });
           return;
         }
 
@@ -482,8 +546,11 @@ export const prerender = false;
             document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
           }
 
-          // Paralleles Laden für schnellere Ladezeiten
-          Promise.all([loadSlots(), loadBookings()]);
+          // Paralleles Laden für schnellere Ladezeiten + Übersicht
+          Promise.all([loadSlots(), loadBookings()]).then(() => {
+            renderOverview();
+            renderWeekCalendar();
+          });
         } else {
           const errorEl = document.getElementById('twofa-error');
           if (errorEl) {
@@ -664,6 +731,7 @@ export const prerender = false;
         if (!response.ok) throw new Error('Failed to load slots');
 
         const slots = await response.json();
+        cachedSlots = slots as any[];
 
         if (loadingEl) loadingEl.classList.add('hidden');
 
@@ -803,28 +871,44 @@ export const prerender = false;
 		        if (!response.ok) throw new Error('Failed to load bookings');
 		
 		        const bookings = await response.json();
-		
+		        cachedBookings = bookings as any[];
+
 		        // Dashboard aktualisieren (auch wenn es keine aktiven Buchungen mehr gibt)
 		        updateDashboard(bookings as any[]);
 		
 		        if (loadingEl) loadingEl.classList.add('hidden');
 		
-		        // Nur wirklich gesetzte, zukünftige Buchungen anzeigen.
-		        // Falls der zugehörige Slot nicht mehr existiert (z.B. Termin gelöscht),
-		        // zeigen wir die Buchung trotzdem an, damit nichts "verschwindet".
+		        // Filter und Suche anwenden
 		        const today = new Date();
 		        today.setHours(0, 0, 0, 0);
-		
+
+		        const searchInput = (document.getElementById('booking-search') as HTMLInputElement)?.value?.toLowerCase() || '';
+		        const activeFilter = document.querySelector('[data-booking-filter].active')?.getAttribute('data-booking-filter') || 'active';
+
 		        const activeBookings = (bookings as any[])
 		          .filter((b) => {
-		            if (b.status === 'cancelled') return false;
-		
-		            if (b.slotDate) {
-		              const slotDate = new Date(b.slotDate + 'T00:00:00');
-		              return slotDate >= today;
+		            // Statusfilter
+		            if (activeFilter === 'active') {
+		              if (b.status === 'cancelled') return false;
+		              if (b.slotDate) {
+		                const slotDate = new Date(b.slotDate + 'T00:00:00');
+		                if (slotDate < today) return false;
+		              }
+		            } else if (activeFilter === 'pending') {
+		              if (b.status !== 'pending') return false;
+		            } else if (activeFilter === 'confirmed') {
+		              if (b.status !== 'confirmed') return false;
+		            } else if (activeFilter === 'cancelled') {
+		              if (b.status !== 'cancelled') return false;
 		            }
-		
-		            // Fallback: Wenn kein Slot mehr gefunden wird, Buchung trotzdem anzeigen
+		            // 'all' zeigt alles
+
+		            // Suchfilter
+		            if (searchInput) {
+		              const searchFields = [b.name, b.email, b.phone, b.notes].filter(Boolean).join(' ').toLowerCase();
+		              if (!searchFields.includes(searchInput)) return false;
+		            }
+
 		            return true;
 		          })
 		          .sort((a, b) => {
@@ -1146,7 +1230,14 @@ export const prerender = false;
           targetTab.classList.remove('hidden');
 
           // Lade Daten wenn Tab gewechselt wird (parallel für Geschwindigkeit)
-          if (tabName === 'workshops') {
+          if (tabName === 'uebersicht') {
+            Promise.all([loadSlots(), loadBookings()]).then(() => {
+              renderOverview();
+              renderWeekCalendar();
+            });
+          } else if (tabName === 'termine') {
+            Promise.all([loadSlots(), loadBookings()]);
+          } else if (tabName === 'workshops') {
             Promise.all([loadWorkshopImageOptions(), loadWorkshops(), loadWorkshopBookings()]);
           } else if (tabName === 'galerie') {
             loadGalleryData();
@@ -1155,6 +1246,21 @@ export const prerender = false;
           }
         }
       });
+    });
+
+    // ========== BUCHUNGSFILTER & SUCHE ==========
+    document.querySelectorAll('[data-booking-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-booking-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadBookings();
+      });
+    });
+
+    let bookingSearchTimeout: ReturnType<typeof setTimeout>;
+    document.getElementById('booking-search')?.addEventListener('input', () => {
+      clearTimeout(bookingSearchTimeout);
+      bookingSearchTimeout = setTimeout(() => loadBookings(), 300);
     });
 
     // ========== WORKSHOPS VERWALTUNG ==========
@@ -1991,6 +2097,247 @@ export const prerender = false;
     (window as any).unapproveReview = unapproveReview;
     (window as any).deleteReview = deleteReview;
 
+    // ========== ÜBERSICHT & WOCHENKALENDER ==========
+
+    function renderOverview() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split('T')[0];
+
+      // Heutige Termine rendern
+      const todayBookings = cachedBookings.filter(b =>
+        b.slotDate === todayStr && b.status !== 'cancelled'
+      ).sort((a, b) => (a.slotTime || '').localeCompare(b.slotTime || ''));
+
+      const todayListEl = document.getElementById('today-bookings-list');
+      const todayLoadingEl = document.getElementById('today-bookings-loading');
+      const noTodayEl = document.getElementById('no-today-bookings');
+
+      if (todayLoadingEl) todayLoadingEl.classList.add('hidden');
+
+      if (todayBookings.length === 0) {
+        if (todayListEl) todayListEl.classList.add('hidden');
+        if (noTodayEl) noTodayEl.classList.remove('hidden');
+      } else {
+        if (noTodayEl) noTodayEl.classList.add('hidden');
+        if (todayListEl) {
+          todayListEl.innerHTML = todayBookings.map(b => {
+            const statusClass = b.status === 'pending' ? 'status-pending' : 'status-confirmed';
+            const statusLabel = b.status === 'pending' ? '⏳ Offen' : '✅ Bestätigt';
+            return `
+              <div class="today-booking-card ${statusClass}">
+                <div class="today-booking-time">${b.slotTime || '?'}${b.slotEndTime ? ' - ' + b.slotEndTime : ''} Uhr</div>
+                <div class="today-booking-info">
+                  <strong>${escapeHtml(b.name || '')}</strong>
+                  <span>${b.participants || 1} Person(en)</span>
+                  ${b.notes ? `<span class="today-booking-note">📝 ${escapeHtml(b.notes)}</span>` : ''}
+                </div>
+                <div class="today-booking-status ${statusClass}">${statusLabel}</div>
+                <div class="today-booking-actions">
+                  ${b.status === 'pending' ? `<button class="btn btn-success btn-sm btn-today-confirm" data-id="${b.id}">✓ Bestätigen</button>` : ''}
+                  <button class="btn btn-danger btn-sm btn-today-cancel" data-id="${b.id}">✕ Absagen</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+          todayListEl.classList.remove('hidden');
+
+          // Schnellaktionen für heutige Termine
+          todayListEl.querySelectorAll('.btn-today-confirm').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = (btn as HTMLElement).dataset.id;
+              if (id) { await confirmBookingAdmin(id); renderOverview(); }
+            });
+          });
+          todayListEl.querySelectorAll('.btn-today-cancel').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = (btn as HTMLElement).dataset.id;
+              if (id && confirm('Termin absagen?')) { await cancelBookingAdmin(id); renderOverview(); }
+            });
+          });
+        }
+      }
+
+      // Warnhinweise
+      const warningsEl = document.getElementById('overview-warnings');
+      const warningsListEl = document.getElementById('warnings-list');
+      const warnings: string[] = [];
+
+      // Offene Anfragen
+      const pendingCount = cachedBookings.filter(b => b.status === 'pending').length;
+      if (pendingCount > 0) {
+        warnings.push(`🔔 <strong>${pendingCount} offene Anfrage${pendingCount > 1 ? 'n' : ''}</strong> warten auf Bestätigung`);
+      }
+
+      // Doppelbelegungen prüfen
+      const slotsByDate: Record<string, any[]> = {};
+      cachedSlots.forEach(s => {
+        if (!slotsByDate[s.date]) slotsByDate[s.date] = [];
+        slotsByDate[s.date].push(s);
+      });
+      Object.entries(slotsByDate).forEach(([date, slots]) => {
+        if (slots.length > 1) {
+          // Zeitüberlappungen prüfen
+          for (let i = 0; i < slots.length; i++) {
+            for (let j = i + 1; j < slots.length; j++) {
+              const a = slots[i], b = slots[j];
+              if (a.time && b.time && a.endTime && b.endTime) {
+                if (a.time < b.endTime && b.time < a.endTime) {
+                  warnings.push(`⚠️ <strong>Zeitüberlappung</strong> am ${formatDate(date)}: ${a.time}-${a.endTime} und ${b.time}-${b.endTime}`);
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Ausgebuchte Slots
+      const fullSlots = cachedSlots.filter(s => {
+        const slotDate = new Date(s.date + 'T00:00:00');
+        return slotDate >= today && s.available === 0 && s.eventType === 'normal';
+      });
+      if (fullSlots.length > 0) {
+        warnings.push(`📌 <strong>${fullSlots.length} Termin${fullSlots.length > 1 ? 'e' : ''}</strong> ausgebucht`);
+      }
+
+      if (warningsEl && warningsListEl) {
+        if (warnings.length > 0) {
+          warningsEl.classList.remove('hidden');
+          warningsListEl.innerHTML = warnings.map(w => `<div class="warning-item">${w}</div>`).join('');
+        } else {
+          warningsEl.classList.add('hidden');
+        }
+      }
+
+      // Gutschein-KPI laden
+      loadVoucherCount();
+    }
+
+    async function loadVoucherCount() {
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          headers: { Authorization: `Basic ${authCredentials}` },
+        });
+        const vouchers = await res.json();
+        if (Array.isArray(vouchers)) {
+          const active = vouchers.filter((v: any) => v.status === 'active').length;
+          const el = document.getElementById('dashboard-voucher-count');
+          if (el) el.textContent = String(active);
+        }
+      } catch {}
+    }
+
+    // ========== WOCHENKALENDER ==========
+    function getWeekDates(offset: number): Date[] {
+      const today = new Date();
+      const dayOfWeek = today.getDay() || 7; // Montag = 1
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - dayOfWeek + 1 + (offset * 7));
+      monday.setHours(0, 0, 0, 0);
+
+      const days: Date[] = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        days.push(d);
+      }
+      return days;
+    }
+
+    function renderWeekCalendar() {
+      const calEl = document.getElementById('week-calendar');
+      const labelEl = document.getElementById('cal-week-label');
+      if (!calEl) return;
+
+      const days = getWeekDates(calendarWeekOffset);
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // Wochenlabel
+      const startStr = days[0].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+      const endStr = days[6].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      if (labelEl) labelEl.textContent = `${startStr} – ${endStr}`;
+
+      // Slots und Buchungen pro Tag gruppieren
+      let html = '<div class="cal-grid">';
+
+      const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+      days.forEach((day, idx) => {
+        const dateStr = day.toISOString().split('T')[0];
+        const isToday = dateStr === todayStr;
+        const isPast = day < new Date(todayStr + 'T00:00:00');
+
+        const daySlots = cachedSlots.filter(s => s.date === dateStr);
+        const dayBookings = cachedBookings.filter(b => b.slotDate === dateStr && b.status !== 'cancelled');
+
+        const totalCapacity = daySlots.reduce((sum: number, s: any) => sum + (s.maxCapacity || 0), 0);
+        const totalBooked = dayBookings.reduce((sum: number, b: any) => sum + (b.participants || 1), 0);
+        const utilization = totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0;
+
+        let utilizationClass = 'cal-free';
+        if (utilization >= 80) utilizationClass = 'cal-full';
+        else if (utilization >= 40) utilizationClass = 'cal-medium';
+
+        html += `
+          <div class="cal-day ${isToday ? 'cal-today' : ''} ${isPast ? 'cal-past' : ''}">
+            <div class="cal-day-header">
+              <span class="cal-day-name">${dayNames[idx]}</span>
+              <span class="cal-day-date">${day.getDate()}.${day.getMonth() + 1}</span>
+            </div>
+            <div class="cal-day-body">
+        `;
+
+        if (daySlots.length === 0) {
+          html += `<div class="cal-empty">Keine Termine</div>`;
+        } else {
+          daySlots.forEach((slot: any) => {
+            const slotBookings = dayBookings.filter(b => b.slotId === slot.id);
+            const booked = slot.maxCapacity - slot.available;
+
+            let badge = '';
+            if (slot.eventType === 'kindergeburtstag') badge = '🎂';
+            else if (slot.eventType === 'stammtisch') badge = '🍷';
+
+            html += `
+              <div class="cal-slot ${utilizationClass}">
+                <div class="cal-slot-time">${badge} ${slot.time}${slot.endTime ? '-' + slot.endTime : ''}</div>
+                <div class="cal-slot-capacity">${booked}/${slot.maxCapacity}</div>
+                ${slotBookings.length > 0 ? `
+                  <div class="cal-slot-names">
+                    ${slotBookings.slice(0, 3).map((b: any) => `<span class="cal-name ${b.status === 'pending' ? 'cal-pending' : ''}">${escapeHtml(b.name || '?')}</span>`).join('')}
+                    ${slotBookings.length > 3 ? `<span class="cal-more">+${slotBookings.length - 3} weitere</span>` : ''}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          });
+        }
+
+        html += `</div></div>`;
+      });
+
+      html += '</div>';
+      calEl.innerHTML = html;
+    }
+
+    // Kalender-Navigation
+    document.getElementById('cal-prev-week')?.addEventListener('click', () => {
+      calendarWeekOffset--;
+      renderWeekCalendar();
+    });
+    document.getElementById('cal-next-week')?.addEventListener('click', () => {
+      calendarWeekOffset++;
+      renderWeekCalendar();
+    });
+
+    function updateOverviewIfVisible() {
+      const overviewTab = document.getElementById('tab-uebersicht');
+      if (overviewTab && !overviewTab.classList.contains('hidden')) {
+        renderOverview();
+        renderWeekCalendar();
+      }
+    }
+
     // ========== GUTSCHEINE ==========
     let html5QrCode: any = null;
     let scannerRunning = false;
@@ -2133,35 +2480,143 @@ export const prerender = false;
     }
 
     // QR-Scanner
-    async function startScanner() {
+    let availableCameras: any[] = [];
+
+    function showScannerStatus(msg: string, type: 'info' | 'error' | 'success' = 'info') {
+      const el = document.getElementById('scanner-status');
+      if (!el) return;
+      el.style.display = 'block';
+      el.textContent = msg;
+      el.style.background = type === 'error' ? '#fee' : type === 'success' ? '#efe' : '#f0f0f0';
+      el.style.color = type === 'error' ? '#c00' : type === 'success' ? '#060' : '#333';
+    }
+
+    function hideScannerStatus() {
+      const el = document.getElementById('scanner-status');
+      if (el) el.style.display = 'none';
+    }
+
+    async function loadQrLibrary(): Promise<boolean> {
+      if ((window as any).Html5Qrcode) return true;
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      document.head.appendChild(script);
+      return new Promise((resolve) => {
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+      });
+    }
+
+    async function requestCameraPermission(): Promise<boolean> {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        // Kamera-Berechtigung erhalten — Stream sofort wieder stoppen
+        stream.getTracks().forEach(t => t.stop());
+        return true;
+      } catch (err: any) {
+        console.error('Kamera-Berechtigung verweigert:', err);
+        if (err.name === 'NotAllowedError') {
+          showScannerStatus('Kamera-Zugriff wurde verweigert. Bitte erlaube den Kamera-Zugriff in den Browser-Einstellungen.', 'error');
+        } else if (err.name === 'NotFoundError') {
+          showScannerStatus('Keine Kamera gefunden. Bitte verwende ein Gerät mit Kamera.', 'error');
+        } else if (err.name === 'NotReadableError') {
+          showScannerStatus('Kamera wird von einer anderen App verwendet. Bitte schließe andere Kamera-Apps.', 'error');
+        } else {
+          showScannerStatus(`Kamera-Fehler: ${err.message || err.name}`, 'error');
+        }
+        return false;
+      }
+    }
+
+    async function startScanner(cameraId?: string) {
       const startBtn = document.getElementById('start-scanner-btn');
       const stopBtn = document.getElementById('stop-scanner-btn');
       if (startBtn) startBtn.style.display = 'none';
       if (stopBtn) stopBtn.style.display = 'inline-block';
 
-      if (!html5QrCode) {
-        // html5-qrcode dynamisch laden
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-        document.head.appendChild(script);
-        await new Promise<void>((resolve) => { script.onload = () => resolve(); });
-        html5QrCode = new (window as any).Html5Qrcode('qr-reader');
+      showScannerStatus('Kamera wird gestartet...', 'info');
+
+      // 1. Kamera-Berechtigung explizit anfragen
+      const hasPermission = await requestCameraPermission();
+      if (!hasPermission) {
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (stopBtn) stopBtn.style.display = 'none';
+        return;
       }
 
+      // 2. Library laden
+      const loaded = await loadQrLibrary();
+      if (!loaded) {
+        showScannerStatus('QR-Scanner konnte nicht geladen werden. Bitte Seite neu laden.', 'error');
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (stopBtn) stopBtn.style.display = 'none';
+        return;
+      }
+
+      // 3. Kameras auflisten
+      try {
+        availableCameras = await (window as any).Html5Qrcode.getCameras();
+        if (!availableCameras || availableCameras.length === 0) {
+          showScannerStatus('Keine Kamera gefunden.', 'error');
+          if (startBtn) startBtn.style.display = 'inline-block';
+          if (stopBtn) stopBtn.style.display = 'none';
+          return;
+        }
+
+        // Kamera-Auswahl anzeigen wenn mehrere vorhanden
+        if (availableCameras.length > 1) {
+          const selectBox = document.getElementById('camera-select-box');
+          const selectEl = document.getElementById('camera-select') as HTMLSelectElement;
+          if (selectBox && selectEl) {
+            selectBox.style.display = 'block';
+            selectEl.innerHTML = availableCameras.map((c: any, i: number) =>
+              `<option value="${c.id}" ${c.id === cameraId ? 'selected' : ''}>${c.label || 'Kamera ' + (i + 1)}</option>`
+            ).join('');
+          }
+        }
+      } catch (e: any) {
+        console.error('Kamera-Liste Fehler:', e);
+      }
+
+      // 4. Scanner instanz erstellen (alte stoppen falls vorhanden)
+      if (html5QrCode && scannerRunning) {
+        try { await html5QrCode.stop(); } catch {}
+      }
+      html5QrCode = new (window as any).Html5Qrcode('qr-reader');
+
+      // 5. Beste Kamera wählen: übergebene ID > Rückkamera > erste verfügbar
+      let selectedCameraId = cameraId;
+      if (!selectedCameraId && availableCameras.length > 0) {
+        // Rückkamera bevorzugen (enthält oft "back", "rear", "environment", "rück")
+        const backCam = availableCameras.find((c: any) =>
+          /back|rear|environment|rück|hinten|0/i.test(c.label || '')
+        );
+        selectedCameraId = backCam ? backCam.id : availableCameras[availableCameras.length - 1].id;
+      }
+
+      // 6. Scanner starten
       scannerRunning = true;
-      html5QrCode.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText: string) => {
-          // Extrahiere Code aus URL oder verwende direkt
-          let code = decodedText;
-          const match = decodedText.match(/einloesen\/([A-Z0-9-]+)/i);
-          if (match) code = match[1];
-          stopScanner();
-          lookupVoucher(code);
-        },
-        () => {} // ignore errors
-      ).catch((err: any) => { console.error('Scanner error:', err); alert('Kamera konnte nicht gestartet werden'); });
+      try {
+        await html5QrCode.start(
+          selectedCameraId || { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
+          (decodedText: string) => {
+            let code = decodedText;
+            const match = decodedText.match(/einloesen\/([A-Z0-9-]+)/i);
+            if (match) code = match[1];
+            stopScanner();
+            lookupVoucher(code);
+          },
+          () => {} // scan-Fehler ignorieren (kein QR im Bild)
+        );
+        hideScannerStatus();
+      } catch (err: any) {
+        console.error('Scanner start error:', err);
+        scannerRunning = false;
+        showScannerStatus(`Kamera konnte nicht gestartet werden: ${err.message || err}`, 'error');
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (stopBtn) stopBtn.style.display = 'none';
+      }
     }
 
     function stopScanner() {
@@ -2169,6 +2624,8 @@ export const prerender = false;
       const stopBtn = document.getElementById('stop-scanner-btn');
       if (startBtn) startBtn.style.display = 'inline-block';
       if (stopBtn) stopBtn.style.display = 'none';
+      document.getElementById('camera-select-box')!.style.display = 'none';
+      hideScannerStatus();
       if (html5QrCode && scannerRunning) {
         html5QrCode.stop().catch(() => {});
         scannerRunning = false;
@@ -2176,8 +2633,14 @@ export const prerender = false;
     }
 
     // Event-Listener
-    document.getElementById('start-scanner-btn')?.addEventListener('click', startScanner);
+    document.getElementById('start-scanner-btn')?.addEventListener('click', () => startScanner());
     document.getElementById('stop-scanner-btn')?.addEventListener('click', stopScanner);
+    document.getElementById('camera-select')?.addEventListener('change', (e) => {
+      const select = e.target as HTMLSelectElement;
+      if (select.value && scannerRunning) {
+        startScanner(select.value);
+      }
+    });
     document.getElementById('lookup-voucher-btn')?.addEventListener('click', () => {
       const input = document.getElementById('manual-voucher-code') as HTMLInputElement;
       if (input?.value.trim()) lookupVoucher(input.value.trim());
@@ -2201,6 +2664,82 @@ export const prerender = false;
 
     (window as any).adminRedeemVoucher = adminRedeemVoucher;
     (window as any).adminReactivateVoucher = adminReactivateVoucher;
+
+    // ========== ECHTZEIT-UPDATES (Auto-Refresh) ==========
+    let autoRefreshInterval: ReturnType<typeof setInterval> | null = null;
+    let lastRefreshTime: Date | null = null;
+
+    function startAutoRefresh() {
+      if (autoRefreshInterval) return;
+      autoRefreshInterval = setInterval(async () => {
+        // Nur refreshen wenn Admin-Panel sichtbar ist
+        if (document.getElementById('admin-panel')?.classList.contains('hidden')) return;
+
+        try {
+          // Aktiven Tab ermitteln
+          const activeTab = document.querySelector('.admin-nav__btn.active')?.getAttribute('data-tab');
+
+          if (activeTab === 'termine' || activeTab === 'uebersicht') {
+            await Promise.all([loadSlots(), loadBookings()]);
+          } else if (activeTab === 'workshops') {
+            await Promise.all([loadWorkshops(), loadWorkshopBookings()]);
+          } else if (activeTab === 'gutscheine') {
+            await loadVouchers();
+          } else if (activeTab === 'bewertungen') {
+            await loadReviews();
+          }
+
+          // Auch Übersicht aktualisieren wenn nicht aktiver Tab
+          if (activeTab !== 'uebersicht') {
+            updateOverviewIfVisible();
+          }
+
+          lastRefreshTime = new Date();
+          updateRefreshIndicator();
+        } catch (err) {
+          console.error('Auto-refresh error:', err);
+        }
+      }, 30000); // Alle 30 Sekunden
+    }
+
+    function stopAutoRefresh() {
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+      }
+    }
+
+    function updateRefreshIndicator() {
+      const indicator = document.getElementById('refresh-indicator');
+      if (indicator && lastRefreshTime) {
+        indicator.textContent = `Aktualisiert: ${lastRefreshTime.toLocaleTimeString('de-DE')}`;
+      }
+    }
+
+    // Auto-Refresh starten wenn Admin-Panel sichtbar wird
+    const adminPanel = document.getElementById('admin-panel');
+    if (adminPanel) {
+      const observer = new MutationObserver(() => {
+        if (!adminPanel.classList.contains('hidden')) {
+          startAutoRefresh();
+        } else {
+          stopAutoRefresh();
+        }
+      });
+      observer.observe(adminPanel, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Seite verlassen: Refresh stoppen
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopAutoRefresh();
+      } else if (!document.getElementById('admin-panel')?.classList.contains('hidden')) {
+        startAutoRefresh();
+        // Sofort refreshen wenn Seite wieder sichtbar
+        loadSlots();
+        loadBookings();
+      }
+    });
   </script>
 </body>
 </html>

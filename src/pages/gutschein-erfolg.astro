@@ -3,9 +3,9 @@ import MainLayout from "../layouts/MainLayout.astro";
 import Button from "../components/Button.astro";
 import { getVoucherBySessionId, createVoucher, formatAmount } from "../lib/voucher-storage";
 import { generateVoucherQRDataUrl } from "../lib/voucher-pdf";
-import { getEnv, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigured } from "../lib/env";
+import { getEnv, FROM_EMAIL, isSmtpConfigured } from "../lib/env";
 import Stripe from "stripe";
-import nodemailer from "nodemailer";
+import { createSmtpTransporter } from "../lib/smtp";
 export const prerender = false;
 
 const sessionId = Astro.url.searchParams.get('session_id');
@@ -43,10 +43,7 @@ if (!voucher && sessionId) {
             const redeemUrl = `${siteUrl}/gutschein/einloesen/${voucher.code}`;
             const qrImg = await generateVoucherQRDataUrl(redeemUrl);
             const amountStr = formatAmount(voucher.amount);
-            const transporter = nodemailer.createTransport({
-              host: SMTP_HOST, port: parseInt(SMTP_PORT), secure: SMTP_PORT === '465',
-              auth: { user: SMTP_USER, pass: SMTP_PASS }, tls: { rejectUnauthorized: false },
-            });
+            const transporter = createSmtpTransporter();
             const html = `
               <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #faf7f4; border-radius: 16px; overflow: hidden;">
                 <div style="background: linear-gradient(135deg, #423430 0%, #8B6F47 100%); padding: 30px; text-align: center;">

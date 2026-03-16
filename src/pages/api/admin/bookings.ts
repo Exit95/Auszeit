@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
-import nodemailer from 'nodemailer';
 import { getBookings, getTimeSlots, cancelBooking, updateBooking } from '../../../lib/storage';
-import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
+import { FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
+import { createSmtpTransporter } from '../../../lib/smtp';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { logAuditEvent } from '../../../lib/audit-log';
 import { validateCredentials } from '../../../lib/totp';
@@ -206,18 +206,7 @@ Dein Atelier Auszeit
 					}
 
 					if (isSmtpConfigured()) {
-						const transporter = nodemailer.createTransport({
-							host: SMTP_HOST,
-							port: parseInt(SMTP_PORT),
-							secure: SMTP_PORT === '465',
-							auth: {
-								user: SMTP_USER,
-								pass: SMTP_PASS,
-							},
-							tls: {
-								rejectUnauthorized: false,
-							},
-						});
+						const transporter = createSmtpTransporter();
 
 						// Wir testen hier nicht extra mit verify(), um die Bestätigung im Admin nicht zu blockieren,
 						// sondern loggen nur Fehler.

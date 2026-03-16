@@ -9,6 +9,7 @@ import {
 } from '../../../lib/totp';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { logAuditEvent } from '../../../lib/audit-log';
+import { createAuthSession } from '../../../lib/auth';
 
 /**
  * Authentication flow:
@@ -86,21 +87,33 @@ export const POST: APIRoute = async ({ request }) => {
 
       // Check if 2FA is required (now applies to both superuser and admin)
       if (!validation.requires2FA) {
-        // 2FA not enabled, login successful
+        // 2FA not enabled, login successful — set session + CSRF cookies
+        const ipAddress = clientId;
+        const userAgent = request.headers.get('user-agent') || 'unknown';
+        const isSecure = request.url.startsWith('https');
+        const authSession = createAuthSession(validation.userType || username, ipAddress, userAgent, isSecure);
+
         await logAuditEvent('LOGIN_SUCCESS', request, {
           username: validation.userType || 'unknown',
           resource: '/api/admin/verify-2fa',
           action: `${validation.userType} login without 2FA (not configured)`,
           success: true,
         });
+
+        const headers = new Headers({ 'Content-Type': 'application/json' });
+        for (const cookie of authSession.cookieHeaders) {
+          headers.append('Set-Cookie', cookie);
+        }
+
         return new Response(JSON.stringify({
           success: true,
           requires2FA: false,
           userType: validation.userType,
-          credentials
+          credentials,
+          csrfToken: authSession.csrfToken,
         }), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' },
+          headers,
         });
       }
 
@@ -175,23 +188,33 @@ export const POST: APIRoute = async ({ request }) => {
         });
       }
 
-      // 2FA successful - complete session
-      const session = completePending2FASession(sessionId);
+      // 2FA successful - complete session and set session + CSRF cookies
+      const pendingSessionData = completePending2FASession(sessionId);
+      const ipAddress = clientId;
+      const userAgent = request.headers.get('user-agent') || 'unknown';
+      const isSecure = request.url.startsWith('https');
+      const authSession = createAuthSession(pendingSessionData?.userType || 'admin', ipAddress, userAgent, isSecure);
 
       await logAuditEvent('LOGIN_SUCCESS', request, {
-        username: session?.userType || 'unknown',
+        username: pendingSessionData?.userType || 'unknown',
         resource: '/api/admin/verify-2fa',
         action: '2FA verification successful',
         success: true,
       });
 
+      const headers = new Headers({ 'Content-Type': 'application/json' });
+      for (const cookie of authSession.cookieHeaders) {
+        headers.append('Set-Cookie', cookie);
+      }
+
       return new Response(JSON.stringify({
         success: true,
-        credentials: session?.credentials,
-        userType: session?.userType
+        credentials: pendingSessionData?.credentials,
+        userType: pendingSessionData?.userType,
+        csrfToken: authSession.csrfToken,
       }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
       });
     }
 

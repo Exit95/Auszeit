@@ -1223,3 +1223,384 @@ input[type="checkbox"] {
     text-align: center;
   }
 }
+
+
+/* ========== ÜBERSICHT TAB ========== */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.overview-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.2s;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #A67C52;
+  line-height: 1;
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Heutige Termine */
+.today-section, .warnings-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.today-section h3, .warnings-section h3 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.today-booking-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: #f8f6f4;
+  border-left: 4px solid #16a34a;
+}
+
+.today-booking-card.status-pending {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.today-booking-time {
+  font-weight: 700;
+  font-size: 0.95rem;
+  min-width: 110px;
+  color: #333;
+}
+
+.today-booking-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+
+.today-booking-note {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.today-booking-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.today-booking-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.6rem !important;
+  font-size: 0.75rem !important;
+}
+
+/* Warnhinweise */
+.warning-item {
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  background: #fff7ed;
+  border-left: 3px solid #f59e0b;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Letzte Aktualisierung */
+.last-refresh {
+  text-align: right;
+  font-size: 0.75rem;
+  color: #aaa;
+  padding: 0.5rem 0;
+}
+
+/* ========== WOCHENKALENDER ========== */
+.week-calendar-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 1.5rem;
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.cal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cal-nav button {
+  background: #f3f0ed;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.cal-nav button:hover {
+  background: #A67C52;
+  color: white;
+}
+
+#cal-week-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day {
+  border: 1px solid #e5e1dd;
+  border-radius: 8px;
+  min-height: 120px;
+  overflow: hidden;
+}
+
+.cal-day.cal-today {
+  border-color: #A67C52;
+  border-width: 2px;
+  box-shadow: 0 0 0 1px rgba(166,124,82,0.2);
+}
+
+.cal-day.cal-past {
+  opacity: 0.5;
+}
+
+.cal-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  background: #f8f6f4;
+  border-bottom: 1px solid #e5e1dd;
+}
+
+.cal-today .cal-day-header {
+  background: #A67C52;
+  color: white;
+}
+
+.cal-day-name {
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.cal-day-date {
+  font-size: 0.7rem;
+  color: #888;
+}
+
+.cal-today .cal-day-date {
+  color: rgba(255,255,255,0.8);
+}
+
+.cal-day-body {
+  padding: 0.35rem;
+}
+
+.cal-empty {
+  text-align: center;
+  padding: 1rem 0.25rem;
+  color: #ccc;
+  font-size: 0.7rem;
+}
+
+.cal-slot {
+  background: #eef9ee;
+  border-radius: 4px;
+  padding: 0.3rem 0.4rem;
+  margin-bottom: 3px;
+  font-size: 0.7rem;
+  border-left: 3px solid #16a34a;
+}
+
+.cal-slot.cal-medium {
+  background: #fff8ee;
+  border-left-color: #f59e0b;
+}
+
+.cal-slot.cal-full {
+  background: #fef2f2;
+  border-left-color: #dc2626;
+}
+
+.cal-slot-time {
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.cal-slot-capacity {
+  font-size: 0.65rem;
+  color: #666;
+}
+
+.cal-slot-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.cal-name {
+  font-size: 0.6rem;
+  background: rgba(0,0,0,0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.cal-name.cal-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.cal-more {
+  font-size: 0.6rem;
+  color: #999;
+  font-style: italic;
+}
+
+/* ========== BUCHUNGSFILTER ========== */
+.bookings-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.booking-search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1ccc7;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.booking-search-input:focus {
+  outline: none;
+  border-color: #A67C52;
+  box-shadow: 0 0 0 2px rgba(166,124,82,0.15);
+}
+
+.bookings-status-filter {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #d1ccc7;
+  background: white;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  background: #f3f0ed;
+}
+
+.filter-btn.active {
+  background: #A67C52;
+  color: white;
+  border-color: #A67C52;
+}
+
+/* ========== MOBILE RESPONSIVE für neue Elemente ========== */
+@media (max-width: 768px) {
+  .overview-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cal-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cal-day:nth-child(7) {
+    grid-column: span 2;
+  }
+
+  .today-booking-card {
+    flex-wrap: wrap;
+  }
+
+  .today-booking-time {
+    min-width: auto;
+  }
+
+  .bookings-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .booking-search-input {
+    min-width: auto;
+  }
+}

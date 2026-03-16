@@ -56,8 +56,7 @@ export function validateCsrfToken(
     return false;
   }
 
-  // Token is valid - delete it (one-time use for extra security)
-  tokenStore.delete(token);
+  // Token bleibt per-session gültig (nicht one-time löschen)
   return true;
 }
 
@@ -80,7 +79,7 @@ export function getCsrfTokenFromRequest(request: Request): string | null {
 export function csrfCookieHeader(token: string, secure: boolean = true): string {
   const sameSite = secure ? 'Strict' : 'Lax';
   const secureFlag = secure ? '; Secure' : '';
-  return `csrf_token=${token}; Path=/; HttpOnly=false; SameSite=${sameSite}${secureFlag}; Max-Age=3600`;
+  return `csrf_token=${token}; Path=/; SameSite=${sameSite}${secureFlag}; Max-Age=3600`;
 }
 
 /**

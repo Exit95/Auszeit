@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
+import { sanitizeEmail } from '../../lib/sanitize';
 
 // Gutschein-Produkte
 const VOUCHER_PRODUCTS: Record<string, { name: string; amount: number; description: string }> = {
@@ -16,6 +18,13 @@ const VOUCHER_PRODUCTS: Record<string, { name: string; amount: number; descripti
 };
 
 export const POST: APIRoute = async ({ request }) => {
+  // Rate-Limiting
+  const clientId = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.API);
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit);
+  }
+
   try {
     // Stripe-Key aus Umgebungsvariablen lesen (zur Laufzeit)
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -37,8 +46,15 @@ export const POST: APIRoute = async ({ request }) => {
     let lineItem: Stripe.Checkout.SessionCreateParams.LineItem;
 
     if (voucherId === 'voucher-custom' && customAmount) {
-      // Wunschbetrag
-      const amount = Math.round(parseFloat(customAmount) * 100);
+      // Wunschbetrag — sicher parsen
+      const parsed = parseFloat(customAmount);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        return new Response(
+          JSON.stringify({ error: 'Ungültiger Betrag' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      const amount = Math.round(parsed * 100);
       if (amount < 500 || amount > 50000) {
         return new Response(
           JSON.stringify({ error: 'Betrag muss zwischen 5€ und 500€ liegen' }),
@@ -86,12 +102,13 @@ export const POST: APIRoute = async ({ request }) => {
       billing_address_collection: 'required',
       metadata: {
         voucher_type: voucherId,
+        voucher_amount_cent: String(lineItem.price_data?.unit_amount || 0),
       },
     };
 
-    // E-Mail hinzufügen wenn vorhanden
+    // E-Mail hinzufügen wenn vorhanden (sanitized)
     if (customerEmail) {
-      sessionParams.customer_email = customerEmail;
+      sessionParams.customer_email = sanitizeEmail(customerEmail) || undefined;
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);

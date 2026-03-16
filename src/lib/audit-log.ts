@@ -34,7 +34,9 @@ export type AuditEventType =
   | 'FILE_UPLOADED'
   | 'FILE_DELETED'
   | 'UNAUTHORIZED_ACCESS'
-  | 'SUSPICIOUS_ACTIVITY';
+  | 'SUSPICIOUS_ACTIVITY'
+  | '2FA_INITIATED'
+  | '2FA_FAILURE';
 
 const AUDIT_LOG_FILE = path.join(process.cwd(), 'data', 'audit-log.json');
 const AUDIT_LOG_FILENAME = 'audit-log.json';
