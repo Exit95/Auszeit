@@ -1,0 +1,2876 @@
+---
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Terminverwaltung | Atelier Auszeit</title>
+  <link rel="stylesheet" href="/admin-styles.css">
+</head>
+<body>
+  <div id="login-screen" class="login-container">
+    <div class="login-box">
+      <h1>🎨 Admin Login</h1>
+      <p>Atelier Auszeit</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">Benutzername</label>
+          <input type="text" id="username" name="username" value="admin" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Passwort</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Anmelden</button>
+        <div id="login-error" class="error-message hidden"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2FA Verification Screen -->
+  <div id="twofa-screen" class="login-container hidden">
+    <div class="login-box">
+      <h1>🔐 2-Faktor-Authentifizierung</h1>
+      <p>Bitte geben Sie den Code aus Ihrer Authenticator-App ein</p>
+      <form id="twofa-form">
+        <div class="form-group">
+          <label for="twofa-code">6-stelliger Code</label>
+          <input type="text" id="twofa-code" name="code"
+                 pattern="[0-9]{6}" maxlength="6"
+                 inputmode="numeric" autocomplete="one-time-code"
+                 placeholder="000000" required
+                 style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
+        </div>
+        <button type="submit" class="btn btn-primary">Bestätigen</button>
+        <button type="button" id="twofa-cancel" class="btn btn-secondary" style="margin-top: 0.5rem;">Abbrechen</button>
+        <div id="twofa-error" class="error-message hidden"></div>
+      </form>
+    </div>
+  </div>
+
+	  <div id="admin-panel" class="admin-container hidden">
+	    <header class="admin-header">
+	      <h1>🎨 Admin Panel</h1>
+	      <div class="admin-header-buttons">
+	        <button id="setup-2fa-btn" class="btn btn-secondary hidden" title="2FA für Admin einrichten">🔐 2FA Setup</button>
+	        <button id="logout-btn" class="btn btn-secondary">Abmelden</button>
+	      </div>
+	    </header>
+
+    <nav class="admin-nav">
+      <button class="admin-nav__btn active" data-tab="uebersicht">📋 Übersicht</button>
+      <button class="admin-nav__btn" data-tab="termine">Termine</button>
+      <button class="admin-nav__btn" data-tab="workshops">Workshops</button>
+      <button class="admin-nav__btn" data-tab="galerie">Galerie</button>
+      <button class="admin-nav__btn" data-tab="bewertungen">Bewertungen</button>
+      <button class="admin-nav__btn" data-tab="gutscheine">🎟️ Gutscheine</button>
+    </nav>
+
+	    		<main class="admin-main">
+      <!-- Tab: Übersicht (Arbeitszentrale) -->
+      <div id="tab-uebersicht" class="admin-tab active">
+        <!-- Header mit Refresh-Indikator -->
+        <div class="overview-top-bar">
+          <h2>📋 Tagesübersicht</h2>
+          <span id="refresh-indicator" class="refresh-indicator"></span>
+        </div>
+
+        <!-- KPI-Karten -->
+        <div class="overview-kpis">
+          <div class="kpi-card kpi-highlight">
+            <div class="kpi-value" id="dashboard-today-count">-</div>
+            <div class="kpi-label">Termine heute</div>
+          </div>
+          <div class="kpi-card kpi-warning">
+            <div class="kpi-value" id="dashboard-new-count">-</div>
+            <div class="kpi-label">Neue Anfragen</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="dashboard-confirmed-count">-</div>
+            <div class="kpi-label">Bestätigt</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="dashboard-cancelled-count">-</div>
+            <div class="kpi-label">Stornierungen</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="dashboard-next7-count">-</div>
+            <div class="kpi-label">Nächste 7 Tage</div>
+          </div>
+          <div class="kpi-card kpi-voucher">
+            <div class="kpi-value" id="dashboard-voucher-count">-</div>
+            <div class="kpi-label">Offene Gutscheine</div>
+          </div>
+        </div>
+
+        <!-- Warnhinweise -->
+        <section class="overview-card overview-warnings hidden" id="overview-warnings">
+          <h3>⚠️ Handlungsbedarf</h3>
+          <div id="warnings-list" class="warnings-list"></div>
+        </section>
+
+        <!-- Zwei-Spalten: Heutige Termine + Wochenkalender -->
+        <div class="overview-content-grid">
+          <!-- Heutige Termine -->
+          <section class="overview-card">
+            <h3>🕐 Heutige Termine</h3>
+            <div id="today-bookings-loading" class="loading">Lade...</div>
+            <div id="today-bookings-list" class="today-bookings-list hidden"></div>
+            <div id="no-today-bookings" class="no-data hidden">Keine Termine für heute</div>
+          </section>
+
+          <!-- Wochenkalender -->
+          <section class="overview-card overview-calendar-card">
+            <div class="cal-header">
+              <h3>📅 Wochenkalender</h3>
+              <div class="cal-nav">
+                <button id="cal-prev-week">← Vor</button>
+                <span id="cal-week-label">Kalenderwoche</span>
+                <button id="cal-next-week">Nächste →</button>
+              </div>
+            </div>
+            <div id="week-calendar" class="week-calendar"></div>
+          </section>
+        </div>
+
+        <!-- Tages-Detail-Panel (wird per Klick auf Kalendertag geöffnet) -->
+        <div id="day-detail-panel" class="day-detail-panel hidden">
+          <div class="day-detail-header">
+            <h3 id="day-detail-title">Termine am ...</h3>
+            <button id="day-detail-close" class="day-detail-close">&times;</button>
+          </div>
+          <div id="day-detail-content" class="day-detail-content"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Termine -->
+      <div id="tab-termine" class="admin-tab hidden">
+			      <section class="add-slot-section">
+		        <h2 id="slot-form-title">Neuen Termin hinzufügen</h2>
+		        <form id="add-slot-form">
+		          <div class="form-row">
+		            <div class="form-group">
+		              <label for="slot-event-type">Event-Typ</label>
+		              <select id="slot-event-type" name="eventType">
+		                <option value="normal">Normaler Termin</option>
+		                <option value="kindergeburtstag">🎂 Kindergeburtstag</option>
+		                <option value="stammtisch">🍷 Stammtisch</option>
+		              </select>
+		            </div>
+		            <div class="form-group">
+		              <label for="slot-date">Datum</label>
+		              <input type="date" id="slot-date" name="date" required>
+		            </div>
+		            <div class="form-group">
+		              <label for="slot-start-time">Beginn</label>
+		              <input type="time" id="slot-start-time" name="startTime" required>
+		            </div>
+		            <div class="form-group">
+		              <label for="slot-end-time">Ende</label>
+		              <input type="time" id="slot-end-time" name="endTime" required>
+		            </div>
+		            <div class="form-group">
+		              <label for="slot-capacity">Max. Personen</label>
+		              <input type="number" id="slot-capacity" name="maxCapacity" min="1" max="20" value="15" required>
+		            </div>
+		            <div class="form-group" id="initial-booked-group">
+		              <label for="slot-initial-booked">Bereits gebuchte Plätze</label>
+		              <input type="number" id="slot-initial-booked" name="initialBooked" min="0" max="20" value="0">
+		            </div>
+		          </div>
+		          <p id="event-type-hint" class="event-type-hint hidden">
+		            ℹ️ Dieses Zeitfenster wird im Kalender als belegt angezeigt. Andere Zeitfenster am selben Tag bleiben buchbar.
+		          </p>
+		          <div class="form-actions">
+		            <button type="submit" class="btn btn-primary" id="slot-submit-btn">Termin hinzufügen</button>
+		            <button type="button" class="btn btn-secondary hidden" id="cancel-edit-btn">Bearbeitung abbrechen</button>
+		          </div>
+		        </form>
+		      </section>
+
+	      <section class="slots-section">
+	        <h2>Verfügbare Termine</h2>
+	        <div id="slots-loading" class="loading">Lade Termine...</div>
+	        <div id="slots-list" class="slots-list hidden"></div>
+	        <div id="no-slots" class="no-data hidden">Keine Termine vorhanden</div>
+	      </section>
+
+	      <section class="bookings-section">
+	        <h2>Buchungen</h2>
+	        <!-- Filter und Suche -->
+	        <div class="bookings-filter-bar">
+	          <input type="text" id="booking-search" class="booking-search-input" placeholder="🔍 Name, E-Mail oder Telefon suchen...">
+	          <div class="bookings-status-filter">
+	            <button class="filter-btn active" data-booking-filter="active">Aktiv</button>
+	            <button class="filter-btn" data-booking-filter="pending">⏳ Offen</button>
+	            <button class="filter-btn" data-booking-filter="confirmed">✅ Bestätigt</button>
+	            <button class="filter-btn" data-booking-filter="cancelled">❌ Storniert</button>
+	            <button class="filter-btn" data-booking-filter="all">Alle</button>
+	          </div>
+	        </div>
+	        <div id="bookings-loading" class="loading">Lade Buchungen...</div>
+	        <div id="bookings-list" class="slots-list hidden"></div>
+	        <div id="no-bookings" class="no-data hidden">Keine Buchungen vorhanden</div>
+	      </section>
+      </div>
+      <!-- Ende Tab: Termine -->
+
+      <!-- Tab: Workshops -->
+      <div id="tab-workshops" class="admin-tab hidden">
+        <section class="add-workshop-section">
+          <h2 id="workshop-form-title">Neuen Workshop hinzufügen</h2>
+          <form id="add-workshop-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="workshop-title">Titel</label>
+                <input type="text" id="workshop-title" name="title" required>
+              </div>
+              <div class="form-group">
+                <label for="workshop-date">Datum</label>
+                <input type="date" id="workshop-date" name="date" required>
+              </div>
+              <div class="form-group">
+                <label for="workshop-time">Uhrzeit</label>
+                <input type="time" id="workshop-time" name="time" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="workshop-price">Preis</label>
+                <input type="text" id="workshop-price" name="price" placeholder="z.B. 45€ pro Person" required>
+              </div>
+              <div class="form-group">
+                <label for="workshop-max-participants">Max. Teilnehmer</label>
+                <input type="number" id="workshop-max-participants" name="maxParticipants" min="1" max="50" value="10" required>
+              </div>
+              <div class="form-group">
+                <label for="workshop-active">
+                  <input type="checkbox" id="workshop-active" name="active" checked>
+                  Aktiv (auf Hauptseite anzeigen)
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="workshop-description">Kurzbeschreibung (für Karte)</label>
+              <textarea id="workshop-description" name="description" rows="2" required placeholder="Kurze Beschreibung für die Workshop-Karte"></textarea>
+              <small class="form-hint">Wird auf der Workshop-Karte angezeigt (max. 2 Zeilen)</small>
+            </div>
+            <div class="form-group">
+              <label for="workshop-detailed-description">Ausführliche Beschreibung (für Modal)</label>
+              <textarea id="workshop-detailed-description" name="detailedDescription" rows="6" placeholder="Detaillierte Beschreibung, die im Modal angezeigt wird"></textarea>
+              <small class="form-hint">Wird im Detail-Modal angezeigt (optional)</small>
+            </div>
+            <div class="form-group">
+              <label for="workshop-image">Titelbild (optional)</label>
+              <select id="workshop-image" name="imageFilename">
+                <option value="">Kein Bild</option>
+              </select>
+              <small class="form-hint">Wählen Sie ein Bild aus der Galerie (nicht zugeordnete Bilder)</small>
+              <div id="workshop-image-preview" class="workshop-image-preview"></div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="workshop-submit-btn">Workshop hinzufügen</button>
+              <button type="button" class="btn btn-secondary hidden" id="cancel-workshop-edit-btn">Bearbeitung abbrechen</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="workshops-list-section">
+          <h2>Workshops</h2>
+          <div id="workshops-loading" class="loading">Lade Workshops...</div>
+          <div id="workshops-list" class="slots-list hidden"></div>
+          <div id="no-workshops-admin" class="no-data hidden">Keine Workshops vorhanden</div>
+        </section>
+
+        <section class="workshop-bookings-section">
+          <h2>Workshop-Buchungen</h2>
+          <div id="workshop-bookings-loading" class="loading">Lade Workshop-Buchungen...</div>
+          <div id="workshop-bookings-list" class="bookings-list hidden"></div>
+          <div id="no-workshop-bookings" class="no-data hidden">Keine Workshop-Buchungen vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Workshops -->
+
+      <!-- Tab: Galerie -->
+      <div id="tab-galerie" class="admin-tab hidden">
+        <!-- Bild hochladen -->
+        <section class="gallery-upload-section">
+          <h2>Bild hochladen</h2>
+          <div class="upload-area" id="upload-drop-area">
+            <div class="upload-icon">📤</div>
+            <p class="upload-text">Klicken oder Datei hierher ziehen</p>
+            <p class="upload-hint">Max. 50MB | JPG, PNG, GIF, WebP</p>
+            <input type="file" id="gallery-file-input" accept="image/*" hidden>
+          </div>
+          <div id="upload-status" class="upload-status"></div>
+        </section>
+
+        <!-- Bilder mit Kategorien -->
+        <section class="gallery-list-section">
+          <div class="gallery-header">
+            <h2>Bilder für Hauptseite (mit Kategorie)</h2>
+            <button type="button" class="btn btn-secondary" id="reload-gallery-btn">🔄 Neu laden</button>
+          </div>
+          <div id="gallery-categorized" class="gallery-categories"></div>
+        </section>
+
+        <!-- Bilder ohne Kategorie -->
+        <section class="gallery-uncategorized-section">
+          <h2>Nicht zugeordnete Bilder</h2>
+          <p class="hint">Diese Bilder werden nicht auf der Hauptseite angezeigt. Weise ihnen eine Kategorie zu.</p>
+          <div id="gallery-uncategorized" class="gallery-grid"></div>
+        </section>
+      </div>
+      <!-- Ende Tab: Galerie -->
+
+      <!-- Tab: Bewertungen -->
+      <div id="tab-bewertungen" class="admin-tab hidden">
+        <section class="reviews-section">
+          <h2>Kundenbewertungen verwalten</h2>
+
+          <div class="reviews-stats">
+            <div class="stat-card">
+              <div class="stat-label">Wartend</div>
+              <div class="stat-value" id="reviews-pending-count">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Freigegeben</div>
+              <div class="stat-value" id="reviews-approved-count">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Gesamt</div>
+              <div class="stat-value" id="reviews-total-count">0</div>
+            </div>
+          </div>
+
+          <div class="reviews-filter">
+            <button class="filter-btn active" data-filter="all">Alle</button>
+            <button class="filter-btn" data-filter="pending">Wartend</button>
+            <button class="filter-btn" data-filter="approved">Freigegeben</button>
+          </div>
+
+          <div id="reviews-loading" class="loading">Lade Bewertungen...</div>
+          <div id="reviews-list" class="reviews-admin-list hidden"></div>
+          <div id="no-reviews" class="no-data hidden">Keine Bewertungen vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Bewertungen -->
+
+      <!-- Tab: Gutscheine -->
+      <div id="tab-gutscheine" class="admin-tab hidden">
+        <section class="voucher-section">
+          <h2>Gutscheine verwalten</h2>
+
+          <!-- QR-Scanner -->
+          <div class="voucher-scanner-box">
+            <h3>📷 QR-Code scannen</h3>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kamera auf den QR-Code des Kunden halten</p>
+            <div id="scanner-status" style="display: none; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.85rem; text-align: center;"></div>
+            <div id="camera-select-box" style="display: none; margin-bottom: 0.5rem; text-align: center;">
+              <label for="camera-select" style="font-size: 0.85rem; color: #666;">Kamera wählen: </label>
+              <select id="camera-select" style="padding: 0.4rem; border-radius: 6px; border: 1px solid #ddd; font-size: 0.85rem;"></select>
+            </div>
+            <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
+            <div style="text-align: center;">
+              <button id="start-scanner-btn" class="btn btn-primary" style="margin-top: 1rem;">📷 Scanner starten</button>
+              <button id="stop-scanner-btn" class="btn btn-secondary" style="margin-top: 1rem; display: none;">Scanner stoppen</button>
+            </div>
+          </div>
+
+          <!-- Manuelle Code-Eingabe -->
+          <div class="voucher-manual-box" style="margin-top: 1.5rem;">
+            <h3>✏️ Code manuell eingeben</h3>
+            <div style="display: flex; gap: 0.5rem; max-width: 400px; margin: 0.5rem auto;">
+              <input type="text" id="manual-voucher-code" placeholder="AUSZ-XXXX-XXXX" style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; text-transform: uppercase; font-family: monospace; font-size: 1rem; text-align: center;">
+              <button id="lookup-voucher-btn" class="btn btn-primary">Suchen</button>
+            </div>
+          </div>
+
+          <!-- Scan-Ergebnis -->
+          <div id="voucher-scan-result" style="display: none; margin-top: 1.5rem;"></div>
+
+          <!-- Gutschein-Statistiken -->
+          <div class="voucher-stats" style="margin-top: 2rem;">
+            <div class="stat-card">
+              <div class="stat-label">Aktiv</div>
+              <div class="stat-value" id="voucher-active-count">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Eingelöst</div>
+              <div class="stat-value" id="voucher-redeemed-count">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Gesamt</div>
+              <div class="stat-value" id="voucher-total-count">0</div>
+            </div>
+          </div>
+
+          <!-- Gutschein-Liste -->
+          <div id="voucher-loading" class="loading">Lade Gutscheine...</div>
+          <div id="voucher-list" class="voucher-admin-list hidden"></div>
+          <div id="no-vouchers" class="no-data hidden">Keine Gutscheine vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Gutscheine -->
+
+	    </main>
+  </div>
+
+	  <script>
+	    let authCredentials = sessionStorage.getItem('adminAuth') || '';
+	    let editingSlotId: string | null = null;
+
+    // Globale Datenspeicher für Übersicht & Kalender
+    let cachedBookings: any[] = [];
+    let cachedSlots: any[] = [];
+    let calendarWeekOffset = 0; // 0 = aktuelle Woche
+
+    // Auto-Login bei Seitenload wenn Session vorhanden
+    if (authCredentials) {
+      // Credentials validieren mit einem Test-Request
+      fetch('/api/admin/slots', { headers: { 'Authorization': `Basic ${authCredentials}` } })
+        .then(res => {
+          if (res.ok) {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('admin-panel')?.classList.remove('hidden');
+            Promise.all([loadSlots(), loadBookings()]).then(() => {
+              renderOverview();
+              renderWeekCalendar();
+            });
+          } else {
+            // Credentials ungültig - Session löschen
+            authCredentials = '';
+            sessionStorage.removeItem('adminAuth');
+          }
+        })
+        .catch(() => {
+          authCredentials = '';
+          sessionStorage.removeItem('adminAuth');
+        });
+    }
+
+    // Hilfsfunktion: HTML escapen
+    function escapeHtml(text: string): string {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Speichert die URL für das ausgewählte Bild (für Vorschau)
+    let workshopImageUrlMap: Record<string, string> = {};
+
+    function updateWorkshopImagePreview(imageValue: string | null) {
+      const previewEl = document.getElementById('workshop-image-preview') as HTMLDivElement | null;
+      if (!previewEl) return;
+
+      if (!imageValue) {
+        previewEl.innerHTML = '';
+        return;
+      }
+
+      // Wenn es bereits eine URL ist (beginnt mit http), direkt verwenden
+      // Sonst aus der Map holen
+      const imageUrl = imageValue.startsWith('http')
+        ? imageValue
+        : (workshopImageUrlMap[imageValue] || '');
+
+      if (!imageUrl) {
+        previewEl.innerHTML = '';
+        return;
+      }
+
+      previewEl.innerHTML = `
+        <div class="workshop-image-preview__inner">
+          <img src="${escapeHtml(imageUrl)}" alt="Ausgewähltes Titelbild" loading="lazy">
+        </div>
+      `;
+    }
+
+    // Pending 2FA Session für Admin-Login
+    let pending2FASessionId = '';
+
+    // Login-Handler mit 2FA-Unterstützung
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target as HTMLFormElement);
+      const username = formData.get('username');
+      const password = formData.get('password');
+
+      const credentials = btoa(`${username}:${password}`);
+
+      try {
+        // Step 1: Verify password and check if 2FA is required
+        const response = await fetch('/api/admin/verify-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'init', credentials })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          const errorEl = document.getElementById('login-error');
+          if (errorEl) {
+            errorEl.textContent = result.message || 'Ungültige Anmeldedaten';
+            errorEl.classList.remove('hidden');
+          }
+          return;
+        }
+
+        // Superuser oder Admin ohne 2FA - direkter Login
+        if (!result.requires2FA) {
+          authCredentials = result.credentials;
+          sessionStorage.setItem('adminAuth', authCredentials);
+          document.getElementById('login-screen')?.classList.add('hidden');
+          document.getElementById('admin-panel')?.classList.remove('hidden');
+
+          // Zeige 2FA-Setup-Button nur für Superuser
+          if (result.userType === 'superuser') {
+            document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+          }
+
+          // Paralleles Laden für schnellere Ladezeiten + Übersicht
+          Promise.all([loadSlots(), loadBookings()]).then(() => {
+            renderOverview();
+            renderWeekCalendar();
+          });
+          return;
+        }
+
+        // Admin mit 2FA - zeige 2FA-Screen
+        pending2FASessionId = result.sessionId;
+        authCredentials = credentials; // Temporär speichern
+        document.getElementById('login-screen')?.classList.add('hidden');
+        document.getElementById('twofa-screen')?.classList.remove('hidden');
+        (document.getElementById('twofa-code') as HTMLInputElement)?.focus();
+
+      } catch (error) {
+        console.error('Login error:', error);
+        const errorEl = document.getElementById('login-error');
+        if (errorEl) {
+          errorEl.textContent = 'Verbindungsfehler';
+          errorEl.classList.remove('hidden');
+        }
+      }
+    });
+
+    // 2FA Code Verification
+    document.getElementById('twofa-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = (document.getElementById('twofa-code') as HTMLInputElement)?.value;
+
+      try {
+        const response = await fetch('/api/admin/verify-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'verify',
+            sessionId: pending2FASessionId,
+            code
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          authCredentials = result.credentials;
+          sessionStorage.setItem('adminAuth', authCredentials);
+          document.getElementById('twofa-screen')?.classList.add('hidden');
+          document.getElementById('admin-panel')?.classList.remove('hidden');
+
+          // Zeige 2FA-Setup-Button für Superuser
+          if (result.userType === 'superuser') {
+            document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+          }
+
+          // Paralleles Laden für schnellere Ladezeiten + Übersicht
+          Promise.all([loadSlots(), loadBookings()]).then(() => {
+            renderOverview();
+            renderWeekCalendar();
+          });
+        } else {
+          const errorEl = document.getElementById('twofa-error');
+          if (errorEl) {
+            errorEl.textContent = result.message || 'Ungültiger Code';
+            errorEl.classList.remove('hidden');
+          }
+          (document.getElementById('twofa-code') as HTMLInputElement).value = '';
+          (document.getElementById('twofa-code') as HTMLInputElement)?.focus();
+        }
+      } catch (error) {
+        console.error('2FA verification error:', error);
+      }
+    });
+
+    // 2FA Cancel - zurück zum Login
+    document.getElementById('twofa-cancel')?.addEventListener('click', () => {
+      pending2FASessionId = '';
+      authCredentials = '';
+      sessionStorage.removeItem('adminAuth');
+      document.getElementById('twofa-screen')?.classList.add('hidden');
+      document.getElementById('login-screen')?.classList.remove('hidden');
+      (document.getElementById('twofa-code') as HTMLInputElement).value = '';
+      (document.getElementById('login-form') as HTMLFormElement)?.reset();
+    });
+
+    // Logout
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      authCredentials = '';
+      sessionStorage.removeItem('adminAuth');
+      pending2FASessionId = '';
+      document.getElementById('admin-panel')?.classList.add('hidden');
+      document.getElementById('twofa-screen')?.classList.add('hidden');
+      document.getElementById('setup-2fa-btn')?.classList.add('hidden');
+      document.getElementById('login-screen')?.classList.remove('hidden');
+      (document.getElementById('login-form') as HTMLFormElement)?.reset();
+      (document.getElementById('twofa-code') as HTMLInputElement).value = '';
+    });
+
+    // 2FA Setup Button - öffnet Setup-Seite in neuem Tab
+    document.getElementById('setup-2fa-btn')?.addEventListener('click', () => {
+      // Öffne die Setup-Seite mit Basic Auth im neuen Tab
+      const setupUrl = '/api/admin/setup-2fa';
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        // String-Konkatenation statt Template-Literals um Astro-Interpolation zu vermeiden
+        const htmlContent = '<html><head><title>2FA Setup wird geladen...</title></head><body>' +
+          '<script>' +
+          'fetch("' + setupUrl + '", { headers: { "Authorization": "Basic ' + authCredentials + '" } })' +
+          '.then(function(r) { return r.text(); })' +
+          '.then(function(html) { document.open(); document.write(html); document.close(); })' +
+          '.catch(function(e) { document.body.innerHTML = "<h1>Fehler beim Laden</h1><p>" + e.message + "</p>"; });' +
+          '<\/script>' +
+          '<p>Lade 2FA Setup...</p></body></html>';
+        newWindow.document.write(htmlContent);
+      }
+    });
+
+	    // Event-Typ Change Handler - zeigt Hinweis bei Kindergeburtstag/Stammtisch
+	    const eventTypeSelect = document.getElementById('slot-event-type') as HTMLSelectElement | null;
+	    const eventTypeHint = document.getElementById('event-type-hint');
+	    const initialBookedGroup = document.getElementById('initial-booked-group');
+
+	    eventTypeSelect?.addEventListener('change', () => {
+	      const eventType = eventTypeSelect.value;
+	      const isSpecialEvent = eventType === 'kindergeburtstag' || eventType === 'stammtisch';
+
+	      // Hinweis anzeigen/verstecken
+	      if (eventTypeHint) {
+	        eventTypeHint.classList.toggle('hidden', !isSpecialEvent);
+	      }
+
+	      // Bei Kindergeburtstag/Stammtisch: "Bereits gebucht" ausblenden und auf max setzen
+	      if (initialBookedGroup) {
+	        initialBookedGroup.classList.toggle('hidden', isSpecialEvent);
+	      }
+	    });
+
+	    // Termin hinzufügen / bearbeiten
+	    document.getElementById('add-slot-form')?.addEventListener('submit', async (e) => {
+	      e.preventDefault();
+	      const form = e.target as HTMLFormElement;
+	      const formData = new FormData(form);
+
+	      const eventType = formData.get('eventType') || 'normal';
+	      const isSpecialEvent = eventType === 'kindergeburtstag' || eventType === 'stammtisch';
+
+	      const baseData = {
+	        date: formData.get('date'),
+	        startTime: formData.get('startTime'),
+	        endTime: formData.get('endTime'),
+	        maxCapacity: formData.get('maxCapacity'),
+	        eventType: eventType
+	      };
+
+	      try {
+	        let response: Response;
+
+	        if (editingSlotId) {
+	          // Vorhandenen Termin aktualisieren
+	          const updatePayload = {
+	            id: editingSlotId,
+	            ...baseData,
+	            initialBooked: isSpecialEvent
+	              ? formData.get('maxCapacity') // Alles gebucht bei Spezial-Events
+	              : (formData.get('initialBooked') || '0')
+	          };
+
+	          response = await fetch('/api/admin/slots', {
+	            method: 'PUT',
+	            headers: {
+	              'Authorization': `Basic ${authCredentials}`,
+	              'Content-Type': 'application/json'
+	            },
+	            body: JSON.stringify(updatePayload)
+	          });
+	        } else {
+	          // Neuen Termin anlegen
+	          // Bei Kindergeburtstag/Stammtisch: Tag ist komplett ausgebucht (available = 0)
+	          const data = {
+	            ...baseData,
+	            initialBooked: isSpecialEvent
+	              ? formData.get('maxCapacity') // Alles gebucht
+	              : (formData.get('initialBooked') || '0')
+	          };
+
+	          response = await fetch('/api/admin/slots', {
+	            method: 'POST',
+	            headers: {
+	              'Authorization': `Basic ${authCredentials}`,
+	              'Content-Type': 'application/json'
+	            },
+	            body: JSON.stringify(data)
+	          });
+	        }
+
+	        if (response.ok) {
+	          form.reset();
+	          resetSlotFormState();
+	          // Hinweis wieder verstecken nach Reset
+	          if (eventTypeHint) eventTypeHint.classList.add('hidden');
+	          if (initialBookedGroup) initialBookedGroup.classList.remove('hidden');
+	          loadSlots();
+	        } else {
+	          const errorText = await response.text().catch(() => '');
+	          console.error('Error saving slot:', errorText);
+	          alert('Fehler beim Speichern des Termins');
+	        }
+	      } catch (error) {
+	        console.error('Error saving slot:', error);
+	        alert('Fehler beim Speichern des Termins');
+	      }
+	    });
+
+	    // Bearbeitung abbrechen
+	    document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
+	      const form = document.getElementById('add-slot-form') as HTMLFormElement | null;
+	      if (form) {
+	        form.reset();
+	      }
+	      resetSlotFormState();
+	    });
+
+    // Termine laden
+    async function loadSlots() {
+      const loadingEl = document.getElementById('slots-loading');
+      const listEl = document.getElementById('slots-list');
+      const noSlotsEl = document.getElementById('no-slots');
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (listEl) listEl.classList.add('hidden');
+      if (noSlotsEl) noSlotsEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/admin/slots', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load slots');
+
+        const slots = await response.json();
+        cachedSlots = slots as any[];
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        if (slots.length === 0) {
+          if (noSlotsEl) noSlotsEl.classList.remove('hidden');
+          return;
+        }
+
+	        if (listEl) {
+	          listEl.innerHTML = slots.map((slot: any) => {
+	            // Event-Typ Badge
+	            let eventBadge = '';
+	            if (slot.eventType === 'kindergeburtstag') {
+	              eventBadge = '<span class="event-badge event-kindergeburtstag">🎂 Kindergeburtstag</span>';
+	            } else if (slot.eventType === 'stammtisch') {
+	              eventBadge = '<span class="event-badge event-stammtisch">🍷 Stammtisch</span>';
+	            }
+
+	            return `
+	              <div class="slot-card ${slot.eventType !== 'normal' && slot.eventType ? 'slot-special-event' : ''}" data-id="${slot.id}">
+	                <div class="slot-info">
+	                  <div class="slot-date">${formatDate(slot.date)} ${eventBadge}</div>
+	                  <div class="slot-time">${slot.time}${slot.endTime ? ' - ' + slot.endTime : ''} Uhr</div>
+	                  <div class="slot-capacity">
+	                    ${slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch'
+	                      ? '<strong>Zeitfenster belegt</strong>'
+	                      : `${slot.available} / ${slot.maxCapacity} Plätze frei`}
+	                  </div>
+	                </div>
+	                <div class="slot-actions">
+	                  <button class="btn btn-secondary btn-edit" data-id="${slot.id}">Bearbeiten</button>
+	                  <button class="btn btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
+	                </div>
+	              </div>
+	            `;
+	          }).join('');
+          listEl.classList.remove('hidden');
+
+          // Delete-Handler
+          listEl.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = (e.target as HTMLElement).dataset.id;
+              if (confirm('Termin wirklich löschen?')) {
+                await deleteSlot(id!);
+              }
+            });
+          });
+
+	          // Edit-Handler
+	          listEl.querySelectorAll('.btn-edit').forEach(btn => {
+	            btn.addEventListener('click', (e) => {
+	              const id = (e.target as HTMLElement).dataset.id;
+	              const slot = (slots as any[]).find(s => s.id === id);
+	              if (slot) {
+	                startEditSlot(slot);
+	              }
+	            });
+	          });
+        }
+      } catch (error) {
+        console.error('Error loading slots:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+      }
+    }
+
+		    // Dashboard-Kennzahlen aktualisieren
+		    function updateDashboard(bookings: any[]) {
+		      const today = new Date();
+		      today.setHours(0, 0, 0, 0);
+		      const todayStr = today.toISOString().split('T')[0];
+		      const sevenDaysAhead = new Date(today);
+		      sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
+
+		      let todayCount = 0;
+		      let newCount = 0;
+		      let confirmedCount = 0;
+		      let cancelledCount = 0;
+		      let next7Count = 0;
+
+		      (bookings as any[]).forEach((b) => {
+		        if (!b.slotDate) return;
+		        const slotDate = new Date(b.slotDate + 'T00:00:00');
+		        const status = b.status || 'confirmed';
+
+		        const isToday = b.slotDate === todayStr;
+		        const isFutureOrToday = slotDate >= today;
+		        const isWithinNext7 = slotDate >= today && slotDate <= sevenDaysAhead;
+
+		        if (isToday && status !== 'cancelled') {
+		          todayCount += 1;
+		        }
+
+		        if (isFutureOrToday) {
+		          if (status === 'pending') newCount += 1;
+		          if (status === 'confirmed') confirmedCount += 1;
+		          if (status === 'cancelled') cancelledCount += 1;
+		        }
+
+		        if (isWithinNext7 && status !== 'cancelled') {
+		          next7Count += 1;
+		        }
+		      });
+
+		      const todayEl = document.getElementById('dashboard-today-count');
+		      if (todayEl) todayEl.textContent = String(todayCount);
+
+		      const newEl = document.getElementById('dashboard-new-count');
+		      if (newEl) newEl.textContent = String(newCount);
+
+		      const confirmedEl = document.getElementById('dashboard-confirmed-count');
+		      if (confirmedEl) confirmedEl.textContent = String(confirmedCount);
+
+		      const cancelledEl = document.getElementById('dashboard-cancelled-count');
+		      if (cancelledEl) cancelledEl.textContent = String(cancelledCount);
+
+		      const next7El = document.getElementById('dashboard-next7-count');
+		      if (next7El) next7El.textContent = String(next7Count);
+		    }
+
+		    // Buchungen laden
+		    async function loadBookings() {
+	      const loadingEl = document.getElementById('bookings-loading');
+	      const listEl = document.getElementById('bookings-list');
+	      const noBookingsEl = document.getElementById('no-bookings');
+
+	      if (loadingEl) loadingEl.classList.remove('hidden');
+	      if (listEl) listEl.classList.add('hidden');
+	      if (noBookingsEl) noBookingsEl.classList.add('hidden');
+
+		      try {
+		        const response = await fetch('/api/admin/bookings', {
+		          headers: {
+		            'Authorization': `Basic ${authCredentials}`,
+		          },
+		        });
+		
+		        if (!response.ok) throw new Error('Failed to load bookings');
+		
+		        const bookings = await response.json();
+		        cachedBookings = bookings as any[];
+
+		        // Dashboard aktualisieren (auch wenn es keine aktiven Buchungen mehr gibt)
+		        updateDashboard(bookings as any[]);
+		
+		        if (loadingEl) loadingEl.classList.add('hidden');
+		
+		        // Filter und Suche anwenden
+		        const today = new Date();
+		        today.setHours(0, 0, 0, 0);
+
+		        const searchInput = (document.getElementById('booking-search') as HTMLInputElement)?.value?.toLowerCase() || '';
+		        const activeFilter = document.querySelector('[data-booking-filter].active')?.getAttribute('data-booking-filter') || 'active';
+
+		        const activeBookings = (bookings as any[])
+		          .filter((b) => {
+		            // Statusfilter
+		            if (activeFilter === 'active') {
+		              if (b.status === 'cancelled') return false;
+		              if (b.slotDate) {
+		                const slotDate = new Date(b.slotDate + 'T00:00:00');
+		                if (slotDate < today) return false;
+		              }
+		            } else if (activeFilter === 'pending') {
+		              if (b.status !== 'pending') return false;
+		            } else if (activeFilter === 'confirmed') {
+		              if (b.status !== 'confirmed') return false;
+		            } else if (activeFilter === 'cancelled') {
+		              if (b.status !== 'cancelled') return false;
+		            }
+		            // 'all' zeigt alles
+
+		            // Suchfilter
+		            if (searchInput) {
+		              const searchFields = [b.name, b.email, b.phone, b.notes].filter(Boolean).join(' ').toLowerCase();
+		              if (!searchFields.includes(searchInput)) return false;
+		            }
+
+		            return true;
+		          })
+		          .sort((a, b) => {
+		            const aDateBase = a.slotDate || (a.createdAt ? String(a.createdAt).split('T')[0] : '');
+		            const bDateBase = b.slotDate || (b.createdAt ? String(b.createdAt).split('T')[0] : '');
+		
+		            if (!aDateBase || !bDateBase) return 0;
+		
+		            const aDate = new Date(`${aDateBase}T${a.slotTime || '00:00'}:00`);
+		            const bDate = new Date(`${bDateBase}T${b.slotTime || '00:00'}:00`);
+		            return aDate.getTime() - bDate.getTime();
+		          });
+
+	        if (activeBookings.length === 0) {
+	          if (noBookingsEl) noBookingsEl.classList.remove('hidden');
+	          return;
+	        }
+
+		        if (listEl) {
+		          listEl.innerHTML = activeBookings
+		            .map((booking: any) => {
+		              const dateLabel = booking.slotDate
+		                ? formatDate(booking.slotDate)
+		                : 'Kein Datum';
+		              const timeLabel = booking.slotTime
+		                ? `${booking.slotTime}${booking.slotEndTime ? ' - ' + booking.slotEndTime : ''} Uhr`
+		                : '';
+
+		              const status = booking.status || 'confirmed';
+		              let statusLabel = 'Bestätigt';
+		              let statusClass = 'booking-status--confirmed';
+		              if (status === 'pending') {
+		                statusLabel = 'Neu / unbestätigt';
+		                statusClass = 'booking-status--pending';
+		              } else if (status === 'cancelled') {
+		                statusLabel = 'Abgesagt';
+		                statusClass = 'booking-status--cancelled';
+		              }
+
+		              const showConfirm = status === 'pending';
+		              const showCancel = status !== 'cancelled';
+
+		              return `
+		                <div class="slot-card booking-card" data-id="${booking.id}">
+		                  <div class="slot-info booking-info">
+		                    <div class="booking-main">
+		                      <div>
+		                        <div class="slot-date">${dateLabel}</div>
+		                        <div class="slot-time">${timeLabel}</div>
+		                      </div>
+		                      <div class="booking-status ${statusClass}">${statusLabel}</div>
+		                    </div>
+		                    <div class="booking-customer">
+		                      <div><strong>${booking.name}</strong>${booking.email ? ` (${booking.email})` : ''}</div>
+		                      <div>${booking.participants} Person(en)</div>
+		                    </div>
+		                  </div>
+		                  <div class="slot-actions booking-actions">
+		                    ${showConfirm ? `<button class="btn btn-success btn-confirm-booking" data-id="${booking.id}">✓ Bestätigen</button>` : ''}
+		                    ${showCancel ? `<button class="btn btn-danger btn-cancel-booking" data-id="${booking.id}">✕ Absagen</button>` : ''}
+		                    <button class="btn btn-secondary btn-edit-booking" data-id="${booking.id}">✎ Bearbeiten</button>
+		                  </div>
+		                </div>
+		              `;
+		            })
+		            .join('');
+		
+		          listEl.classList.remove('hidden');
+		
+		          // Cancel-Handler
+		          listEl.querySelectorAll('.btn-cancel-booking').forEach((btn) => {
+		            btn.addEventListener('click', async (e) => {
+		              const id = (e.target as HTMLElement).dataset.id;
+		              if (id && confirm('Buchung wirklich stornieren?')) {
+		                await cancelBookingAdmin(id);
+		              }
+		            });
+		          });
+		
+		          // Confirm-Handler
+		          listEl.querySelectorAll('.btn-confirm-booking').forEach((btn) => {
+		            btn.addEventListener('click', async (e) => {
+		              const id = (e.target as HTMLElement).dataset.id;
+		              if (id && confirm('Buchung als bestätigt markieren?')) {
+		                await confirmBookingAdmin(id);
+		              }
+		            });
+		          });
+		
+		          // Edit-Handler (Teilnehmerzahl & Notizen mit einfachen Prompts bearbeiten)
+		          listEl.querySelectorAll('.btn-edit-booking').forEach((btn) => {
+		            btn.addEventListener('click', async (e) => {
+		              const id = (e.target as HTMLElement).dataset.id;
+		              if (!id) return;
+
+		              const booking = (activeBookings as any[]).find((b) => b.id === id);
+		              if (!booking) return;
+
+		              const participantsInput = prompt('Anzahl Personen', String(booking.participants || 1));
+		              if (participantsInput === null) return;
+		              const participants = parseInt(participantsInput, 10);
+		              if (!Number.isFinite(participants) || participants <= 0) {
+		                alert('Bitte eine gültige Personenzahl eingeben.');
+		                return;
+		              }
+
+		              const notesInput = prompt('Notizen (optional)', booking.notes || '');
+		              try {
+		                const response = await fetch('/api/admin/bookings', {
+		                  method: 'PUT',
+		                  headers: {
+		                    'Authorization': `Basic ${authCredentials}`,
+		                    'Content-Type': 'application/json',
+		                  },
+		                  body: JSON.stringify({
+		                    id,
+		                    participants,
+		                    notes: notesInput ?? '',
+		                  }),
+		                });
+		
+		                if (response.ok) {
+		                  await loadBookings();
+		                  await loadSlots();
+		                } else {
+		                  const result = await response.json().catch(() => null);
+		                  const message = result?.error || 'Fehler beim Aktualisieren der Buchung';
+		                  alert(message);
+		                }
+		              } catch (error) {
+		                console.error('Error updating booking:', error);
+		                alert('Fehler beim Aktualisieren der Buchung');
+		              }
+		            });
+		          });
+		        }
+	      } catch (error) {
+	        console.error('Error loading bookings:', error);
+	        if (loadingEl) loadingEl.classList.add('hidden');
+	      }
+	    }
+
+    // Termin löschen
+    async function deleteSlot(id: string) {
+      try {
+        const response = await fetch('/api/admin/slots', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ id })
+        });
+
+        if (response.ok) {
+          loadSlots();
+        } else {
+          alert('Fehler beim Löschen');
+        }
+      } catch (error) {
+        console.error('Error deleting slot:', error);
+      }
+    }
+
+		    // Buchung stornieren
+		    async function cancelBookingAdmin(id: string) {
+	      try {
+	        const response = await fetch('/api/admin/bookings', {
+	          method: 'POST',
+	          headers: {
+	            'Authorization': `Basic ${authCredentials}`,
+	            'Content-Type': 'application/json',
+	          },
+	          body: JSON.stringify({ id }),
+	        });
+
+	        if (response.ok) {
+	          // Buchungen neu laden und Slots aktualisieren, damit Plätze wieder sichtbar sind
+	          await loadBookings();
+	          await loadSlots();
+	        } else {
+	          alert('Fehler beim Stornieren der Buchung');
+	        }
+	      } catch (error) {
+	        console.error('Error cancelling booking:', error);
+	        alert('Fehler beim Stornieren der Buchung');
+	      }
+	    }
+
+		    // Buchung als bestätigt markieren
+		    async function confirmBookingAdmin(id: string) {
+		      try {
+		        const response = await fetch('/api/admin/bookings', {
+		          method: 'POST',
+		          headers: {
+		            'Authorization': `Basic ${authCredentials}`,
+		            'Content-Type': 'application/json',
+		          },
+		          body: JSON.stringify({ id, action: 'confirm' }),
+		        });
+		
+		        if (response.ok) {
+		          await loadBookings();
+		        } else {
+		          alert('Fehler beim Bestätigen der Buchung');
+		        }
+		      } catch (error) {
+		        console.error('Error confirming booking:', error);
+		        alert('Fehler beim Bestätigen der Buchung');
+		      }
+		    }
+
+	    // Formular in Bearbeitungsmodus versetzen
+	    function startEditSlot(slot: any) {
+	      editingSlotId = slot.id;
+
+	      const dateInput = document.getElementById('slot-date') as HTMLInputElement | null;
+	      const startInput = document.getElementById('slot-start-time') as HTMLInputElement | null;
+	      const endInput = document.getElementById('slot-end-time') as HTMLInputElement | null;
+	      const capacityInput = document.getElementById('slot-capacity') as HTMLInputElement | null;
+	      const initialBookedInput = document.getElementById('slot-initial-booked') as HTMLInputElement | null;
+	      const eventTypeSelect = document.getElementById('slot-event-type') as HTMLSelectElement | null;
+	      const eventTypeHint = document.getElementById('event-type-hint');
+	      const initialBookedGroup = document.getElementById('initial-booked-group');
+	      const titleEl = document.getElementById('slot-form-title');
+	      const submitBtn = document.getElementById('slot-submit-btn') as HTMLButtonElement | null;
+	      const cancelBtn = document.getElementById('cancel-edit-btn');
+
+	      if (dateInput) dateInput.value = slot.date;
+	      if (startInput) startInput.value = slot.time;
+	      if (endInput) endInput.value = slot.endTime || '';
+	      if (capacityInput) capacityInput.value = String(slot.maxCapacity);
+
+	      // Event-Typ setzen
+	      if (eventTypeSelect) {
+	        eventTypeSelect.value = slot.eventType || 'normal';
+	      }
+
+	      // Hinweis und Felder entsprechend Event-Typ anzeigen/verstecken
+	      const isSpecialEvent = slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch';
+	      if (eventTypeHint) eventTypeHint.classList.toggle('hidden', !isSpecialEvent);
+	      if (initialBookedGroup) initialBookedGroup.classList.toggle('hidden', isSpecialEvent);
+
+	      // Bereits gebuchte Plätze anzeigen und bearbeitbar lassen
+	      const bookedCount = slot.maxCapacity - slot.available;
+	      if (initialBookedInput) {
+	        initialBookedInput.value = String(bookedCount);
+	        initialBookedInput.disabled = false; // Bearbeitbar lassen
+	      }
+
+	      if (titleEl) titleEl.textContent = 'Termin bearbeiten';
+	      if (submitBtn) submitBtn.textContent = 'Termin aktualisieren';
+	      if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+	      const formEl = document.getElementById('add-slot-form') as HTMLElement | null;
+	      if (formEl && 'scrollIntoView' in formEl) {
+	        formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	      }
+	    }
+
+	    // Formular-Zustand zurücksetzen (Neuen-Termin-Modus)
+	    function resetSlotFormState() {
+	      editingSlotId = null;
+
+	      const initialBookedInput = document.getElementById('slot-initial-booked') as HTMLInputElement | null;
+	      const titleEl = document.getElementById('slot-form-title');
+	      const submitBtn = document.getElementById('slot-submit-btn') as HTMLButtonElement | null;
+	      const cancelBtn = document.getElementById('cancel-edit-btn');
+
+	      if (initialBookedInput) {
+	        initialBookedInput.disabled = false;
+	        if (!initialBookedInput.value) {
+	          initialBookedInput.value = '0';
+	        }
+	      }
+
+	      if (titleEl) titleEl.textContent = 'Neuen Termin hinzufügen';
+	      if (submitBtn) submitBtn.textContent = 'Termin hinzufügen';
+	      if (cancelBtn && !cancelBtn.classList.contains('hidden')) {
+	        cancelBtn.classList.add('hidden');
+	      }
+	    }
+
+	    // Datum formatieren
+	    function formatDate(dateStr: string) {
+	      const date = new Date(dateStr + 'T00:00:00');
+	      return date.toLocaleDateString('de-DE', {
+	        weekday: 'long',
+	        year: 'numeric',
+	        month: 'long',
+	        day: 'numeric'
+	      });
+	    }
+
+	    // Setze Mindestdatum auf heute
+	    const dateInput = document.getElementById('slot-date') as HTMLInputElement;
+	    if (dateInput) {
+	      const today = new Date().toISOString().split('T')[0];
+	      dateInput.min = today;
+	    }
+
+    // ========== TAB NAVIGATION ==========
+    const tabButtons = document.querySelectorAll('.admin-nav__btn');
+    const tabContents = document.querySelectorAll('.admin-tab');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.getAttribute('data-tab');
+
+        // Deaktiviere alle Tabs
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(t => t.classList.add('hidden'));
+
+        // Aktiviere gewählten Tab
+        btn.classList.add('active');
+        const targetTab = document.getElementById(`tab-${tabName}`);
+        if (targetTab) {
+          targetTab.classList.remove('hidden');
+
+          // Lade Daten wenn Tab gewechselt wird (parallel für Geschwindigkeit)
+          if (tabName === 'uebersicht') {
+            Promise.all([loadSlots(), loadBookings()]).then(() => {
+              renderOverview();
+              renderWeekCalendar();
+            });
+          } else if (tabName === 'termine') {
+            Promise.all([loadSlots(), loadBookings()]);
+          } else if (tabName === 'workshops') {
+            Promise.all([loadWorkshopImageOptions(), loadWorkshops(), loadWorkshopBookings()]);
+          } else if (tabName === 'galerie') {
+            loadGalleryData();
+          } else if (tabName === 'bewertungen') {
+            loadReviews();
+          }
+        }
+      });
+    });
+
+    // ========== BUCHUNGSFILTER & SUCHE ==========
+    document.querySelectorAll('[data-booking-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-booking-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadBookings();
+      });
+    });
+
+    let bookingSearchTimeout: ReturnType<typeof setTimeout>;
+    document.getElementById('booking-search')?.addEventListener('input', () => {
+      clearTimeout(bookingSearchTimeout);
+      bookingSearchTimeout = setTimeout(() => loadBookings(), 300);
+    });
+
+    // ========== WORKSHOPS VERWALTUNG ==========
+    let editingWorkshopId: string | null = null;
+    let workshopImagePreviewInitialized = false;
+
+    // Workshop-Formular absenden
+    document.getElementById('add-workshop-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+
+      const imageFilename = formData.get('imageFilename') as string;
+
+      const data = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        detailedDescription: formData.get('detailedDescription') || undefined,
+        date: formData.get('date'),
+        time: formData.get('time'),
+        price: formData.get('price'),
+        maxParticipants: formData.get('maxParticipants'),
+        active: (document.getElementById('workshop-active') as HTMLInputElement)?.checked || false,
+        imageFilename: imageFilename || undefined
+      };
+
+      try {
+        const url = editingWorkshopId ? '/api/admin/workshops' : '/api/admin/workshops';
+        const method = editingWorkshopId ? 'PUT' : 'POST';
+        const body = editingWorkshopId ? { ...data, id: editingWorkshopId } : data;
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+          form.reset();
+          (document.getElementById('workshop-active') as HTMLInputElement).checked = true;
+          resetWorkshopFormState();
+          await loadWorkshops();
+        } else {
+          alert('Fehler beim Speichern des Workshops');
+        }
+      } catch (error) {
+        console.error('Error saving workshop:', error);
+        alert('Fehler beim Speichern des Workshops');
+      }
+    });
+
+    // Workshop bearbeiten abbrechen
+    document.getElementById('cancel-workshop-edit-btn')?.addEventListener('click', () => {
+      (document.getElementById('add-workshop-form') as HTMLFormElement)?.reset();
+      resetWorkshopFormState();
+    });
+
+    // Bilder-Dropdown für Workshop-Formular laden (aus Galerie - nicht zugeordnete Bilder)
+    async function loadWorkshopImageOptions() {
+      const selectEl = document.getElementById('workshop-image') as HTMLSelectElement;
+      if (!selectEl) return;
+
+      try {
+        // Lade Galerie-Bilder und Metadaten
+        const [galleryRes, metadataRes] = await Promise.all([
+          fetch('/api/gallery'),
+          fetch('/api/gallery-metadata')
+        ]);
+
+        if (galleryRes.ok && metadataRes.ok) {
+          const allImages = await galleryRes.json();
+          const { metadata } = await metadataRes.json();
+          const currentValue = selectEl.value;
+
+          // Reset URL-Map
+          workshopImageUrlMap = {};
+
+          // Filtere nur nicht zugeordnete Bilder (aus gallery/ ohne Kategorie)
+          const unassignedImages = allImages.filter((img: any) => {
+            // Bilder aus gallery/ die keine Kategorie haben
+            if (img.source === 'gallery') {
+              const imgMeta = metadata[img.filename];
+              return !imgMeta || !imgMeta.category;
+            }
+            return false;
+          });
+
+          selectEl.innerHTML = '<option value="">Kein Bild</option>';
+
+          unassignedImages.forEach((img: any) => {
+            const option = document.createElement('option');
+            option.value = img.url; // Speichere die volle URL als Wert
+            option.textContent = img.filename;
+            selectEl.appendChild(option);
+            // URL in Map speichern für Vorschau
+            workshopImageUrlMap[img.url] = img.url;
+          });
+
+          if (currentValue) {
+            selectEl.value = currentValue;
+          }
+
+          ensureWorkshopImagePreviewListener();
+          updateWorkshopImagePreview(selectEl.value || null);
+        }
+      } catch (error) {
+        console.error('Error loading images for workshop:', error);
+      }
+    }
+
+    function ensureWorkshopImagePreviewListener() {
+      if (workshopImagePreviewInitialized) return;
+      const selectEl = document.getElementById('workshop-image') as HTMLSelectElement | null;
+      if (!selectEl) return;
+      workshopImagePreviewInitialized = true;
+      selectEl.addEventListener('change', () => {
+        updateWorkshopImagePreview(selectEl.value || null);
+      });
+    }
+
+    // Workshops laden
+    async function loadWorkshops() {
+      const loadingEl = document.getElementById('workshops-loading');
+      const listEl = document.getElementById('workshops-list');
+      const noWorkshopsEl = document.getElementById('no-workshops-admin');
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (listEl) listEl.classList.add('hidden');
+      if (noWorkshopsEl) noWorkshopsEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/admin/workshops', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Failed to load workshops');
+
+        const workshops = await response.json();
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        if (workshops.length === 0) {
+          if (noWorkshopsEl) noWorkshopsEl.classList.remove('hidden');
+          return;
+        }
+
+        if (listEl) {
+          listEl.classList.remove('hidden');
+          listEl.innerHTML = '';
+
+          workshops.forEach((workshop: any) => {
+            const card = document.createElement('div');
+            card.className = 'slot-card';
+
+            const formattedDate = formatDate(workshop.date);
+            const statusBadge = workshop.active
+              ? '<span class="status-badge status-active">Aktiv</span>'
+              : '<span class="status-badge status-inactive">Inaktiv</span>';
+
+            const detailedDesc = workshop.detailedDescription
+              ? `<br><small><strong>Ausführlich:</strong> ${workshop.detailedDescription}</small>`
+              : '';
+
+            card.innerHTML = `
+              <div class="slot-info">
+                <div class="slot-date">${formattedDate}</div>
+                <div class="slot-time">${workshop.time} Uhr</div>
+                <div class="slot-capacity">
+                  <strong>${workshop.title}</strong><br>
+                  <strong>Kurz:</strong> ${workshop.description}${detailedDesc}<br>
+                  Preis: ${workshop.price} | Max. ${workshop.maxParticipants} Teilnehmer
+                </div>
+                ${statusBadge}
+              </div>
+              <div class="slot-actions">
+                <button class="btn btn-secondary btn-edit-workshop" data-id="${workshop.id}">Bearbeiten</button>
+                <button class="btn btn-danger btn-delete-workshop" data-id="${workshop.id}">Löschen</button>
+              </div>
+            `;
+
+            listEl.appendChild(card);
+          });
+
+          // Event Listener für Bearbeiten-Buttons
+          document.querySelectorAll('.btn-edit-workshop').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.getAttribute('data-id');
+              const workshop = workshops.find((w: any) => w.id === id);
+              if (workshop) startEditWorkshop(workshop);
+            });
+          });
+
+          // Event Listener für Löschen-Buttons
+          document.querySelectorAll('.btn-delete-workshop').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-id');
+              if (confirm('Workshop wirklich löschen?')) {
+                await deleteWorkshop(id!);
+              }
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error loading workshops:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+      }
+    }
+
+    // Workshop löschen
+    async function deleteWorkshop(id: string) {
+      try {
+        console.log('Deleting workshop:', id);
+        const response = await fetch(`/api/admin/workshops?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        console.log('Delete response status:', response.status);
+
+        if (response.ok) {
+          alert('Workshop erfolgreich gelöscht!');
+          await loadWorkshops();
+        } else {
+          const error = await response.json();
+          console.error('Delete error:', error);
+          alert(`Fehler beim Löschen: ${error.error || 'Unbekannter Fehler'}`);
+        }
+      } catch (error) {
+        console.error('Error deleting workshop:', error);
+        alert('Fehler beim Löschen des Workshops: ' + error);
+      }
+    }
+
+    // Workshop bearbeiten
+    function startEditWorkshop(workshop: any) {
+      editingWorkshopId = workshop.id;
+
+      (document.getElementById('workshop-title') as HTMLInputElement).value = workshop.title;
+      (document.getElementById('workshop-description') as HTMLTextAreaElement).value = workshop.description;
+      (document.getElementById('workshop-detailed-description') as HTMLTextAreaElement).value = workshop.detailedDescription || '';
+      (document.getElementById('workshop-date') as HTMLInputElement).value = workshop.date;
+      (document.getElementById('workshop-time') as HTMLInputElement).value = workshop.time;
+      (document.getElementById('workshop-price') as HTMLInputElement).value = workshop.price;
+      (document.getElementById('workshop-max-participants') as HTMLInputElement).value = String(workshop.maxParticipants);
+      (document.getElementById('workshop-active') as HTMLInputElement).checked = workshop.active;
+      (document.getElementById('workshop-image') as HTMLSelectElement).value = workshop.imageFilename || '';
+      updateWorkshopImagePreview(workshop.imageFilename || null);
+
+      const titleEl = document.getElementById('workshop-form-title');
+      const submitBtn = document.getElementById('workshop-submit-btn');
+      const cancelBtn = document.getElementById('cancel-workshop-edit-btn');
+
+      if (titleEl) titleEl.textContent = 'Workshop bearbeiten';
+      if (submitBtn) submitBtn.textContent = 'Workshop aktualisieren';
+      if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+      document.getElementById('add-workshop-form')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Workshop-Formular zurücksetzen
+    function resetWorkshopFormState() {
+      editingWorkshopId = null;
+
+      const titleEl = document.getElementById('workshop-form-title');
+      const submitBtn = document.getElementById('workshop-submit-btn');
+      const cancelBtn = document.getElementById('cancel-workshop-edit-btn');
+
+      if (titleEl) titleEl.textContent = 'Neuen Workshop hinzufügen';
+      if (submitBtn) submitBtn.textContent = 'Workshop hinzufügen';
+      if (cancelBtn) cancelBtn.classList.add('hidden');
+      updateWorkshopImagePreview(null);
+    }
+
+    // ========== WORKSHOP-BUCHUNGEN VERWALTUNG ==========
+    async function loadWorkshopBookings() {
+      const loadingEl = document.getElementById('workshop-bookings-loading');
+      const listEl = document.getElementById('workshop-bookings-list');
+      const noBookingsEl = document.getElementById('no-workshop-bookings');
+
+      if (loadingEl) loadingEl.classList.remove('hidden');
+      if (listEl) listEl.classList.add('hidden');
+      if (noBookingsEl) noBookingsEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/admin/workshop-bookings', {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load workshop bookings');
+
+        const bookings = await response.json();
+
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        // Nur nicht-stornierte Buchungen anzeigen
+        const activeBookings = bookings.filter((b: any) => b.status !== 'cancelled');
+
+        if (activeBookings.length === 0) {
+          if (noBookingsEl) noBookingsEl.classList.remove('hidden');
+          return;
+        }
+
+        if (listEl) {
+          listEl.innerHTML = activeBookings.map((booking: any) => {
+            const status = booking.status || 'pending';
+            let statusLabel = 'Bestätigt';
+            let statusClass = 'booking-status--confirmed';
+            if (status === 'pending') {
+              statusLabel = 'Neu / unbestätigt';
+              statusClass = 'booking-status--pending';
+            }
+
+            const showConfirm = status === 'pending';
+
+            return `
+              <div class="slot-card booking-card" data-id="${booking.id}">
+                <div class="slot-info booking-info">
+                  <div class="booking-main">
+                    <div>
+                      <div class="slot-date">${booking.workshopTitle || 'Workshop'}</div>
+                      <div class="slot-time">${booking.workshopDate || ''} um ${booking.workshopTime || ''} Uhr</div>
+                    </div>
+                    <div class="booking-status ${statusClass}">${statusLabel}</div>
+                  </div>
+                  <div class="booking-customer">
+                    <div><strong>${booking.name}</strong> (${booking.email})</div>
+                    <div>${booking.participants} Person(en)${booking.phone ? ' | Tel: ' + booking.phone : ''}</div>
+                    ${booking.notes ? `<div style="font-size: 0.85em; color: #666;">Notiz: ${booking.notes}</div>` : ''}
+                  </div>
+                </div>
+                <div class="slot-actions booking-actions">
+                  ${showConfirm ? `<button class="btn btn-success btn-confirm-wb" data-id="${booking.id}">✓ Bestätigen</button>` : ''}
+                  <button class="btn btn-danger btn-cancel-wb" data-id="${booking.id}">✕ Stornieren</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          listEl.classList.remove('hidden');
+
+          // Confirm-Handler
+          listEl.querySelectorAll('.btn-confirm-wb').forEach((btn) => {
+            btn.addEventListener('click', async (e) => {
+              const id = (e.target as HTMLElement).dataset.id;
+              if (id && confirm('Workshop-Buchung bestätigen und Bestätigungs-E-Mail an Kunden senden?')) {
+                await confirmWorkshopBooking(id);
+              }
+            });
+          });
+
+          // Cancel-Handler
+          listEl.querySelectorAll('.btn-cancel-wb').forEach((btn) => {
+            btn.addEventListener('click', async (e) => {
+              const id = (e.target as HTMLElement).dataset.id;
+              if (id && confirm('Workshop-Buchung wirklich stornieren?')) {
+                await cancelWorkshopBooking(id);
+              }
+            });
+          });
+        }
+      } catch (error) {
+        console.error('Error loading workshop bookings:', error);
+        if (loadingEl) loadingEl.classList.add('hidden');
+      }
+    }
+
+    async function confirmWorkshopBooking(id: string) {
+      try {
+        const response = await fetch('/api/admin/workshop-bookings', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id, action: 'confirm' }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          if (result.customerEmailSent) {
+            alert('Buchung bestätigt und Bestätigungs-E-Mail an Kunden gesendet!');
+          } else {
+            alert('Buchung bestätigt. E-Mail konnte nicht gesendet werden: ' + (result.emailError || 'Unbekannter Fehler'));
+          }
+          await loadWorkshopBookings();
+        } else {
+          alert('Fehler beim Bestätigen: ' + (result.error || 'Unbekannter Fehler'));
+        }
+      } catch (error) {
+        console.error('Error confirming workshop booking:', error);
+        alert('Fehler beim Bestätigen der Buchung');
+      }
+    }
+
+    async function cancelWorkshopBooking(id: string) {
+      try {
+        const response = await fetch('/api/admin/workshop-bookings', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id, action: 'cancel' }),
+        });
+
+        if (response.ok) {
+          await loadWorkshopBookings();
+        } else {
+          alert('Fehler beim Stornieren der Buchung');
+        }
+      } catch (error) {
+        console.error('Error cancelling workshop booking:', error);
+        alert('Fehler beim Stornieren der Buchung');
+      }
+    }
+
+    // ========== GALERIE VERWALTUNG (S3) ==========
+    const GALLERY_CATEGORIES = [
+      { id: 'tassen', name: 'Tassen' },
+      { id: 'teller', name: 'Teller' },
+      { id: 'spardosen', name: 'Spardosen & Krüge & Boxen' },
+      { id: 'anhaenger', name: 'Weihnachtsanhänger' },
+    ];
+
+    let galleryImages: any[] = [];
+    let galleryMetadata: Record<string, { category: string | null }> = {};
+
+    // Upload-Bereich initialisieren
+    const uploadArea = document.getElementById('upload-drop-area');
+    const fileInput = document.getElementById('gallery-file-input') as HTMLInputElement;
+    const uploadStatus = document.getElementById('upload-status');
+
+    uploadArea?.addEventListener('click', () => fileInput?.click());
+
+    uploadArea?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea?.addEventListener('dragleave', () => {
+      uploadArea?.classList.remove('drag-over');
+    });
+
+    uploadArea?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea?.classList.remove('drag-over');
+      const files = (e as DragEvent).dataTransfer?.files;
+      if (files?.[0]) uploadGalleryFile(files[0]);
+    });
+
+    fileInput?.addEventListener('change', () => {
+      if (fileInput.files?.[0]) uploadGalleryFile(fileInput.files[0]);
+    });
+
+    async function uploadGalleryFile(file: File) {
+      if (!uploadStatus) return;
+      uploadStatus.className = 'upload-status uploading';
+      uploadStatus.textContent = `Uploading ${file.name}...`;
+
+      try {
+        const formData = new FormData();
+        formData.append('filename', file.name);
+        formData.append('file', file);
+
+        const response = await fetch('/api/gallery', {
+          method: 'POST',
+          headers: { 'Authorization': `Basic ${authCredentials}` },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+
+        const result = await response.json();
+        uploadStatus.className = 'upload-status success';
+        uploadStatus.textContent = `✓ Hochgeladen: ${result.filename}`;
+        fileInput.value = '';
+        await loadGalleryData();
+      } catch (error) {
+        uploadStatus.className = 'upload-status error';
+        uploadStatus.textContent = `✗ Fehler: ${error instanceof Error ? error.message : 'Unbekannt'}`;
+      }
+    }
+
+    // Galerie-Daten laden (Bilder + Metadaten)
+    async function loadGalleryData() {
+      try {
+        const [imagesRes, metaRes] = await Promise.all([
+          fetch('/api/gallery'),
+          fetch('/api/gallery-metadata'),
+        ]);
+
+        galleryImages = await imagesRes.json();
+        const metaData = await metaRes.json();
+        galleryMetadata = metaData.metadata || {};
+
+        renderGallery();
+      } catch (error) {
+        console.error('Error loading gallery:', error);
+      }
+    }
+
+    // Galerie rendern
+    function renderGallery() {
+      const categorizedEl = document.getElementById('gallery-categorized');
+      const uncategorizedEl = document.getElementById('gallery-uncategorized');
+
+      if (!categorizedEl || !uncategorizedEl) return;
+
+      // Bilder nach Kategorie gruppieren
+      const categorized: Record<string, any[]> = {};
+      const uncategorized: any[] = [];
+
+      galleryImages.forEach((img: any) => {
+        const meta = galleryMetadata[img.filename];
+        if (meta?.category) {
+          if (!categorized[meta.category]) categorized[meta.category] = [];
+          categorized[meta.category].push(img);
+        } else {
+          uncategorized.push(img);
+        }
+      });
+
+      // Kategorisierte Bilder rendern
+      categorizedEl.innerHTML = '';
+      GALLERY_CATEGORIES.forEach(cat => {
+        const images = categorized[cat.id] || [];
+        if (images.length === 0) return;
+
+        const section = document.createElement('div');
+        section.className = 'category-section';
+        section.innerHTML = `
+          <h3>${escapeHtml(cat.name)} (${images.length})</h3>
+          <div class="gallery-grid">
+            ${images.map((img: any) => renderImageCard(img, cat.id)).join('')}
+          </div>
+        `;
+        categorizedEl.appendChild(section);
+      });
+
+      if (categorizedEl.innerHTML === '') {
+        categorizedEl.innerHTML = '<p class="hint">Noch keine Bilder mit Kategorien.</p>';
+      }
+
+      // Nicht kategorisierte Bilder rendern
+      uncategorizedEl.innerHTML = uncategorized.length > 0
+        ? uncategorized.map((img: any) => renderImageCard(img, null)).join('')
+        : '<p class="hint">Alle Bilder sind kategorisiert.</p>';
+
+      // Event Listener hinzufügen
+      attachGalleryEventListeners();
+    }
+
+    function renderImageCard(img: any, category: string | null): string {
+      return `
+        <div class="gallery-item">
+          <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.filename)}" loading="lazy">
+          <div class="gallery-item__info">
+            <div class="gallery-item__name">${escapeHtml(img.filename)}</div>
+            <div class="gallery-item__size">${formatFileSize(img.size)}</div>
+          </div>
+          <div class="gallery-item__actions">
+            <select class="category-select" data-filename="${escapeHtml(img.filename)}">
+              <option value="">-- Keine Kategorie --</option>
+              ${GALLERY_CATEGORIES.map(c =>
+                `<option value="${c.id}" ${category === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+              ).join('')}
+            </select>
+            <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}">🗑️</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachGalleryEventListeners() {
+      // Kategorie-Änderung
+      document.querySelectorAll('.category-select').forEach(select => {
+        select.addEventListener('change', async (e) => {
+          const el = e.target as HTMLSelectElement;
+          const filename = el.dataset.filename;
+          const category = el.value || null;
+
+          try {
+            const response = await fetch('/api/gallery-metadata', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Basic ${authCredentials}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ filename, category }),
+            });
+
+            if (response.ok) {
+              await loadGalleryData();
+            } else {
+              alert('Fehler beim Speichern der Kategorie');
+            }
+          } catch (error) {
+            console.error('Error updating category:', error);
+          }
+        });
+      });
+
+      // Löschen
+      document.querySelectorAll('.btn-delete-image').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const filename = (btn as HTMLElement).dataset.filename;
+          if (!filename || !confirm(`Bild "${filename}" wirklich löschen?`)) return;
+
+          try {
+            const response = await fetch(`/api/gallery?filename=${encodeURIComponent(filename)}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Basic ${authCredentials}` },
+            });
+
+            if (response.ok) {
+              await loadGalleryData();
+            } else {
+              alert('Fehler beim Löschen');
+            }
+          } catch (error) {
+            console.error('Error deleting image:', error);
+          }
+        });
+      });
+    }
+
+    // Galerie neu laden Button
+    document.getElementById('reload-gallery-btn')?.addEventListener('click', () => {
+      loadGalleryData();
+    });
+
+    // Hilfsfunktion: Dateigröße formatieren
+    function formatFileSize(bytes: number): string {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    // ========================================
+    // BEWERTUNGEN TAB
+    // ========================================
+
+    let currentReviewFilter = 'all';
+    let allReviews: any[] = [];
+
+    async function loadReviews() {
+      const loadingEl = document.getElementById('reviews-loading');
+      const listEl = document.getElementById('reviews-list');
+      const noDataEl = document.getElementById('no-reviews');
+
+      if (loadingEl) loadingEl.style.display = 'block';
+      if (listEl) listEl.classList.add('hidden');
+      if (noDataEl) noDataEl.classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/reviews?all=true', {
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Fehler beim Laden');
+
+        allReviews = await response.json();
+        updateReviewStats();
+        displayReviews();
+      } catch (error) {
+        console.error('Fehler beim Laden der Bewertungen:', error);
+        if (noDataEl) {
+          noDataEl.textContent = 'Fehler beim Laden der Bewertungen';
+          noDataEl.classList.remove('hidden');
+        }
+      } finally {
+        if (loadingEl) loadingEl.style.display = 'none';
+      }
+    }
+
+    function updateReviewStats() {
+      const pending = allReviews.filter(r => !r.approved).length;
+      const approved = allReviews.filter(r => r.approved).length;
+      const total = allReviews.length;
+
+      const pendingEl = document.getElementById('reviews-pending-count');
+      const approvedEl = document.getElementById('reviews-approved-count');
+      const totalEl = document.getElementById('reviews-total-count');
+
+      if (pendingEl) pendingEl.textContent = pending.toString();
+      if (approvedEl) approvedEl.textContent = approved.toString();
+      if (totalEl) totalEl.textContent = total.toString();
+    }
+
+    function displayReviews() {
+      const listEl = document.getElementById('reviews-list');
+      const noDataEl = document.getElementById('no-reviews');
+
+      if (!listEl || !noDataEl) return;
+
+      let filteredReviews = allReviews;
+      if (currentReviewFilter === 'pending') {
+        filteredReviews = allReviews.filter(r => !r.approved);
+      } else if (currentReviewFilter === 'approved') {
+        filteredReviews = allReviews.filter(r => r.approved);
+      }
+
+      if (filteredReviews.length === 0) {
+        listEl.classList.add('hidden');
+        noDataEl.classList.remove('hidden');
+        noDataEl.textContent = 'Keine Bewertungen in dieser Kategorie';
+        return;
+      }
+
+      listEl.innerHTML = filteredReviews.map(review => `
+        <div class="review-admin-card ${review.approved ? 'approved' : 'pending'}">
+          <div class="review-admin-header">
+            <div>
+              <strong>${escapeHtml(review.name)}</strong>
+              <span class="review-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span>
+            </div>
+            <div class="review-date">${new Date(review.date).toLocaleDateString('de-DE')}</div>
+          </div>
+          <div class="review-admin-comment">${escapeHtml(review.comment)}</div>
+          <div class="review-admin-actions">
+            <span class="review-status ${review.approved ? 'status-approved' : 'status-pending'}">
+              ${review.approved ? '✓ Freigegeben' : '⏳ Wartend'}
+            </span>
+            ${!review.approved ? `
+              <button class="btn btn-success btn-sm" onclick="approveReview('${review.id}')">Freigeben</button>
+            ` : `
+              <button class="btn btn-warning btn-sm" onclick="unapproveReview('${review.id}')">Zurückziehen</button>
+            `}
+            <button class="btn btn-danger btn-sm" onclick="deleteReview('${review.id}')">Löschen</button>
+          </div>
+        </div>
+      `).join('');
+
+      listEl.classList.remove('hidden');
+      noDataEl.classList.add('hidden');
+    }
+
+    async function approveReview(id: string) {
+      try {
+        const response = await fetch('/api/reviews', {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id, approved: true })
+        });
+
+        if (response.ok) {
+          await loadReviews();
+        } else {
+          alert('Fehler beim Freigeben der Bewertung');
+        }
+      } catch (error) {
+        console.error('Fehler:', error);
+        alert('Fehler beim Freigeben der Bewertung');
+      }
+    }
+
+    async function unapproveReview(id: string) {
+      try {
+        const response = await fetch('/api/reviews', {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id, approved: false })
+        });
+
+        if (response.ok) {
+          await loadReviews();
+        } else {
+          alert('Fehler beim Zurückziehen der Bewertung');
+        }
+      } catch (error) {
+        console.error('Fehler:', error);
+        alert('Fehler beim Zurückziehen der Bewertung');
+      }
+    }
+
+    async function deleteReview(id: string) {
+      if (!confirm('Bewertung wirklich löschen?')) return;
+
+      try {
+        const response = await fetch(`/api/reviews?id=${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`
+          }
+        });
+
+        if (response.ok) {
+          await loadReviews();
+        } else {
+          alert('Fehler beim Löschen der Bewertung');
+        }
+      } catch (error) {
+        console.error('Fehler:', error);
+        alert('Fehler beim Löschen der Bewertung');
+      }
+    }
+
+    // Filter-Buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const filter = target.dataset.filter || 'all';
+
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        target.classList.add('active');
+
+        currentReviewFilter = filter;
+        displayReviews();
+      });
+    });
+
+    // Globale Funktionen für onclick-Handler
+    (window as any).approveReview = approveReview;
+    (window as any).unapproveReview = unapproveReview;
+    (window as any).deleteReview = deleteReview;
+
+    // ========== ÜBERSICHT & WOCHENKALENDER ==========
+
+    function renderOverview() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split('T')[0];
+
+      // Heutige Termine rendern
+      const todayBookings = cachedBookings.filter(b =>
+        b.slotDate === todayStr && b.status !== 'cancelled'
+      ).sort((a, b) => (a.slotTime || '').localeCompare(b.slotTime || ''));
+
+      const todayListEl = document.getElementById('today-bookings-list');
+      const todayLoadingEl = document.getElementById('today-bookings-loading');
+      const noTodayEl = document.getElementById('no-today-bookings');
+
+      if (todayLoadingEl) todayLoadingEl.classList.add('hidden');
+
+      if (todayBookings.length === 0) {
+        if (todayListEl) todayListEl.classList.add('hidden');
+        if (noTodayEl) noTodayEl.classList.remove('hidden');
+      } else {
+        if (noTodayEl) noTodayEl.classList.add('hidden');
+        if (todayListEl) {
+          todayListEl.innerHTML = todayBookings.map(b => {
+            const statusClass = b.status === 'pending' ? 'status-pending' : 'status-confirmed';
+            const statusLabel = b.status === 'pending' ? '⏳ Offen' : '✅ Bestätigt';
+            return `
+              <div class="today-booking-card ${statusClass}">
+                <div class="today-booking-time">${b.slotTime || '?'}${b.slotEndTime ? ' - ' + b.slotEndTime : ''} Uhr</div>
+                <div class="today-booking-info">
+                  <strong>${escapeHtml(b.name || '')}</strong>
+                  <span>${b.participants || 1} Person(en)</span>
+                  ${b.notes ? `<span class="today-booking-note">📝 ${escapeHtml(b.notes)}</span>` : ''}
+                </div>
+                <div class="today-booking-status ${statusClass}">${statusLabel}</div>
+                <div class="today-booking-actions">
+                  ${b.status === 'pending' ? `<button class="btn btn-success btn-sm btn-today-confirm" data-id="${b.id}">✓ Bestätigen</button>` : ''}
+                  <button class="btn btn-danger btn-sm btn-today-cancel" data-id="${b.id}">✕ Absagen</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+          todayListEl.classList.remove('hidden');
+
+          // Schnellaktionen für heutige Termine
+          todayListEl.querySelectorAll('.btn-today-confirm').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = (btn as HTMLElement).dataset.id;
+              if (id) { await confirmBookingAdmin(id); renderOverview(); }
+            });
+          });
+          todayListEl.querySelectorAll('.btn-today-cancel').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = (btn as HTMLElement).dataset.id;
+              if (id && confirm('Termin absagen?')) { await cancelBookingAdmin(id); renderOverview(); }
+            });
+          });
+        }
+      }
+
+      // Warnhinweise
+      const warningsEl = document.getElementById('overview-warnings');
+      const warningsListEl = document.getElementById('warnings-list');
+      const warnings: string[] = [];
+
+      // Offene Anfragen
+      const pendingCount = cachedBookings.filter(b => b.status === 'pending').length;
+      if (pendingCount > 0) {
+        warnings.push(`🔔 <strong>${pendingCount} offene Anfrage${pendingCount > 1 ? 'n' : ''}</strong> warten auf Bestätigung`);
+      }
+
+      // Doppelbelegungen prüfen
+      const slotsByDate: Record<string, any[]> = {};
+      cachedSlots.forEach(s => {
+        if (!slotsByDate[s.date]) slotsByDate[s.date] = [];
+        slotsByDate[s.date].push(s);
+      });
+      Object.entries(slotsByDate).forEach(([date, slots]) => {
+        if (slots.length > 1) {
+          // Zeitüberlappungen prüfen
+          for (let i = 0; i < slots.length; i++) {
+            for (let j = i + 1; j < slots.length; j++) {
+              const a = slots[i], b = slots[j];
+              if (a.time && b.time && a.endTime && b.endTime) {
+                if (a.time < b.endTime && b.time < a.endTime) {
+                  warnings.push(`⚠️ <strong>Zeitüberlappung</strong> am ${formatDate(date)}: ${a.time}-${a.endTime} und ${b.time}-${b.endTime}`);
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Ausgebuchte Slots
+      const fullSlots = cachedSlots.filter(s => {
+        const slotDate = new Date(s.date + 'T00:00:00');
+        return slotDate >= today && s.available === 0 && s.eventType === 'normal';
+      });
+      if (fullSlots.length > 0) {
+        warnings.push(`📌 <strong>${fullSlots.length} Termin${fullSlots.length > 1 ? 'e' : ''}</strong> ausgebucht`);
+      }
+
+      if (warningsEl && warningsListEl) {
+        if (warnings.length > 0) {
+          warningsEl.classList.remove('hidden');
+          warningsListEl.innerHTML = warnings.map(w => `<div class="warning-item">${w}</div>`).join('');
+        } else {
+          warningsEl.classList.add('hidden');
+        }
+      }
+
+      // Gutschein-KPI laden
+      loadVoucherCount();
+    }
+
+    async function loadVoucherCount() {
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          headers: { Authorization: `Basic ${authCredentials}` },
+        });
+        const vouchers = await res.json();
+        if (Array.isArray(vouchers)) {
+          const active = vouchers.filter((v: any) => v.status === 'active').length;
+          const el = document.getElementById('dashboard-voucher-count');
+          if (el) el.textContent = String(active);
+        }
+      } catch {}
+    }
+
+    // ========== WOCHENKALENDER ==========
+    function getWeekDates(offset: number): Date[] {
+      const today = new Date();
+      const dayOfWeek = today.getDay() || 7; // Montag = 1
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - dayOfWeek + 1 + (offset * 7));
+      monday.setHours(0, 0, 0, 0);
+
+      const days: Date[] = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        days.push(d);
+      }
+      return days;
+    }
+
+    function renderWeekCalendar() {
+      const calEl = document.getElementById('week-calendar');
+      const labelEl = document.getElementById('cal-week-label');
+      if (!calEl) return;
+
+      const days = getWeekDates(calendarWeekOffset);
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // Wochenlabel
+      const startStr = days[0].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+      const endStr = days[6].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      if (labelEl) labelEl.textContent = `${startStr} – ${endStr}`;
+
+      // Slots und Buchungen pro Tag gruppieren
+      let html = '<div class="cal-grid">';
+
+      const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+      days.forEach((day, idx) => {
+        const dateStr = day.toISOString().split('T')[0];
+        const isToday = dateStr === todayStr;
+        const isPast = day < new Date(todayStr + 'T00:00:00');
+
+        const daySlots = cachedSlots.filter(s => s.date === dateStr);
+        const dayBookings = cachedBookings.filter(b => b.slotDate === dateStr && b.status !== 'cancelled');
+
+        const totalCapacity = daySlots.reduce((sum: number, s: any) => sum + (s.maxCapacity || 0), 0);
+        const totalBooked = dayBookings.reduce((sum: number, b: any) => sum + (b.participants || 1), 0);
+        const utilization = totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0;
+
+        let utilizationClass = 'cal-free';
+        if (utilization >= 80) utilizationClass = 'cal-full';
+        else if (utilization >= 40) utilizationClass = 'cal-medium';
+
+        html += `
+          <div class="cal-day ${isToday ? 'cal-today' : ''} ${isPast ? 'cal-past' : ''}" data-cal-date="${dateStr}" style="cursor:pointer;" title="Klicken für Details">
+            <div class="cal-day-header">
+              <span class="cal-day-name">${dayNames[idx]}</span>
+              <span class="cal-day-date">${day.getDate()}.${day.getMonth() + 1}</span>
+            </div>
+            <div class="cal-day-body">
+        `;
+
+        if (daySlots.length === 0) {
+          html += `<div class="cal-empty">Keine Termine</div>`;
+        } else {
+          daySlots.forEach((slot: any) => {
+            const slotBookings = dayBookings.filter(b => b.slotId === slot.id);
+            const booked = slot.maxCapacity - slot.available;
+
+            let badge = '';
+            if (slot.eventType === 'kindergeburtstag') badge = '🎂';
+            else if (slot.eventType === 'stammtisch') badge = '🍷';
+
+            html += `
+              <div class="cal-slot ${utilizationClass}">
+                <div class="cal-slot-time">${badge} ${slot.time}${slot.endTime ? '-' + slot.endTime : ''}</div>
+                <div class="cal-slot-capacity">${booked}/${slot.maxCapacity}</div>
+                ${slotBookings.length > 0 ? `
+                  <div class="cal-slot-names">
+                    ${slotBookings.slice(0, 3).map((b: any) => `<span class="cal-name ${b.status === 'pending' ? 'cal-pending' : ''}">${escapeHtml(b.name || '?')}</span>`).join('')}
+                    ${slotBookings.length > 3 ? `<span class="cal-more">+${slotBookings.length - 3} weitere</span>` : ''}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          });
+        }
+
+        html += `</div></div>`;
+      });
+
+      html += '</div>';
+      calEl.innerHTML = html;
+
+      // Click-Handler auf Kalendertage
+      calEl.querySelectorAll('.cal-day[data-cal-date]').forEach(dayEl => {
+        dayEl.addEventListener('click', () => {
+          const dateStr = (dayEl as HTMLElement).dataset.calDate;
+          if (dateStr) showDayDetail(dateStr);
+        });
+      });
+    }
+
+    function showDayDetail(dateStr: string) {
+      const panel = document.getElementById('day-detail-panel');
+      const titleEl = document.getElementById('day-detail-title');
+      const contentEl = document.getElementById('day-detail-content');
+      if (!panel || !titleEl || !contentEl) return;
+
+      const dateObj = new Date(dateStr + 'T00:00:00');
+      const formatted = dateObj.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      titleEl.textContent = `📅 ${formatted}`;
+
+      const daySlots = cachedSlots.filter((s: any) => s.date === dateStr);
+      const dayBookings = cachedBookings.filter((b: any) => b.slotDate === dateStr && b.status !== 'cancelled');
+
+      if (daySlots.length === 0 && dayBookings.length === 0) {
+        contentEl.innerHTML = '<p class="no-data" style="padding:1rem">Keine Termine an diesem Tag.</p>';
+      } else {
+        let html = '';
+
+        daySlots.forEach((slot: any) => {
+          const slotBookings = dayBookings.filter((b: any) => b.slotId === slot.id);
+          const booked = slot.maxCapacity - slot.available;
+
+          let badge = '';
+          if (slot.eventType === 'kindergeburtstag') badge = '🎂 Kindergeburtstag';
+          else if (slot.eventType === 'stammtisch') badge = '🍷 Stammtisch';
+
+          html += `<div class="day-detail-slot">`;
+          html += `<div class="day-detail-slot-header">`;
+          html += `<strong>${slot.time}${slot.endTime ? ' – ' + slot.endTime : ''} Uhr</strong>`;
+          html += `<span class="day-detail-capacity">${booked}/${slot.maxCapacity} Plätze</span>`;
+          if (badge) html += `<span class="day-detail-badge">${badge}</span>`;
+          html += `</div>`;
+
+          if (slotBookings.length === 0) {
+            html += `<p class="day-detail-empty">Noch keine Buchungen</p>`;
+          } else {
+            html += `<div class="day-detail-bookings">`;
+            slotBookings.forEach((b: any) => {
+              const statusClass = b.status === 'pending' ? 'status-pending' : 'status-confirmed';
+              const statusLabel = b.status === 'pending' ? '⏳ Offen' : '✓ Bestätigt';
+              html += `
+                <div class="day-detail-booking ${statusClass}">
+                  <div class="day-detail-booking-name"><strong>${escapeHtml(b.name || '?')}</strong></div>
+                  <div class="day-detail-booking-info">
+                    ${b.participants ? b.participants + ' Person(en)' : ''}
+                    ${b.email ? ' · ' + escapeHtml(b.email) : ''}
+                    ${b.phone ? ' · ' + escapeHtml(b.phone) : ''}
+                  </div>
+                  <span class="day-detail-booking-status ${statusClass}">${statusLabel}</span>
+                </div>
+              `;
+            });
+            html += `</div>`;
+          }
+
+          html += `</div>`;
+        });
+
+        // Buchungen ohne Slot-Zuordnung
+        const orphanBookings = dayBookings.filter((b: any) => !daySlots.some((s: any) => s.id === b.slotId));
+        if (orphanBookings.length > 0) {
+          html += `<div class="day-detail-slot"><div class="day-detail-slot-header"><strong>Weitere Buchungen</strong></div><div class="day-detail-bookings">`;
+          orphanBookings.forEach((b: any) => {
+            html += `<div class="day-detail-booking"><div class="day-detail-booking-name"><strong>${escapeHtml(b.name || '?')}</strong></div><div class="day-detail-booking-info">${b.participants ? b.participants + ' Person(en)' : ''} ${b.email ? ' · ' + escapeHtml(b.email) : ''}</div></div>`;
+          });
+          html += `</div></div>`;
+        }
+
+        contentEl.innerHTML = html;
+      }
+
+      panel.classList.remove('hidden');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Detail-Panel schließen
+    document.getElementById('day-detail-close')?.addEventListener('click', () => {
+      document.getElementById('day-detail-panel')?.classList.add('hidden');
+    });
+
+    // Kalender-Navigation
+    document.getElementById('cal-prev-week')?.addEventListener('click', () => {
+      calendarWeekOffset--;
+      renderWeekCalendar();
+    });
+    document.getElementById('cal-next-week')?.addEventListener('click', () => {
+      calendarWeekOffset++;
+      renderWeekCalendar();
+    });
+
+    function updateOverviewIfVisible() {
+      const overviewTab = document.getElementById('tab-uebersicht');
+      if (overviewTab && !overviewTab.classList.contains('hidden')) {
+        renderOverview();
+        renderWeekCalendar();
+      }
+    }
+
+    // ========== GUTSCHEINE ==========
+    let html5QrCode: any = null;
+    let scannerRunning = false;
+
+    function formatCents(cents: number): string {
+      return (cents / 100).toFixed(2).replace('.', ',') + ' €';
+    }
+
+    function formatVoucherDate(iso: string): string {
+      return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function statusBadge(status: string): string {
+      const map: Record<string, { label: string; color: string }> = {
+        active: { label: 'Aktiv', color: '#16a34a' },
+        redeemed: { label: 'Eingelöst', color: '#dc2626' },
+        expired: { label: 'Abgelaufen', color: '#9ca3af' },
+      };
+      const s = map[status] || { label: status, color: '#666' };
+      return `<span style="background: ${s.color}; color: white; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">${s.label}</span>`;
+    }
+
+    async function loadVouchers() {
+      const loading = document.getElementById('voucher-loading');
+      const list = document.getElementById('voucher-list');
+      const noData = document.getElementById('no-vouchers');
+      if (loading) loading.classList.remove('hidden');
+      if (list) list.classList.add('hidden');
+      if (noData) noData.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          headers: { Authorization: `Basic ${authCredentials}` },
+        });
+        const vouchers = await res.json();
+
+        if (loading) loading.classList.add('hidden');
+
+        if (!Array.isArray(vouchers) || vouchers.length === 0) {
+          if (noData) noData.classList.remove('hidden');
+          return;
+        }
+
+        // Stats
+        const active = vouchers.filter((v: any) => v.status === 'active').length;
+        const redeemed = vouchers.filter((v: any) => v.status === 'redeemed').length;
+        const el = (id: string) => document.getElementById(id);
+        if (el('voucher-active-count')) el('voucher-active-count')!.textContent = String(active);
+        if (el('voucher-redeemed-count')) el('voucher-redeemed-count')!.textContent = String(redeemed);
+        if (el('voucher-total-count')) el('voucher-total-count')!.textContent = String(vouchers.length);
+
+        if (list) {
+          list.innerHTML = vouchers.map((v: any) => `
+            <div class="voucher-card" style="background: white; border: 1px solid #e8e0d8; border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-family: monospace; font-size: 1.1rem; font-weight: 700; letter-spacing: 1px;">${escapeHtml(v.code)}</span>
+                <span style="margin-left: 0.75rem; font-size: 1.1rem; font-weight: 600;">${formatCents(v.amount)}</span>
+                ${statusBadge(v.status)}
+              </div>
+              <div style="font-size: 0.8rem; color: #888;">
+                ${escapeHtml(v.customerEmail || '')} · ${formatVoucherDate(v.createdAt)}
+                ${v.redeemedAt ? ' · Eingelöst: ' + formatVoucherDate(v.redeemedAt) : ''}
+              </div>
+              <div>
+                ${v.status === 'active' ? `<button class="btn btn-sm" onclick="adminRedeemVoucher('${escapeHtml(v.code)}')" style="background: #dc2626; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Einlösen</button>` : ''}
+                ${v.status === 'redeemed' ? `<button class="btn btn-sm" onclick="adminReactivateVoucher('${escapeHtml(v.code)}')" style="background: #8B6F47; color: white; border: none; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">Reaktivieren</button>` : ''}
+              </div>
+            </div>
+          `).join('');
+          list.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('Fehler beim Laden der Gutscheine:', err);
+        if (loading) loading.textContent = 'Fehler beim Laden';
+      }
+    }
+
+    function showVoucherScanResult(voucher: any) {
+      const el = document.getElementById('voucher-scan-result');
+      if (!el) return;
+      const isActive = voucher.status === 'active';
+      el.style.display = 'block';
+      el.innerHTML = `
+        <div style="background: ${isActive ? '#f0fdf4' : '#fef2f2'}; border: 2px solid ${isActive ? '#16a34a' : '#dc2626'}; border-radius: 16px; padding: 1.5rem; text-align: center; max-width: 400px; margin: 0 auto;">
+          <div style="font-size: 3rem;">${isActive ? '✅' : '⚠️'}</div>
+          <h3 style="color: ${isActive ? '#16a34a' : '#dc2626'}; margin: 0.5rem 0;">${isActive ? 'Gutschein gültig' : (voucher.status === 'redeemed' ? 'Bereits eingelöst' : 'Abgelaufen')}</h3>
+          <p style="font-family: monospace; font-size: 1.25rem; letter-spacing: 2px; margin: 0.5rem 0;">${escapeHtml(voucher.code)}</p>
+          <p style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">${formatCents(voucher.amount)}</p>
+          <p style="font-size: 0.85rem; color: #666;">${escapeHtml(voucher.customerEmail || '')}${voucher.customerName ? ' (' + escapeHtml(voucher.customerName) + ')' : ''}</p>
+          ${voucher.redeemedAt ? `<p style="font-size: 0.8rem; color: #999;">Eingelöst: ${formatVoucherDate(voucher.redeemedAt)}</p>` : ''}
+          ${isActive ? `<button onclick="adminRedeemVoucher('${escapeHtml(voucher.code)}')" style="margin-top: 1rem; background: #dc2626; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">🎟️ Jetzt einlösen</button>` : ''}
+        </div>`;
+    }
+
+    async function adminRedeemVoucher(code: string) {
+      if (!confirm(`Gutschein ${code} wirklich einlösen?`)) return;
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Basic ${authCredentials}` },
+          body: JSON.stringify({ action: 'redeem', code }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✅ Gutschein erfolgreich eingelöst!');
+          showVoucherScanResult(data.voucher);
+          loadVouchers();
+        } else {
+          alert('❌ ' + (data.error || 'Fehler'));
+          if (data.voucher) showVoucherScanResult(data.voucher);
+        }
+      } catch (err) { alert('Fehler bei der Verbindung'); }
+    }
+
+    async function adminReactivateVoucher(code: string) {
+      if (!confirm(`Gutschein ${code} wieder aktivieren?`)) return;
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Basic ${authCredentials}` },
+          body: JSON.stringify({ action: 'update-status', code, status: 'active' }),
+        });
+        const data = await res.json();
+        if (data.success) { alert('✅ Gutschein reaktiviert'); loadVouchers(); }
+        else { alert('❌ ' + (data.error || 'Fehler')); }
+      } catch (err) { alert('Fehler'); }
+    }
+
+    async function lookupVoucher(code: string) {
+      try {
+        const res = await fetch('/api/admin/vouchers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Basic ${authCredentials}` },
+          body: JSON.stringify({ action: 'lookup', code }),
+        });
+        const data = await res.json();
+        if (data.voucher) { showVoucherScanResult(data.voucher); }
+        else { alert('❌ Gutschein nicht gefunden'); }
+      } catch (err) { alert('Fehler'); }
+    }
+
+    // QR-Scanner
+    let availableCameras: any[] = [];
+
+    function showScannerStatus(msg: string, type: 'info' | 'error' | 'success' = 'info') {
+      const el = document.getElementById('scanner-status');
+      if (!el) return;
+      el.style.display = 'block';
+      el.textContent = msg;
+      el.style.background = type === 'error' ? '#fee' : type === 'success' ? '#efe' : '#f0f0f0';
+      el.style.color = type === 'error' ? '#c00' : type === 'success' ? '#060' : '#333';
+    }
+
+    function hideScannerStatus() {
+      const el = document.getElementById('scanner-status');
+      if (el) el.style.display = 'none';
+    }
+
+    async function loadQrLibrary(): Promise<boolean> {
+      if ((window as any).Html5Qrcode) return true;
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      document.head.appendChild(script);
+      return new Promise((resolve) => {
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+      });
+    }
+
+    async function requestCameraPermission(): Promise<boolean> {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        // Kamera-Berechtigung erhalten — Stream sofort wieder stoppen
+        stream.getTracks().forEach(t => t.stop());
+        return true;
+      } catch (err: any) {
+        console.error('Kamera-Berechtigung verweigert:', err);
+        if (err.name === 'NotAllowedError') {
+          showScannerStatus('Kamera-Zugriff wurde verweigert. Bitte erlaube den Kamera-Zugriff in den Browser-Einstellungen.', 'error');
+        } else if (err.name === 'NotFoundError') {
+          showScannerStatus('Keine Kamera gefunden. Bitte verwende ein Gerät mit Kamera.', 'error');
+        } else if (err.name === 'NotReadableError') {
+          showScannerStatus('Kamera wird von einer anderen App verwendet. Bitte schließe andere Kamera-Apps.', 'error');
+        } else {
+          showScannerStatus(`Kamera-Fehler: ${err.message || err.name}`, 'error');
+        }
+        return false;
+      }
+    }
+
+    async function startScanner(cameraId?: string) {
+      const startBtn = document.getElementById('start-scanner-btn');
+      const stopBtn = document.getElementById('stop-scanner-btn');
+      if (startBtn) startBtn.style.display = 'none';
+      if (stopBtn) stopBtn.style.display = 'inline-block';
+
+      showScannerStatus('Kamera wird gestartet...', 'info');
+
+      // 1. Kamera-Berechtigung explizit anfragen
+      const hasPermission = await requestCameraPermission();
+      if (!hasPermission) {
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (stopBtn) stopBtn.style.display = 'none';
+        return;
+      }
+
+      // 2. Library laden
+      const loaded = await loadQrLibrary();
+      if (!loaded) {
+        showScannerStatus('QR-Scanner konnte nicht geladen werden. Bitte Seite neu laden.', 'error');
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (stopBtn) stopBtn.style.display = 'none';
+        return;
+      }
+
+      // 3. Kameras auflisten
+      try {
+        availableCameras = await (window as any).Html5Qrcode.getCameras();
+        if (!availableCameras || availableCameras.length === 0) {
+          showScannerStatus('Keine Kamera gefunden.', 'error');
+          if (startBtn) startBtn.style.display = 'inline-block';
+          if (stopBtn) stopBtn.style.display = 'none';
+          return;
+        }
+
+        // Kamera-Auswahl anzeigen wenn mehrere vorhanden
+        if (availableCameras.length > 1) {
+          const selectBox = document.getElementById('camera-select-box');
+          const selectEl = document.getElementById('camera-select') as HTMLSelectElement;
+          if (selectBox && selectEl) {
+            selectBox.style.display = 'block';
+            selectEl.innerHTML = availableCameras.map((c: any, i: number) =>
+              `<option value="${c.id}" ${c.id === cameraId ? 'selected' : ''}>${c.label || 'Kamera ' + (i + 1)}</option>`
+            ).join('');
+          }
+        }
+      } catch (e: any) {
+        console.error('Kamera-Liste Fehler:', e);
+      }
+
+      // 4. Scanner instanz erstellen (alte stoppen falls vorhanden)
+      if (html5QrCode && scannerRunning) {
+        try { await html5QrCode.stop(); } catch {}
+      }
+      html5QrCode = new (window as any).Html5Qrcode('qr-reader');
+
+      // 5. Beste Kamera wählen: übergebene ID > Rückkamera > erste verfügbar
+      let selectedCameraId = cameraId;
+      if (!selectedCameraId && availableCameras.length > 0) {
+        // Rückkamera bevorzugen (enthält oft "back", "rear", "environment", "rück")
+        const backCam = availableCameras.find((c: any) =>
+          /back|rear|environment|rück|hinten|0/i.test(c.label || '')
+        );
+        selectedCameraId = backCam ? backCam.id : availableCameras[availableCameras.length - 1].id;
+      }
+
+      // 6. Scanner starten
+      scannerRunning = true;
+      try {
+        await html5QrCode.start(
+          selectedCameraId || { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
+          (decodedText: string) => {
+            let code = decodedText;
+            const match = decodedText.match(/einloesen\/([A-Z0-9-]+)/i);
+            if (match) code = match[1];
+            stopScanner();
+            lookupVoucher(code);
+          },
+          () => {} // scan-Fehler ignorieren (kein QR im Bild)
+        );
+        hideScannerStatus();
+      } catch (err: any) {
+        console.error('Scanner start error:', err);
+        scannerRunning = false;
+        showScannerStatus(`Kamera konnte nicht gestartet werden: ${err.message || err}`, 'error');
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (stopBtn) stopBtn.style.display = 'none';
+      }
+    }
+
+    function stopScanner() {
+      const startBtn = document.getElementById('start-scanner-btn');
+      const stopBtn = document.getElementById('stop-scanner-btn');
+      if (startBtn) startBtn.style.display = 'inline-block';
+      if (stopBtn) stopBtn.style.display = 'none';
+      document.getElementById('camera-select-box')!.style.display = 'none';
+      hideScannerStatus();
+      if (html5QrCode && scannerRunning) {
+        html5QrCode.stop().catch(() => {});
+        scannerRunning = false;
+      }
+    }
+
+    // Event-Listener
+    document.getElementById('start-scanner-btn')?.addEventListener('click', () => startScanner());
+    document.getElementById('stop-scanner-btn')?.addEventListener('click', stopScanner);
+    document.getElementById('camera-select')?.addEventListener('change', (e) => {
+      const select = e.target as HTMLSelectElement;
+      if (select.value && scannerRunning) {
+        startScanner(select.value);
+      }
+    });
+    document.getElementById('lookup-voucher-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('manual-voucher-code') as HTMLInputElement;
+      if (input?.value.trim()) lookupVoucher(input.value.trim());
+    });
+    document.getElementById('manual-voucher-code')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const input = e.target as HTMLInputElement;
+        if (input.value.trim()) lookupVoucher(input.value.trim());
+      }
+    });
+
+    // Gutscheine laden wenn Tab aktiv wird
+    const tabBtns = document.querySelectorAll('.admin-nav__btn');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.getAttribute('data-tab') === 'gutscheine') {
+          loadVouchers();
+        }
+      });
+    });
+
+    (window as any).adminRedeemVoucher = adminRedeemVoucher;
+    (window as any).adminReactivateVoucher = adminReactivateVoucher;
+
+    // ========== ECHTZEIT-UPDATES (Auto-Refresh) ==========
+    let autoRefreshInterval: ReturnType<typeof setInterval> | null = null;
+    let lastRefreshTime: Date | null = null;
+
+    function startAutoRefresh() {
+      if (autoRefreshInterval) return;
+      autoRefreshInterval = setInterval(async () => {
+        // Nur refreshen wenn Admin-Panel sichtbar ist
+        if (document.getElementById('admin-panel')?.classList.contains('hidden')) return;
+
+        try {
+          // Aktiven Tab ermitteln
+          const activeTab = document.querySelector('.admin-nav__btn.active')?.getAttribute('data-tab');
+
+          if (activeTab === 'termine' || activeTab === 'uebersicht') {
+            await Promise.all([loadSlots(), loadBookings()]);
+          } else if (activeTab === 'workshops') {
+            await Promise.all([loadWorkshops(), loadWorkshopBookings()]);
+          } else if (activeTab === 'gutscheine') {
+            await loadVouchers();
+          } else if (activeTab === 'bewertungen') {
+            await loadReviews();
+          }
+
+          // Auch Übersicht aktualisieren wenn nicht aktiver Tab
+          if (activeTab !== 'uebersicht') {
+            updateOverviewIfVisible();
+          }
+
+          lastRefreshTime = new Date();
+          updateRefreshIndicator();
+        } catch (err) {
+          console.error('Auto-refresh error:', err);
+        }
+      }, 30000); // Alle 30 Sekunden
+    }
+
+    function stopAutoRefresh() {
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+      }
+    }
+
+    function updateRefreshIndicator() {
+      const indicator = document.getElementById('refresh-indicator');
+      if (indicator && lastRefreshTime) {
+        indicator.textContent = `Aktualisiert: ${lastRefreshTime.toLocaleTimeString('de-DE')}`;
+      }
+    }
+
+    // Auto-Refresh starten wenn Admin-Panel sichtbar wird
+    const adminPanel = document.getElementById('admin-panel');
+    if (adminPanel) {
+      const observer = new MutationObserver(() => {
+        if (!adminPanel.classList.contains('hidden')) {
+          startAutoRefresh();
+        } else {
+          stopAutoRefresh();
+        }
+      });
+      observer.observe(adminPanel, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Seite verlassen: Refresh stoppen
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopAutoRefresh();
+      } else if (!document.getElementById('admin-panel')?.classList.contains('hidden')) {
+        startAutoRefresh();
+        // Sofort refreshen wenn Seite wieder sichtbar
+        loadSlots();
+        loadBookings();
+      }
+    });
+  </script>
+</body>
+</html>
+

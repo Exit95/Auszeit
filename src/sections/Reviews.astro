@@ -1,0 +1,872 @@
+---
+// Bewertungen-Section mit Karussell und Formular
+const MAX_COMMENT_LENGTH = 400;
+---
+
+<section id="bewertungen" class="reviews">
+  <div class="container">
+    <h2 class="reviews__title">Kundenbewertungen</h2>
+    <p class="reviews__subtitle">Was unsere Kunden über uns sagen</p>
+
+    <!-- Karussell Container -->
+    <div class="reviews-carousel">
+      <button class="carousel-btn carousel-btn--prev" id="carousel-prev" aria-label="Vorherige Bewertungen">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="reviews-carousel__track-container">
+        <div id="reviews-container" class="reviews-carousel__track">
+          <p class="loading">Bewertungen werden geladen...</p>
+        </div>
+      </div>
+
+      <button class="carousel-btn carousel-btn--next" id="carousel-next" aria-label="Nächste Bewertungen">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Pagination Dots -->
+    <div class="carousel-dots" id="carousel-dots"></div>
+
+    <!-- Bewertungsformular -->
+    <div class="review-form-container">
+      <h3>Ihre Meinung ist uns wichtig!</h3>
+      <p>Teilen Sie Ihre Erfahrung mit uns</p>
+
+      <form id="review-form" class="review-form">
+        <div class="form-group">
+          <label for="review-name">Ihr Name *</label>
+          <input type="text" id="review-name" name="name" required placeholder="Max Mustermann" maxlength="50">
+        </div>
+
+        <div class="form-group">
+          <label for="review-rating">Bewertung *</label>
+          <div class="star-rating">
+            <input type="radio" id="star5" name="rating" value="5" required>
+            <label for="star5" title="5 Sterne">★</label>
+            <input type="radio" id="star4" name="rating" value="4">
+            <label for="star4" title="4 Sterne">★</label>
+            <input type="radio" id="star3" name="rating" value="3">
+            <label for="star3" title="3 Sterne">★</label>
+            <input type="radio" id="star2" name="rating" value="2">
+            <label for="star2" title="2 Sterne">★</label>
+            <input type="radio" id="star1" name="rating" value="1">
+            <label for="star1" title="1 Stern">★</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="review-comment">Ihre Bewertung * <span class="char-counter"><span id="char-count">0</span>/{MAX_COMMENT_LENGTH}</span></label>
+          <textarea id="review-comment" name="comment" required rows="4" placeholder="Teilen Sie Ihre Erfahrung..." maxlength={MAX_COMMENT_LENGTH}></textarea>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--large">Bewertung absenden</button>
+        <p class="form-note">Ihre Bewertung wird nach Prüfung veröffentlicht.</p>
+      </form>
+
+      <div id="review-success" class="success-message" style="display: none;">
+        ✅ Vielen Dank für Ihre Bewertung! Sie wird nach Prüfung veröffentlicht.
+      </div>
+      <div id="review-error" class="error-message" style="display: none;"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .reviews {
+    padding: var(--space-12) var(--gutter);
+    background-color: var(--color-background);
+  }
+
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .reviews__title {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    text-align: center;
+    margin-bottom: var(--space-2);
+  }
+
+  .reviews__subtitle {
+    text-align: center;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-8);
+    font-size: var(--font-size-lg);
+  }
+
+  /* Karussell Styles */
+  .reviews-carousel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .reviews-carousel__track-container {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .reviews-carousel__track {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .carousel-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--color-warm-beige);
+    color: var(--color-clay-brown);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(107, 91, 83, 0.1);
+  }
+
+  .carousel-btn:hover {
+    background: var(--color-terracotta);
+    border-color: var(--color-terracotta);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  .carousel-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-10);
+  }
+
+  :global(.carousel-dot) {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-warm-beige);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  :global(.carousel-dot:hover) {
+    background: var(--color-clay-brown);
+  }
+
+  :global(.carousel-dot.active) {
+    background: var(--color-terracotta);
+    transform: scale(1.2);
+  }
+
+  /* Zeichenzähler */
+  .char-counter {
+    font-size: 0.875rem;
+    color: var(--color-text-tertiary);
+    font-weight: normal;
+    margin-left: var(--space-2);
+  }
+
+  :global(.char-counter.warning) {
+    color: #f39c12;
+  }
+
+  :global(.char-counter.limit) {
+    color: var(--color-error);
+  }
+
+  :global(.review-card) {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(107, 91, 83, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(217, 201, 185, 0.2);
+  }
+
+  :global(.review-card__decoration) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-terracotta) 0%, var(--color-clay-brown) 100%);
+  }
+
+  :global(.review-card):hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(107, 91, 83, 0.12);
+  }
+
+  :global(.review-card__content) {
+    padding: var(--space-4);
+    position: relative;
+  }
+
+  :global(.review-card__header) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  :global(.review-card__avatar) {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-terracotta) 0%, var(--color-clay-brown) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  :global(.review-card__avatar-ring) {
+    display: none;
+  }
+
+  :global(.review-card__initial) {
+    color: white;
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-bold);
+    font-family: var(--font-serif);
+  }
+
+  :global(.review-card__info) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  :global(.review-card__name) {
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-clay-brown);
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  :global(.review-card__meta) {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-tertiary);
+    font-size: 0.75rem;
+  }
+
+  :global(.review-card__icon) {
+    opacity: 0.5;
+    width: 10px;
+    height: 10px;
+  }
+
+  :global(.review-card__rating) {
+    margin-bottom: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  :global(.review-card__stars) {
+    display: flex;
+    gap: 2px;
+  }
+
+  :global(.review-card__star) {
+    color: #E0E0E0;
+    width: 16px;
+    height: 16px;
+  }
+
+  :global(.review-card__star.filled) {
+    color: var(--color-terracotta);
+  }
+
+  :global(.review-card__rating-text) {
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+  }
+
+  :global(.review-card__comment) {
+    position: relative;
+    padding: var(--space-3);
+    background: var(--color-soft-cream);
+    border-radius: 8px;
+    margin-bottom: var(--space-3);
+  }
+
+  :global(.review-card__quote-left),
+  :global(.review-card__quote-right) {
+    display: none;
+  }
+
+  :global(.review-card__text) {
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  :global(.review-card__footer) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding-top: var(--space-2);
+    border-top: 1px solid rgba(217, 201, 185, 0.2);
+  }
+
+  :global(.review-card__verified) {
+    color: #27ae60;
+    width: 14px;
+    height: 14px;
+  }
+
+  :global(.review-card__verified-text) {
+    font-size: 0.7rem;
+    color: #27ae60;
+  }
+
+  .loading {
+    text-align: center;
+    color: var(--color-text-secondary);
+    padding: var(--space-8);
+  }
+
+  .review-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--color-soft-cream);
+    padding: var(--space-6);
+    border-radius: var(--radius-base);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .review-form-container h3 {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    margin-bottom: var(--space-2);
+  }
+
+  .review-form-container > p {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-5);
+  }
+
+  .form-group {
+    margin-bottom: var(--space-4);
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-clay-brown);
+  }
+
+  .form-group input[type="text"],
+  .form-group textarea {
+    width: 100%;
+    padding: var(--space-3);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    font-family: var(--font-sans);
+    background: white;
+    transition: border-color var(--duration-normal) var(--easing);
+  }
+
+  .form-group input[type="text"]:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-terracotta);
+  }
+
+  .star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: var(--space-1);
+  }
+
+  .star-rating input {
+    display: none;
+  }
+
+  .star-rating label {
+    font-size: 2rem;
+    color: var(--color-warm-beige);
+    cursor: pointer;
+    transition: color var(--duration-normal) var(--easing);
+  }
+
+  .star-rating input:checked ~ label,
+  .star-rating label:hover,
+  .star-rating label:hover ~ label {
+    color: var(--color-terracotta);
+  }
+
+  .form-note {
+    margin-top: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+    font-style: italic;
+  }
+
+  .success-message {
+    background: var(--color-success-light);
+    color: var(--color-success);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    margin-top: var(--space-4);
+    text-align: center;
+    border: 1px solid var(--color-success);
+  }
+
+  .error-message {
+    background: var(--color-error-light);
+    color: var(--color-error);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    margin-top: var(--space-4);
+    text-align: center;
+    border: 1px solid var(--color-error);
+  }
+
+  /* Button Styles */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-weight: 600;
+    border-radius: var(--radius);
+    border: 2px solid transparent;
+    transition: all var(--duration-normal) var(--easing);
+    text-decoration: none;
+    white-space: nowrap;
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+
+  .btn::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .btn--large {
+    font-size: 1.125rem;
+    padding: 0 var(--space-5);
+    min-height: 52px;
+  }
+
+  .btn--primary {
+    background-color: var(--color-terracotta);
+    color: var(--color-off-white);
+  }
+
+  .btn--primary:hover {
+    background-color: var(--color-clay-brown);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .btn--primary:active {
+    transform: translateY(0);
+  }
+
+  /* Responsive Karussell-Grid */
+  @media (max-width: 1024px) {
+    .reviews-carousel__track {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .carousel-btn {
+      width: 40px;
+      height: 40px;
+    }
+
+    .carousel-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .reviews-carousel__track {
+      grid-template-columns: 1fr;
+    }
+
+    .reviews-carousel {
+      gap: var(--space-2);
+    }
+
+    .carousel-btn {
+      width: 36px;
+      height: 36px;
+    }
+
+    .carousel-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .review-form-container {
+      padding: var(--space-5);
+    }
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn--large {
+      min-height: 48px;
+    }
+
+    :global(.review-card__header) {
+      gap: var(--space-3);
+    }
+
+    :global(.review-card__rating) {
+      width: 100%;
+    }
+
+    :global(.review-card__text) {
+      font-size: 0.9375rem;
+    }
+  }
+
+  /* Mobile Optimierungen */
+  @media (max-width: 374px) {
+    .reviews {
+      padding: var(--space-8) var(--gutter);
+    }
+
+    .reviews__title {
+      font-size: 1.75rem;
+      margin-bottom: var(--space-1);
+    }
+
+    .reviews__subtitle {
+      font-size: 1rem;
+      margin-bottom: var(--space-6);
+    }
+
+    .review-form-container {
+      padding: var(--space-4);
+    }
+
+    :global(.review-card__content) {
+      padding: var(--space-4);
+    }
+
+    :global(.review-card__avatar) {
+      width: 52px;
+      height: 52px;
+    }
+
+    :global(.review-card__initial) {
+      font-size: 1.5rem;
+    }
+
+    :global(.review-card__name) {
+      font-size: 1.125rem;
+    }
+
+    :global(.review-card__comment) {
+      padding: var(--space-4);
+    }
+
+    :global(.review-card__quote-left),
+    :global(.review-card__quote-right) {
+      width: 24px;
+      height: 24px;
+    }
+
+    .btn {
+      font-size: 0.9375rem;
+      padding: 0 var(--space-3);
+    }
+
+    .btn--large {
+      font-size: 1rem;
+      padding: 0 var(--space-4);
+    }
+  }
+
+  @media (min-width: 375px) and (max-width: 639px) {
+    .reviews {
+      padding: var(--space-10) var(--gutter);
+    }
+
+    .reviews__title {
+      font-size: 1.875rem;
+    }
+
+    :global(.review-card__content) {
+      padding: var(--space-5);
+    }
+  }
+</style>
+
+<script>
+  // Karussell-Konfiguration
+  const REVIEWS_PER_PAGE = 3;
+  let currentPage = 0;
+  let totalPages = 0;
+  let allReviews: any[] = [];
+
+  // Bewertungen laden und Karussell initialisieren
+  async function loadReviews() {
+    try {
+      const response = await fetch('/api/reviews');
+      allReviews = await response.json();
+
+      const container = document.getElementById('reviews-container');
+      if (!container) return;
+
+      if (allReviews.length === 0) {
+        container.innerHTML = '<p class="loading">Noch keine Bewertungen vorhanden. Seien Sie der Erste!</p>';
+        return;
+      }
+
+      // Seiten berechnen
+      totalPages = Math.ceil(allReviews.length / REVIEWS_PER_PAGE);
+
+      // Erste Seite anzeigen
+      renderCurrentPage();
+      renderPaginationDots();
+      updateNavigationButtons();
+
+    } catch (error) {
+      console.error('Fehler beim Laden der Bewertungen:', error);
+    }
+  }
+
+  function renderCurrentPage() {
+    const container = document.getElementById('reviews-container');
+    if (!container) return;
+
+    const startIdx = currentPage * REVIEWS_PER_PAGE;
+    const endIdx = Math.min(startIdx + REVIEWS_PER_PAGE, allReviews.length);
+    const pageReviews = allReviews.slice(startIdx, endIdx);
+
+    container.innerHTML = pageReviews.map((review: any) => renderReviewCard(review)).join('');
+  }
+
+  function renderReviewCard(review: any): string {
+    return `
+      <div class="review-card">
+        <div class="review-card__decoration"></div>
+        <div class="review-card__content">
+          <div class="review-card__header">
+            <div class="review-card__avatar">
+              <span class="review-card__initial">${escapeHtml(review.name.charAt(0).toUpperCase())}</span>
+              <div class="review-card__avatar-ring"></div>
+            </div>
+            <div class="review-card__info">
+              <div class="review-card__name">${escapeHtml(review.name)}</div>
+              <div class="review-card__meta">
+                <svg class="review-card__icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                ${new Date(review.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
+              </div>
+            </div>
+          </div>
+
+          <div class="review-card__rating">
+            <div class="review-card__stars">
+              ${Array.from({length: 5}, (_, i) => `
+                <svg class="review-card__star ${i < review.rating ? 'filled' : ''}" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${i < review.rating ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              `).join('')}
+            </div>
+            <div class="review-card__rating-text">${review.rating} von 5 Sternen</div>
+          </div>
+
+          <div class="review-card__comment">
+            <svg class="review-card__quote-left" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/>
+            </svg>
+            <p class="review-card__text">${escapeHtml(review.comment)}</p>
+            <svg class="review-card__quote-right" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18 7h-3l-2 4v6h6v-6h-3zm-8 0H7L5 11v6h6v-6h-3z"/>
+            </svg>
+          </div>
+
+          <div class="review-card__footer">
+            <svg class="review-card__verified" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span class="review-card__verified-text">Verifizierte Bewertung</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPaginationDots() {
+    const dotsContainer = document.getElementById('carousel-dots');
+    if (!dotsContainer) return;
+
+    dotsContainer.innerHTML = Array.from({ length: totalPages }, (_, i) =>
+      `<button class="carousel-dot ${i === currentPage ? 'active' : ''}" data-page="${i}" aria-label="Seite ${i + 1}"></button>`
+    ).join('');
+
+    // Event-Listener für Dots
+    dotsContainer.querySelectorAll('.carousel-dot').forEach(dot => {
+      dot.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLElement;
+        const page = parseInt(target.dataset.page || '0');
+        goToPage(page);
+      });
+    });
+  }
+
+  function updateNavigationButtons() {
+    const prevBtn = document.getElementById('carousel-prev') as HTMLButtonElement;
+    const nextBtn = document.getElementById('carousel-next') as HTMLButtonElement;
+
+    if (prevBtn) prevBtn.disabled = currentPage === 0;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages - 1;
+  }
+
+  function goToPage(page: number) {
+    if (page < 0 || page >= totalPages) return;
+    currentPage = page;
+    renderCurrentPage();
+    updatePaginationDots();
+    updateNavigationButtons();
+  }
+
+  function updatePaginationDots() {
+    document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentPage);
+    });
+  }
+
+  function escapeHtml(text: string) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Karussell-Navigation
+  document.getElementById('carousel-prev')?.addEventListener('click', () => goToPage(currentPage - 1));
+  document.getElementById('carousel-next')?.addEventListener('click', () => goToPage(currentPage + 1));
+
+  // Zeichenzähler für das Formular
+  const commentTextarea = document.getElementById('review-comment') as HTMLTextAreaElement;
+  const charCountSpan = document.getElementById('char-count');
+  const charCounter = document.querySelector('.char-counter');
+
+  if (commentTextarea && charCountSpan) {
+    commentTextarea.addEventListener('input', () => {
+      const length = commentTextarea.value.length;
+      charCountSpan.textContent = String(length);
+
+      // Visuelle Rückmeldung
+      if (charCounter) {
+        charCounter.classList.remove('warning', 'limit');
+        if (length > 380) {
+          charCounter.classList.add('limit');
+        } else if (length > 320) {
+          charCounter.classList.add('warning');
+        }
+      }
+    });
+  }
+
+  // Formular absenden
+  const form = document.getElementById('review-form') as HTMLFormElement;
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const data = {
+        name: formData.get('name'),
+        rating: formData.get('rating'),
+        comment: formData.get('comment')
+      };
+
+      try {
+        const response = await fetch('/api/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          const successMsg = document.getElementById('review-success');
+          const errorMsg = document.getElementById('review-error');
+          if (successMsg) successMsg.style.display = 'block';
+          if (errorMsg) errorMsg.style.display = 'none';
+          form.reset();
+          if (charCountSpan) charCountSpan.textContent = '0';
+          if (charCounter) charCounter.classList.remove('warning', 'limit');
+
+          setTimeout(() => {
+            if (successMsg) successMsg.style.display = 'none';
+          }, 5000);
+        } else {
+          throw new Error('Fehler beim Absenden');
+        }
+      } catch (error) {
+        const errorMsg = document.getElementById('review-error');
+        if (errorMsg) {
+          errorMsg.textContent = '❌ Fehler beim Absenden. Bitte versuchen Sie es später erneut.';
+          errorMsg.style.display = 'block';
+        }
+      }
+    });
+  }
+
+  // Bewertungen beim Laden der Seite anzeigen
+  loadReviews();
+</script>
+

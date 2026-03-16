@@ -1,0 +1,331 @@
+import type { APIRoute } from 'astro';
+import fs from 'fs/promises';
+import path from 'path';
+import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-storage';
+import { FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
+import { createSmtpTransporter } from '../../../lib/smtp';
+import { sanitizeId } from '../../../lib/sanitize';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
+import { logAuditEvent } from '../../../lib/audit-log';
+import { validateCredentials } from '../../../lib/totp';
+import { createICalEvent } from '../../../lib/ical-helper';
+import { getCancelUrl } from '../../../lib/cancel-token';
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const WORKSHOP_BOOKINGS_FILENAME = 'workshop-bookings.json';
+const WORKSHOPS_FILENAME = 'workshops.json';
+
+interface WorkshopBooking {
+  id: string;
+  workshopId: string;
+  name: string;
+  email: string;
+  phone?: string;
+  participants: number;
+  notes?: string;
+  createdAt: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+}
+
+interface Workshop {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  price: string;
+  maxParticipants: number;
+  active: boolean;
+}
+
+// Authentifizierung - akzeptiert Superuser und Admin
+function checkAuth(request: Request): boolean {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader) return false;
+  const [type, credentials] = authHeader.split(' ');
+  if (type !== 'Basic') return false;
+  const decoded = Buffer.from(credentials, 'base64').toString();
+  const [username, password] = decoded.split(':');
+  const validation = validateCredentials(username, password);
+  return validation.valid;
+}
+
+async function getWorkshopBookings(): Promise<WorkshopBooking[]> {
+  if (isS3Configured()) {
+    return await readJsonFromS3<WorkshopBooking[]>(WORKSHOP_BOOKINGS_FILENAME, []);
+  }
+  const filePath = path.join(DATA_DIR, WORKSHOP_BOOKINGS_FILENAME);
+  try {
+    const data = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+async function saveWorkshopBookings(bookings: WorkshopBooking[]): Promise<void> {
+  if (isS3Configured()) {
+    await writeJsonToS3(WORKSHOP_BOOKINGS_FILENAME, bookings);
+    return;
+  }
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(path.join(DATA_DIR, WORKSHOP_BOOKINGS_FILENAME), JSON.stringify(bookings, null, 2));
+}
+
+async function getWorkshops(): Promise<Workshop[]> {
+  if (isS3Configured()) {
+    return await readJsonFromS3<Workshop[]>(WORKSHOPS_FILENAME, []);
+  }
+  const filePath = path.join(DATA_DIR, WORKSHOPS_FILENAME);
+  try {
+    const data = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+// GET - Alle Workshop-Buchungen abrufen
+export const GET: APIRoute = async ({ request }) => {
+  if (!checkAuth(request)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const [bookings, workshops] = await Promise.all([getWorkshopBookings(), getWorkshops()]);
+
+    const enriched = bookings.map((b) => {
+      const workshop = workshops.find((w) => w.id === b.workshopId);
+      return {
+        ...b,
+        workshopTitle: workshop?.title ?? 'Unbekannt',
+        workshopDate: workshop?.date ?? null,
+        workshopTime: workshop?.time ?? null,
+        workshopPrice: workshop?.price ?? null,
+      };
+    });
+
+    return new Response(JSON.stringify(enriched), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: 'Failed to fetch workshop bookings' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+
+// POST - Workshop-Buchung bestätigen oder stornieren
+export const POST: APIRoute = async ({ request }) => {
+  // Rate limiting for admin actions
+  const clientId = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.ADMIN);
+  if (!rateLimit.allowed) {
+    await logAuditEvent('RATE_LIMIT_EXCEEDED', request, {
+      resource: '/api/admin/workshop-bookings',
+      action: 'Admin rate limit exceeded',
+      success: false,
+    });
+    return rateLimitResponse(rateLimit);
+  }
+
+  if (!checkAuth(request)) {
+    await logAuditEvent('UNAUTHORIZED_ACCESS', request, {
+      resource: '/api/admin/workshop-bookings',
+      action: 'Unauthorized admin access attempt',
+      success: false,
+    });
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const body = await request.json();
+
+    // Sanitize inputs
+    const id = sanitizeId(body.id);
+    const action = body.action === 'confirm' ? 'confirm' : body.action === 'cancel' ? 'cancel' : null;
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Missing booking ID' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const bookings = await getWorkshopBookings();
+    const bookingIndex = bookings.findIndex((b) => b.id === id);
+
+    if (bookingIndex === -1) {
+      return new Response(JSON.stringify({ error: 'Booking not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const booking = bookings[bookingIndex];
+    const workshops = await getWorkshops();
+    const workshop = workshops.find((w) => w.id === booking.workshopId);
+
+    if (action === 'confirm') {
+      bookings[bookingIndex].status = 'confirmed';
+      await saveWorkshopBookings(bookings);
+
+      // Log admin action
+      await logAuditEvent('ADMIN_ACTION', request, {
+        username: 'admin',
+        resource: '/api/admin/workshop-bookings',
+        action: `Workshop booking confirmed: ${id}`,
+        success: true,
+        extra: { bookingId: id, workshopId: booking.workshopId, customerEmail: booking.email },
+      });
+
+      let customerEmailSent = false;
+      let emailError: string | null = null;
+
+      try {
+        const fromEmail = FROM_EMAIL;
+        const workshopTitle = workshop?.title ?? 'Workshop';
+        const workshopDate = workshop?.date ?? '';
+        const workshopTime = workshop?.time ?? '';
+
+        const customerSubject = `Deine Workshop-Buchung wurde bestätigt - ${workshopTitle}`;
+
+        const cancelUrl = getCancelUrl(booking.id, 'workshop');
+
+        const customerHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #8B6F47;">Deine Workshop-Buchung ist bestätigt!</h2>
+            <p>Liebe/r ${booking.name},</p>
+            <p>wir freuen uns, dir mitzuteilen, dass deine Buchung für den Workshop <strong>${workshopTitle}</strong> bestätigt wurde!</p>
+
+            <div style="background-color: #F5F0E8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #8B6F47; margin-top: 0;">Workshop-Details:</h3>
+              <p><strong>Workshop:</strong> ${workshopTitle}</p>
+              <p><strong>Datum:</strong> ${workshopDate}</p>
+              <p><strong>Uhrzeit:</strong> ${workshopTime} Uhr</p>
+              <p><strong>Teilnehmer:</strong> ${booking.participants}</p>
+              ${workshop?.price ? `<p><strong>Preis:</strong> ${workshop.price}</p>` : ''}
+            </div>
+
+            <p style="margin-top: 20px;">
+              <strong>Ort:</strong><br/>
+              Atelier Auszeit<br/>
+              Feldstiege 6a<br/>
+              48599 Gronau
+            </p>
+
+            <p>Bei Fragen oder Änderungswünschen erreichst du uns unter:<br/>
+            E-Mail: keramik-auszeit@web.de<br/>
+            Telefon: +49 176 34255005</p>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
+              <p style="font-size: 0.85rem; color: #999;">Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:<br/>
+              <a href="${cancelUrl}" style="color: #dc2626;">Workshop-Buchung stornieren</a></p>
+            </div>
+
+            <p style="margin-top: 20px;">Wir freuen uns auf dich!<br/>
+            <strong>Dein Atelier Auszeit</strong></p>
+          </div>
+        `;
+
+        const customerText = `
+Deine Workshop-Buchung ist bestätigt!
+
+Liebe/r ${booking.name},
+
+wir freuen uns, dir mitzuteilen, dass deine Buchung für den Workshop "${workshopTitle}" bestätigt wurde!
+
+Workshop-Details:
+- Workshop: ${workshopTitle}
+- Datum: ${workshopDate}
+- Uhrzeit: ${workshopTime} Uhr
+- Teilnehmer: ${booking.participants}
+${workshop?.price ? `- Preis: ${workshop.price}` : ''}
+
+Ort:
+Atelier Auszeit
+Feldstiege 6a
+48599 Gronau
+
+Bei Fragen oder Änderungswünschen erreichst du uns unter:
+E-Mail: keramik-auszeit@web.de
+Telefon: +49 176 34255005
+
+Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:
+${cancelUrl}
+
+Wir freuen uns auf dich!
+Dein Atelier Auszeit
+`;
+
+        // Kalender-Event erstellen (mit korrekter Zeitzone)
+        let icalEvent: string | null = null;
+        if (workshopDate && workshopTime) {
+          icalEvent = createICalEvent({
+            summary: `Workshop: ${workshopTitle}`,
+            description: `Buchung für ${booking.participants} Person(en)\nE-Mail: ${booking.email}\nTelefon: ${booking.phone || 'Nicht angegeben'}`,
+            date: workshopDate,
+            startTime: workshopTime,
+            defaultDurationHours: 3,
+            prodId: '-//Atelier Auszeit//Workshop//DE',
+          });
+        }
+
+        if (isSmtpConfigured()) {
+          const transporter = createSmtpTransporter();
+
+          await transporter.sendMail({
+            from: `"Atelier Auszeit - Irena Woschkowiak" <${fromEmail}>`,
+            to: booking.email,
+            subject: customerSubject,
+            text: customerText,
+            html: customerHtml,
+            ...(icalEvent ? { icalEvent: { filename: 'workshop.ics', method: 'REQUEST', content: icalEvent } } : {}),
+          });
+
+          customerEmailSent = true;
+          console.log('✅ Workshop-Bestätigungs-E-Mail gesendet an:', booking.email);
+        } else {
+          emailError = 'SMTP nicht konfiguriert';
+        }
+      } catch (err: any) {
+        emailError = err?.message || String(err);
+        console.error('❌ Fehler beim Versand der Workshop-Bestätigungs-E-Mail:', err);
+      }
+
+      return new Response(JSON.stringify({ success: true, customerEmailSent, emailError }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'cancel') {
+      bookings[bookingIndex].status = 'cancelled';
+      await saveWorkshopBookings(bookings);
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: 'Invalid action' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error updating workshop booking:', error);
+    return new Response(JSON.stringify({ error: 'Failed to update booking' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+

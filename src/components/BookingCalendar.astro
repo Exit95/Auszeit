@@ -1,0 +1,685 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = "Termin buchen" } = Astro.props;
+---
+
+<link rel="stylesheet" href="/booking-calendar.css" />
+<link rel="stylesheet" href="/booking-calendar-custom.css" />
+
+<section class="booking-section animate-on-scroll" id="calendar-section">
+  <div class="booking-container">
+    <h2 class="booking-title">{title}</h2>
+    <div class="booking-grid">
+      <div id="bookingCalendar" class="booking-calendar"></div>
+
+      <!-- Profil-Karte -->
+      <div class="profile-card">
+        <div class="profile-card__image">
+          <img src="/profil.png" alt="Irena Woschkowiak" />
+        </div>
+        <div class="profile-card__content">
+          <h3>Über mich</h3>
+          <p class="profile-card__intro">
+            Als zertifizierte Tagesmutter biete ich eine liebevolle, familiäre Betreuung
+            für Ihre Kinder in einer warmen und sicheren Umgebung. In meinem Atelier gebe ich euch die Möglichkeit, alleine, in kleinen Gruppen, Stammtisch, Firmenfeier, Kindergeburtstag uvm. eine Auszeit zu genießen.
+          </p>
+          <ul class="profile-card__facts">
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Zertifizierte Tagesmutter
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              42 Jahre
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+              Verheiratet, 2 Kinder
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buchungsformular -->
+    <div id="bookingForm" class="booking-form hidden">
+      <h3>Buchung bestätigen</h3>
+      <div class="booking-details">
+        <p><strong>Datum:</strong> <span id="selectedDate"></span></p>
+        <p><strong>Uhrzeit:</strong> <span id="selectedTime"></span></p>
+        <p>
+          <strong>Verfügbare Plätze:</strong>
+          <span id="availableCapacity">-</span>
+        </p>
+      </div>
+
+      <form id="bookingFormElement">
+        <div class="form-group">
+          <label for="name">Name *</label>
+          <input type="text" id="name" name="name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-Mail *</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Telefon *</label>
+          <input type="tel" id="phone" name="phone" required />
+        </div>
+
+        <div class="form-group">
+          <label for="participants">Anzahl Personen *</label>
+          <input
+            type="number"
+            id="participants"
+            name="participants"
+            min="1"
+            max="15"
+            value="1"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Anmerkungen</label>
+          <textarea id="notes" name="notes" rows="3"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="backToCalendar"
+            >Zurück</button
+          >
+          <button type="submit" class="btn btn-primary"
+            >Verbindlich buchen</button
+          >
+        </div>
+      </form>
+    </div>
+
+    <!-- Erfolgs-/Fehlermeldung -->
+    <div id="message" class="message hidden"></div>
+  </div>
+</section>
+
+<style>
+  .booking-section {
+    padding: var(--space-8) var(--gutter);
+  }
+
+  .booking-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    border-radius: 18px;
+    padding: var(--space-5);
+    box-shadow: 0 10px 26px rgba(66, 52, 48, 0.08);
+  }
+
+  .booking-title {
+    font-family: var(--font-serif);
+    color: var(--brand-espresso, #423430);
+    text-align: center;
+    margin-bottom: var(--space-5);
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .booking-grid {
+    display: grid;
+    gap: var(--space-6);
+    grid-template-columns: 1fr;
+    position: relative;
+  }
+
+  @media (min-width: 1024px) {
+    .booking-grid {
+      grid-template-columns: 1fr 360px;
+      align-items: start;
+    }
+  }
+
+  .booking-calendar {
+    background: rgba(255, 255, 255, 0.62);
+    border-radius: 14px;
+    padding: var(--space-5);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    box-shadow: 0 6px 16px rgba(66, 52, 48, 0.06);
+  }
+
+  /* Profil-Karte */
+  .profile-card {
+    background: rgba(255, 255, 255, 0.62);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    box-shadow: 0 6px 16px rgba(66, 52, 48, 0.06);
+    position: sticky;
+    top: var(--space-4);
+  }
+
+  /* Profil während des Buchungsvorgangs auf kleineren Bildschirmen ausblenden */
+  @media (max-width: 1023px) {
+    .profile-card--hide-during-booking {
+      display: none;
+    }
+  }
+
+  .profile-card__image {
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+  }
+
+  .profile-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .profile-card__content {
+    padding: var(--space-5);
+  }
+
+  .profile-card__content h3 {
+    font-family: var(--font-serif);
+    color: var(--brand-espresso, #423430);
+    margin-bottom: var(--space-2);
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .profile-card__intro {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: var(--space-3);
+    font-size: 0.9rem;
+  }
+
+  .profile-card__facts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .profile-card__facts li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--brand-espresso, #423430);
+    font-size: 0.875rem;
+  }
+
+  .profile-card__facts svg {
+    flex-shrink: 0;
+    color: var(--accent-terra, #D96C4A);
+  }
+
+  .booking-form {
+    background: rgba(255, 255, 255, 0.62);
+    border-radius: 14px;
+    padding: var(--space-5);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    box-shadow: 0 6px 16px rgba(66, 52, 48, 0.06);
+    margin-top: var(--space-5);
+  }
+
+  .booking-form h3 {
+    font-family: var(--font-serif);
+    color: var(--brand-espresso, #423430);
+    margin-bottom: var(--space-3);
+    font-size: 1.15rem;
+  }
+
+  .booking-details {
+    background: rgba(242, 235, 229, 0.55);
+    padding: var(--space-3);
+    border-radius: 12px;
+    margin-bottom: var(--space-4);
+    border: 1px solid rgba(66, 52, 48, 0.08);
+  }
+
+  .booking-details p {
+    margin-bottom: var(--space-1);
+    font-size: 0.9rem;
+  }
+
+  .form-group {
+    margin-bottom: var(--space-3);
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-weight: 550;
+    font-size: 0.875rem;
+    color: var(--brand-espresso, #423430);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid rgba(66, 52, 48, 0.14);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.7);
+    transition: border-color 0.14s ease, box-shadow 0.14s ease;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-terra, #D96C4A);
+    box-shadow: 0 0 0 3px rgba(217, 108, 74, 0.12);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: flex-end;
+    margin-top: var(--space-4);
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  .message {
+    margin-top: var(--space-4);
+    padding: var(--space-3);
+    border-radius: 12px;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  .message.success {
+    background-color: rgba(74, 124, 89, 0.12);
+    color: #4A7C59;
+    border: 1px solid rgba(74, 124, 89, 0.2);
+  }
+
+  .message.error {
+    background-color: rgba(185, 74, 72, 0.1);
+    color: #B94A48;
+    border: 1px solid rgba(185, 74, 72, 0.2);
+  }
+
+  /* Mobile Optimierungen */
+  @media (max-width: 374px) {
+    .booking-section {
+      padding: var(--space-8) var(--gutter);
+    }
+
+    .booking-title {
+      font-size: 1.5rem;
+      margin-bottom: var(--space-6);
+    }
+
+    .booking-grid {
+      gap: var(--space-6);
+    }
+
+    .booking-calendar,
+    .booking-form {
+      padding: var(--space-4);
+    }
+
+    .profile-card__content {
+      padding: var(--space-4);
+    }
+
+    .profile-card__content h3 {
+      font-size: 1.25rem;
+    }
+
+    .form-group label {
+      font-size: 0.9375rem;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      padding: var(--space-2);
+      font-size: 0.9375rem;
+    }
+
+    .form-actions {
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .form-actions button {
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 375px) and (max-width: 639px) {
+    .booking-section {
+      padding: var(--space-10) var(--gutter);
+    }
+
+    .booking-title {
+      font-size: 1.75rem;
+    }
+
+    .booking-grid {
+      gap: var(--space-6);
+    }
+
+    .booking-calendar,
+    .booking-form {
+      padding: var(--space-5);
+    }
+
+    .profile-card__content {
+      padding: var(--space-5);
+    }
+
+    .form-actions {
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .form-actions button {
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .booking-calendar,
+    .booking-form {
+      padding: var(--space-5);
+    }
+
+    .booking-grid {
+      gap: var(--space-6);
+    }
+  }
+</style>
+
+<script>
+  // Type definitions
+  interface TimeSlot {
+	    date: string;
+	    time: string;
+	    endTime?: string;
+	    maxCapacity: number;
+	    available: number;
+	    id: string;
+	    eventType?: string;
+	    isBlocked?: boolean;
+	    blockedReason?: string;
+	  }
+
+	  interface BookedSlot {
+	    date: string;
+	    time: string;
+	    endTime?: string;
+	    booked: number;
+	    available: number;
+	    maxCapacity: number;
+	    isFull: boolean;
+	    slotId: string;
+	    isBlocked?: boolean;
+	    blockedReason?: string;
+	  }
+
+  // Declare BookingCalendar from external script
+  declare class BookingCalendar {
+    constructor(selector: string, options: any);
+  }
+
+  // Kalender-Initialisierung nach dem Laden der Seite
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Prüfen ob BookingCalendar verfügbar ist
+    if (typeof BookingCalendar === "undefined") {
+      console.error("BookingCalendar ist nicht geladen");
+      return;
+    }
+
+    // Lade verfügbare Termine vom Server
+    let availableSlots: TimeSlot[] = [];
+    try {
+      const response = await fetch('/api/slots');
+      if (response.ok) {
+        availableSlots = await response.json();
+        console.log('Geladene Termine:', availableSlots);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Termine:', error);
+    }
+
+    // Konvertiere Slots in das Format, das der Kalender erwartet
+	    const bookedSlots: BookedSlot[] = availableSlots.map(slot => ({
+	      date: slot.date,
+	      time: slot.time,
+	      endTime: slot.endTime,
+	      booked: slot.maxCapacity - slot.available,
+	      available: slot.available,
+	      maxCapacity: slot.maxCapacity,
+	      isFull: slot.available === 0,
+	      slotId: slot.id,
+	      isBlocked: slot.isBlocked || false,
+	      blockedReason: slot.blockedReason || undefined
+	    }));
+
+    // Kalender initialisieren
+    const calendar = new BookingCalendar("#bookingCalendar", {
+      locale: "de",
+      firstDayOfWeek: 1, // Montag
+      minDate: new Date(),
+      maxDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+      timeSlots: {
+        enabled: true,
+        start: "09:00",
+        end: "20:00",
+        duration: 120, // 2 Stunden
+      },
+      blockedDates: [],
+      blockedWeekdays: [], // Keine festen Ruhetage mehr
+      bookedSlots: bookedSlots,
+      maxCapacityPerSlot: 15,
+      onDateSelect: function (date: Date, timeSlot: string) {
+        showBookingForm(date, timeSlot);
+      },
+    });
+
+    // Prevent unused variable warning
+    void calendar;
+
+	    // Formular-Handler
+	    function showBookingForm(date: Date, timeSlot: string): void {
+	      const formEl = document.getElementById("bookingForm");
+	      const selectedDateEl = document.getElementById("selectedDate");
+	      const selectedTimeEl = document.getElementById("selectedTime");
+	      const capacityEl = document.getElementById("availableCapacity");
+
+	      if (!formEl || !selectedDateEl || !selectedTimeEl || !capacityEl) return;
+
+	      // Profilkarte für den Buchungsvorgang auf mobilen Geräten ausblenden
+	      const profileCard = document.querySelector(".profile-card");
+	      if (profileCard) {
+	        profileCard.classList.add("profile-card--hide-during-booking");
+	      }
+
+	      // Zeige nur das Formular, Kalender bleibt sichtbar
+      formEl.classList.remove("hidden");
+      selectedDateEl.textContent = formatDate(date);
+      selectedTimeEl.textContent = timeSlot;
+
+      // Datum im ISO-Format speichern (für API)
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const isoDate = `${year}-${month}-${day}`;
+
+      // Versteckte Felder für API-Daten
+      selectedDateEl.dataset.isoDate = isoDate;
+      selectedTimeEl.dataset.time = timeSlot;
+
+      // Hole die tatsächliche verfügbare Kapazität für diesen Slot
+      fetch(`/api/slots?date=${isoDate}`)
+        .then(res => res.json())
+        .then(slots => {
+	          const slot = slots.find((s: any) => s.date === isoDate && s.time === timeSlot);
+	          if (slot) {
+	            if (capacityEl) {
+	              capacityEl.textContent = String(slot.available);
+	            }
+	            if (selectedTimeEl) {
+	              selectedTimeEl.textContent = slot.endTime
+	                ? `${slot.time} - ${slot.endTime} Uhr`
+	                : `${slot.time} Uhr`;
+	            }
+	          }
+        })
+        .catch(err => {
+          console.error('Fehler beim Laden der Kapazität:', err);
+          capacityEl.textContent = "0";
+        });
+    }
+
+    function formatDate(date: Date): string {
+      return date.toLocaleDateString("de-DE", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+
+	    // Zurück-Button
+	    document.getElementById("backToCalendar")?.addEventListener("click", () => {
+	      const formEl = document.getElementById("bookingForm");
+
+	      if (formEl) formEl.classList.add("hidden");
+
+	      // Profilkarte wieder einblenden, wenn der Buchungsvorgang abgebrochen wird
+	      const profileCard = document.querySelector(".profile-card");
+	      if (profileCard) {
+	        profileCard.classList.remove("profile-card--hide-during-booking");
+	      }
+	    });
+
+    // Formular-Submit
+    const formElement = document.getElementById("bookingFormElement");
+    if (formElement) {
+      formElement.addEventListener("submit", async (e: Event) => {
+        e.preventDefault();
+
+        const form = e.target as HTMLFormElement;
+        if (!form) return;
+
+        const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+        if (!submitButton) return;
+
+        const originalButtonText = submitButton.textContent || "Verbindlich buchen";
+        submitButton.disabled = true;
+        submitButton.textContent = "Wird gesendet...";
+
+        const formData = new FormData(form);
+        const selectedDateEl = document.getElementById("selectedDate") as HTMLElement | null;
+        const selectedTimeEl = document.getElementById("selectedTime") as HTMLElement | null;
+
+        const data = {
+          date: selectedDateEl?.dataset.isoDate || "",
+          time: selectedTimeEl?.dataset.time || "",
+          name: formData.get("name") as string,
+          email: formData.get("email") as string,
+          phone: formData.get("phone") as string,
+          participants: formData.get("participants") as string,
+          notes: formData.get("notes") as string,
+        };
+
+        console.log('Buchungsdaten:', data);
+
+        const messageEl = document.getElementById("message");
+        if (!messageEl) {
+          submitButton.disabled = false;
+          submitButton.textContent = originalButtonText;
+          return;
+        }
+
+        try {
+          // API-Call zur Buchung
+          const response = await fetch("/api/booking", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            // Erfolgsmeldung anzeigen
+            messageEl.textContent =
+              "Vielen Dank! Ihre Buchung wurde erfolgreich übermittelt. Sie erhalten in Kürze eine Bestätigungs-E-Mail mit Kalender-Eintrag.";
+            messageEl.className = "message success";
+            messageEl.classList.remove("hidden");
+
+            // Formular ausblenden
+            const bookingFormEl = document.getElementById("bookingForm");
+            if (bookingFormEl) {
+              bookingFormEl.classList.add("hidden");
+            }
+
+            // Nach 5 Sekunden zurück zum Kalender
+            setTimeout(() => {
+              if (messageEl) {
+                messageEl.classList.add("hidden");
+              }
+              const calendarEl = document.getElementById("bookingCalendar");
+              if (calendarEl) {
+                calendarEl.style.display = "block";
+              }
+              form.reset();
+            }, 5000);
+          } else {
+            throw new Error(result.message || "Buchung fehlgeschlagen");
+          }
+        } catch (error) {
+          console.error("Fehler bei der Buchung:", error);
+          if (messageEl) {
+            messageEl.textContent =
+              "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns direkt.";
+            messageEl.className = "message error";
+            messageEl.classList.remove("hidden");
+
+            setTimeout(() => {
+              if (messageEl) {
+                messageEl.classList.add("hidden");
+              }
+            }, 5000);
+          }
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = originalButtonText;
+        }
+      });
+    }
+  });
+</script>
+
+<script is:inline src="/booking-calendar.js"></script>

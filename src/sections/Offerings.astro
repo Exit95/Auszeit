@@ -1,0 +1,530 @@
+---
+import { content } from '../data/content';
+import ProductModal from '../components/ProductModal.astro';
+import fs from 'fs';
+import path from 'path';
+import { isS3Configured, listS3Objects, getS3Key, readJsonFromS3 } from '../lib/s3-storage';
+
+// Kategorie-Mapping für Produkte (für neues Galerie-System)
+const categoryMapping: Record<string, { id: string; folder: string; mainImage: string }> = {
+  'Tassen': { id: 'tassen', folder: 'tassen', mainImage: '/becher.jpeg' },
+  'Teller': { id: 'teller', folder: 'teller', mainImage: '/teller.jpeg' },
+  'Spardosen & Krüge & Boxen': { id: 'spardosen', folder: 'spardosen', mainImage: '/spardose.jpeg' },
+  'Weihnachtsanhänger': { id: 'anhaenger', folder: 'anhaenger', mainImage: '/anhänger.png' },
+};
+
+// Metadaten laden aus S3
+async function loadGalleryMetadata(): Promise<Record<string, { category: string | null }>> {
+  try {
+    return await readJsonFromS3('gallery-metadata.json', {});
+  } catch {
+    return {};
+  }
+}
+
+// Bilder aus dem neuen gallery/ Ordner laden
+async function loadGalleryImages(): Promise<{ filename: string; url: string }[]> {
+  try {
+    const s3Key = getS3Key('gallery/');
+    const s3Objects = await listS3Objects(s3Key);
+
+    const endpoint = process.env.S3_ENDPOINT || import.meta.env.S3_ENDPOINT || '';
+    const bucket = process.env.S3_BUCKET || import.meta.env.S3_BUCKET || '';
+
+    return s3Objects
+      .filter(obj => {
+        const ext = obj.key.split('.').pop()?.toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext || '');
+      })
+      .map(obj => ({
+        filename: obj.key.split('/').pop() || '',
+        url: `${endpoint}/${bucket}/${obj.key}`,
+      }));
+  } catch (error) {
+    console.warn('Konnte Galerie-Bilder nicht laden:', error);
+    return [];
+  }
+}
+
+// Funktion zum Laden der Bilder aus S3 (alte Methode - products/tassen etc.)
+async function getImagesFromS3(category: string): Promise<string[]> {
+  const config = categoryMapping[category];
+  if (!config) return [];
+
+  const images: string[] = [config.mainImage];
+
+  try {
+    const s3Key = getS3Key(`products/${config.folder}/`);
+    const s3Objects = await listS3Objects(s3Key);
+
+    const imageFiles = s3Objects
+      .filter(obj => {
+        const ext = obj.key.split('.').pop()?.toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'webp'].includes(ext || '');
+      })
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map(obj => {
+        const filename = obj.key.split('/').pop() || '';
+        return `/products/${config.folder}/${filename}`;
+      });
+
+    images.push(...imageFiles);
+  } catch (error) {
+    console.warn(`Konnte S3-Ordner für ${category} nicht lesen:`, error);
+  }
+
+  return images;
+}
+
+// Funktion zum Laden der Bilder aus dem lokalen Ordner (Fallback)
+function getImagesFromFolder(folderPath: string, mainImage: string): string[] {
+  const publicDir = path.join(process.cwd(), 'public');
+  const distClientDir = path.join(process.cwd(), 'dist', 'client');
+
+  let fullPath = path.join(publicDir, folderPath);
+  if (!fs.existsSync(fullPath)) {
+    fullPath = path.join(distClientDir, folderPath);
+  }
+
+  const images = [mainImage];
+
+  try {
+    if (fs.existsSync(fullPath)) {
+      const files = fs.readdirSync(fullPath);
+      const imageFiles = files
+        .filter(file => /\.(jpeg|jpg|png|webp)$/i.test(file))
+        .sort()
+        .map(file => `/${folderPath}/${file}`);
+
+      images.push(...imageFiles);
+    }
+  } catch (error) {
+    console.warn(`Konnte Ordner ${folderPath} nicht lesen:`, error);
+  }
+
+  return images;
+}
+
+// Produktgalerien laden - kombiniert altes und neues System
+let productGalleries: Record<string, string[]> = {};
+
+if (isS3Configured()) {
+  // Lade aus dem alten products/ Ordner (bestehende Bilder)
+  const categories = Object.keys(categoryMapping);
+  const oldResults = await Promise.all(
+    categories.map(async (category) => ({
+      category,
+      images: await getImagesFromS3(category)
+    }))
+  );
+
+  for (const result of oldResults) {
+    productGalleries[result.category] = result.images;
+  }
+
+  // Zusätzlich: Lade aus dem neuen gallery/ Ordner mit Metadaten
+  try {
+    const [galleryImages, metadata] = await Promise.all([
+      loadGalleryImages(),
+      loadGalleryMetadata(),
+    ]);
+
+    // Füge Bilder aus dem neuen System hinzu
+    for (const [productName, config] of Object.entries(categoryMapping)) {
+      const newImages = galleryImages
+        .filter((img) => metadata[img.filename]?.category === config.id)
+        .map((img) => img.url);
+
+      if (newImages.length > 0) {
+        productGalleries[productName] = [...(productGalleries[productName] || [config.mainImage]), ...newImages];
+      }
+    }
+  } catch (error) {
+    console.warn('Fehler beim Laden der neuen Galerie-Daten:', error);
+  }
+} else {
+  // Lokaler Modus: Lade Bilder aus dem Dateisystem
+  productGalleries = {
+    'Tassen': getImagesFromFolder('products/tassen', '/becher.jpeg'),
+    'Teller': getImagesFromFolder('products/teller', '/teller.jpeg'),
+    'Spardosen & Krüge & Boxen': getImagesFromFolder('products/spardosen', '/spardose.jpeg'),
+    'Weihnachtsanhänger': getImagesFromFolder('products/anhaenger', '/anhänger.png'),
+  };
+}
+---
+
+<section class="offerings" id="angebote" aria-labelledby="offerings-title">
+  <div class="container">
+    <h2 id="offerings-title" class="offerings__title">{content.offerings.title}</h2>
+    <div class="offerings__grid" role="list">
+      {
+        content.offerings.items.map((item, index) => (
+          <article
+            class="offering-card"
+            role="listitem"
+            data-product-name={item.name}
+            data-product-price={item.price}
+            data-product-images={JSON.stringify(productGalleries[item.name] || [item.image])}
+          >
+            <div class="offering-card__image">
+              <img
+                src={item.image}
+                alt={`${item.name} – Keramik bemalen im Atelier Auszeit Gronau`}
+                loading={index < 2 ? "eager" : "lazy"}
+                width="400"
+                height="400"
+              />
+            </div>
+            <div class="offering-card__content">
+              <h3 class="offering-card__name">{item.name}</h3>
+              <p class="offering-card__price" aria-label={`Preis: ${item.price}`}>{item.price}</p>
+              <span class="offering-card__hint" aria-hidden="true">Klicken für mehr Bilder</span>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <p class="offerings__more">und vieles mehr...</p>
+
+    <div class="offerings__pricing">
+      <h3>Farb- und Brennpauschale</h3>
+      <div class="pricing__list">
+        {
+          content.offerings.pricing.map((item) => (
+            <div class="pricing__item">
+              <span class="pricing__description">{item.description}</span>
+              <span class="pricing__price">{item.price}</span>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <p class="offerings__note">{content.offerings.note}</p>
+  </div>
+</section>
+
+<ProductModal />
+
+<style>
+  .offerings {
+    padding: var(--space-12) var(--gutter);
+    background-color: var(--color-soft-cream);
+  }
+
+  .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .offerings__title {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    text-align: center;
+    margin-bottom: var(--space-8);
+    font-size: 2.5rem;
+  }
+
+  .offerings__grid {
+    display: grid;
+    gap: var(--space-6);
+    margin-bottom: var(--space-6);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+
+  @media (min-width: 640px) {
+    .offerings__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .offerings__grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .offering-card {
+    background-color: var(--color-background);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: transform var(--duration-normal) var(--easing),
+                box-shadow var(--duration-normal) var(--easing);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+  }
+
+  .offering-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .offering-card__image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background-color: var(--color-warm-beige);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .offering-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--duration-slow) var(--easing);
+  }
+
+  .offering-card__image img[src$=".png"] {
+    object-fit: contain;
+    padding: var(--space-3);
+  }
+
+  .offering-card:hover .offering-card__image img {
+    transform: scale(1.05);
+  }
+
+  .offering-card__content {
+    padding: var(--space-4);
+    text-align: center;
+  }
+
+  .offering-card__name {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    font-size: 1.25rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .offering-card__price {
+    font-size: 1.125rem;
+    color: var(--color-terracotta);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+  }
+
+  .offering-card__hint {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--color-clay-brown);
+    opacity: 0.7;
+    font-style: italic;
+  }
+
+  .offerings__more {
+    text-align: center;
+    font-size: 1.25rem;
+    color: var(--color-clay-brown);
+    font-style: italic;
+    margin-top: var(--space-6);
+    opacity: 0.8;
+  }
+
+  .offerings__pricing {
+    margin-top: var(--space-10);
+    margin-bottom: var(--space-6);
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .offerings__pricing h3 {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown);
+    text-align: center;
+    font-size: 1.75rem;
+    margin-bottom: var(--space-6);
+  }
+
+  .pricing__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    background-color: var(--color-background);
+    padding: var(--space-6);
+    border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .pricing__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--color-warm-beige);
+  }
+
+  .pricing__item:last-child {
+    border-bottom: none;
+  }
+
+  .pricing__description {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+  }
+
+  .pricing__price {
+    color: var(--color-terracotta);
+    font-weight: 600;
+    font-size: 1.125rem;
+  }
+
+  .offerings__note {
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 0.9375rem;
+    font-style: italic;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* Mobile Optimierungen */
+  @media (max-width: 374px) {
+    .offerings {
+      padding: var(--space-8) var(--gutter);
+    }
+
+    .offerings__title {
+      font-size: 1.75rem;
+      margin-bottom: var(--space-6);
+    }
+
+    .offerings__grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+
+    .offering-card__name {
+      font-size: 1.125rem;
+    }
+
+    .offering-card__price {
+      font-size: 1rem;
+    }
+
+    .offerings__pricing h3 {
+      font-size: 1.25rem;
+    }
+
+    .pricing__list {
+      padding: var(--space-4);
+    }
+
+    .pricing__item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-1);
+    }
+
+    .pricing__description {
+      font-size: 0.9375rem;
+    }
+
+    .pricing__price {
+      font-size: 1rem;
+    }
+  }
+
+  @media (min-width: 375px) and (max-width: 639px) {
+    .offerings {
+      padding: var(--space-10) var(--gutter);
+    }
+
+    .offerings__title {
+      font-size: 2rem;
+    }
+
+    .offerings__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .offerings__pricing h3 {
+      font-size: 1.5rem;
+    }
+
+    .pricing__item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-1);
+    }
+  }
+</style>
+
+<script>
+  // Modal-Funktionalität für Produktgalerien
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('productModal');
+    const modalTitle = modal?.querySelector('.modal__title');
+    const modalPrice = modal?.querySelector('.modal__price');
+    const modalGallery = modal?.querySelector('.modal__gallery');
+    const modalClose = modal?.querySelector('.modal__close');
+    const modalOverlay = modal?.querySelector('.modal__overlay');
+    const offeringCards = document.querySelectorAll('.offering-card');
+
+    // Funktion zum Öffnen des Modals
+    function openModal(productName: string, productPrice: string, images: string[]) {
+      if (!modal || !modalTitle || !modalPrice || !modalGallery) return;
+
+      // Setze Titel und Preis
+      modalTitle.textContent = productName;
+      modalPrice.textContent = productPrice;
+
+      // Leere die Galerie
+      modalGallery.innerHTML = '';
+
+      // Füge Bilder hinzu
+      images.forEach((imageSrc) => {
+        const img = document.createElement('img');
+        img.src = imageSrc;
+        img.alt = `${productName} Bild`;
+        img.loading = 'lazy';
+
+        // Klick auf Bild öffnet es in neuem Tab
+        img.addEventListener('click', () => {
+          window.open(imageSrc, '_blank');
+        });
+
+        modalGallery.appendChild(img);
+      });
+
+      // Zeige Modal
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Funktion zum Schließen des Modals
+    function closeModal() {
+      if (!modal) return;
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Event-Listener für Produktkarten
+    offeringCards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const productName = card.getAttribute('data-product-name') || '';
+        const productPrice = card.getAttribute('data-product-price') || '';
+        const imagesJson = card.getAttribute('data-product-images') || '[]';
+        const images = JSON.parse(imagesJson);
+
+        openModal(productName, productPrice, images);
+      });
+    });
+
+    // Event-Listener für Schließen-Button
+    modalClose?.addEventListener('click', closeModal);
+
+    // Event-Listener für Overlay
+    modalOverlay?.addEventListener('click', closeModal);
+
+    // ESC-Taste zum Schließen
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+      }
+    });
+  });
+</script>

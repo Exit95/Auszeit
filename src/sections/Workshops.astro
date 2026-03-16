@@ -1,0 +1,147 @@
+---
+import WorkshopCard from "../components/WorkshopCard.astro";
+import WorkshopModal from "../components/WorkshopModal.astro";
+import { getWorkshops } from "../lib/storage";
+import { isS3Configured, readJsonFromS3 } from "../lib/s3-storage";
+import fs from "fs/promises";
+import path from "path";
+
+interface WorkshopBooking {
+  workshopId: string;
+  participants: number;
+  status: 'pending' | 'confirmed' | 'cancelled';
+}
+
+// Buchungen laden um aktuelle Teilnehmerzahl zu berechnen
+async function getWorkshopBookings(): Promise<WorkshopBooking[]> {
+  if (isS3Configured()) {
+    return await readJsonFromS3<WorkshopBooking[]>('workshop-bookings.json', []);
+  }
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'workshop-bookings.json');
+    const data = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+const [workshops, bookings] = await Promise.all([getWorkshops(), getWorkshopBookings()]);
+
+// Aktive Workshops mit berechneter Teilnehmerzahl
+const activeWorkshops = workshops
+  .filter((w) => w.active)
+  .map((workshop) => {
+    const workshopBookings = bookings.filter(
+      (b) => b.workshopId === workshop.id && b.status !== 'cancelled'
+    );
+    const currentParticipants = workshopBookings.reduce(
+      (sum, b) => sum + b.participants,
+      0
+    );
+    return {
+      ...workshop,
+      currentParticipants,
+    };
+  });
+---
+
+<section id="workshops" class="workshops animate-on-scroll">
+  <div class="container">
+    <h2 class="workshops__title">Workshops</h2>
+    <p class="workshops__subtitle">
+      Entdecken Sie unsere kreativen Keramik-Workshops
+    </p>
+
+    {
+      activeWorkshops.length > 0 ? (
+        <div class="workshops__grid">
+          {activeWorkshops.map((workshop) => (
+            <WorkshopCard workshop={workshop} />
+          ))}
+        </div>
+      ) : (
+        <div class="workshops__empty">
+          Aktuell sind keine Workshops verfügbar.
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<WorkshopModal />
+
+<script src="../scripts/workshop-modal.js"></script>
+
+<style>
+  .workshops {
+    padding: var(--space-8) var(--gutter);
+  }
+
+  .workshops .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(66, 52, 48, 0.10);
+    border-radius: 18px;
+    padding: var(--space-5);
+    box-shadow: 0 10px 26px rgba(66, 52, 48, 0.08);
+  }
+
+  .workshops__title {
+    font-family: var(--font-serif);
+    color: var(--brand-espresso, #423430);
+    text-align: center;
+    margin-bottom: var(--space-2);
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .workshops__subtitle {
+    text-align: center;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-5);
+    font-size: 0.95rem;
+  }
+
+  .workshops__empty {
+    text-align: center;
+    color: var(--color-text-secondary);
+    padding: var(--space-6);
+    background: rgba(242, 235, 229, 0.55);
+    border-radius: 14px;
+    border: 1px solid rgba(66, 52, 48, 0.10);
+  }
+
+  .workshops__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 14px;
+  }
+
+  @media (min-width: 640px) {
+    .workshops__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .workshops__grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 639px) {
+    .workshops {
+      padding: var(--space-6) var(--gutter);
+    }
+
+    .workshops .container {
+      padding: var(--space-4);
+    }
+
+    .workshops__title {
+      font-size: 1.35rem;
+    }
+  }
+</style>

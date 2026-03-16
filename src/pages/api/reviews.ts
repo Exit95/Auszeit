@@ -1,0 +1,387 @@
+import type { APIRoute } from 'astro';
+import fs from 'fs';
+import path from 'path';
+import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../lib/s3-storage';
+import { BOOKING_EMAIL, FROM_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, isSmtpConfigured } from '../../lib/env';
+import { createSmtpTransporter } from '../../lib/smtp';
+import { sanitizeText, sanitizeNumber } from '../../lib/sanitize';
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
+
+// Admin-Passwort zur Laufzeit lesen
+function getAdminPassword(): string {
+  return process.env.ADMIN_PASSWORD || '';
+}
+
+const REVIEWS_FILE = path.join(process.cwd(), 'data', 'reviews.json');
+const REVIEWS_FILENAME = 'reviews.json';
+
+interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  date: string;
+  approved: boolean;
+}
+
+// Bewertungen lesen (S3 oder lokal)
+async function getReviews(): Promise<Review[]> {
+  if (isS3Configured()) {
+    return await readJsonFromS3<Review[]>(REVIEWS_FILENAME, []);
+  }
+  // Lokaler Fallback
+  const dataDir = path.dirname(REVIEWS_FILE);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  if (!fs.existsSync(REVIEWS_FILE)) {
+    return [];
+  }
+  return JSON.parse(fs.readFileSync(REVIEWS_FILE, 'utf-8'));
+}
+
+// Bewertungen speichern (S3 oder lokal)
+async function saveReviews(reviews: Review[]): Promise<void> {
+  if (isS3Configured()) {
+    await writeJsonToS3(REVIEWS_FILENAME, reviews);
+    return;
+  }
+  // Lokaler Fallback
+  const dataDir = path.dirname(REVIEWS_FILE);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  fs.writeFileSync(REVIEWS_FILE, JSON.stringify(reviews, null, 2));
+}
+
+// GET - Alle Bewertungen abrufen (für Admin) oder nur freigegebene (für Webseite)
+export const GET: APIRoute = async ({ request, url }) => {
+  const showAll = url.searchParams.get('all') === 'true';
+  const authHeader = request.headers.get('Authorization');
+
+  try {
+    const reviews = await getReviews();
+    
+    // Wenn showAll=true, prüfe Admin-Authentifizierung
+    if (showAll) {
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
+      const base64Credentials = authHeader.split(' ')[1];
+      const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+      const [username, password] = credentials.split(':');
+      
+      if (username !== 'admin' || password !== getAdminPassword()) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Admin sieht alle Bewertungen
+      return new Response(JSON.stringify(reviews), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Öffentlich: nur freigegebene Bewertungen
+    const approvedReviews = reviews.filter(r => r.approved);
+    return new Response(JSON.stringify(approvedReviews), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('Fehler beim Lesen der Bewertungen:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
+// POST - Neue Bewertung erstellen
+export const POST: APIRoute = async ({ request }) => {
+  // Rate limiting for review submissions
+  const clientId = getClientIdentifier(request);
+  const rateLimit = checkRateLimit(clientId, RATE_LIMITS.REVIEW);
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit);
+  }
+
+  try {
+    const body = await request.json();
+
+    // Sanitize inputs
+    const name = sanitizeText(body.name);
+    const rating = sanitizeNumber(body.rating, 1, 5);
+    const comment = sanitizeText(body.comment);
+
+    if (!name || !comment) {
+      return new Response(JSON.stringify({ error: 'Fehlende Felder' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const reviews = await getReviews();
+
+    const newReview: Review = {
+      id: Date.now().toString(),
+      name,
+      rating,
+      comment,
+      date: new Date().toISOString(),
+      approved: false
+    };
+
+    reviews.push(newReview);
+    await saveReviews(reviews);
+
+    // E-Mail-Benachrichtigung an Admin senden
+    await sendReviewNotificationEmail(newReview);
+
+    return new Response(JSON.stringify({ success: true, review: newReview }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('Fehler beim Erstellen der Bewertung:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
+// Hilfsfunktion: E-Mail-Benachrichtigung senden
+async function sendReviewNotificationEmail(review: Review) {
+  const bookingEmail = BOOKING_EMAIL;
+  const fromEmail = FROM_EMAIL;
+
+  console.log('📧 Versuche Bewertungs-E-Mail zu senden...');
+  console.log('SMTP Config:', {
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    user: SMTP_USER,
+    hasPassword: !!SMTP_PASS,
+    to: bookingEmail,
+    from: fromEmail
+  });
+
+  if (!isSmtpConfigured()) {
+    console.log('⚠️ SMTP nicht konfiguriert - E-Mail-Benachrichtigung wird übersprungen');
+    return;
+  }
+
+  try {
+    const transporter = createSmtpTransporter();
+
+    // Verbindung testen
+    console.log('🔍 Teste SMTP-Verbindung...');
+    await transporter.verify();
+    console.log('✅ SMTP-Verbindung erfolgreich');
+
+    const stars = '⭐'.repeat(review.rating);
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #6B5B53 0%, #D9C9B9 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .review-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #B1735C; }
+          .stars { font-size: 24px; margin: 10px 0; }
+          .comment { font-style: italic; color: #555; margin: 15px 0; padding: 15px; background: #f5f5f5; border-radius: 6px; }
+          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+          .btn { display: inline-block; padding: 12px 24px; background: #B1735C; color: white; text-decoration: none; border-radius: 6px; margin-top: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎨 Neue Kundenbewertung</h1>
+            <p>Atelier Auszeit</p>
+          </div>
+          <div class="content">
+            <p>Eine neue Kundenbewertung wurde abgegeben und wartet auf Ihre Freigabe:</p>
+
+            <div class="review-box">
+              <h2>${review.name}</h2>
+              <div class="stars">${stars}</div>
+              <p><strong>Bewertung:</strong> ${review.rating} von 5 Sternen</p>
+              <p><strong>Datum:</strong> ${new Date(review.date).toLocaleDateString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}</p>
+              <div class="comment">
+                "${review.comment}"
+              </div>
+            </div>
+
+            <p>Bitte melden Sie sich im Admin-Panel an, um die Bewertung zu prüfen und freizugeben:</p>
+            <a href="https://keramik-auszeit.de/admin" class="btn">Zum Admin-Panel</a>
+
+            <div class="footer">
+              <p>Diese E-Mail wurde automatisch generiert.</p>
+              <p>Atelier Auszeit – Keramik Malatelier<br>
+              Feldstiege 6a, 48599 Gronau</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await transporter.sendMail({
+      from: `"Atelier Auszeit - Bewertungssystem" <${fromEmail}>`,
+      to: bookingEmail,
+      subject: `⭐ Neue Kundenbewertung von ${review.name} (${review.rating} Sterne)`,
+      html: emailHtml,
+      text: `
+Neue Kundenbewertung - Atelier Auszeit
+
+Von: ${review.name}
+Bewertung: ${review.rating} von 5 Sternen
+Datum: ${new Date(review.date).toLocaleDateString('de-DE')}
+
+Kommentar:
+"${review.comment}"
+
+Bitte melden Sie sich im Admin-Panel an, um die Bewertung zu prüfen und freizugeben:
+https://keramik-auszeit.de/admin
+
+---
+Diese E-Mail wurde automatisch generiert.
+Atelier Auszeit – Keramik Malatelier
+Feldstiege 6a, 48599 Gronau
+      `
+    });
+
+    console.log('✅ Bewertungs-Benachrichtigung erfolgreich gesendet an:', bookingEmail);
+  } catch (error: any) {
+    console.error('❌ Fehler beim Senden der Bewertungs-Benachrichtigung:', error);
+    console.error('Fehler-Details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response
+    });
+    // Fehler nicht weiterwerfen, damit die Bewertung trotzdem gespeichert wird
+  }
+}
+
+// PATCH - Bewertung freigeben/ablehnen
+export const PATCH: APIRoute = async ({ request }) => {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  const base64Credentials = authHeader.split(' ')[1];
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+  const [username, password] = credentials.split(':');
+  
+  if (username !== 'admin' || password !== getAdminPassword()) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  try {
+    const body = await request.json();
+    const { id, approved } = body;
+
+    const reviews = await getReviews();
+    const reviewIndex = reviews.findIndex(r => r.id === id);
+
+    if (reviewIndex === -1) {
+      return new Response(JSON.stringify({ error: 'Bewertung nicht gefunden' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    reviews[reviewIndex].approved = approved;
+    await saveReviews(reviews);
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren der Bewertung:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
+// DELETE - Bewertung löschen
+export const DELETE: APIRoute = async ({ request, url }) => {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const base64Credentials = authHeader.split(' ')[1];
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+  const [username, password] = credentials.split(':');
+
+  if (username !== 'admin' || password !== getAdminPassword()) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  try {
+    const id = url.searchParams.get('id');
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'ID fehlt' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const reviews = await getReviews();
+    const filteredReviews = reviews.filter(r => r.id !== id);
+
+    if (filteredReviews.length === reviews.length) {
+      return new Response(JSON.stringify({ error: 'Bewertung nicht gefunden' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    await saveReviews(filteredReviews);
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('Fehler beim Löschen der Bewertung:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};

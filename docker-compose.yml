@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web:
+    # Use the internal IPv4 of your Registry VM here
+    image: 10.1.9.0:5000/keramik-auszeit-de:latest
+    networks:
+      - public-ingress
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        # REPLACE with your actual domain
+        - "traefik.http.routers.keramik-auszeit-de.rule=Host(`<domain>`)"
+        - "traefik.http.routers.keramik-auszeit-de.entrypoints=websecure"
+        - "traefik.http.routers.keramik-auszeit-de.tls.certresolver=myresolver"
+        - "traefik.http.services.keramik-auszeit-de.loadbalancer.server.port=3000"
+networks:
+  public-ingress:
+    external: true

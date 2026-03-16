@@ -1,0 +1,109 @@
+---
+import MainLayout from "../../../layouts/MainLayout.astro";
+import { getVoucherByCode, formatAmount } from "../../../lib/voucher-storage";
+export const prerender = false;
+
+const { code } = Astro.params;
+const voucher = code ? await getVoucherByCode(code) : null;
+---
+
+<MainLayout title="Gutschein | Atelier Auszeit">
+  <section class="voucher-check">
+    <div class="voucher-check__card">
+      {!voucher ? (
+        <div class="voucher-check__status voucher-check__status--invalid">
+          <div class="voucher-check__icon">❌</div>
+          <h1>Gutschein nicht gefunden</h1>
+          <p>Dieser Gutschein-Code ist ungültig oder existiert nicht.</p>
+        </div>
+      ) : voucher.status === 'active' ? (
+        <div class="voucher-check__status voucher-check__status--valid">
+          <div class="voucher-check__icon">✅</div>
+          <h1>Gutschein gültig</h1>
+          <div class="voucher-check__amount">{formatAmount(voucher.amount)}</div>
+          <p class="voucher-check__code">{voucher.code}</p>
+          <p class="voucher-check__hint">Bitte zeigen Sie diesen Bildschirm im Atelier vor.</p>
+        </div>
+      ) : voucher.status === 'redeemed' ? (
+        <div class="voucher-check__status voucher-check__status--redeemed">
+          <div class="voucher-check__icon">⚠️</div>
+          <h1>Bereits eingelöst</h1>
+          <div class="voucher-check__amount">{formatAmount(voucher.amount)}</div>
+          <p class="voucher-check__code">{voucher.code}</p>
+          <p>Eingelöst am: {new Date(voucher.redeemedAt!).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+        </div>
+      ) : (
+        <div class="voucher-check__status voucher-check__status--expired">
+          <div class="voucher-check__icon">⏰</div>
+          <h1>Gutschein abgelaufen</h1>
+          <p class="voucher-check__code">{voucher.code}</p>
+        </div>
+      )}
+      <a href="/" class="voucher-check__back">← Zur Startseite</a>
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+  .voucher-check {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8) var(--gutter);
+    background: linear-gradient(135deg, var(--color-clay-brown, #423430) 0%, var(--color-warm-beige, #f2ebe5) 100%);
+  }
+  .voucher-check__card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 18px;
+    padding: var(--space-8);
+    text-align: center;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 20px 40px rgba(66,52,48,0.15);
+  }
+  .voucher-check__icon { font-size: 4rem; margin-bottom: var(--space-3); }
+  .voucher-check__card h1 {
+    color: var(--brand-espresso, #423430);
+    font-size: 1.5rem;
+    margin-bottom: var(--space-3);
+  }
+  .voucher-check__amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--brand-espresso, #423430);
+    margin: var(--space-3) 0;
+  }
+  .voucher-check__code {
+    font-family: monospace;
+    font-size: 1.25rem;
+    letter-spacing: 2px;
+    color: var(--accent-terra, #8B6F47);
+    background: rgba(242,235,229,0.55);
+    padding: var(--space-2) var(--space-3);
+    border-radius: 8px;
+    display: inline-block;
+    margin: var(--space-2) 0;
+  }
+  .voucher-check__hint {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-top: var(--space-3);
+  }
+  .voucher-check__status--valid .voucher-check__icon { color: #16a34a; }
+  .voucher-check__status--redeemed { opacity: 0.85; }
+  .voucher-check__back {
+    display: inline-block;
+    margin-top: var(--space-4);
+    color: var(--accent-terra, #8B6F47);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .voucher-check__back:hover { text-decoration: underline; }
+
+  @media (max-width: 639px) {
+    .voucher-check__card { padding: var(--space-5); }
+    .voucher-check__amount { font-size: 2rem; }
+  }
+</style>
+

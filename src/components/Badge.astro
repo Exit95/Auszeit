@@ -1,0 +1,43 @@
+---
+interface Props {
+  variant: "sold" | "available" | "warning";
+  label: string;
+  className?: string;
+}
+
+const { variant, label, className = "" } = Astro.props;
+---
+
+<span class={`badge badge--${variant} ${className}`}>
+  {label}
+</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+
+  .badge--sold {
+    background-color: #dc2626;
+    color: white;
+  }
+
+  .badge--available {
+    background-color: #16a34a;
+    color: white;
+  }
+
+  .badge--warning {
+    background-color: #f59e0b;
+    color: white;
+  }
+</style>
+
