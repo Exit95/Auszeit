@@ -4,23 +4,27 @@ services:
   web:
     image: "[2a01:4f8:202:1129:2447:2447:1:900]:5000/keramik-auszeit-de:latest"
     environment:
-      - ADMIN_PASSWORD=Irena2025!
-      - SUPERUSER_PASSWORD=Exit2025!Developer
-      - TOTP_SECRET=VMXYSJ5HREHMZ6EE4ENAAVJ2YIU564FY
-      - SMTP_HOST=smtp.web.de
-      - SMTP_PORT=587
-      - SMTP_USER=keramik-auszeit@web.de
-      - SMTP_PASS=Malatelier2025
-      - BOOKING_EMAIL=keramik-auszeit@web.de
-      - FROM_EMAIL=keramik-auszeit@web.de
-      - S3_ENDPOINT=https://nbg1.your-objectstorage.com
-      - S3_BUCKET=danapfel-digital
-      - S3_ACCESS_KEY_ID=EJM7QHG4BX98EEPUYR5W
-      - S3_SECRET_ACCESS_KEY=hCXXaEoNo9Xrgr7oJ9LfAgmWG68wmrnj1SrLpT6W
-      - S3_REGION=eu-central
-      - S3_PREFIX=Auszeit/
-      - STRIPE_SECRET_KEY=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
-      - STRIPE_PUBLISHABLE_KEY=pk_live_51T1DtzFnSCRtGxvlQFbNr4M4srzrh7rLnHMX6i3aegBAdWINDfkkk3Pl1Ypz8sHDUOUr9Tw4ogHog3B1eMqgXKcD00zARsULHi
+      # All secrets must be set on the server via environment file
+      # NEVER commit actual values here
+      # Use: docker stack deploy --compose-file keramik-auszeit-de.yml keramik-auszeit-de
+      # With env file loaded on the server at /srv/apps/keramik-auszeit/config/.env
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SUPERUSER_PASSWORD=${SUPERUSER_PASSWORD}
+      - TOTP_SECRET=${TOTP_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - BOOKING_EMAIL=${BOOKING_EMAIL}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+      - S3_REGION=${S3_REGION}
+      - S3_PREFIX=${S3_PREFIX}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
     networks:
       - public-ingress
     deploy:
@@ -34,8 +38,11 @@ services:
         - "traefik.http.routers.keramik-auszeit-de.entrypoints=websecure"
         - "traefik.http.routers.keramik-auszeit-de.tls.certresolver=myresolver"
         - "traefik.http.services.keramik-auszeit-de.loadbalancer.server.port=3000"
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
 
 networks:
   public-ingress:
     external: true
-
