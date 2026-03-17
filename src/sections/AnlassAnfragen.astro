@@ -2,7 +2,7 @@
 // Besondere Anlässe – Anfrageformular
 ---
 
-<section class="special-events-section" id="special-events">
+<section class="special-events-section" id="special-events" style="scroll-margin-top: 60px;">
   <div class="special-events-container">
     <h2 class="special-events-title">Besondere Anlässe</h2>
     <p class="special-events-subtitle">
@@ -11,24 +11,12 @@
     </p>
 
     <div class="event-types">
-      <button class="event-type-btn" data-event="kindergeburtstag">
-        <span class="event-type-label">Kindergeburtstag</span>
-      </button>
-      <button class="event-type-btn" data-event="jga">
-        <span class="event-type-label">JGA</span>
-      </button>
-      <button class="event-type-btn" data-event="stammtisch">
-        <span class="event-type-label">Stammtisch</span>
-      </button>
-      <button class="event-type-btn" data-event="firmen_event">
-        <span class="event-type-label">Firmen-Event</span>
-      </button>
-      <button class="event-type-btn" data-event="privater_anlass">
-        <span class="event-type-label">Privater Anlass</span>
-      </button>
-      <button class="event-type-btn" data-event="sonstiges">
-        <span class="event-type-label">Sonstiges</span>
-      </button>
+      <button class="event-type-btn" data-event="kindergeburtstag">Kindergeburtstag</button>
+      <button class="event-type-btn" data-event="jga">JGA</button>
+      <button class="event-type-btn" data-event="stammtisch">Stammtisch</button>
+      <button class="event-type-btn" data-event="firmen_event">Firmen-Event</button>
+      <button class="event-type-btn" data-event="privater_anlass">Privater Anlass</button>
+      <button class="event-type-btn" data-event="sonstiges">Sonstiges</button>
     </div>
 
     <form id="inquiryForm" class="inquiry-form hidden">
@@ -69,7 +57,7 @@
       </div>
     </form>
 
-    <div id="inquiryMessage-result" class="inquiry-result hidden"></div>
+    <div id="inquiryResult" class="inquiry-result hidden"></div>
   </div>
 </section>
 
@@ -91,44 +79,40 @@
   .special-events-subtitle {
     text-align: center;
     color: var(--color-text-muted, #6b5e57);
-    margin-bottom: 2rem;
+    margin: 0 auto 2rem;
     max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
     line-height: 1.6;
   }
   .event-types {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
     margin-bottom: 2rem;
   }
   .event-type-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1.25rem 1rem;
-    border: 2px solid var(--color-border, #e0d5cc);
-    border-radius: 12px;
+    padding: 0.6rem 1.4rem;
+    border: 1.5px solid var(--color-border, #e0d5cc);
+    border-radius: 999px;
     background: white;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 0.9rem;
+    font-weight: 500;
+    font-family: inherit;
     color: var(--color-text, #3d2e24);
+    letter-spacing: 0.01em;
   }
   .event-type-btn:hover {
     border-color: var(--color-primary, #5b3e31);
     background: var(--color-primary-light, #f5efe9);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    color: var(--color-primary, #5b3e31);
   }
   .event-type-btn.active {
     border-color: var(--color-primary, #5b3e31);
     background: var(--color-primary, #5b3e31);
     color: white;
   }
-  .event-type-label { font-weight: 500; text-align: center; }
 
   .inquiry-form {
     background: white;
@@ -169,6 +153,7 @@
     font-size: 0.95rem;
     font-family: inherit;
     transition: border-color 0.2s;
+    resize: vertical;
   }
   .inquiry-form input:focus,
   .inquiry-form textarea:focus {
@@ -217,7 +202,7 @@
     const form = document.getElementById('inquiryForm') as HTMLFormElement;
     const formTitle = document.getElementById('inquiryFormTitle');
     const eventTypeInput = document.getElementById('inquiryEventType') as HTMLInputElement;
-    const resultDiv = document.getElementById('inquiryMessage-result');
+    const resultDiv = document.getElementById('inquiryResult');
     const backBtn = document.getElementById('inquiryBack');
     const eventTypesDiv = document.querySelector('.event-types') as HTMLElement;
 
@@ -250,7 +235,7 @@
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-      const origText = submitBtn.textContent;
+      const origText = submitBtn.textContent ?? 'Anfrage senden';
       submitBtn.disabled = true;
       submitBtn.textContent = 'Wird gesendet...';
 
@@ -298,4 +283,3 @@
     });
   });
 </script>
-

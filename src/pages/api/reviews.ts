@@ -89,8 +89,10 @@ export const GET: APIRoute = async ({ request, url }) => {
       });
     }
     
-    // Öffentlich: nur freigegebene Bewertungen
-    const approvedReviews = reviews.filter(r => r.approved);
+    // Öffentlich: nur freigegebene Bewertungen, neueste zuerst
+    const approvedReviews = reviews
+      .filter(r => r.approved)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return new Response(JSON.stringify(approvedReviews), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -234,7 +236,7 @@ async function sendReviewNotificationEmail(review: Review) {
 
             <div class="footer">
               <p>Diese E-Mail wurde automatisch generiert.</p>
-              <p>Atelier Auszeit – Keramik Malatelier<br>
+              <p>Atelier Auszeit Keramik Malatelier<br>
               Feldstiege 6a, 48599 Gronau</p>
             </div>
           </div>
@@ -263,7 +265,7 @@ https://keramik-auszeit.de/admin
 
 ---
 Diese E-Mail wurde automatisch generiert.
-Atelier Auszeit – Keramik Malatelier
+Atelier Auszeit Keramik Malatelier
 Feldstiege 6a, 48599 Gronau
       `
     });

@@ -1,0 +1,461 @@
+---
+// Galerie-Sektion
+---
+
+<section id="galerie" class="galerie" style="scroll-margin-top: 60px;">
+  <div class="galerie__head">
+    <h2 class="galerie__title">Unsere Arbeiten</h2>
+    <p class="galerie__sub">Lass dich von unseren Keramiken inspirieren</p>
+
+    <div class="galerie__filter" id="galerie-filter">
+      <button class="gf-btn active" data-cat="all">Alle</button>
+      <button class="gf-btn" data-cat="tassen">Tassen & Becher</button>
+      <button class="gf-btn" data-cat="teller">Teller & Schalen</button>
+      <button class="gf-btn" data-cat="figuren">Figuren & Deko</button>
+      <button class="gf-btn" data-cat="spardosen">Spardosen & Krüge</button>
+      <button class="gf-btn" data-cat="anhaenger">Anhänger & Schmuck</button>
+      <button class="gf-btn" data-cat="kindergeburtstag">Kindergeburtstage</button>
+      <button class="gf-btn" data-cat="sonstiges">Sonstiges</button>
+    </div>
+  </div>
+
+  <div class="galerie__body">
+    <div id="galerie-loading" class="galerie__state">Bilder werden geladen ...</div>
+
+    <!-- Wird angezeigt wenn die gesamte Galerie leer ist -->
+    <div id="galerie-empty-all" class="galerie__coming-soon hidden">
+      <div class="galerie__cs-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+      <h3 class="galerie__cs-title">Unsere Galerie ist in Arbeit</h3>
+      <p class="galerie__cs-text">Bald zeigen wir dir hier unsere schönsten Keramiken und Unikate. Schau bald wieder vorbei!</p>
+    </div>
+
+    <!-- Wird angezeigt wenn eine Kategorie leer ist -->
+    <div id="galerie-empty-cat" class="galerie__state hidden">Noch keine Bilder in dieser Kategorie.</div>
+
+    <div id="galerie-grid" class="galerie__grid hidden"></div>
+  </div>
+
+  <!-- Lightbox -->
+  <div id="glb" class="glb hidden" role="dialog" aria-modal="true">
+    <div class="glb__bg" id="glb-bg"></div>
+    <div class="glb__ui">
+      <button class="glb__close" id="glb-close" aria-label="Schließen">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <button class="glb__arrow glb__arrow--l" id="glb-prev" aria-label="Zurück">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+
+      <div class="glb__stage">
+        <img id="glb-img" class="glb__img" src="" alt="Galerie">
+      </div>
+
+      <button class="glb__arrow glb__arrow--r" id="glb-next" aria-label="Weiter">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+
+      <div class="glb__count" id="glb-count">1 / 1</div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .galerie {
+    background: #f9f6f2;
+  }
+
+  .galerie__head {
+    padding: 3.5rem var(--gutter, 1.5rem) 0;
+    max-width: var(--max-width, 1400px);
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .galerie__title {
+    font-family: var(--font-serif);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    color: var(--color-clay-brown, #6B5B53);
+    margin-bottom: 0.4rem;
+  }
+
+  .galerie__sub {
+    color: var(--color-text-secondary, #888);
+    font-size: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  /* Filter */
+  .galerie__filter {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-bottom: 2rem;
+  }
+
+  .gf-btn {
+    padding: 0.42rem 1.1rem;
+    border-radius: 99px;
+    border: 1.5px solid #b8a090;
+    background: transparent;
+    color: #7a5c4a;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    font-family: inherit;
+  }
+
+  .gf-btn:hover { background: #e8d5c4; border-color: #a07060; }
+  .gf-btn.active { background: #6B5B53; color: #fff; border-color: #6B5B53; }
+
+  /* Body / Grid */
+  .galerie__body {
+    max-width: var(--max-width, 1400px);
+    margin: 0 auto;
+    padding: 0 var(--gutter, 1.5rem) 4rem;
+  }
+
+  .galerie__state {
+    text-align: center;
+    color: var(--color-text-secondary, #888);
+    padding: 3rem;
+    font-style: italic;
+  }
+
+  .galerie__coming-soon {
+    text-align: center;
+    padding: 4rem 1.5rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .galerie__cs-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #ede8e2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a07060;
+    margin-bottom: 0.5rem;
+  }
+
+  .galerie__cs-title {
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    color: var(--color-clay-brown, #6B5B53);
+    margin: 0;
+  }
+
+  .galerie__cs-text {
+    color: var(--color-text-secondary, #888);
+    font-size: 1rem;
+    max-width: 420px;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* Grid */
+  .galerie__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .g-item {
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    background: #ede8e2;
+  }
+
+  .g-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.32s ease;
+  }
+
+  .g-item__hover {
+    position: absolute;
+    inset: 0;
+    background: rgba(66, 52, 48, 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.22s ease;
+    color: #fff;
+    opacity: 0;
+  }
+
+  .g-item:hover img { transform: scale(1.06); }
+  .g-item:hover .g-item__hover { background: rgba(66, 52, 48, 0.42); opacity: 1; }
+
+  /* Lightbox */
+  .glb {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .glb.hidden { display: none; }
+
+  .glb__bg {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 5, 2, 0.94);
+  }
+
+  .glb__ui {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    height: 100%;
+    padding: 3.5rem 1rem 2.5rem;
+    box-sizing: border-box;
+  }
+
+  .glb__stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    max-width: 80vw;
+    height: 100%;
+  }
+
+  .glb__img {
+    max-height: 82vh;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.55);
+  }
+
+  .glb__arrow {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.18s;
+  }
+  .glb__arrow:hover { background: rgba(255,255,255,0.26); }
+
+  .glb__close {
+    position: fixed;
+    top: 1.1rem;
+    right: 1.1rem;
+    z-index: 2;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.18s;
+  }
+  .glb__close:hover { background: rgba(255,255,255,0.28); }
+
+  .glb__count {
+    position: fixed;
+    bottom: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.55);
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .galerie__grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .galerie__grid { grid-template-columns: repeat(2, 1fr); gap: 4px; }
+    .glb__arrow { width: 38px; height: 38px; }
+    .glb__arrow svg { width: 18px; height: 18px; }
+    .glb__stage { max-width: 88vw; }
+    .galerie__head { padding-top: 2.5rem; }
+    .gf-btn { font-size: 0.78rem; padding: 0.38rem 0.9rem; }
+  }
+  @media (max-width: 360px) {
+    .galerie__grid { grid-template-columns: repeat(2, 1fr); gap: 3px; }
+  }
+</style>
+
+<script>
+  (function () {
+    // Nur Bilder aus dem gallery/-Ordner (source:'gallery'), mit Kategorie aus Metadaten
+    let all: { url: string; filename: string; category: string }[] = [];
+    let visible: typeof all = [];
+    let idx = 0;
+    let activeCat = 'all';
+
+    async function init() {
+      try {
+        const [galleryRes, metaRes] = await Promise.all([
+          fetch('/api/gallery'),
+          fetch('/api/gallery-metadata'),
+        ]);
+
+        if (!galleryRes.ok) throw new Error();
+        const images = await galleryRes.json() as any[];
+        const metaData = metaRes.ok ? (await metaRes.json()).metadata || {} : {};
+
+        // Nur gallery/-Bilder mit echter Bildendung, Kategorie aus Metadaten
+        all = images
+          .filter((d: any) =>
+            d.source === 'gallery' &&
+            d.url &&
+            /\.(jpe?g|png|webp|gif)(\?|$)/i.test(d.url)
+          )
+          .map((d: any) => ({
+            url: d.url,
+            filename: d.filename,
+            category: metaData[d.filename]?.category || '',
+          }));
+
+      } catch {
+        document.getElementById('galerie-loading')!.textContent =
+          'Bilder konnten nicht geladen werden.';
+        return;
+      }
+
+      hide('galerie-loading');
+
+      if (all.length === 0) {
+        show('galerie-empty-all');
+        return;
+      }
+
+      show('galerie-grid');
+      render('all');
+    }
+
+    function render(cat: string) {
+      activeCat = cat;
+      visible = cat === 'all'
+        ? [...all]
+        : all.filter((d) => d.category === cat);
+
+      const grid = document.getElementById('galerie-grid')!;
+
+      if (visible.length === 0) {
+        grid.innerHTML = '';
+        hide('galerie-grid');
+        if (cat === 'all') {
+          show('galerie-empty-all');
+        } else {
+          show('galerie-empty-cat');
+        }
+        return;
+      }
+
+      hide('galerie-empty-all');
+      hide('galerie-empty-cat');
+      show('galerie-grid');
+
+      grid.innerHTML = visible
+        .map(
+          (img, i) => `
+          <div class="g-item" data-i="${i}" tabindex="0" role="button" aria-label="Bild ${i + 1} ansehen">
+            <img src="${img.url}" alt="Keramik Atelier Auszeit" loading="lazy" decoding="async">
+            <div class="g-item__hover">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+              </svg>
+            </div>
+          </div>`
+        )
+        .join('');
+
+      grid.querySelectorAll('.g-item').forEach((el) =>
+        el.addEventListener('click', () =>
+          openLightbox(parseInt((el as HTMLElement).dataset.i || '0', 10))
+        )
+      );
+    }
+
+    function openLightbox(i: number) {
+      idx = i;
+      document.getElementById('glb')!.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      updateLightbox();
+    }
+
+    function closeLightbox() {
+      document.getElementById('glb')!.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function updateLightbox() {
+      (document.getElementById('glb-img') as HTMLImageElement).src =
+        visible[idx]?.url || '';
+      document.getElementById('glb-count')!.textContent =
+        `${idx + 1} / ${visible.length}`;
+    }
+
+    function prev() { idx = (idx - 1 + visible.length) % visible.length; updateLightbox(); }
+    function next() { idx = (idx + 1) % visible.length; updateLightbox(); }
+
+    document.getElementById('glb-close')!.addEventListener('click', closeLightbox);
+    document.getElementById('glb-bg')!.addEventListener('click', closeLightbox);
+    document.getElementById('glb-prev')!.addEventListener('click', prev);
+    document.getElementById('glb-next')!.addEventListener('click', next);
+
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('glb')!.classList.contains('hidden')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    });
+
+    document.querySelectorAll('.gf-btn').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.gf-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        render((btn as HTMLElement).dataset.cat || 'all');
+      })
+    );
+
+    function hide(id: string) { document.getElementById(id)?.classList.add('hidden'); }
+    function show(id: string) { document.getElementById(id)?.classList.remove('hidden'); }
+
+    init();
+  })();
+</script>

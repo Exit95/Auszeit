@@ -9,7 +9,7 @@ import {
 } from '../../../lib/totp';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { logAuditEvent } from '../../../lib/audit-log';
-import { createAuthSession, isDeviceTrusted, createDeviceTrust, deviceTrustCookieHeader, clearDeviceTrustCookieHeader } from '../../../lib/auth';
+import { createAuthSession, isDeviceTrusted, createDeviceTrust, deviceTrustCookieHeader, clearDeviceTrustCookieHeader, getTrustedDeviceUsername } from '../../../lib/auth';
 
 /**
  * Authentication flow:
@@ -267,9 +267,50 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    return new Response(JSON.stringify({ 
-      success: false, 
-      message: 'Invalid action' 
+    if (action === 'device-check') {
+      // Check if device_trust cookie is valid → create session if so
+      if (!isDeviceTrusted(request)) {
+        return new Response(JSON.stringify({ success: false, reason: 'not_trusted' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const userType = getTrustedDeviceUsername(request);
+      const ipAddress = clientId;
+      const userAgent = request.headers.get('user-agent') || 'unknown';
+      const isSecure = request.url.startsWith('https');
+      const authSession = createAuthSession(userType || 'admin', ipAddress, userAgent, isSecure);
+
+      await logAuditEvent('LOGIN_SUCCESS', request, {
+        username: userType || 'unknown',
+        resource: '/api/admin/verify-2fa',
+        action: 'Auto-login via trusted device (device-check)',
+        success: true,
+      });
+
+      const headers = new Headers({ 'Content-Type': 'application/json' });
+      for (const cookie of authSession.cookieHeaders) {
+        headers.append('Set-Cookie', cookie);
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        userType,
+        csrfToken: authSession.csrfToken,
+      }), { status: 200, headers });
+    }
+
+    if (action === 'logout-device') {
+      // Clear device trust cookie
+      const headers = new Headers({ 'Content-Type': 'application/json' });
+      headers.append('Set-Cookie', clearDeviceTrustCookieHeader());
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers });
+    }
+
+    return new Response(JSON.stringify({
+      success: false,
+      message: 'Invalid action'
     }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },

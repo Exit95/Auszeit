@@ -9,7 +9,7 @@ const { title = "Termin buchen" } = Astro.props;
 <link rel="stylesheet" href="/booking-calendar.css" />
 <link rel="stylesheet" href="/booking-calendar-custom.css" />
 
-<section class="booking-section animate-on-scroll" id="calendar-section">
+<section class="booking-section animate-on-scroll" id="calendar-section" style="scroll-margin-top: 60px;">
   <div class="booking-container">
     <h2 class="booking-title">{title}</h2>
     <div class="booking-grid">
@@ -23,8 +23,7 @@ const { title = "Termin buchen" } = Astro.props;
         <div class="profile-card__content">
           <h3>Über mich</h3>
           <p class="profile-card__intro">
-            Als zertifizierte Tagesmutter biete ich eine liebevolle, familiäre Betreuung
-            für Ihre Kinder in einer warmen und sicheren Umgebung. In meinem Atelier gebe ich euch die Möglichkeit, alleine, in kleinen Gruppen, Stammtisch, Firmenfeier, Kindergeburtstag uvm. eine Auszeit zu genießen.
+            Willkommen in meinem Atelier! Ich bin Irena Woschkowiak und freue mich, euch die Welt der Keramikmalerei näherzubringen. Ob alleine, mit Freunden oder als Gruppe: Hier findet jeder seine kreative Auszeit.
           </p>
           <ul class="profile-card__facts">
             <li>
@@ -32,22 +31,23 @@ const { title = "Termin buchen" } = Astro.props;
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
-              Zertifizierte Tagesmutter
+              Inhaberin & Keramik-Künstlerin
             </li>
             <li>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
               </svg>
-              42 Jahre
+              Gronau (Westfalen)
             </li>
             <li>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
-              Verheiratet, 2 Kinder
+              Gruppen &amp; Einzeltermine
             </li>
           </ul>
         </div>
@@ -522,7 +522,6 @@ const { title = "Termin buchen" } = Astro.props;
       const response = await fetch('/api/slots');
       if (response.ok) {
         availableSlots = await response.json();
-        console.log('Geladene Termine:', availableSlots);
       }
     } catch (error) {
       console.error('Fehler beim Laden der Termine:', error);
@@ -715,8 +714,6 @@ const { title = "Termin buchen" } = Astro.props;
           participantNames,
           notes: formData.get("notes") as string,
         };
-
-        console.log('Buchungsdaten:', data);
 
         const messageEl = document.getElementById("message");
         if (!messageEl) {

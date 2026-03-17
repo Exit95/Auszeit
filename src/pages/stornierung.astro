@@ -38,7 +38,7 @@ import MainLayout from '../layouts/MainLayout.astro';
           <button id="cancel-btn" style="width: 100%; padding: 0.875rem; background-color: #dc2626; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
             Buchung stornieren
           </button>
-          <a href="/" style="display: block; text-align: center; margin-top: 1rem; color: #8B6F47; text-decoration: underline;">Abbrechen &ndash; zurück zur Startseite</a>
+          <a href="/" style="display: block; text-align: center; margin-top: 1rem; color: #8B6F47; text-decoration: underline;">Abbrechen und zurück zur Startseite</a>
         </div>
       </div>
 
@@ -125,9 +125,19 @@ import MainLayout from '../layouts/MainLayout.astro';
       }
     }
 
+    const cancelErrorEl = document.createElement('p');
+    cancelErrorEl.style.cssText = 'color:#dc2626;margin-top:0.75rem;font-size:0.9rem;text-align:center;display:none;';
+    cancelBtn.insertAdjacentElement('afterend', cancelErrorEl);
+
+    const showCancelError = (msg: string) => {
+      cancelErrorEl.textContent = msg;
+      cancelErrorEl.style.display = 'block';
+    };
+
     cancelBtn.addEventListener('click', async () => {
       cancelBtn.setAttribute('disabled', 'true');
       cancelBtn.textContent = 'Wird storniert...';
+      cancelErrorEl.style.display = 'none';
 
       try {
         const res = await fetch('/api/cancel', {
@@ -141,12 +151,12 @@ import MainLayout from '../layouts/MainLayout.astro';
           bookingEl.style.display = 'none';
           successEl.style.display = 'block';
         } else {
-          alert(data.error || 'Stornierung fehlgeschlagen.');
+          showCancelError(data.error || 'Stornierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
           cancelBtn.removeAttribute('disabled');
           cancelBtn.textContent = 'Buchung stornieren';
         }
       } catch {
-        alert('Verbindungsfehler. Bitte versuchen Sie es später erneut.');
+        showCancelError('Verbindungsfehler. Bitte versuchen Sie es später erneut.');
         cancelBtn.removeAttribute('disabled');
         cancelBtn.textContent = 'Buchung stornieren';
       }

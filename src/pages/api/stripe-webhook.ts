@@ -120,7 +120,7 @@ export const POST: APIRoute = async ({ request }) => {
         await transporter.sendMail({
           from: `"Atelier Auszeit" <${FROM_EMAIL}>`,
           to: voucher.customerEmail,
-          subject: `Dein Gutschein über ${amountStr} – Atelier Auszeit`,
+          subject: `Dein Gutschein über ${amountStr} vom Atelier Auszeit`,
           html,
         });
 

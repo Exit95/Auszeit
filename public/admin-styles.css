@@ -680,141 +680,291 @@ body {
 }
 
 /* ============================================
-   SLOTS LIST
+   SLOTS LIST – Termine-Tab
    ============================================ */
 .slots-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-}
-
-.slot-card {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 1.25rem;
-  background: var(--c-bg-muted);
+  gap: 0.45rem;
+}
+
+/* ============================================
+   SC – Slot Card (Termine)
+   ============================================ */
+.sc {
+  display: flex;
+  align-items: stretch;
+  background: var(--c-bg-card);
   border: 1px solid var(--c-border);
   border-radius: var(--r-md);
-  transition: all var(--t-fast);
+  overflow: hidden;
+  transition: box-shadow var(--t-fast), border-color var(--t-fast);
 }
 
-.slot-card:hover {
-  border-color: var(--c-accent);
-  box-shadow: var(--shadow-md);
+.sc:hover {
+  border-color: var(--c-primary-light);
+  box-shadow: 0 2px 8px rgba(139,111,71,0.12);
 }
 
-.slot-card .slot-actions {
-  display: flex;
-  gap: 0.4rem;
-  justify-content: flex-end;
-  border-top: 1px solid var(--c-border);
-  padding-top: 0.6rem;
-  margin-top: auto;
-}
-
-.slot-special-event {
-  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+.sc--special {
   border-color: #FFB74D;
 }
 
-.slot-special-event:hover {
-  border-color: #FF9800;
+.sc--special .sc__date-block {
+  background: linear-gradient(160deg, #E65100, #FF9800);
 }
 
-.event-badge {
-  display: inline-block;
-  padding: 0.2rem 0.5rem;
+.sc__body {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.sc__date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  width: 52px;
+  padding: 0.4rem 0.3rem;
+  background: var(--c-primary);
   border-radius: var(--r-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-left: 0.5rem;
+  color: white;
+  text-align: center;
+  flex-shrink: 0;
 }
 
-.event-kindergeburtstag {
+.sc__weekday {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.8;
+}
+
+.sc__day {
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.sc__monthyear {
+  font-size: 0.6rem;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.sc__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sc__time-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.sc__time {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--c-text);
+}
+
+.sc__badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--r-sm);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.sc__badge--kinder {
   background: #FFE0B2;
   color: #E65100;
 }
 
-.event-stammtisch {
+.sc__badge--stammtisch {
   background: #E1BEE7;
   color: #7B1FA2;
 }
 
-.slot-info {
+.sc__cap-row {
   display: flex;
-  gap: 1.5rem;
   align-items: center;
+  gap: 0.55rem;
+}
+
+.sc__cap-bar {
+  flex: 1;
+  max-width: 100px;
+  height: 5px;
+  background: var(--c-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.sc__cap-fill {
+  height: 100%;
+  border-radius: 99px;
+}
+
+.sc__cap-txt {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sc__cap-special {
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  font-style: italic;
+}
+
+.sc__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border-left: 1px solid var(--c-border-light);
+  justify-content: center;
+  background: var(--c-bg-muted);
 }
 
 /* ============================================
-   BOOKINGS
+   BOOKINGS LIST – Kunden-Tab
    ============================================ */
-.booking-card .booking-info {
+.bookings-list {
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.45rem;
 }
 
-.booking-main {
+/* BC – Booking Card */
+.bc {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-left: 4px solid transparent;
+  border-radius: var(--r-md);
+  padding: 0.8rem 1rem;
+  transition: box-shadow var(--t-fast);
+}
+
+.bc:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.bc--pending {
+  border-left-color: #f59e0b;
+}
+
+.bc--confirmed {
+  border-left-color: #22c55e;
+}
+
+.bc--cancelled {
+  border-left-color: #d1d5db;
+  opacity: 0.65;
+}
+
+.bc--past:not(.bc--pending) {
+  opacity: 0.72;
+}
+
+.bc__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  width: 100%;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
 }
 
-.booking-customer {
-  color: var(--c-text-muted);
+.bc__name {
+  font-weight: 700;
   font-size: 0.95rem;
+  color: var(--c-text);
 }
 
-.booking-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: flex-end;
-}
-
-.booking-status {
-  padding: 0.2rem 0.65rem;
+.bc__status {
+  padding: 0.15rem 0.55rem;
   border-radius: var(--r-full);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.booking-status--pending {
+.bc__status--pending {
   background: var(--c-warning-bg);
   color: #92400e;
 }
 
-.booking-status--confirmed {
+.bc__status--confirmed {
   background: var(--c-success-bg);
   color: #166534;
 }
 
-.booking-status--cancelled {
-  background: var(--c-danger-bg);
-  color: #991b1b;
-}
-
-.slot-date {
-  font-weight: 600;
-  color: var(--c-primary);
-  font-size: 1.05rem;
-}
-
-.slot-time {
+.bc__status--cancelled {
+  background: var(--c-bg-muted);
   color: var(--c-text-muted);
-  font-size: 0.95rem;
 }
 
-.slot-capacity {
-  color: var(--c-accent);
-  font-weight: 600;
+.bc__datetime {
+  font-size: 0.855rem;
+  color: var(--c-text-muted);
+  margin-bottom: 0.2rem;
 }
+
+.bc__contact {
+  font-size: 0.82rem;
+  color: var(--c-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.bc__names {
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.bc__notes {
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  font-style: italic;
+  padding: 0.25rem 0.55rem;
+  background: var(--c-bg-muted);
+  border-radius: var(--r-sm);
+  margin-bottom: 0.3rem;
+  margin-top: 0.1rem;
+}
+
+.bc__actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--c-border-light);
+}
+
+/* Kleine Button-Variante */
+.btn-sm {
+  padding: 0.28rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+/* Alte Klassen – Kompatibilität */
+.slot-date { font-weight: 600; color: var(--c-primary); font-size: 1.05rem; }
+.slot-time { color: var(--c-text-muted); font-size: 0.95rem; }
+.slot-capacity { color: var(--c-accent); font-weight: 600; }
 
 /* ============================================
    MESSAGES & STATES
@@ -912,6 +1062,39 @@ body {
 
 .gallery-header h2 {
   margin: 0;
+}
+
+.upload-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.upload-cat-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--c-text);
+  white-space: nowrap;
+}
+
+.upload-cat-select {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--c-border);
+  background: var(--c-bg-card);
+  color: var(--c-text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.upload-cat-select:focus {
+  outline: none;
+  border-color: var(--c-accent);
 }
 
 .upload-area {

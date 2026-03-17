@@ -3,6 +3,7 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import Hero from '../sections/Hero.astro';
 import BookingCalendar from '../components/BookingCalendar.astro';
+import Process from '../sections/Process.astro';
 import Workshops from '../sections/Workshops.astro';
 import FAQ from '../sections/FAQ.astro';
 import Offerings from '../sections/Offerings.astro';
@@ -10,6 +11,7 @@ import Gutschein from '../sections/Gutschein.astro';
 import Reviews from '../sections/Reviews.astro';
 import Contact from '../sections/Contact.astro';
 import AnlassAnfragen from '../sections/AnlassAnfragen.astro';
+import Galerie from '../sections/Galerie.astro';
 
 // SEO-optimierter Title und Description für lokale Suche
 const seoTitle = "Keramik bemalen Gronau | Atelier Auszeit | Workshops & Kindergeburtstage";
@@ -21,11 +23,13 @@ const seoDescription = "Keramik selbst bemalen in Gronau (Westfalen) ✓ Kreativ
   description={seoDescription}
 >
   <Hero />
+  <Process />
   <BookingCalendar title="Termin buchen" />
   <AnlassAnfragen />
   <Workshops />
   <FAQ />
   <Offerings />
+  <Galerie />
   <Gutschein />
   <Reviews />
   <Contact />

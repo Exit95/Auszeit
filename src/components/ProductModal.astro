@@ -1,45 +1,44 @@
 ---
-// Modal-Komponente für Produktgalerien
+// Produkt-Modal als Carousel
 ---
 
-<div id="productModal" class="modal">
-  <div class="modal__overlay"></div>
-  <div class="modal__content">
-    <button class="modal__close" aria-label="Schließen">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
+<div id="productModal" class="pmodal" role="dialog" aria-modal="true" aria-label="Produktgalerie">
+  <div class="pmodal__overlay"></div>
+  <div class="pmodal__box">
+    <button class="pmodal__close" aria-label="Schließen">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
 
-    <div class="modal__header">
-      <h3 class="modal__title"></h3>
-      <p class="modal__price"></p>
+    <div class="pmodal__header">
+      <h3 class="pmodal__title"></h3>
+      <p class="pmodal__price"></p>
     </div>
 
-    <div class="modal__gallery">
-      <!-- Bilder werden hier dynamisch eingefügt -->
+    <!-- Carousel -->
+    <div class="pmc">
+      <button class="pmc__nav pmc__nav--prev" id="pmc-prev" aria-label="Vorheriges Bild">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+
+      <div class="pmc__stage">
+        <img id="pmc-main" class="pmc__main-img" src="" alt="" loading="eager">
+      </div>
+
+      <button class="pmc__nav pmc__nav--next" id="pmc-next" aria-label="Nächstes Bild">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
     </div>
+
+    <div class="pmc__counter" id="pmc-counter">1 / 1</div>
   </div>
 </div>
 
 <style>
-  .modal {
+  .pmodal {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     z-index: 9999;
     display: none;
     align-items: center;
@@ -47,152 +46,163 @@
     padding: var(--space-4);
   }
 
-  .modal.active {
+  .pmodal.active {
     display: flex;
   }
 
-  .modal__overlay {
+  .pmodal__overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
     backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease;
+    animation: pmFadeIn 0.25s ease;
   }
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  @keyframes pmFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
 
-  .modal__content {
+  .pmodal__box {
     position: relative;
-    background-color: var(--color-background);
-    border-radius: var(--radius);
-    max-width: 900px;
+    background: var(--color-background, #fff);
+    border-radius: var(--radius, 12px);
+    max-width: 840px;
     width: 100%;
-    max-height: 90vh;
+    max-height: 92vh;
     overflow-y: auto;
     padding: var(--space-6);
-    animation: slideUp 0.3s ease;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: pmSlideUp 0.28s ease;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
   }
 
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  @keyframes pmSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  .modal__close {
+  .pmodal__close {
     position: absolute;
-    top: var(--space-4);
-    right: var(--space-4);
-    background: var(--color-terracotta);
+    top: var(--space-3);
+    right: var(--space-3);
+    background: var(--color-terracotta, #B1735C);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all var(--duration-normal) var(--easing);
+    transition: background 0.2s, transform 0.2s;
     z-index: 10;
   }
 
-  .modal__close:hover {
-    background: var(--color-clay-brown);
+  .pmodal__close:hover {
+    background: var(--color-clay-brown, #6B5B53);
     transform: rotate(90deg);
   }
 
-  .modal__header {
+  .pmodal__header {
     text-align: center;
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-4);
     padding-right: var(--space-8);
   }
 
-  .modal__title {
+  .pmodal__title {
     font-family: var(--font-serif);
     color: var(--color-clay-brown);
-    font-size: 2rem;
-    margin-bottom: var(--space-2);
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
   }
 
-  .modal__price {
-    font-size: 1.5rem;
+  .pmodal__price {
+    font-size: 1.25rem;
     color: var(--color-terracotta);
     font-weight: 600;
   }
 
-  .modal__gallery {
+  /* Carousel */
+  .pmc {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-4);
+    align-items: center;
+    gap: 0.75rem;
   }
 
-  .modal__gallery img {
-    height: 300px;
+  .pmc__stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    background: var(--color-warm-beige, #f5f0e8);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .pmc__main-img {
+    max-height: 420px;
+    max-width: 100%;
     width: auto;
-    flex-grow: 1;
-    object-fit: cover;
-    border-radius: var(--radius);
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    transition: opacity 0.18s ease;
+    cursor: zoom-in;
+  }
+
+  .pmc__main-img.loading {
+    opacity: 0.4;
+  }
+
+  .pmc__nav {
+    background: var(--color-warm-beige, #f5f0e8);
+    border: 1.5px solid var(--color-clay-brown, #6B5B53);
+    color: var(--color-clay-brown);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all var(--duration-normal) var(--easing);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: background 0.2s, color 0.2s;
+    flex-shrink: 0;
   }
 
-  /* Damit die letzte Zeile nicht extrem gestreckt wird */
-  .modal__gallery::after {
-    content: "";
-    flex-grow: 10;
+  .pmc__nav:hover {
+    background: var(--color-clay-brown);
+    color: white;
   }
 
-  .modal__gallery img:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  .pmc__nav:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .pmc__counter {
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    margin: 0.5rem 0;
   }
 
   /* Mobile */
   @media (max-width: 640px) {
-    .modal {
-      padding: 0;
-    }
+    .pmodal { padding: 0; }
 
-    .modal__content {
-      max-height: 100vh;
+    .pmodal__box {
+      max-height: 100dvh;
       border-radius: 0;
       padding: var(--space-4);
     }
 
-    .modal__title {
-      font-size: 1.5rem;
-    }
+    .pmodal__title { font-size: 1.35rem; }
+    .pmodal__price { font-size: 1.1rem; }
 
-    .modal__price {
-      font-size: 1.25rem;
-    }
-
-    .modal__gallery {
-      gap: var(--space-2);
-    }
-
-    .modal__gallery img {
-      height: 200px;
-      width: 100%; /* Auf Mobile volle Breite oder flexibel lassen? Volle Breite ist sicherer */
-      flex-grow: 0;
-    }
+    .pmc__stage { min-height: 220px; }
+    .pmc__main-img { max-height: 260px; }
+    .pmc__nav { width: 36px; height: 36px; }
   }
 </style>

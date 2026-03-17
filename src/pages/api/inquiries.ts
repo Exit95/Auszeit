@@ -75,7 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
           await transporter.sendMail({
             from: `"Atelier Auszeit - Irena Woschkowiak" <${FROM_EMAIL}>`,
             to: email,
-            subject: `Ihre Anfrage bei Atelier Auszeit – ${label}`,
+            subject: `Ihre Anfrage bei Atelier Auszeit: ${label}`,
             text: `Liebe/r ${name},\n\nvielen Dank für Ihre Anfrage!\n\nArt: ${label}\nWunschdatum: ${preferredDate || 'Flexibel'}\nPersonen: ${participants}\n\nWir melden uns zeitnah bei Ihnen, um die Details zu besprechen.\n\nHerzliche Grüße,\nIrena Woschkowiak\nAtelier Auszeit\nFeldstiege 6a\n48599 Gronau\n\nTelefon: +49 176 34255005\nE-Mail: keramik-auszeit@web.de`,
           });
         } catch (err) {

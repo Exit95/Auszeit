@@ -32,10 +32,13 @@ const METADATA_KEY = 'Auszeit/data/gallery-metadata.json';
 
 // Galerie-Kategorien
 export const GALLERY_CATEGORIES = [
-  { id: 'tassen', name: 'Tassen' },
-  { id: 'teller', name: 'Teller' },
-  { id: 'spardosen', name: 'Spardosen & Krüge & Boxen' },
-  { id: 'anhaenger', name: 'Weihnachtsanhänger' },
+  { id: 'tassen', name: 'Tassen & Becher' },
+  { id: 'teller', name: 'Teller & Schalen' },
+  { id: 'figuren', name: 'Figuren & Deko' },
+  { id: 'spardosen', name: 'Spardosen & Krüge' },
+  { id: 'anhaenger', name: 'Anhänger & Schmuck' },
+  { id: 'kindergeburtstag', name: 'Kindergeburtstage' },
+  { id: 'sonstiges', name: 'Sonstiges' },
 ];
 
 interface GalleryMetadata {

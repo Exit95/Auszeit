@@ -75,7 +75,7 @@ if (!voucher && sessionId) {
             await transporter.sendMail({
               from: `"Atelier Auszeit" <${FROM_EMAIL}>`,
               to: voucher.customerEmail,
-              subject: `Dein Gutschein über ${amountStr} – Atelier Auszeit`,
+              subject: `Dein Gutschein über ${amountStr} vom Atelier Auszeit`,
               html,
             });
             console.log(`[Erfolgsseite] Gutschein-Mail gesendet an ${voucher.customerEmail}`);
@@ -118,7 +118,7 @@ if (voucher) {
             </div>
           )}
           <p class="success__info">
-            Du erhältst den Gutschein auch per E-Mail. Einfach im Atelier vorzeigen – fertig!
+            Du erhältst den Gutschein auch per E-Mail. Einfach im Atelier vorzeigen, fertig!
           </p>
         </div>
       ) : (

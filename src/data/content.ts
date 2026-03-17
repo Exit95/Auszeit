@@ -26,7 +26,7 @@ export const content = {
       {
         icon: 'gift',
         title: 'Abholen',
-        text: 'Nach 10-14 Tagen ist dein Werk glasiert und fertig zum Abholen.',
+        text: 'Nach 10 bis 14 Tagen ist dein Werk glasiert und fertig zum Abholen.',
       },
     ],
   },
@@ -38,7 +38,7 @@ export const content = {
       { name: 'Spardosen & Krüge & Boxen', price: 'ab 8,00€', image: '/spardose.jpeg' },
       { name: 'Weihnachtsanhänger', price: 'ab 6,00€', image: '/anhänger.png' },
     ],
-    note: 'Abholbereit nach 10-14 Tagen.',
+    note: 'Abholbereit nach 10 bis 14 Tagen.',
     pricing: [
       { description: 'Farb- und Brennpauschale bis 3 Teile pro Person', price: '10,00€' },
       { description: 'Farb- und Brennpauschale 4-6 Teile pro Person', price: '15,00€' },
@@ -49,6 +49,18 @@ export const content = {
     title: 'Häufig gestellte Fragen',
     items: [
       {
+        question: 'Wie läuft ein Besuch im Atelier ab?',
+        answer: 'Du kommst zu deinem gebuchten Termin, wählst ein Keramikstück aus unserer großen Auswahl und bemalst es nach deinen Wünschen. Alle Farben, Pinsel und Werkzeuge stehen bereit. Nach dem Bemalen übernehmen wir das Glasieren und Brennen. Dein fertiges Stück kannst du nach 10 bis 14 Tagen abholen.',
+      },
+      {
+        question: 'Was kostet ein Besuch?',
+        answer: 'Der Preis setzt sich zusammen aus dem Preis für das Keramikstück (ab 6 €) und einer Farb- und Brennpauschale: bis 3 Teile 10 €, 4 bis 6 Teile 15 €, 7 bis 9 Teile 20 €. Farben, Pinsel und Brennen sind immer inklusive.',
+      },
+      {
+        question: 'Muss ich einen Termin buchen?',
+        answer: 'Ja, eine Terminbuchung ist erforderlich, damit wir ausreichend Platz und Materialien für dich bereitstellen können. Du kannst direkt hier auf der Website einen Termin buchen.',
+      },
+      {
         question: 'Kann ich meinen Termin stornieren?',
         answer: 'Bis 24 Stunden vor dem Termin kannst du kostenfrei stornieren. Nutze dazu den Link in deiner Bestätigungs-E-Mail.',
       },
@@ -58,11 +70,19 @@ export const content = {
       },
       {
         question: 'Ist das Atelier für Kinder geeignet?',
-        answer: 'Ja, Kinder ab 6 Jahren sind herzlich willkommen. Jüngere Kinder bitte in Begleitung eines Erwachsenen.',
+        answer: 'Ja, Kinder ab 6 Jahren sind herzlich willkommen. Jüngere Kinder bitte in Begleitung eines Erwachsenen. Für Kindergeburtstage bieten wir spezielle Pakete an – einfach anfragen!',
       },
       {
         question: 'Können wir als Gruppe kommen?',
-        answer: 'Gerne! Für Gruppen ab 6 Personen oder Teamevents kontaktiere uns bitte vorab per WhatsApp oder Telefon.',
+        answer: 'Gerne! Das Atelier bietet Platz für Gruppen. Für besondere Anlässe wie JGA, Stammtisch oder Firmenevent nutze bitte unser Anfrageformular, damit wir alles optimal für euch vorbereiten können.',
+      },
+      {
+        question: 'Wie lange dauert ein Besuch?',
+        answer: 'In der Regel solltest du etwa 2 Stunden einplanen. Wer sehr detailliert arbeiten möchte, kann auch länger bleiben – je nach Buchungsslot ist das möglich.',
+      },
+      {
+        question: 'Kann ich einen Gutschein verschenken?',
+        answer: 'Ja! Gutscheine gibt es in verschiedenen Beträgen (25 €, 50 € oder Wunschbetrag). Nach dem Kauf erhältst du den Gutschein-Code per E-Mail, den du ausdrucken oder digital weiterschicken kannst.',
       },
     ],
   },
@@ -70,7 +90,7 @@ export const content = {
     title: 'Kontakt & Standort',
     address: {
       street: 'Feldstiege 6a',
-      city: '48599 Gronau',
+      city: 'Gronau (Westfalen)',
     },
     phone: '+49 176 34255005',
     email: 'keramik-auszeit@web.de',

@@ -258,7 +258,7 @@ export const prerender = false;
             </div>
           </div>
           <div id="bookings-loading" class="loading">Lade Buchungen...</div>
-          <div id="bookings-list" class="slots-list hidden"></div>
+          <div id="bookings-list" class="bookings-list hidden"></div>
           <div id="no-bookings" class="no-data hidden">Keine Buchungen vorhanden</div>
         </section>
       </div>
@@ -267,7 +267,7 @@ export const prerender = false;
       <!-- Tab: Anfragen (Besondere Anlässe) -->
       <div id="tab-anfragen" class="admin-tab hidden">
         <section class="inquiries-section">
-          <h2>Anfragen – Besondere Anlässe</h2>
+          <h2>Anfragen: Besondere Anlässe</h2>
           <div class="inquiries-filter-bar">
             <button class="filter-btn active" data-inquiry-filter="new">Neue</button>
             <button class="filter-btn" data-inquiry-filter="contacted">Kontaktiert</button>
@@ -362,6 +362,19 @@ export const prerender = false;
         <!-- Bild hochladen -->
         <section class="gallery-upload-section">
           <h2>Bild hochladen</h2>
+          <div class="upload-cat-row">
+            <label for="gallery-cat-select" class="upload-cat-label">Galerie-Kategorie</label>
+            <select id="gallery-cat-select" class="upload-cat-select">
+              <option value="">-- Kategorie wählen --</option>
+              <option value="tassen">Tassen & Becher</option>
+              <option value="teller">Teller & Schalen</option>
+              <option value="figuren">Figuren & Deko</option>
+              <option value="spardosen">Spardosen & Krüge</option>
+              <option value="anhaenger">Anhänger & Schmuck</option>
+              <option value="kindergeburtstag">Kindergeburtstage</option>
+              <option value="sonstiges">Sonstiges</option>
+            </select>
+          </div>
           <div class="upload-area" id="upload-drop-area">
             <div class="upload-icon">Hochladen</div>
             <p class="upload-text">Klicken oder Datei hierher ziehen</p>
@@ -526,7 +539,7 @@ export const prerender = false;
   </div>
 
 	  <script>
-	    let authCredentials = sessionStorage.getItem('adminAuth') || '';
+	    let authCredentials = '';
 	    let editingSlotId: string | null = null;
 
     // Globale Datenspeicher für Übersicht & Kalender
@@ -534,29 +547,61 @@ export const prerender = false;
     let cachedSlots: any[] = [];
     let calendarWeekOffset = 0; // 0 = aktuelle Woche
 
-    // Auto-Login bei Seitenload wenn Session vorhanden
-    if (authCredentials) {
-      // Credentials validieren mit einem Test-Request
-      fetch('/api/admin/slots', { headers: { 'Authorization': `Basic ${authCredentials}` } })
-        .then(res => {
-          if (res.ok) {
-            document.getElementById('login-screen')?.classList.add('hidden');
-            document.getElementById('admin-panel')?.classList.remove('hidden');
-            Promise.all([loadSlots(), loadBookings()]).then(() => {
-              renderOverview();
-              renderWeekCalendar();
-            });
+    function showAdminPanel(userType?: string | null) {
+      document.getElementById('login-screen')?.classList.add('hidden');
+      document.getElementById('twofa-screen')?.classList.add('hidden');
+      document.getElementById('admin-panel')?.classList.remove('hidden');
+      if (userType === 'superuser') {
+        document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+      }
+      Promise.all([loadSlots(), loadBookings()]).then(() => {
+        renderOverview();
+        renderWeekCalendar();
+      });
+    }
+
+    // Auto-Login bei Seitenload:
+    // 1. localStorage (Gerät merken, persistent) → device-check auf Server
+    // 2. sessionStorage (aktuelle Sitzung)
+    (async function tryAutoLogin() {
+      const storedCreds = localStorage.getItem('adminAuth');
+      if (storedCreds) {
+        try {
+          const res = await fetch('/api/admin/verify-2fa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'device-check' }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            authCredentials = storedCreds;
+            showAdminPanel(data.userType);
+            return;
           } else {
-            // Credentials ungültig - Session löschen
-            authCredentials = '';
+            // Gerätevertrauen abgelaufen oder Server neugestartet
+            localStorage.removeItem('adminAuth');
+          }
+        } catch { /* Netzwerkfehler - weiter mit sessionStorage */ }
+      }
+
+      const sessionCreds = sessionStorage.getItem('adminAuth');
+      if (sessionCreds) {
+        try {
+          const res = await fetch('/api/admin/slots', {
+            headers: { 'Authorization': `Basic ${sessionCreds}` },
+          });
+          if (res.ok) {
+            authCredentials = sessionCreds;
+            showAdminPanel(null);
+            return;
+          } else {
             sessionStorage.removeItem('adminAuth');
           }
-        })
-        .catch(() => {
-          authCredentials = '';
+        } catch {
           sessionStorage.removeItem('adminAuth');
-        });
-    }
+        }
+      }
+    })();
 
     // Hilfsfunktion: HTML escapen
     function escapeHtml(text: string): string {
@@ -727,20 +772,13 @@ export const prerender = false;
         // Superuser oder Admin ohne 2FA - direkter Login
         if (!result.requires2FA) {
           authCredentials = result.credentials;
-          sessionStorage.setItem('adminAuth', authCredentials);
-          document.getElementById('login-screen')?.classList.add('hidden');
-          document.getElementById('admin-panel')?.classList.remove('hidden');
-
-          // Zeige 2FA-Setup-Button nur für Superuser
-          if (result.userType === 'superuser') {
-            document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+          if (result.trustedDevice) {
+            // Gerät ist vertraut → persistent in localStorage speichern
+            localStorage.setItem('adminAuth', authCredentials);
+          } else {
+            sessionStorage.setItem('adminAuth', authCredentials);
           }
-
-          // Paralleles Laden für schnellere Ladezeiten + Übersicht
-          Promise.all([loadSlots(), loadBookings()]).then(() => {
-            renderOverview();
-            renderWeekCalendar();
-          });
+          showAdminPanel(result.userType);
           return;
         }
 
@@ -783,20 +821,13 @@ export const prerender = false;
 
         if (result.success) {
           authCredentials = result.credentials;
-          sessionStorage.setItem('adminAuth', authCredentials);
-          document.getElementById('twofa-screen')?.classList.add('hidden');
-          document.getElementById('admin-panel')?.classList.remove('hidden');
-
-          // Zeige 2FA-Setup-Button für Superuser
-          if (result.userType === 'superuser') {
-            document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+          if (trustDevice) {
+            // "Gerät merken" → persistent in localStorage speichern
+            localStorage.setItem('adminAuth', authCredentials);
+          } else {
+            sessionStorage.setItem('adminAuth', authCredentials);
           }
-
-          // Paralleles Laden für schnellere Ladezeiten + Übersicht
-          Promise.all([loadSlots(), loadBookings()]).then(() => {
-            renderOverview();
-            renderWeekCalendar();
-          });
+          showAdminPanel(result.userType);
         } else {
           const errorEl = document.getElementById('twofa-error');
           if (errorEl) {
@@ -826,7 +857,14 @@ export const prerender = false;
     document.getElementById('logout-btn')?.addEventListener('click', () => {
       authCredentials = '';
       sessionStorage.removeItem('adminAuth');
+      localStorage.removeItem('adminAuth');
       pending2FASessionId = '';
+      // Gerätevertrauen auf dem Server löschen (fire & forget)
+      fetch('/api/admin/verify-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logout-device' }),
+      }).catch(() => {});
       document.getElementById('admin-panel')?.classList.add('hidden');
       document.getElementById('twofa-screen')?.classList.add('hidden');
       document.getElementById('setup-2fa-btn')?.classList.add('hidden');
@@ -993,25 +1031,44 @@ export const prerender = false;
 	            // Event-Typ Badge
 	            let eventBadge = '';
 	            if (slot.eventType === 'kindergeburtstag') {
-	              eventBadge = '<span class="event-badge event-kindergeburtstag">Kindergeburtstag</span>';
+	              eventBadge = '<span class="sc__badge sc__badge--kinder">Kindergeburtstag</span>';
 	            } else if (slot.eventType === 'stammtisch') {
-	              eventBadge = '<span class="event-badge event-stammtisch">Stammtisch</span>';
+	              eventBadge = '<span class="sc__badge sc__badge--stammtisch">Stammtisch</span>';
 	            }
 
+	            const d = new Date(slot.date + 'T00:00:00');
+	            const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
+	            const dayNum = d.toLocaleDateString('de-DE', { day: '2-digit' });
+	            const monthYear = d.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+	            const isSpecial = slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch';
+	            const filled = slot.maxCapacity - slot.available;
+	            const pct = slot.maxCapacity > 0 ? Math.round((filled / slot.maxCapacity) * 100) : 0;
+	            const capColor = slot.available === 0 ? '#ef4444' : slot.available <= 3 ? '#f97316' : '#22c55e';
+
 	            return `
-	              <div class="slot-card ${slot.eventType !== 'normal' && slot.eventType ? 'slot-special-event' : ''}" data-id="${slot.id}">
-	                <div class="slot-info">
-	                  <div class="slot-date">${formatDate(slot.date)} ${eventBadge}</div>
-	                  <div class="slot-time">${slot.time}${slot.endTime ? ' - ' + slot.endTime : ''} Uhr</div>
-	                  <div class="slot-capacity">
-	                    ${slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch'
-	                      ? '<strong>Zeitfenster belegt</strong>'
-	                      : `${slot.available} / ${slot.maxCapacity} Plätze frei`}
+	              <div class="sc ${isSpecial ? 'sc--special' : ''}" data-id="${slot.id}">
+	                <div class="sc__body">
+	                  <div class="sc__date-block">
+	                    <span class="sc__weekday">${weekday}</span>
+	                    <span class="sc__day">${dayNum}</span>
+	                    <span class="sc__monthyear">${monthYear}</span>
+	                  </div>
+	                  <div class="sc__info">
+	                    <div class="sc__time-row">
+	                      <span class="sc__time">${slot.time}${slot.endTime ? ' – ' + slot.endTime : ''} Uhr</span>
+	                      ${eventBadge}
+	                    </div>
+	                    ${isSpecial
+	                      ? '<div class="sc__cap-special">Zeitfenster belegt</div>'
+	                      : `<div class="sc__cap-row">
+	                          <div class="sc__cap-bar"><div class="sc__cap-fill" style="width:${pct}%;background:${capColor}"></div></div>
+	                          <span class="sc__cap-txt" style="color:${capColor}">${slot.available} / ${slot.maxCapacity} frei</span>
+	                        </div>`}
 	                  </div>
 	                </div>
-	                <div class="slot-actions">
-	                  <button class="btn btn-secondary btn-edit" data-id="${slot.id}">Bearbeiten</button>
-	                  <button class="btn btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
+	                <div class="sc__actions">
+	                  <button class="btn btn-sm btn-secondary btn-edit" data-id="${slot.id}">Bearbeiten</button>
+	                  <button class="btn btn-sm btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
 	                </div>
 	              </div>
 	            `;
@@ -1191,39 +1248,34 @@ export const prerender = false;
 
 		              const status = booking.status || 'confirmed';
 		              let statusLabel = 'Zugesagt';
-		              let statusClass = 'booking-status--confirmed';
 		              if (status === 'pending') {
-		                statusLabel = 'Neue Anfrage – bitte bestätigen';
-		                statusClass = 'booking-status--pending';
+		                statusLabel = 'Neue Anfrage';
 		              } else if (status === 'cancelled') {
 		                statusLabel = 'Abgesagt';
-		                statusClass = 'booking-status--cancelled';
 		              }
 
 		              const showConfirm = status === 'pending';
 		              const showCancel = status !== 'cancelled';
+		              const today = new Date(); today.setHours(0,0,0,0);
+		              const isPast = booking.slotDate ? new Date(booking.slotDate + 'T00:00:00') < today : false;
+		              const contactParts = [booking.email, booking.phone].filter(Boolean);
 
 		              return `
-		                <div class="slot-card booking-card" data-id="${booking.id}">
-		                  <div class="slot-info booking-info">
-		                    <div class="booking-main">
-		                      <div>
-		                        <div class="slot-date">${dateLabel}</div>
-		                        <div class="slot-time">${timeLabel}</div>
-		                      </div>
-		                      <div class="booking-status ${statusClass}">${statusLabel}</div>
-		                    </div>
-		                    <div class="booking-customer">
-		                      <div><strong>${booking.name}</strong>${booking.email ? ` (${booking.email})` : ''}</div>
-		                      <div>${booking.participants} Person(en)</div>
-		                      ${booking.participantNames && booking.participantNames.length > 0 ? `<div class="booking-participant-names">Teilnehmer: ${booking.participantNames.map((n: string) => escapeHtml(n)).join(', ')}</div>` : ''}
-		                      ${booking.notes ? `<div class="booking-notes">${escapeHtml(booking.notes)}</div>` : ''}
-		                    </div>
+		                <div class="bc bc--${status}${isPast ? ' bc--past' : ''}" data-id="${booking.id}">
+		                  <div class="bc__header">
+		                    <div class="bc__name">${escapeHtml(booking.name)}</div>
+		                    <span class="bc__status bc__status--${status}">${statusLabel}</span>
 		                  </div>
-		                  <div class="slot-actions booking-actions">
-		                    ${showConfirm ? `<button class="btn btn-success btn-confirm-booking" data-id="${booking.id}">Zusagen</button>` : ''}
-		                    ${showCancel ? `<button class="btn btn-danger btn-cancel-booking" data-id="${booking.id}">Absagen</button>` : ''}
-		                    <button class="btn btn-secondary btn-edit-booking" data-id="${booking.id}">Bearbeiten</button>
+		                  <div class="bc__datetime">
+		                    ${dateLabel}${timeLabel ? ' &middot; ' + timeLabel : ''}${booking.participants ? ' &middot; ' + booking.participants + ' Person(en)' : ''}
+		                  </div>
+		                  ${contactParts.length > 0 ? `<div class="bc__contact">${contactParts.map(v => escapeHtml(v)).join(' &middot; ')}</div>` : ''}
+		                  ${booking.participantNames && booking.participantNames.length > 0 ? `<div class="bc__names">Teilnehmer: ${booking.participantNames.map((n: string) => escapeHtml(n)).join(', ')}</div>` : ''}
+		                  ${booking.notes ? `<div class="bc__notes">${escapeHtml(booking.notes)}</div>` : ''}
+		                  <div class="bc__actions">
+		                    ${showConfirm ? `<button class="btn btn-sm btn-success btn-confirm-booking" data-id="${booking.id}">Zusagen</button>` : ''}
+		                    ${showCancel ? `<button class="btn btn-sm btn-danger btn-cancel-booking" data-id="${booking.id}">Absagen</button>` : ''}
+		                    <button class="btn btn-sm btn-secondary btn-edit-booking" data-id="${booking.id}">Bearbeiten</button>
 		                  </div>
 		                </div>
 		              `;
@@ -1937,10 +1989,13 @@ export const prerender = false;
 
     // ========== GALERIE VERWALTUNG (S3) ==========
     const GALLERY_CATEGORIES = [
-      { id: 'tassen', name: 'Tassen' },
-      { id: 'teller', name: 'Teller' },
-      { id: 'spardosen', name: 'Spardosen & Krüge & Boxen' },
-      { id: 'anhaenger', name: 'Weihnachtsanhänger' },
+      { id: 'tassen', name: 'Tassen & Becher' },
+      { id: 'teller', name: 'Teller & Schalen' },
+      { id: 'figuren', name: 'Figuren & Deko' },
+      { id: 'spardosen', name: 'Spardosen & Krüge' },
+      { id: 'anhaenger', name: 'Anhänger & Schmuck' },
+      { id: 'kindergeburtstag', name: 'Kindergeburtstage' },
+      { id: 'sonstiges', name: 'Sonstiges' },
     ];
 
     let galleryImages: any[] = [];
@@ -1975,8 +2030,12 @@ export const prerender = false;
 
     async function uploadGalleryFile(file: File) {
       if (!uploadStatus) return;
+
+      const catSelect = document.getElementById('gallery-cat-select') as HTMLSelectElement;
+      const selectedCat = catSelect?.value || '';
+
       uploadStatus.className = 'upload-status uploading';
-      uploadStatus.textContent = `Uploading ${file.name}...`;
+      uploadStatus.textContent = `Wird hochgeladen...`;
 
       try {
         const formData = new FormData();
@@ -1995,8 +2054,22 @@ export const prerender = false;
         }
 
         const result = await response.json();
+
+        // Kategorie sofort speichern wenn ausgewählt
+        if (selectedCat && result.filename) {
+          await fetch('/api/gallery-metadata', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${authCredentials}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename: result.filename, category: selectedCat }),
+          });
+        }
+
+        const catName = GALLERY_CATEGORIES.find(c => c.id === selectedCat)?.name || 'ohne Kategorie';
         uploadStatus.className = 'upload-status success';
-        uploadStatus.textContent = `✓ Hochgeladen: ${result.filename}`;
+        uploadStatus.textContent = `✓ Hochgeladen${selectedCat ? ` → ${catName}` : ' (ohne Kategorie)'}`;
         fileInput.value = '';
         await loadGalleryData();
       } catch (error) {
