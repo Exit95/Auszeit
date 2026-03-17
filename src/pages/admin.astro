@@ -1055,7 +1055,7 @@ export const prerender = false;
 	                  </div>
 	                  <div class="sc__info">
 	                    <div class="sc__time-row">
-	                      <span class="sc__time">${slot.time}${slot.endTime ? ' – ' + slot.endTime : ''} Uhr</span>
+	                      <span class="sc__time">${slot.time}${slot.endTime ? ' bis ' + slot.endTime : ''} Uhr</span>
 	                      ${eventBadge}
 	                    </div>
 	                    ${isSpecial
@@ -2578,7 +2578,7 @@ export const prerender = false;
       // Wochenlabel
       const startStr = days[0].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
       const endStr = days[6].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      if (labelEl) labelEl.textContent = `${startStr} – ${endStr}`;
+      if (labelEl) labelEl.textContent = `${startStr} bis ${endStr}`;
 
       // Slots und Buchungen pro Tag gruppieren
       let html = '<div class="cal-grid">';
@@ -2679,7 +2679,7 @@ export const prerender = false;
 
           html += `<div class="day-detail-slot">`;
           html += `<div class="day-detail-slot-header">`;
-          html += `<strong>${slot.time}${slot.endTime ? ' – ' + slot.endTime : ''} Uhr</strong>`;
+          html += `<strong>${slot.time}${slot.endTime ? ' bis ' + slot.endTime : ''} Uhr</strong>`;
           html += `<span class="day-detail-capacity">${booked}/${slot.maxCapacity} Plätze</span>`;
           if (badge) html += `<span class="day-detail-badge">${badge}</span>`;
           html += `</div>`;

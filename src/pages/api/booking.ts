@@ -131,7 +131,7 @@ export const POST: APIRoute = async ({ request }) => {
 	    const adminEmailData = {
 	      to: bookingEmail,
 	      from: fromEmail,
-	      subject: `Neue Buchung: ${name} – ${date} ${timeDisplay} Uhr`,
+	      subject: `Neue Buchung: ${name} | ${date} ${timeDisplay} Uhr`,
         html: bookingRequestAdminHtml({
           name, email,
           phone: phone || 'Nicht angegeben',
@@ -150,7 +150,7 @@ export const POST: APIRoute = async ({ request }) => {
 		    const customerEmailData = {
 	      to: email,
 	      from: fromEmail,
-		      subject: `Buchungsanfrage eingegangen – Atelier Auszeit am ${date} um ${timeDisplay} Uhr`,
+		      subject: `Buchungsanfrage eingegangen | Atelier Auszeit am ${date} um ${timeDisplay} Uhr`,
           html: bookingRequestCustomerHtml({
             name, date, time: timeDisplay,
             participants,

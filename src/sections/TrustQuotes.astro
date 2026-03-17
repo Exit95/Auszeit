@@ -1,0 +1,216 @@
+---
+// Trust-Zitate – Echte Bewertungen von der API, rotierend alle 5 Sekunden
+---
+
+<section class="trust" aria-label="Kundenstimmen">
+  <div class="trust__inner">
+    <div class="trust__badge">
+      <span class="trust__stars">★★★★★</span>
+      <span class="trust__count" id="trust-count">Bewertungen werden geladen…</span>
+    </div>
+
+    <div class="trust__quotes" id="trust-quotes">
+      <blockquote class="trust__quote trust__quote--loading">
+        <p>&nbsp;</p>
+        <cite>&nbsp;</cite>
+      </blockquote>
+      <blockquote class="trust__quote trust__quote--loading">
+        <p>&nbsp;</p>
+        <cite>&nbsp;</cite>
+      </blockquote>
+    </div>
+  </div>
+</section>
+
+<style>
+  .trust {
+    padding: var(--space-8) var(--gutter);
+    background: var(--color-soft-cream, #FAF8F3);
+  }
+
+  .trust__inner {
+    max-width: 860px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .trust__badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: var(--space-5);
+    flex-wrap: wrap;
+  }
+
+  .trust__stars {
+    color: var(--color-terracotta, #D96C4A);
+    font-size: 1.25rem;
+    letter-spacing: 2px;
+  }
+
+  .trust__count {
+    color: var(--color-text-secondary, #5D4E43);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .trust__quotes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    min-height: 120px;
+  }
+
+  .trust__quote {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(66, 52, 48, 0.08);
+    border-radius: 14px;
+    padding: var(--space-4) var(--space-5);
+    margin: 0;
+    text-align: left;
+    position: relative;
+    transition: opacity 0.4s ease;
+  }
+
+  .trust__quote--loading {
+    opacity: 0.3;
+  }
+
+  .trust__quote--fade {
+    opacity: 0;
+  }
+
+  .trust__quote p {
+    color: var(--color-text-primary, #2D2D2D);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    margin: 0 0 0.75rem;
+    font-style: italic;
+  }
+
+  .trust__quote cite {
+    color: var(--color-terracotta, #D96C4A);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  @media (max-width: 639px) {
+    .trust__quotes {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+
+    .trust {
+      padding: var(--space-6) var(--gutter);
+    }
+
+    .trust__quote {
+      padding: var(--space-3) var(--space-4);
+    }
+  }
+</style>
+
+<script>
+  interface Review {
+    name: string;
+    rating: number;
+    comment: string;
+    date: string;
+  }
+
+  let reviews: Review[] = [];
+  let currentIndex = 0;
+  let rotationInterval: ReturnType<typeof setInterval> | null = null;
+
+  function escapeHtml(text: string): string {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+  }
+
+  function truncate(text: string, max: number): string {
+    if (text.length <= max) return text;
+    return text.slice(0, max).replace(/\s+\S*$/, '') + '…';
+  }
+
+  function getQuotePair(index: number): [Review, Review] {
+    const a = reviews[index % reviews.length];
+    const b = reviews[(index + 1) % reviews.length];
+    return [a, b];
+  }
+
+  function renderPair(pair: [Review, Review]) {
+    const container = document.getElementById('trust-quotes');
+    if (!container) return;
+    const quotes = container.querySelectorAll('.trust__quote');
+
+    // Fade out
+    quotes.forEach(q => q.classList.add('trust__quote--fade'));
+
+    setTimeout(() => {
+      pair.forEach((review, i) => {
+        const el = quotes[i];
+        if (!el) return;
+        const p = el.querySelector('p');
+        const cite = el.querySelector('cite');
+        if (p) p.innerHTML = '„' + escapeHtml(truncate(review.comment, 160)) + '"';
+        if (cite) cite.textContent = '— ' + review.name;
+        el.classList.remove('trust__quote--loading', 'trust__quote--fade');
+      });
+    }, 400);
+  }
+
+  function rotate() {
+    currentIndex = (currentIndex + 2) % reviews.length;
+    renderPair(getQuotePair(currentIndex));
+  }
+
+  async function init() {
+    try {
+      const res = await fetch('/api/reviews');
+      const data: Review[] = await res.json();
+
+      // Nur Bewertungen mit Kommentar (mindestens 20 Zeichen)
+      reviews = data.filter(r => r.comment && r.comment.length >= 20);
+
+      if (reviews.length < 2) return;
+
+      // Zufällig mischen
+      for (let i = reviews.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [reviews[i], reviews[j]] = [reviews[j], reviews[i]];
+      }
+
+      // Durchschnitt berechnen
+      const avg = (data.reduce((s, r) => s + r.rating, 0) / data.length).toFixed(1).replace('.', ',');
+      const countEl = document.getElementById('trust-count');
+      if (countEl) countEl.textContent = `${avg} von 5 · ${data.length} Bewertungen`;
+
+      // Erstes Paar anzeigen
+      renderPair(getQuotePair(0));
+
+      // Alle 6 Sekunden rotieren
+      rotationInterval = setInterval(rotate, 6000);
+
+      // Pause bei Hover
+      const container = document.getElementById('trust-quotes');
+      container?.addEventListener('mouseenter', () => {
+        if (rotationInterval) clearInterval(rotationInterval);
+      });
+      container?.addEventListener('mouseleave', () => {
+        rotationInterval = setInterval(rotate, 6000);
+      });
+
+    } catch {
+      // Bei Fehler statische Fallback-Texte stehen lassen
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>

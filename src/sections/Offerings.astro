@@ -119,10 +119,10 @@ if (isS3Configured()) {
   }
 } else {
   productGalleries = {
-    'Tassen': getImagesFromFolder('products/tassen', '/becher.jpeg'),
-    'Teller': getImagesFromFolder('products/teller', '/teller.jpeg'),
-    'Spardosen & Krüge & Boxen': getImagesFromFolder('products/spardosen', '/spardose.jpeg'),
-    'Weihnachtsanhänger': getImagesFromFolder('products/anhaenger', '/anhänger.png'),
+    'Tassen': [...new Set(getImagesFromFolder('products/tassen', '/becher.jpeg'))],
+    'Teller': [...new Set(getImagesFromFolder('products/teller', '/teller.jpeg'))],
+    'Spardosen & Krüge & Boxen': [...new Set(getImagesFromFolder('products/spardosen', '/spardose.jpeg'))],
+    'Weihnachtsanhänger': [...new Set(getImagesFromFolder('products/anhaenger', '/anhänger.png'))],
   };
 }
 
@@ -169,7 +169,7 @@ const products = [
   <div class="off__head">
     <span class="off__eyebrow">Handbemalte Keramik aus Gronau</span>
     <h2 id="off-title" class="off__title">Unser Angebot</h2>
-    <p class="off__sub">Wähle dein Lieblingsstück und gestalte es ganz nach deinen Vorstellungen – ein echtes Unikat, das bleibt.</p>
+    <p class="off__sub">Wähle dein Lieblingsstück und gestalte es ganz nach deinen Vorstellungen. Ein echtes Unikat, das bleibt.</p>
   </div>
 
   <!-- Bento-Grid -->
@@ -182,7 +182,7 @@ const products = [
         data-product-images={JSON.stringify(p.images)}
         role="button"
         tabindex="0"
-        aria-label={`${p.name} – Bilder ansehen`}
+        aria-label={`${p.name}: Bilder ansehen`}
       >
         <div class="ocard__img-wrap">
           <img
@@ -340,22 +340,6 @@ const products = [
 
   .ocard:hover .ocard__img { transform: scale(1.07); }
   .ocard:hover .ocard__overlay { opacity: 0.85; }
-
-  /* Tag badge */
-  .ocard__tag {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    background: #c9956e;
-    color: #fff;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 0.25rem 0.65rem;
-    border-radius: 99px;
-    z-index: 2;
-  }
 
   /* Body text */
   .ocard__body {

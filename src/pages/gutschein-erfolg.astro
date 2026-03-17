@@ -1,9 +1,9 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import Button from "../components/Button.astro";
 import { getVoucherBySessionId, createVoucher, formatAmount } from "../lib/voucher-storage";
 import { generateVoucherQRDataUrl } from "../lib/voucher-pdf";
 import { getEnv, FROM_EMAIL, isSmtpConfigured } from "../lib/env";
+import { voucherPurchasedCustomerHtml } from "../lib/email-templates";
 import Stripe from "stripe";
 import { createSmtpTransporter } from "../lib/smtp";
 export const prerender = false;
@@ -12,8 +12,10 @@ const sessionId = Astro.url.searchParams.get('session_id');
 let voucher = sessionId ? await getVoucherBySessionId(sessionId) : null;
 let qrDataUrl = '';
 let errorMsg = '';
+let emailAlreadySent = !!voucher; // Webhook hat bereits gesendet
 
 // Wenn noch kein Gutschein existiert, aber eine session_id da ist: direkt erstellen
+// (Fallback falls Webhook nicht durchkam)
 if (!voucher && sessionId) {
   try {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -22,7 +24,6 @@ if (!voucher && sessionId) {
     const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-12-18.acacia' as any });
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    // Nur bei erfolgreicher Zahlung
     if (session.payment_status === 'paid' && session.metadata?.voucher_type) {
       const customerEmail = session.customer_details?.email || session.customer_email || '';
 
@@ -36,42 +37,22 @@ if (!voucher && sessionId) {
         });
         console.log(`[Erfolgsseite] Gutschein erstellt: ${voucher.code} für ${customerEmail}`);
 
-        // E-Mail senden
-        if (isSmtpConfigured() && voucher) {
+        // E-Mail nur senden wenn Webhook sie nicht schon gesendet hat
+        // (createVoucher ist idempotent - wenn es neu erstellt wurde, kam der Webhook nicht durch)
+        if (isSmtpConfigured() && voucher && !emailAlreadySent) {
           try {
             const siteUrl = getEnv('SITE_URL', 'https://keramik-auszeit.de');
             const redeemUrl = `${siteUrl}/gutschein/einloesen/${voucher.code}`;
             const qrImg = await generateVoucherQRDataUrl(redeemUrl);
             const amountStr = formatAmount(voucher.amount);
             const transporter = createSmtpTransporter();
-            const html = `
-              <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #faf7f4; border-radius: 16px; overflow: hidden;">
-                <div style="background: linear-gradient(135deg, #423430 0%, #8B6F47 100%); padding: 30px; text-align: center;">
-                  <h1 style="color: #f2ebe5; margin: 0; font-size: 24px;">🎨 Atelier Auszeit</h1>
-                  <p style="color: #CFA874; margin: 8px 0 0;">Gutschein</p>
-                </div>
-                <div style="padding: 30px; text-align: center;">
-                  <p style="color: #423430; font-size: 16px;">Vielen Dank für deinen Kauf!</p>
-                  <div style="background: white; border: 2px dashed #CFA874; border-radius: 12px; padding: 24px; margin: 20px 0;">
-                    <p style="color: #8B6F47; font-size: 14px; margin: 0 0 8px;">Gutschein-Code</p>
-                    <p style="color: #423430; font-size: 28px; font-weight: bold; margin: 0; letter-spacing: 2px;">${voucher.code}</p>
-                    <p style="color: #423430; font-size: 32px; font-weight: bold; margin: 16px 0 0;">${amountStr}</p>
-                  </div>
-                  <div style="margin: 20px 0;">
-                    <img src="${qrImg}" alt="QR-Code" style="width: 180px; height: 180px;" />
-                    <p style="color: #8B6F47; font-size: 12px; margin: 8px 0 0;">QR-Code scannen zum Einlösen</p>
-                  </div>
-                  <p style="color: #666; font-size: 13px; line-height: 1.6;">
-                    Zeige diesen Gutschein einfach im Atelier vor.<br>
-                    Der QR-Code kann direkt gescannt werden.
-                  </p>
-                  <hr style="border: none; border-top: 1px solid #e8e0d8; margin: 20px 0;" />
-                  <p style="color: #999; font-size: 11px;">
-                    Atelier Auszeit · Irena Woschkowiak · Gronau<br>
-                    <a href="${siteUrl}" style="color: #8B6F47;">keramik-auszeit.de</a>
-                  </p>
-                </div>
-              </div>`;
+            const html = voucherPurchasedCustomerHtml({
+              code: voucher.code,
+              amount: amountStr,
+              qrDataUrl: qrImg,
+              redeemUrl,
+              customerName: voucher.customerName,
+            });
             await transporter.sendMail({
               from: `"Atelier Auszeit" <${FROM_EMAIL}>`,
               to: voucher.customerEmail,
@@ -95,172 +76,580 @@ if (voucher) {
   const siteUrl = getEnv('SITE_URL', 'https://keramik-auszeit.de');
   qrDataUrl = await generateVoucherQRDataUrl(`${siteUrl}/gutschein/einloesen/${voucher.code}`);
 }
+
+const amountDisplay = voucher ? formatAmount(voucher.amount) : '';
 ---
 
 <MainLayout title="Gutschein erfolgreich gekauft | Atelier Auszeit" description="Dein Gutschein für Atelier Auszeit wurde erfolgreich gekauft.">
-  <section class="success">
-    <div class="success__card">
-      <div class="success__icon">✓</div>
-      <h1 class="success__title">Vielen Dank für deinen Kauf!</h1>
+  <section class="erfolg">
+    <div class="erfolg__container">
 
       {voucher ? (
-        <div class="success__voucher">
-          <p class="success__text">Dein Gutschein ist sofort gültig!</p>
-          <div class="success__voucher-code">
-            <span class="success__voucher-label">Gutschein-Code</span>
-            <span class="success__voucher-value">{voucher.code}</span>
-            <span class="success__voucher-amount">{formatAmount(voucher.amount)}</span>
-          </div>
-          {qrDataUrl && (
-            <div class="success__qr">
-              <img src={qrDataUrl} alt="QR-Code" width="160" height="160" />
-              <p class="success__qr-hint">QR-Code im Atelier vorzeigen</p>
+        <div class="erfolg__layout">
+          <!-- Linke Seite: Gutschein-Karte -->
+          <div class="gutschein-card">
+            <div class="gutschein-card__header">
+              <span class="gutschein-card__brand-line">Handbemalte Keramik</span>
+              <span class="gutschein-card__brand">Atelier Auszeit</span>
+              <span class="gutschein-card__brand-sub">Irena Woschkowiak · Gronau</span>
             </div>
-          )}
-          <p class="success__info">
-            Du erhältst den Gutschein auch per E-Mail. Einfach im Atelier vorzeigen, fertig!
-          </p>
+
+            <div class="gutschein-card__body">
+              <div class="gutschein-card__amount-block">
+                <span class="gutschein-card__label">Gutschein</span>
+                <span class="gutschein-card__amount">{amountDisplay}</span>
+              </div>
+
+              <div class="gutschein-card__divider"></div>
+
+              <div class="gutschein-card__code-block">
+                <span class="gutschein-card__code-label">Code</span>
+                <span class="gutschein-card__code" id="voucher-code">{voucher.code}</span>
+                <button class="gutschein-card__copy-btn" id="copy-code-btn" type="button" title="Code kopieren">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <span id="copy-label">Kopieren</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="gutschein-card__footer">
+              Einlösbar im Atelier Auszeit · Feldstiege 6a · 48599 Gronau
+            </div>
+          </div>
+
+          <!-- Rechte Seite: QR + Infos -->
+          <div class="erfolg__info">
+            <div class="erfolg__badge">Kauf erfolgreich</div>
+            <h1 class="erfolg__title">Dein Gutschein ist bereit!</h1>
+            <p class="erfolg__text">
+              Zeige den QR-Code oder den Gutschein-Code einfach im Atelier vor.
+              Der Gutschein ist sofort gültig und hat kein Ablaufdatum.
+            </p>
+
+            {qrDataUrl && (
+              <div class="erfolg__qr-card">
+                <img src={qrDataUrl} alt="QR-Code zum Einlösen" width="200" height="200" class="erfolg__qr-img" />
+                <span class="erfolg__qr-label">QR-Code scannen zum Einlösen</span>
+              </div>
+            )}
+
+            <div class="erfolg__hint-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+              <span>
+                Du erh&auml;ltst den Gutschein auch per E-Mail an <strong>{voucher.customerEmail}</strong>
+              </span>
+            </div>
+
+            <div class="erfolg__actions">
+              <a href="/" class="erfolg__btn erfolg__btn--primary">Zur Startseite</a>
+              <button type="button" class="erfolg__btn erfolg__btn--secondary" id="print-btn">Drucken / Speichern</button>
+            </div>
+          </div>
         </div>
       ) : (
-        <div>
-          <p class="success__text">
-            Dein Gutschein wurde erfolgreich bezahlt. Du erhältst in Kürze eine
+        <div class="erfolg__fallback">
+          <div class="erfolg__fallback-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+          </div>
+          <h1 class="erfolg__title">Zahlung erfolgreich!</h1>
+          <p class="erfolg__text">
+            Dein Gutschein wurde bezahlt. Du erh&auml;ltst in K&uuml;rze eine
             E-Mail mit deinem Gutschein-Code und QR-Code.
           </p>
-          <p class="success__info">
-            Falls die E-Mail nicht ankommt, kontaktiere uns einfach.
+          <p class="erfolg__text-small">
+            Falls die E-Mail nicht ankommt, kontaktiere uns unter
+            <a href="mailto:keramik-auszeit@web.de">keramik-auszeit@web.de</a>
           </p>
+          <a href="/" class="erfolg__btn erfolg__btn--primary">Zur Startseite</a>
         </div>
       )}
 
-      <div class="success__actions">
-        <Button href="/" variant="primary" size="large">
-          Zurück zur Startseite
-        </Button>
-      </div>
     </div>
   </section>
 </MainLayout>
 
+<script>
+  // Code kopieren
+  document.getElementById('copy-code-btn')?.addEventListener('click', async () => {
+    const code = document.getElementById('voucher-code')?.textContent?.trim();
+    const label = document.getElementById('copy-label');
+    if (!code || !label) return;
+
+    try {
+      await navigator.clipboard.writeText(code);
+      label.textContent = 'Kopiert!';
+      setTimeout(() => { label.textContent = 'Kopieren'; }, 2000);
+    } catch {
+      // Fallback
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      label.textContent = 'Kopiert!';
+      setTimeout(() => { label.textContent = 'Kopieren'; }, 2000);
+    }
+  });
+
+  // Drucken
+  document.getElementById('print-btn')?.addEventListener('click', () => {
+    window.print();
+  });
+</script>
+
 <style>
-  .success {
-    min-height: 80vh;
+  .erfolg {
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-8) var(--gutter);
-    background: linear-gradient(
-      135deg,
-      var(--color-clay-brown) 0%,
-      var(--color-warm-beige) 100%
-    );
+    padding: var(--space-6) var(--gutter);
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(207, 168, 116, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(217, 108, 74, 0.08) 0%, transparent 50%),
+      linear-gradient(160deg, #3d2a1e 0%, #5D4E43 40%, #E3D5CA 100%);
   }
 
-  .success__card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 18px;
-    padding: var(--space-8);
+  .erfolg__container {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* ── Zwei-Spalten-Layout ─────────────────────────────────── */
+  .erfolg__layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  /* ── Gutschein-Karte (links) ─────────────────────────────── */
+  .gutschein-card {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    position: relative;
+  }
+
+  .gutschein-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 20px;
+    border: 1px solid rgba(207, 168, 116, 0.3);
+    pointer-events: none;
+  }
+
+  .gutschein-card__header {
+    background: linear-gradient(135deg, #3d2a1e 0%, #5D4E43 100%);
+    padding: 32px 28px 26px;
     text-align: center;
-    max-width: 500px;
-    box-shadow: 0 20px 40px rgba(66, 52, 48, 0.15);
+    position: relative;
   }
 
-  .success__icon {
-    width: 80px;
-    height: 80px;
-    background: #4CAF50;
-    color: white;
-    font-size: 2.5rem;
-    font-weight: bold;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto var(--space-4);
+  .gutschein-card__header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 28px;
+    right: 28px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(207, 168, 116, 0.4), transparent);
   }
 
-  .success__title {
-    color: var(--brand-espresso, #423430);
-    font-size: 1.75rem;
-    margin-bottom: var(--space-3);
-  }
-
-  .success__text {
-    color: var(--color-text-secondary);
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: var(--space-3);
-  }
-
-  .success__info {
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.6;
-    background: rgba(242, 235, 229, 0.55);
-    padding: var(--space-3);
-    border-radius: 10px;
-    margin-bottom: var(--space-5);
-  }
-
-  .success__voucher-code {
-    background: white;
-    border: 2px dashed var(--accent-terra, #CFA874);
-    border-radius: 12px;
-    padding: var(--space-4);
-    margin: var(--space-3) 0;
-  }
-  .success__voucher-label {
+  .gutschein-card__brand-line {
     display: block;
-    color: var(--accent-terra, #8B6F47);
-    font-size: 0.85rem;
-    margin-bottom: var(--space-1);
+    color: #CFA874;
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 6px;
   }
-  .success__voucher-value {
+
+  .gutschein-card__brand {
     display: block;
-    font-family: monospace;
-    font-size: 1.5rem;
-    font-weight: 700;
+    color: #F2EBE5;
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: 1.6rem;
+    font-weight: 400;
     letter-spacing: 2px;
-    color: var(--brand-espresso, #423430);
-    margin-bottom: var(--space-2);
   }
-  .success__voucher-amount {
+
+  .gutschein-card__brand-sub {
     display: block;
-    font-size: 2rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-top: 6px;
+  }
+
+  .gutschein-card__body {
+    padding: 32px 28px;
+    text-align: center;
+  }
+
+  .gutschein-card__amount-block {
+    margin-bottom: 24px;
+  }
+
+  .gutschein-card__label {
+    display: block;
+    color: #8B6F47;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .gutschein-card__amount {
+    display: block;
+    font-size: 3rem;
     font-weight: 700;
     color: var(--brand-espresso, #423430);
+    line-height: 1;
   }
-  .success__qr {
-    margin: var(--space-3) 0;
+
+  .gutschein-card__divider {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #CFA874, transparent);
+    margin: 0 auto 24px;
   }
-  .success__qr img {
+
+  .gutschein-card__code-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .gutschein-card__code-label {
+    color: #a5947e;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .gutschein-card__code {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--brand-espresso, #423430);
+    background: rgba(242, 235, 229, 0.6);
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px dashed rgba(207, 168, 116, 0.4);
+  }
+
+  .gutschein-card__copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid rgba(66, 52, 48, 0.15);
     border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #8B6F47;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
   }
-  .success__qr-hint {
-    color: var(--accent-terra, #8B6F47);
-    font-size: 0.8rem;
+
+  .gutschein-card__copy-btn:hover {
+    background: rgba(242, 235, 229, 0.5);
+    border-color: #CFA874;
+  }
+
+  .gutschein-card__footer {
+    background: rgba(242, 235, 229, 0.5);
+    border-top: 1px solid rgba(207, 168, 116, 0.15);
+    padding: 14px 28px;
+    text-align: center;
+    color: #a5947e;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  /* ── Info-Seite (rechts) ─────────────────────────────────── */
+  .erfolg__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .erfolg__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(74, 124, 89, 0.15);
+    color: #5a9e6f;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 999px;
+    width: fit-content;
+    border: 1px solid rgba(74, 124, 89, 0.2);
+  }
+
+  .erfolg__badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4A7C59;
+    flex-shrink: 0;
+  }
+
+  .erfolg__title {
+    color: #F2EBE5;
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: 1.75rem;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .erfolg__text {
+    color: rgba(242, 235, 229, 0.7);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  /* QR-Code Karte */
+  .erfolg__qr-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .erfolg__qr-img {
+    border-radius: 12px;
+  }
+
+  .erfolg__qr-label {
+    color: #8B6F47;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* Hinweis-Box */
+  .erfolg__hint-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: rgba(242, 235, 229, 0.65);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .erfolg__hint-box svg {
+    flex-shrink: 0;
+    color: #CFA874;
+    margin-top: 1px;
+  }
+
+  .erfolg__hint-box strong {
+    color: rgba(242, 235, 229, 0.85);
+  }
+
+  /* Buttons */
+  .erfolg__actions {
+    display: flex;
+    gap: 12px;
     margin-top: var(--space-1);
   }
 
-  .success__actions {
-    display: flex;
+  .erfolg__btn {
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    border: none;
   }
 
-  @media (max-width: 639px) {
-    .success__card {
-      padding: var(--space-5);
+  .erfolg__btn--primary {
+    background: var(--accent-terra, #D96C4A);
+    color: white;
+  }
+
+  .erfolg__btn--primary:hover {
+    background: #c55a3a;
+    transform: translateY(-1px);
+  }
+
+  .erfolg__btn--secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(242, 235, 229, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .erfolg__btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #F2EBE5;
+  }
+
+  /* ── Fallback (kein Gutschein direkt verfügbar) ────────── */
+  .erfolg__fallback {
+    text-align: center;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .erfolg__fallback-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(74, 124, 89, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5a9e6f;
+  }
+
+  .erfolg__fallback .erfolg__title {
+    font-size: 1.5rem;
+  }
+
+  .erfolg__text-small {
+    color: rgba(242, 235, 229, 0.5);
+    font-size: 0.85rem;
+  }
+
+  .erfolg__text-small a {
+    color: #CFA874;
+    text-decoration: underline;
+  }
+
+  /* ── Print Styles ────────────────────────────────────────── */
+  @media print {
+    .erfolg {
+      background: white !important;
+      min-height: auto;
+      padding: 0;
     }
 
-    .success__title {
-      font-size: 1.5rem;
+    .erfolg__info {
+      display: none;
     }
 
-    .success__icon {
-      width: 60px;
-      height: 60px;
+    .erfolg__layout {
+      grid-template-columns: 1fr;
+    }
+
+    .gutschein-card {
+      box-shadow: none;
+      max-width: 400px;
+      margin: 0 auto;
+      border: 2px solid #ddd;
+    }
+
+    .gutschein-card__header {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+
+  /* ── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 767px) {
+    .erfolg {
+      padding: var(--space-4) var(--gutter);
+      align-items: flex-start;
+      padding-top: var(--space-6);
+    }
+
+    .erfolg__layout {
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+
+    .erfolg__info {
+      order: -1;
+    }
+
+    .erfolg__title {
+      font-size: 1.4rem;
+    }
+
+    .gutschein-card__amount {
+      font-size: 2.5rem;
+    }
+
+    .gutschein-card__code {
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+    }
+
+    .erfolg__qr-card {
+      padding: 20px;
+    }
+
+    .erfolg__qr-img {
+      width: 160px;
+      height: 160px;
+    }
+
+    .erfolg__actions {
+      flex-direction: column;
+    }
+
+    .erfolg__btn {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 374px) {
+    .gutschein-card__amount {
       font-size: 2rem;
+    }
+
+    .gutschein-card__code {
+      font-size: 1rem;
+      padding: 8px 14px;
+    }
+
+    .gutschein-card__body {
+      padding: 24px 20px;
     }
   }
 </style>
-

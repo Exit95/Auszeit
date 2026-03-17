@@ -173,11 +173,11 @@ export const POST: APIRoute = async ({ request }) => {
             await transporter.sendMail({
               from: `"Atelier Auszeit - Irena Woschkowiak" <${FROM_EMAIL}>`,
               to: booking.email,
-              subject: 'Ihre Buchung wurde storniert – Atelier Auszeit',
+              subject: 'Ihre Buchung wurde storniert | Atelier Auszeit',
               html: bookingCancelledCustomerHtml({
                 name: booking.name,
                 date: slot?.date,
-                time: slot?.endTime ? `${slot.time} – ${slot.endTime}` : slot?.time,
+                time: slot?.endTime ? `${slot.time} bis ${slot.endTime}` : slot?.time,
               }),
               text: `Liebe/r ${booking.name},\n\nIhre Buchung${slot ? ` am ${slot.date} um ${slot.time} Uhr` : ''} wurde storniert.\n\nFalls Sie einen neuen Termin buchen möchten, besuchen Sie unsere Webseite.\n\nHerzliche Grüße,\nIrena Woschkowiak\nAtelier Auszeit`,
             });

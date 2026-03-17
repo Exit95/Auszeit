@@ -249,7 +249,7 @@ export function bookingConfirmedCustomerHtml(p: {
       { label: 'Notizen', value: p.notes || '' },
     ])}
     ${para('Bitte kommen Sie <strong>pünktlich</strong>. Farben, Pinsel und der Glasurbrand sind im Kurspreis bereits enthalten.')}
-    ${para('Bei Fragen erreichen Sie uns jederzeit per E-Mail oder Telefon – wir helfen gerne.')}
+    ${para('Bei Fragen erreichen Sie uns jederzeit per E-Mail oder Telefon. Wir helfen gerne.')}
     ${divider()}
     ${cancelLink(p.cancelUrl)}
     ${signature()}
@@ -312,7 +312,45 @@ export function inquiryCustomerHtml(p: {
 }
 
 /**
- * 6. Admin-Benachrichtigung: neue Anfrage (Besondere Anlässe)
+ * 6. Gutschein-Bestätigung → Kunde
+ */
+export function voucherPurchasedCustomerHtml(p: {
+  code: string;
+  amount: string;
+  qrDataUrl: string;
+  redeemUrl: string;
+  customerName?: string;
+}): string {
+  const body = `
+    ${h2('Dein Gutschein ist da!')}
+    ${p.customerName ? greeting(p.customerName) : ''}
+    ${para('Vielen Dank für deinen Kauf! Dein Gutschein ist sofort gültig und kann jederzeit im Atelier eingelöst werden.')}
+
+    <div style="background:white;border:2px dashed ${C.accent};border-radius:14px;padding:28px 20px;margin:24px 0;text-align:center;">
+      <p style="margin:0 0 6px;color:${C.muted};font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Gutschein-Code</p>
+      <p style="margin:0 0 12px;color:${C.header};font-size:26px;font-weight:bold;font-family:monospace;letter-spacing:3px;">${p.code}</p>
+      <div style="width:60px;border-top:1px solid ${C.divider};margin:0 auto 12px;"></div>
+      <p style="margin:0;color:${C.header};font-size:34px;font-weight:bold;">${p.amount}</p>
+    </div>
+
+    <div style="text-align:center;margin:24px 0;">
+      <img src="${p.qrDataUrl}" alt="QR-Code zum Einl\u00f6sen" width="180" height="180" style="border-radius:10px;" />
+      <p style="margin:8px 0 0;color:${C.muted};font-size:12px;">QR-Code im Atelier vorzeigen</p>
+    </div>
+
+    ${para('Zeige diesen Gutschein einfach im Atelier vor \u2013 der QR-Code kann direkt gescannt werden.')}
+    ${divider()}
+    <p style="margin:0;color:${C.subtle};font-size:12px;line-height:1.6;">
+      Einl\u00f6se-Link: <a href="${p.redeemUrl}" style="color:${C.accent};text-decoration:underline;">${p.redeemUrl}</a>
+    </p>
+    ${signature()}
+  `;
+
+  return shell(body);
+}
+
+/**
+ * 7. Admin-Benachrichtigung: neue Anfrage (Besondere Anlässe)
  */
 export function inquiryAdminHtml(p: {
   name: string;

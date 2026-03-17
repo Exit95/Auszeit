@@ -1,0 +1,124 @@
+---
+// Persönliche Vorstellung – Vertrauensaufbau durch echtes Gesicht
+---
+
+<section class="profil" aria-label="Über Irena">
+  <div class="profil__inner">
+    <div class="profil__image-wrap">
+      <img
+        src="/profil.png"
+        alt="Irena Woschkowiak – Inhaberin von Atelier Auszeit in Gronau"
+        class="profil__image"
+        width="280"
+        height="280"
+        loading="lazy"
+      />
+    </div>
+    <div class="profil__text">
+      <span class="profil__eyebrow">Ihre Gastgeberin</span>
+      <h2 class="profil__name">Irena Woschkowiak</h2>
+      <p class="profil__bio">
+        Willkommen in meinem kleinen Atelier in Gronau! Bei mir findest du eine entspannte, kreative Auszeit vom Alltag.
+        Ob allein, mit Freunden oder als Familie – ich zeige dir Schritt für Schritt, wie du dein eigenes Keramik-Unikat gestaltest.
+        Keine Vorkenntnisse nötig, nur gute Laune.
+      </p>
+      <a href="#calendar-section" class="profil__cta">Jetzt Termin buchen</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .profil {
+    padding: var(--space-10) var(--gutter);
+    background: var(--color-background, #F2EBE5);
+  }
+
+  .profil__inner {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .profil__image-wrap {
+    flex-shrink: 0;
+  }
+
+  .profil__image {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 24px rgba(66, 52, 48, 0.12);
+  }
+
+  .profil__text {
+    flex: 1;
+  }
+
+  .profil__eyebrow {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-terracotta, #D96C4A);
+    margin-bottom: 0.5rem;
+  }
+
+  .profil__name {
+    font-family: var(--font-serif);
+    color: var(--color-clay-brown, #5D4E43);
+    font-size: 1.75rem;
+    margin: 0 0 1rem;
+  }
+
+  .profil__bio {
+    color: var(--color-text-secondary, #5D4E43);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin: 0 0 1.5rem;
+  }
+
+  .profil__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--color-terracotta, #D96C4A);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.75rem 1.75rem;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .profil__cta:hover {
+    background: var(--color-clay-brown, #5D4E43);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 639px) {
+    .profil {
+      padding: var(--space-8) var(--gutter);
+    }
+
+    .profil__inner {
+      flex-direction: column;
+      text-align: center;
+      gap: var(--space-4);
+    }
+
+    .profil__image {
+      width: 160px;
+      height: 160px;
+    }
+
+    .profil__name {
+      font-size: 1.5rem;
+    }
+  }
+</style>
