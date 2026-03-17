@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { addInquiry, getInquiries, updateInquiry } from '../../lib/storage';
 import { BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
 import { createSmtpTransporter } from '../../lib/smtp';
+import { inquiryCustomerHtml, inquiryAdminHtml } from '../../lib/email-templates';
 import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeDate } from '../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
 import type { InquiryEventType } from '../../lib/storage';
@@ -65,18 +66,34 @@ export const POST: APIRoute = async ({ request }) => {
         try {
           const transporter = createSmtpTransporter();
           const label = EVENT_TYPE_LABELS[eventType] || eventType;
+          // Admin-Benachrichtigung
           await transporter.sendMail({
             from: `"Atelier Auszeit" <${FROM_EMAIL}>`,
             to: BOOKING_EMAIL,
             subject: `Neue Anfrage: ${label} von ${name}`,
-            text: `Neue Anfrage über die Webseite:\n\nArt: ${label}\nName: ${name}\nE-Mail: ${email}\nTelefon: ${phone || 'Nicht angegeben'}\nWunschdatum: ${preferredDate || 'Nicht angegeben'}\nPersonen: ${participants}\n\nNachricht:\n${message || 'Keine Nachricht'}\n\nBitte im Admin-Panel unter "Anfragen" bearbeiten.`,
+            html: inquiryAdminHtml({
+              name, email,
+              phone: phone || 'Nicht angegeben',
+              eventLabel: label,
+              preferredDate: preferredDate || undefined,
+              participants,
+              message: message || undefined,
+            }),
+            text: `Neue Anfrage: ${label}\n\nName: ${name}\nE-Mail: ${email}\nTelefon: ${phone || 'Nicht angegeben'}\nWunschdatum: ${preferredDate || 'Flexibel'}\nPersonen: ${participants}\n\nNachricht:\n${message || 'Keine Nachricht'}`,
           });
           // Bestätigungs-E-Mail an Kunden
           await transporter.sendMail({
             from: `"Atelier Auszeit - Irena Woschkowiak" <${FROM_EMAIL}>`,
             to: email,
             subject: `Ihre Anfrage bei Atelier Auszeit: ${label}`,
-            text: `Liebe/r ${name},\n\nvielen Dank für Ihre Anfrage!\n\nArt: ${label}\nWunschdatum: ${preferredDate || 'Flexibel'}\nPersonen: ${participants}\n\nWir melden uns zeitnah bei Ihnen, um die Details zu besprechen.\n\nHerzliche Grüße,\nIrena Woschkowiak\nAtelier Auszeit\nFeldstiege 6a\n48599 Gronau\n\nTelefon: +49 176 34255005\nE-Mail: keramik-auszeit@web.de`,
+            html: inquiryCustomerHtml({
+              name,
+              eventLabel: label,
+              preferredDate: preferredDate || undefined,
+              participants,
+              message: message || undefined,
+            }),
+            text: `Liebe/r ${name},\n\nvielen Dank für Ihre Anfrage! Wir melden uns zeitnah.\n\nAnlass: ${label}\nWunschdatum: ${preferredDate || 'Flexibel'}\nPersonen: ${participants}\n${message ? `\nNachricht: ${message}\n` : ''}\nHerzliche Grüße,\nIrena Woschkowiak\nAtelier Auszeit`,
           });
         } catch (err) {
           console.error('Inquiry email error:', err);

@@ -3,6 +3,9 @@ import { verifyCancelToken } from '../../lib/cancel-token';
 import { getBookings, cancelBooking, getTimeSlots } from '../../lib/storage';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../lib/s3-storage';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
+import { isSmtpConfigured, FROM_EMAIL } from '../../lib/env';
+import { createSmtpTransporter } from '../../lib/smtp';
+import { bookingCancelledCustomerHtml } from '../../lib/email-templates';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -159,6 +162,30 @@ export const POST: APIRoute = async ({ request }) => {
         return new Response(JSON.stringify({ error: 'Buchung wurde bereits storniert' }), {
           status: 400, headers: { 'Content-Type': 'application/json' },
         });
+      }
+      // Stornierungsbestätigung per E-Mail
+      if (isSmtpConfigured() && booking.email) {
+        const slots = await getTimeSlots();
+        const slot = slots.find(s => s.id === booking.slotId);
+        const sendCancelMail = async () => {
+          try {
+            const transporter = createSmtpTransporter();
+            await transporter.sendMail({
+              from: `"Atelier Auszeit - Irena Woschkowiak" <${FROM_EMAIL}>`,
+              to: booking.email,
+              subject: 'Ihre Buchung wurde storniert – Atelier Auszeit',
+              html: bookingCancelledCustomerHtml({
+                name: booking.name,
+                date: slot?.date,
+                time: slot?.endTime ? `${slot.time} – ${slot.endTime}` : slot?.time,
+              }),
+              text: `Liebe/r ${booking.name},\n\nIhre Buchung${slot ? ` am ${slot.date} um ${slot.time} Uhr` : ''} wurde storniert.\n\nFalls Sie einen neuen Termin buchen möchten, besuchen Sie unsere Webseite.\n\nHerzliche Grüße,\nIrena Woschkowiak\nAtelier Auszeit`,
+            });
+          } catch (err) {
+            console.error('Stornierungsmail-Fehler:', err);
+          }
+        };
+        sendCancelMail().catch(() => {});
       }
       await cancelBooking(id);
     }

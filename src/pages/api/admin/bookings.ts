@@ -7,6 +7,7 @@ import { logAuditEvent } from '../../../lib/audit-log';
 import { validateCredentials } from '../../../lib/totp';
 import { createICalEvent } from '../../../lib/ical-helper';
 import { getCancelUrl } from '../../../lib/cancel-token';
+import { bookingConfirmedCustomerHtml } from '../../../lib/email-templates';
 
 // Authentifizierung - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
@@ -137,33 +138,14 @@ export const POST: APIRoute = async ({ request }) => {
 
 					const cancelUrl = getCancelUrl(updated.id, 'booking');
 
-					const customerHtml = `
-							  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-							    <h2 style="color: #8B6F47;">Dein Termin ist jetzt bestätigt</h2>
-							    <p>Liebe/r ${updated.name},</p>
-							    <p>wir haben deine Buchung im Atelier Auszeit gerade im System bestätigt.</p>
-							    <p><strong>Termin:</strong><br/>
-							    ${date || ''}${date && timeDisplay ? ' · ' : ''}${timeDisplay || ''}</p>
-							    <p><strong>Teilnehmer:</strong> ${updated.participants}</p>
-							    ${updated.notes ? `<p><strong>Notizen:</strong> ${updated.notes}</p>` : ''}
-							    <p style="margin-top: 20px;">
-							      <strong>Ort:</strong><br/>
-							      Atelier Auszeit<br/>
-							      Feldstiege 6a<br/>
-							      48599 Gronau
-							    </p>
-							    <p style="margin-top: 20px;">
-							      Wenn du Fragen hast oder etwas ändern möchtest, melde dich gerne bei uns:<br/>
-							      E-Mail: keramik-auszeit@web.de<br/>
-							      Telefon: +49 176 34255005
-							    </p>
-							    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
-							      <p style="font-size: 0.85rem; color: #999;">Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:<br/>
-							      <a href="${cancelUrl}" style="color: #dc2626;">Termin stornieren</a></p>
-							    </div>
-							    <p style="margin-top: 20px;">Herzliche Grüße<br/>Dein Atelier Auszeit</p>
-							  </div>
-							`;
+					const customerHtml = bookingConfirmedCustomerHtml({
+					name: updated.name,
+					date: date || '',
+					time: timeDisplay,
+					participants: updated.participants,
+					notes: updated.notes || undefined,
+					cancelUrl,
+				});
 
 					const customerText = `
 Liebe/r ${updated.name},

@@ -41,6 +41,14 @@ upload-server-data.ts
 upload-server-images.ts
 
 # ========================
+# Claude Code & IDE
+# ========================
+.claude/
+.vscode/
+deployment.md
+DEPLOYMENT.md
+
+# ========================
 # OS & IDE
 # ========================
 .DS_Store
