@@ -95,6 +95,12 @@ const { title = "Termin buchen" } = Astro.props;
           />
         </div>
 
+        <div id="participantNamesContainer" class="participant-names-container hidden">
+          <label class="participant-names-label">Namen der weiteren Teilnehmer *</label>
+          <p class="participant-names-hint">Ihr Name wird automatisch als Teilnehmer 1 übernommen.</p>
+          <div id="participantNameFields"></div>
+        </div>
+
         <div class="form-group">
           <label for="notes">Anmerkungen</label>
           <textarea id="notes" name="notes" rows="3"></textarea>
@@ -289,6 +295,59 @@ const { title = "Termin buchen" } = Astro.props;
 
   .form-group input:focus,
   .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-terra, #D96C4A);
+    box-shadow: 0 0 0 3px rgba(217, 108, 74, 0.12);
+  }
+
+  .participant-names-container {
+    margin-bottom: var(--space-3);
+  }
+  .participant-names-container.hidden {
+    display: none;
+  }
+
+  .participant-names-hint {
+    font-size: 0.8rem;
+    color: #888;
+    margin: 0 0 var(--space-2) 0;
+    font-style: italic;
+  }
+
+  .participant-names-label {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-weight: 550;
+    font-size: 0.875rem;
+    color: var(--brand-espresso, #423430);
+  }
+
+  .participant-name-field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  .participant-name-field span {
+    min-width: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-terra, #D96C4A);
+  }
+
+  .participant-name-field input {
+    flex: 1;
+    padding: var(--space-3);
+    border: 1px solid rgba(66, 52, 48, 0.14);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.7);
+    transition: border-color 0.14s ease, box-shadow 0.14s ease;
+  }
+
+  .participant-name-field input:focus {
     outline: none;
     border-color: var(--accent-terra, #D96C4A);
     box-shadow: 0 0 0 3px rgba(217, 108, 74, 0.12);
@@ -581,6 +640,42 @@ const { title = "Termin buchen" } = Astro.props;
 	      }
 	    });
 
+    // Dynamische Teilnehmernamen-Felder (nur für WEITERE Teilnehmer ab Person 2)
+    function updateParticipantNameFields(count: number): void {
+      const container = document.getElementById("participantNameFields");
+      const wrapper = document.getElementById("participantNamesContainer");
+      if (!container || !wrapper) return;
+
+      container.innerHTML = "";
+      if (count <= 1) {
+        wrapper.classList.add("hidden");
+        return;
+      }
+      wrapper.classList.remove("hidden");
+      // Felder für Teilnehmer 2 bis N (Teilnehmer 1 = Bucher)
+      for (let i = 2; i <= count; i++) {
+        const field = document.createElement("div");
+        field.className = "participant-name-field";
+        field.innerHTML = `
+          <span>${i}.</span>
+          <input type="text" name="participantName_${i}" placeholder="Name Teilnehmer ${i}" required />
+        `;
+        container.appendChild(field);
+      }
+    }
+
+    // Initial: bei 1 Person keine Zusatzfelder
+    updateParticipantNameFields(1);
+
+    // Bei Änderung der Personenzahl: Felder aktualisieren
+    const participantsInput = document.getElementById("participants") as HTMLInputElement;
+    if (participantsInput) {
+      participantsInput.addEventListener("input", () => {
+        const count = parseInt(participantsInput.value, 10) || 1;
+        updateParticipantNameFields(Math.min(Math.max(count, 1), 15));
+      });
+    }
+
     // Formular-Submit
     const formElement = document.getElementById("bookingFormElement");
     if (formElement) {
@@ -601,6 +696,15 @@ const { title = "Termin buchen" } = Astro.props;
         const selectedDateEl = document.getElementById("selectedDate") as HTMLElement | null;
         const selectedTimeEl = document.getElementById("selectedTime") as HTMLElement | null;
 
+        // Teilnehmernamen sammeln: Bucher = Teilnehmer 1, dann die weiteren
+        const participantCount = parseInt(formData.get("participants") as string, 10) || 1;
+        const bookerName = (formData.get("name") as string || "").trim();
+        const participantNames: string[] = [bookerName];
+        for (let i = 2; i <= participantCount; i++) {
+          const name = (formData.get(`participantName_${i}`) as string || "").trim();
+          if (name) participantNames.push(name);
+        }
+
         const data = {
           date: selectedDateEl?.dataset.isoDate || "",
           time: selectedTimeEl?.dataset.time || "",
@@ -608,6 +712,7 @@ const { title = "Termin buchen" } = Astro.props;
           email: formData.get("email") as string,
           phone: formData.get("phone") as string,
           participants: formData.get("participants") as string,
+          participantNames,
           notes: formData.get("notes") as string,
         };
 

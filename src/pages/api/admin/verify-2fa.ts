@@ -9,7 +9,7 @@ import {
 } from '../../../lib/totp';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { logAuditEvent } from '../../../lib/audit-log';
-import { createAuthSession } from '../../../lib/auth';
+import { createAuthSession, isDeviceTrusted, createDeviceTrust, deviceTrustCookieHeader, clearDeviceTrustCookieHeader } from '../../../lib/auth';
 
 /**
  * Authentication flow:
@@ -117,6 +117,38 @@ export const POST: APIRoute = async ({ request }) => {
         });
       }
 
+      // Check if device is trusted (skip 2FA)
+      if (isDeviceTrusted(request)) {
+        const ipAddress = clientId;
+        const userAgent = request.headers.get('user-agent') || 'unknown';
+        const isSecure = request.url.startsWith('https');
+        const authSession = createAuthSession(validation.userType || username, ipAddress, userAgent, isSecure);
+
+        await logAuditEvent('LOGIN_SUCCESS', request, {
+          username: validation.userType || 'unknown',
+          resource: '/api/admin/verify-2fa',
+          action: `${validation.userType} login with trusted device (2FA skipped)`,
+          success: true,
+        });
+
+        const headers = new Headers({ 'Content-Type': 'application/json' });
+        for (const cookie of authSession.cookieHeaders) {
+          headers.append('Set-Cookie', cookie);
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          requires2FA: false,
+          userType: validation.userType,
+          credentials,
+          csrfToken: authSession.csrfToken,
+          trustedDevice: true,
+        }), {
+          status: 200,
+          headers,
+        });
+      }
+
       // Create pending 2FA session for both superuser and admin
       const ipAddress = clientId;
       const userAgent = request.headers.get('user-agent') || 'unknown';
@@ -142,7 +174,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (action === 'verify') {
       // Step 2: Verify TOTP code
-      const { sessionId, code } = body;
+      const { sessionId, code, trustDevice } = body;
 
       if (!sessionId || !code) {
         return new Response(JSON.stringify({ 
@@ -205,6 +237,23 @@ export const POST: APIRoute = async ({ request }) => {
       const headers = new Headers({ 'Content-Type': 'application/json' });
       for (const cookie of authSession.cookieHeaders) {
         headers.append('Set-Cookie', cookie);
+      }
+
+      // Set device trust cookie if requested
+      if (trustDevice) {
+        const trustToken = createDeviceTrust(
+          pendingSessionData?.userType || 'admin',
+          ipAddress,
+          userAgent
+        );
+        headers.append('Set-Cookie', deviceTrustCookieHeader(trustToken, isSecure));
+
+        await logAuditEvent('DEVICE_TRUSTED', request, {
+          username: pendingSessionData?.userType || 'unknown',
+          resource: '/api/admin/verify-2fa',
+          action: 'Device marked as trusted for 30 days',
+          success: true,
+        });
       }
 
       return new Response(JSON.stringify({

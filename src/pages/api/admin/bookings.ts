@@ -282,7 +282,7 @@ export const PUT: APIRoute = async ({ request }) => {
 
 	try {
 		const body = await request.json();
-		const { id, name, email, phone, participants, notes, status } = body;
+		const { id, name, email, phone, participants, participantNames, notes, status } = body;
 
 		if (!id) {
 			return new Response(JSON.stringify({ error: 'Missing booking ID' }), {
@@ -296,6 +296,11 @@ export const PUT: APIRoute = async ({ request }) => {
 		if (typeof email === 'string') updates.email = email;
 		if (typeof phone === 'string') updates.phone = phone;
 		if (typeof participants === 'number') updates.participants = participants;
+		if (Array.isArray(participantNames)) {
+			updates.participantNames = participantNames
+				.map((n: any) => (typeof n === 'string' ? n.trim() : ''))
+				.filter((n: string) => n.length > 0);
+		}
 		if (typeof notes === 'string') updates.notes = notes;
 		if (typeof status === 'string') {
 			if (status === 'pending' || status === 'confirmed') {

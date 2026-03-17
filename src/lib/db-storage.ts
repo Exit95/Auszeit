@@ -11,7 +11,7 @@
 
 import { query, execute, withTransaction, isDbEnabled } from './database.js';
 import type { RowDataPacket } from 'mysql2/promise';
-import type { TimeSlot, Booking, Workshop, GalleryCategory, ImageMetadata } from './storage.js';
+import type { TimeSlot, Booking, Workshop, GalleryCategory, ImageMetadata, Inquiry } from './storage.js';
 import type { Voucher, VoucherStatus } from './voucher-storage.js';
 
 // ─── Helper: ISO → MariaDB DATETIME ─────────────────────────────────────────
@@ -84,14 +84,15 @@ export async function dbGetBookings(): Promise<Booking[]> {
 
 export async function dbSaveBooking(booking: Booking): Promise<void> {
   await execute(
-    `INSERT INTO bookings (legacy_id, slot_legacy_id, customer_name, email, phone, participants, notes, booking_status, raw_json, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO bookings (legacy_id, slot_legacy_id, customer_name, email, phone, participants, participant_names, notes, booking_status, raw_json, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        customer_name = VALUES(customer_name), email = VALUES(email), phone = VALUES(phone),
-       participants = VALUES(participants), notes = VALUES(notes),
+       participants = VALUES(participants), participant_names = VALUES(participant_names), notes = VALUES(notes),
        booking_status = VALUES(booking_status), updated_at = NOW()`,
     [booking.id, booking.slotId, booking.name, booking.email, booking.phone || null,
-     booking.participants, booking.notes || null, booking.status, JSON.stringify(booking), toDbDatetime(booking.createdAt) || new Date().toISOString().slice(0, 19).replace('T', ' ')]
+     booking.participants, booking.participantNames ? JSON.stringify(booking.participantNames) : null,
+     booking.notes || null, booking.status, JSON.stringify(booking), toDbDatetime(booking.createdAt) || new Date().toISOString().slice(0, 19).replace('T', ' ')]
   );
 }
 
@@ -265,6 +266,14 @@ function rowToTimeSlot(r: RowDataPacket): TimeSlot {
 }
 
 function rowToBooking(r: RowDataPacket): Booking {
+  let participantNames: string[] | undefined;
+  if (r.participant_names) {
+    try {
+      participantNames = typeof r.participant_names === 'string'
+        ? JSON.parse(r.participant_names)
+        : r.participant_names;
+    } catch { participantNames = undefined; }
+  }
   return {
     id: r.legacy_id,
     slotId: r.slot_legacy_id,
@@ -272,6 +281,7 @@ function rowToBooking(r: RowDataPacket): Booking {
     email: r.email || '',
     phone: r.phone || undefined,
     participants: r.participants,
+    participantNames,
     notes: r.notes || undefined,
     createdAt: new Date(r.created_at).toISOString(),
     status: r.booking_status as Booking['status'],
@@ -308,3 +318,59 @@ function formatTime(t: any): string {
   return s.length >= 5 ? s.slice(0, 5) : s;
 }
 
+
+
+// ─── Inquiries (Anfragen für besondere Anlässe) ─────────────────────────────
+
+export async function dbGetInquiries(): Promise<Inquiry[]> {
+  const rows = await query('SELECT * FROM inquiries ORDER BY created_at DESC') as RowDataPacket[];
+  return rows.map(rowToInquiry);
+}
+
+export async function dbSaveInquiry(inq: Omit<Inquiry, 'id' | 'createdAt' | 'status'>): Promise<Inquiry> {
+  const result = await execute(
+    `INSERT INTO inquiries (event_type, customer_name, email, phone, preferred_date, participants, message, inquiry_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'new')`,
+    [inq.eventType, inq.name, inq.email, inq.phone || null,
+     inq.preferredDate || null, inq.participants, inq.message || null]
+  );
+  const insertId = (result as any).insertId;
+  return {
+    id: String(insertId),
+    eventType: inq.eventType,
+    name: inq.name,
+    email: inq.email,
+    phone: inq.phone,
+    preferredDate: inq.preferredDate,
+    participants: inq.participants,
+    message: inq.message,
+    status: 'new',
+    createdAt: new Date().toISOString(),
+  };
+}
+
+export async function dbUpdateInquiry(id: string, updates: { status?: string; adminNotes?: string }): Promise<void> {
+  const fields: string[] = [];
+  const values: any[] = [];
+  if (updates.status !== undefined) { fields.push('inquiry_status = ?'); values.push(updates.status); }
+  if (updates.adminNotes !== undefined) { fields.push('admin_notes = ?'); values.push(updates.adminNotes); }
+  if (fields.length === 0) return;
+  values.push(id);
+  await execute(`UPDATE inquiries SET ${fields.join(', ')} WHERE id = ?`, values);
+}
+
+function rowToInquiry(r: RowDataPacket): Inquiry {
+  return {
+    id: String(r.id),
+    eventType: r.event_type,
+    name: r.customer_name,
+    email: r.email,
+    phone: r.phone || undefined,
+    preferredDate: r.preferred_date ? formatDate(r.preferred_date) : undefined,
+    participants: r.participants,
+    message: r.message || undefined,
+    status: r.inquiry_status,
+    adminNotes: r.admin_notes || undefined,
+    createdAt: new Date(r.created_at).toISOString(),
+  };
+}

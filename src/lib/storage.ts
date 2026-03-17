@@ -8,6 +8,7 @@ import {
   dbGetWorkshops, dbSaveWorkshop,
   dbGetCategories, dbSaveCategory,
   dbGetImageMetadata, dbSaveImageMetadata,
+  dbGetInquiries, dbSaveInquiry, dbUpdateInquiry,
 } from './db-storage';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -29,6 +30,24 @@ const IMAGE_METADATA_FILE = path.join(DATA_DIR, IMAGE_METADATA_FILENAME);
 // Event-Typen für Termine
 export type EventType = 'normal' | 'kindergeburtstag' | 'stammtisch';
 
+// Event-Typen für Anfragen (besondere Anlässe)
+export type InquiryEventType = 'kindergeburtstag' | 'jga' | 'stammtisch' | 'firmen_event' | 'privater_anlass' | 'sonstiges';
+export type InquiryStatus = 'new' | 'contacted' | 'confirmed' | 'cancelled';
+
+export interface Inquiry {
+  id: string;
+  eventType: InquiryEventType;
+  name: string;
+  email: string;
+  phone?: string;
+  preferredDate?: string;
+  participants: number;
+  message?: string;
+  status: InquiryStatus;
+  adminNotes?: string;
+  createdAt: string;
+}
+
 export interface TimeSlot {
 	id: string;
 	date: string; // YYYY-MM-DD
@@ -48,6 +67,7 @@ export interface Booking {
   email: string;
   phone?: string;
   participants: number;
+  participantNames?: string[];
   notes?: string;
   createdAt: string;
   status: 'pending' | 'confirmed' | 'cancelled';
@@ -225,14 +245,14 @@ export async function saveBookings(bookings: Booking[]): Promise<void> {
 export async function addBooking(booking: Omit<Booking, 'id' | 'createdAt' | 'status'>): Promise<Booking | null> {
   const bookings = await getBookings();
   const slots = await getTimeSlots();
-  
+
   // Finde den Slot
   const slot = slots.find(s => s.id === booking.slotId);
   if (!slot) return null;
-  
+
   // Prüfe Verfügbarkeit
   if (slot.available < booking.participants) return null;
-  
+
   // Erstelle Buchung
   const newBooking: Booking = {
     ...booking,
@@ -241,14 +261,14 @@ export async function addBooking(booking: Omit<Booking, 'id' | 'createdAt' | 'st
 	    // Neue Buchungen starten als "neu/unbestätigt" und können im Admin-Panel bestätigt werden
 	    status: 'pending',
   };
-  
+
   bookings.push(newBooking);
   await saveBookings(bookings);
-  
+
   // Aktualisiere Slot-Verfügbarkeit
   slot.available -= booking.participants;
   await updateTimeSlot(slot.id, { available: slot.available });
-  
+
   return newBooking;
 }
 
@@ -261,17 +281,17 @@ export async function cancelBooking(id: string): Promise<boolean> {
   const bookings = await getBookings();
   const booking = bookings.find(b => b.id === id);
   if (!booking) return false;
-  
+
   booking.status = 'cancelled';
   await saveBookings(bookings);
-  
+
   // Gebe Kapazität zurück
   const slot = (await getTimeSlots()).find(s => s.id === booking.slotId);
   if (slot) {
     slot.available += booking.participants;
     await updateTimeSlot(slot.id, { available: slot.available });
   }
-	  
+
 	  return true;
 	}
 
@@ -568,4 +588,22 @@ export async function removeImageFromCategory(filename: string, categoryId: stri
   metadata[index].categories = metadata[index].categories.filter(id => id !== categoryId);
   await saveImageMetadata(metadata);
   return metadata[index];
+}
+
+
+// ─── Inquiries (Anfragen für besondere Anlässe) ─────────────────────────────
+
+export async function getInquiries(): Promise<Inquiry[]> {
+  if (isDbEnabled()) {
+    return await dbGetInquiries();
+  }
+  return [];
+}
+
+export async function addInquiry(inq: Omit<Inquiry, 'id' | 'createdAt' | 'status'>): Promise<Inquiry> {
+  return await dbSaveInquiry(inq);
+}
+
+export async function updateInquiry(id: string, updates: { status?: string; adminNotes?: string }): Promise<void> {
+  await dbUpdateInquiry(id, updates);
 }

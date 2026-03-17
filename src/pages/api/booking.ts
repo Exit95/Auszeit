@@ -27,6 +27,15 @@ export const POST: APIRoute = async ({ request }) => {
 	    const time = sanitizeTime(data.time);
 	    const notes = sanitizeText(data.notes);
 
+	    // Teilnehmernamen sanitizen
+	    let participantNames: string[] = [];
+	    if (Array.isArray(data.participantNames)) {
+	      participantNames = data.participantNames
+	        .map((n: any) => sanitizeText(String(n || '')))
+	        .filter((n: string) => n.length > 0)
+	        .slice(0, participants);
+	    }
+
 	    // Validate required fields
 	    if (!name || !email || !phone || !date || !time) {
 	      return new Response(
@@ -85,6 +94,7 @@ export const POST: APIRoute = async ({ request }) => {
 	      email: email!,
 	      phone: phone || '',
 	      participants,
+	      participantNames: participantNames.length > 0 ? participantNames : undefined,
 	      notes: notes || '',
 	    });
 
@@ -108,6 +118,14 @@ export const POST: APIRoute = async ({ request }) => {
 	    // Anzeigeformat für die Uhrzeit (mit optionaler Endzeit)
 	    const timeDisplay = slot.endTime ? `${slot.time} - ${slot.endTime}` : slot.time;
 
+	    // Teilnehmernamen für E-Mail formatieren
+	    const participantNamesHtml = participantNames.length > 0
+	      ? `<p><strong>Teilnehmer:</strong></p><ol>${participantNames.map(n => `<li>${n}</li>`).join('')}</ol>`
+	      : '';
+	    const participantNamesText = participantNames.length > 0
+	      ? `Teilnehmer:\n${participantNames.map((n, i) => `  ${i + 1}. ${n}`).join('\n')}`
+	      : '';
+
 	    // E-Mail-Benachrichtigung für Admin vorbereiten
 	    const adminEmailData = {
 	      to: bookingEmail,
@@ -119,6 +137,7 @@ export const POST: APIRoute = async ({ request }) => {
         <p><strong>E-Mail:</strong> ${email}</p>
         <p><strong>Telefon:</strong> ${phone || 'Nicht angegeben'}</p>
         <p><strong>Anzahl Personen:</strong> ${participants}</p>
+        ${participantNamesHtml}
 	        <p><strong>Datum:</strong> ${date}</p>
 	        <p><strong>Uhrzeit:</strong> ${timeDisplay} Uhr</p>
         <p><strong>Notizen:</strong> ${notes || 'Keine'}</p>
@@ -130,6 +149,7 @@ Name: ${name}
 E-Mail: ${email}
 Telefon: ${phone || 'Nicht angegeben'}
 Anzahl Personen: ${participants}
+${participantNamesText}
 	  Datum: ${date}
 	  Uhrzeit: ${timeDisplay} Uhr
 Notizen: ${notes || 'Keine'}
@@ -156,6 +176,7 @@ Notizen: ${notes || 'Keine'}
 		            <p><strong>Datum:</strong> ${date}</p>
 		            <p><strong>Uhrzeit:</strong> ${timeDisplay} Uhr</p>
 	            <p><strong>Anzahl Personen:</strong> ${participants}</p>
+	            ${participantNamesHtml}
 	            ${notes ? `<p><strong>Ihre Notizen:</strong> ${notes}</p>` : ''}
 	          </div>
 
@@ -196,6 +217,7 @@ IHRE ANGABE:
   Datum: ${date}
   Uhrzeit: ${timeDisplay} Uhr
 Anzahl Personen: ${participants}
+${participantNamesText}
 ${notes ? `Ihre Notizen: ${notes}` : ''}
 
 VERANSTALTUNGSORT:

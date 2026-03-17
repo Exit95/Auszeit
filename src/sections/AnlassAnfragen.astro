@@ -1,0 +1,301 @@
+---
+// Besondere Anlässe – Anfrageformular
+---
+
+<section class="special-events-section" id="special-events">
+  <div class="special-events-container">
+    <h2 class="special-events-title">Besondere Anlässe</h2>
+    <p class="special-events-subtitle">
+      Planen Sie einen besonderen Anlass? Ob Kindergeburtstag, JGA oder Firmenevent,
+      wir gestalten Ihren Wunschtermin individuell. Senden Sie uns eine unverbindliche Anfrage.
+    </p>
+
+    <div class="event-types">
+      <button class="event-type-btn" data-event="kindergeburtstag">
+        <span class="event-type-label">Kindergeburtstag</span>
+      </button>
+      <button class="event-type-btn" data-event="jga">
+        <span class="event-type-label">JGA</span>
+      </button>
+      <button class="event-type-btn" data-event="stammtisch">
+        <span class="event-type-label">Stammtisch</span>
+      </button>
+      <button class="event-type-btn" data-event="firmen_event">
+        <span class="event-type-label">Firmen-Event</span>
+      </button>
+      <button class="event-type-btn" data-event="privater_anlass">
+        <span class="event-type-label">Privater Anlass</span>
+      </button>
+      <button class="event-type-btn" data-event="sonstiges">
+        <span class="event-type-label">Sonstiges</span>
+      </button>
+    </div>
+
+    <form id="inquiryForm" class="inquiry-form hidden">
+      <h3 id="inquiryFormTitle">Anfrage senden</h3>
+      <input type="hidden" id="inquiryEventType" value="">
+
+      <div class="inquiry-form-grid">
+        <div class="form-group">
+          <label for="inquiryName">Name *</label>
+          <input type="text" id="inquiryName" required placeholder="Ihr Name">
+        </div>
+        <div class="form-group">
+          <label for="inquiryEmail">E-Mail *</label>
+          <input type="email" id="inquiryEmail" required placeholder="ihre@email.de">
+        </div>
+        <div class="form-group">
+          <label for="inquiryPhone">Telefon *</label>
+          <input type="tel" id="inquiryPhone" required placeholder="+49 ...">
+        </div>
+        <div class="form-group">
+          <label for="inquiryDate">Wunschdatum</label>
+          <input type="date" id="inquiryDate">
+        </div>
+        <div class="form-group">
+          <label for="inquiryParticipants">Anzahl Personen *</label>
+          <input type="number" id="inquiryParticipants" min="1" max="50" value="1" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="inquiryMessage">Ihre Nachricht / Wünsche</label>
+        <textarea id="inquiryMessage" rows="4" placeholder="Erzählen Sie uns von Ihrem Anlass..."></textarea>
+      </div>
+
+      <div class="inquiry-form-actions">
+        <button type="button" class="btn btn-secondary" id="inquiryBack">Zurück</button>
+        <button type="submit" class="btn btn-primary">Anfrage senden</button>
+      </div>
+    </form>
+
+    <div id="inquiryMessage-result" class="inquiry-result hidden"></div>
+  </div>
+</section>
+
+<style>
+  .special-events-section {
+    padding: 4rem 1.5rem;
+    background: var(--color-surface, #faf9f7);
+  }
+  .special-events-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .special-events-title {
+    text-align: center;
+    font-size: 1.75rem;
+    color: var(--color-primary, #5b3e31);
+    margin-bottom: 0.5rem;
+  }
+  .special-events-subtitle {
+    text-align: center;
+    color: var(--color-text-muted, #6b5e57);
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+  .event-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .event-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    border: 2px solid var(--color-border, #e0d5cc);
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    color: var(--color-text, #3d2e24);
+  }
+  .event-type-btn:hover {
+    border-color: var(--color-primary, #5b3e31);
+    background: var(--color-primary-light, #f5efe9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .event-type-btn.active {
+    border-color: var(--color-primary, #5b3e31);
+    background: var(--color-primary, #5b3e31);
+    color: white;
+  }
+  .event-type-label { font-weight: 500; text-align: center; }
+
+  .inquiry-form {
+    background: white;
+    border: 1px solid var(--color-border, #e0d5cc);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 1rem;
+  }
+  .inquiry-form h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--color-primary, #5b3e31);
+    font-size: 1.25rem;
+  }
+  .inquiry-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 600px) {
+    .inquiry-form-grid { grid-template-columns: 1fr; }
+  }
+  .inquiry-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .inquiry-form label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text-muted, #6b5e57);
+  }
+  .inquiry-form input,
+  .inquiry-form textarea {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--color-border, #e0d5cc);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .inquiry-form input:focus,
+  .inquiry-form textarea:focus {
+    outline: none;
+    border-color: var(--color-primary, #5b3e31);
+    box-shadow: 0 0 0 3px rgba(91,62,49,0.1);
+  }
+  .inquiry-form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+  .inquiry-result {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 500;
+  }
+  .inquiry-result.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+  }
+  .inquiry-result.error {
+    background: #fbe9e7;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+  }
+  .hidden { display: none; }
+</style>
+
+<script>
+  const EVENT_LABELS: Record<string, string> = {
+    kindergeburtstag: 'Kindergeburtstag',
+    jga: 'JGA (Junggesellenabschied)',
+    stammtisch: 'Stammtisch / Gruppenabend',
+    firmen_event: 'Firmen-Event / Teambuilding',
+    privater_anlass: 'Privater Anlass',
+    sonstiges: 'Sonstiges',
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const eventBtns = document.querySelectorAll('.event-type-btn');
+    const form = document.getElementById('inquiryForm') as HTMLFormElement;
+    const formTitle = document.getElementById('inquiryFormTitle');
+    const eventTypeInput = document.getElementById('inquiryEventType') as HTMLInputElement;
+    const resultDiv = document.getElementById('inquiryMessage-result');
+    const backBtn = document.getElementById('inquiryBack');
+    const eventTypesDiv = document.querySelector('.event-types') as HTMLElement;
+
+    // Set min date to today
+    const dateInput = document.getElementById('inquiryDate') as HTMLInputElement;
+    if (dateInput) {
+      const today = new Date().toISOString().slice(0, 10);
+      dateInput.setAttribute('min', today);
+    }
+
+    eventBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const eventType = btn.getAttribute('data-event') || 'sonstiges';
+        eventBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        eventTypeInput.value = eventType;
+        if (formTitle) formTitle.textContent = `Anfrage: ${EVENT_LABELS[eventType] || eventType}`;
+        form.classList.remove('hidden');
+        if (resultDiv) resultDiv.classList.add('hidden');
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    backBtn?.addEventListener('click', () => {
+      form.classList.add('hidden');
+      eventBtns.forEach(b => b.classList.remove('active'));
+      eventTypesDiv?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      const origText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Wird gesendet...';
+
+      try {
+        const payload = {
+          eventType: eventTypeInput.value,
+          name: (document.getElementById('inquiryName') as HTMLInputElement).value.trim(),
+          email: (document.getElementById('inquiryEmail') as HTMLInputElement).value.trim(),
+          phone: (document.getElementById('inquiryPhone') as HTMLInputElement).value.trim(),
+          preferredDate: (document.getElementById('inquiryDate') as HTMLInputElement).value,
+          participants: parseInt((document.getElementById('inquiryParticipants') as HTMLInputElement).value) || 1,
+          message: (document.getElementById('inquiryMessage') as HTMLTextAreaElement).value.trim(),
+        };
+
+        const res = await fetch('/api/inquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (resultDiv) {
+          resultDiv.classList.remove('hidden', 'success', 'error');
+          if (data.success) {
+            resultDiv.classList.add('success');
+            resultDiv.textContent = 'Vielen Dank! Ihre Anfrage wurde gesendet. Wir melden uns zeitnah bei Ihnen.';
+            form.classList.add('hidden');
+            form.reset();
+            eventBtns.forEach(b => b.classList.remove('active'));
+          } else {
+            resultDiv.classList.add('error');
+            resultDiv.textContent = data.message || 'Fehler beim Senden. Bitte versuchen Sie es erneut.';
+          }
+        }
+      } catch (err) {
+        if (resultDiv) {
+          resultDiv.classList.remove('hidden', 'success', 'error');
+          resultDiv.classList.add('error');
+          resultDiv.textContent = 'Verbindungsfehler. Bitte versuchen Sie es später erneut.';
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = origText;
+      }
+    });
+  });
+</script>
+

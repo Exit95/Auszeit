@@ -21,8 +21,17 @@ services:
       - S3_PREFIX=Auszeit/
       - STRIPE_SECRET_KEY=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
       - STRIPE_PUBLISHABLE_KEY=pk_live_51T1DtzFnSCRtGxvlQFbNr4M4srzrh7rLnHMX6i3aegBAdWINDfkkk3Pl1Ypz8sHDUOUr9Tw4ogHog3B1eMqgXKcD00zARsULHi
+      - DB_ENABLED=true
+      - DUAL_WRITE=false
+      - JSON_FALLBACK=false
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_NAME=auszeit_prod
+      - DB_USER=auszeit_user
+      - DB_PASSWORD=AuszeitDB2025Secure!
     networks:
       - public-ingress
+      - auszeit-internal
     deploy:
       replicas: 1
       placement:
@@ -30,12 +39,35 @@ services:
           - node.role == manager
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.keramik-auszeit-de.rule=Host(`keramik-auszeit.de`) || Host(`www.keramik-auszeit.de`)"
+        - "traefik.docker.network=public-ingress"
+        - "traefik.http.routers.keramik-auszeit-de.rule=Host(`keramik-auszeit.de`)"
         - "traefik.http.routers.keramik-auszeit-de.entrypoints=websecure"
         - "traefik.http.routers.keramik-auszeit-de.tls.certresolver=myresolver"
         - "traefik.http.services.keramik-auszeit-de.loadbalancer.server.port=3000"
 
+  mariadb:
+    image: mariadb:11
+    environment:
+      - MARIADB_ROOT_PASSWORD=AuszeitRootDB2025!
+      - MARIADB_DATABASE=auszeit_prod
+      - MARIADB_USER=auszeit_user
+      - MARIADB_PASSWORD=AuszeitDB2025Secure!
+    volumes:
+      - auszeit-db-data:/var/lib/mysql
+    networks:
+      - auszeit-internal
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
 networks:
   public-ingress:
     external: true
+  auszeit-internal:
+    driver: overlay
 
+volumes:
+  auszeit-db-data:
+    driver: local

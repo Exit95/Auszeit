@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   email           VARCHAR(255) NULL,
   phone           VARCHAR(100) NULL,
   participants    INT NOT NULL DEFAULT 1,
+  participant_names JSON NULL,
   notes           TEXT NULL,
   booking_status  VARCHAR(50) NOT NULL DEFAULT 'pending',
   source_file     VARCHAR(255) NULL,
@@ -221,3 +222,24 @@ CREATE TABLE IF NOT EXISTS image_metadata (
   UNIQUE KEY uniq_image_metadata_filename (filename)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+-- -----------------------------------------------------------------------------
+-- 10. inquiries – Anfragen für besondere Anlässe
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS inquiries (
+  id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  event_type      VARCHAR(100) NOT NULL,
+  customer_name   VARCHAR(255) NOT NULL,
+  email           VARCHAR(255) NOT NULL,
+  phone           VARCHAR(100) NULL,
+  preferred_date  DATE NULL,
+  participants    INT NOT NULL DEFAULT 1,
+  message         TEXT NULL,
+  inquiry_status  VARCHAR(50) NOT NULL DEFAULT 'new',
+  admin_notes     TEXT NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_inquiries_status (inquiry_status),
+  KEY idx_inquiries_email (email),
+  KEY idx_inquiries_event_type (event_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

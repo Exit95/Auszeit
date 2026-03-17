@@ -13,7 +13,7 @@ export const prerender = false;
 <body>
   <div id="login-screen" class="login-container">
     <div class="login-box">
-      <h1>🎨 Admin Login</h1>
+      <h1>Admin Login</h1>
       <p>Atelier Auszeit</p>
       <form id="login-form">
         <div class="form-group">
@@ -33,7 +33,7 @@ export const prerender = false;
   <!-- 2FA Verification Screen -->
   <div id="twofa-screen" class="login-container hidden">
     <div class="login-box">
-      <h1>🔐 2-Faktor-Authentifizierung</h1>
+      <h1>2-Faktor-Authentifizierung</h1>
       <p>Bitte geben Sie den Code aus Ihrer Authenticator-App ein</p>
       <form id="twofa-form">
         <div class="form-group">
@@ -44,6 +44,10 @@ export const prerender = false;
                  placeholder="000000" required
                  style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
         </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
+          <input type="checkbox" id="twofa-trust" name="trustDevice" style="width: auto; margin: 0;">
+          <label for="twofa-trust" style="margin: 0; font-size: 0.85rem; cursor: pointer;">Dieses Gerät 30 Tage merken</label>
+        </div>
         <button type="submit" class="btn btn-primary">Bestätigen</button>
         <button type="button" id="twofa-cancel" class="btn btn-secondary" style="margin-top: 0.5rem;">Abbrechen</button>
         <div id="twofa-error" class="error-message hidden"></div>
@@ -52,29 +56,66 @@ export const prerender = false;
   </div>
 
 	  <div id="admin-panel" class="admin-container hidden">
-	    <header class="admin-header">
-	      <h1>🎨 Admin Panel</h1>
-	      <div class="admin-header-buttons">
-	        <button id="setup-2fa-btn" class="btn btn-secondary hidden" title="2FA für Admin einrichten">🔐 2FA Setup</button>
-	        <button id="logout-btn" class="btn btn-secondary">Abmelden</button>
-	      </div>
-	    </header>
+      <!-- Sidebar -->
+      <aside class="admin-sidebar" id="admin-sidebar">
+        <div class="sidebar-brand">
+          <span class="sidebar-brand__icon">A</span>
+          <span class="sidebar-brand__text">Atelier Auszeit</span>
+        </div>
+        <nav class="admin-nav">
+          <button class="admin-nav__btn active" data-tab="uebersicht">
+            <span class="nav-label">Übersicht</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="termine">
+            <span class="nav-label">Termine</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="kunden">
+            <span class="nav-label">Kunden</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="anfragen">
+            <span class="nav-label">Anfragen</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="workshops">
+            <span class="nav-label">Workshops</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="galerie">
+            <span class="nav-label">Galerie</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="bewertungen">
+            <span class="nav-label">Bewertungen</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="gutscheine">
+            <span class="nav-label">Gutscheine</span>
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <button id="setup-2fa-btn" class="btn btn-secondary btn-sidebar hidden" title="2FA einrichten">2FA</button>
+          <button id="logout-btn" class="btn btn-secondary btn-sidebar">Abmelden</button>
+        </div>
+      </aside>
 
-    <nav class="admin-nav">
-      <button class="admin-nav__btn active" data-tab="uebersicht">📋 Übersicht</button>
-      <button class="admin-nav__btn" data-tab="termine">Termine</button>
-      <button class="admin-nav__btn" data-tab="workshops">Workshops</button>
-      <button class="admin-nav__btn" data-tab="galerie">Galerie</button>
-      <button class="admin-nav__btn" data-tab="bewertungen">Bewertungen</button>
-      <button class="admin-nav__btn" data-tab="gutscheine">🎟️ Gutscheine</button>
-    </nav>
+      <!-- Sidebar Overlay (mobile) -->
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-	    		<main class="admin-main">
+      <!-- Content Wrapper -->
+      <div class="admin-content-wrapper">
+        <!-- Top Bar -->
+        <header class="admin-topbar">
+          <button class="hamburger-btn" id="hamburger-btn" aria-label="Menü öffnen">
+            <span></span><span></span><span></span>
+          </button>
+          <h1 class="topbar-title">Admin Panel</h1>
+          <div class="admin-header-buttons">
+            <span class="topbar-user" id="topbar-user">Admin</span>
+          </div>
+        </header>
+
+        <main class="admin-main">
       <!-- Tab: Übersicht (Arbeitszentrale) -->
       <div id="tab-uebersicht" class="admin-tab active">
         <!-- Header mit Refresh-Indikator -->
         <div class="overview-top-bar">
-          <h2>📋 Tagesübersicht</h2>
+          <h2>Tagesübersicht</h2>
           <span id="refresh-indicator" class="refresh-indicator"></span>
         </div>
 
@@ -108,7 +149,7 @@ export const prerender = false;
 
         <!-- Warnhinweise -->
         <section class="overview-card overview-warnings hidden" id="overview-warnings">
-          <h3>⚠️ Handlungsbedarf</h3>
+          <h3>Handlungsbedarf</h3>
           <div id="warnings-list" class="warnings-list"></div>
         </section>
 
@@ -116,7 +157,7 @@ export const prerender = false;
         <div class="overview-content-grid">
           <!-- Heutige Termine -->
           <section class="overview-card">
-            <h3>🕐 Heutige Termine</h3>
+            <h3>Heutige Termine</h3>
             <div id="today-bookings-loading" class="loading">Lade...</div>
             <div id="today-bookings-list" class="today-bookings-list hidden"></div>
             <div id="no-today-bookings" class="no-data hidden">Keine Termine für heute</div>
@@ -125,7 +166,7 @@ export const prerender = false;
           <!-- Wochenkalender -->
           <section class="overview-card overview-calendar-card">
             <div class="cal-header">
-              <h3>📅 Wochenkalender</h3>
+              <h3>Wochenkalender</h3>
               <div class="cal-nav">
                 <button id="cal-prev-week">← Vor</button>
                 <span id="cal-week-label">Kalenderwoche</span>
@@ -156,8 +197,8 @@ export const prerender = false;
 		              <label for="slot-event-type">Event-Typ</label>
 		              <select id="slot-event-type" name="eventType">
 		                <option value="normal">Normaler Termin</option>
-		                <option value="kindergeburtstag">🎂 Kindergeburtstag</option>
-		                <option value="stammtisch">🍷 Stammtisch</option>
+		                <option value="kindergeburtstag">Kindergeburtstag</option>
+		                <option value="stammtisch">Stammtisch</option>
 		              </select>
 		            </div>
 		            <div class="form-group">
@@ -182,7 +223,7 @@ export const prerender = false;
 		            </div>
 		          </div>
 		          <p id="event-type-hint" class="event-type-hint hidden">
-		            ℹ️ Dieses Zeitfenster wird im Kalender als belegt angezeigt. Andere Zeitfenster am selben Tag bleiben buchbar.
+		            Dieses Zeitfenster wird im Kalender als belegt angezeigt. Andere Zeitfenster am selben Tag bleiben buchbar.
 		          </p>
 		          <div class="form-actions">
 		            <button type="submit" class="btn btn-primary" id="slot-submit-btn">Termin hinzufügen</button>
@@ -198,25 +239,47 @@ export const prerender = false;
 	        <div id="no-slots" class="no-data hidden">Keine Termine vorhanden</div>
 	      </section>
 
-	      <section class="bookings-section">
-	        <h2>Buchungen</h2>
-	        <!-- Filter und Suche -->
-	        <div class="bookings-filter-bar">
-	          <input type="text" id="booking-search" class="booking-search-input" placeholder="🔍 Name, E-Mail oder Telefon suchen...">
-	          <div class="bookings-status-filter">
-	            <button class="filter-btn active" data-booking-filter="active">Aktiv</button>
-	            <button class="filter-btn" data-booking-filter="pending">⏳ Offen</button>
-	            <button class="filter-btn" data-booking-filter="confirmed">✅ Bestätigt</button>
-	            <button class="filter-btn" data-booking-filter="cancelled">❌ Storniert</button>
-	            <button class="filter-btn" data-booking-filter="all">Alle</button>
-	          </div>
-	        </div>
-	        <div id="bookings-loading" class="loading">Lade Buchungen...</div>
-	        <div id="bookings-list" class="slots-list hidden"></div>
-	        <div id="no-bookings" class="no-data hidden">Keine Buchungen vorhanden</div>
-	      </section>
       </div>
       <!-- Ende Tab: Termine -->
+
+      <!-- Tab: Kunden -->
+      <div id="tab-kunden" class="admin-tab hidden">
+        <section class="bookings-section">
+          <h2>Kunden & Buchungen</h2>
+          <!-- Filter und Suche -->
+          <div class="bookings-filter-bar">
+            <input type="text" id="booking-search" class="booking-search-input" placeholder="Name, E-Mail oder Telefon suchen...">
+            <div class="bookings-status-filter">
+              <button class="filter-btn active" data-booking-filter="active">Aktuelle</button>
+              <button class="filter-btn" data-booking-filter="pending">Neue Anfragen</button>
+              <button class="filter-btn" data-booking-filter="confirmed">Zugesagt</button>
+              <button class="filter-btn" data-booking-filter="cancelled">Abgesagt</button>
+              <button class="filter-btn" data-booking-filter="all">Alle</button>
+            </div>
+          </div>
+          <div id="bookings-loading" class="loading">Lade Buchungen...</div>
+          <div id="bookings-list" class="slots-list hidden"></div>
+          <div id="no-bookings" class="no-data hidden">Keine Buchungen vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Kunden -->
+
+      <!-- Tab: Anfragen (Besondere Anlässe) -->
+      <div id="tab-anfragen" class="admin-tab hidden">
+        <section class="inquiries-section">
+          <h2>Anfragen – Besondere Anlässe</h2>
+          <div class="inquiries-filter-bar">
+            <button class="filter-btn active" data-inquiry-filter="new">Neue</button>
+            <button class="filter-btn" data-inquiry-filter="contacted">Kontaktiert</button>
+            <button class="filter-btn" data-inquiry-filter="confirmed">Bestätigt</button>
+            <button class="filter-btn" data-inquiry-filter="cancelled">Abgesagt</button>
+            <button class="filter-btn" data-inquiry-filter="all">Alle</button>
+          </div>
+          <div id="inquiries-list" class="inquiries-list"></div>
+          <div id="no-inquiries" class="no-data hidden">Keine Anfragen vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Anfragen -->
 
       <!-- Tab: Workshops -->
       <div id="tab-workshops" class="admin-tab hidden">
@@ -300,7 +363,7 @@ export const prerender = false;
         <section class="gallery-upload-section">
           <h2>Bild hochladen</h2>
           <div class="upload-area" id="upload-drop-area">
-            <div class="upload-icon">📤</div>
+            <div class="upload-icon">Hochladen</div>
             <p class="upload-text">Klicken oder Datei hierher ziehen</p>
             <p class="upload-hint">Max. 50MB | JPG, PNG, GIF, WebP</p>
             <input type="file" id="gallery-file-input" accept="image/*" hidden>
@@ -312,7 +375,7 @@ export const prerender = false;
         <section class="gallery-list-section">
           <div class="gallery-header">
             <h2>Bilder für Hauptseite (mit Kategorie)</h2>
-            <button type="button" class="btn btn-secondary" id="reload-gallery-btn">🔄 Neu laden</button>
+            <button type="button" class="btn btn-secondary" id="reload-gallery-btn">Neu laden</button>
           </div>
           <div id="gallery-categorized" class="gallery-categories"></div>
         </section>
@@ -366,7 +429,7 @@ export const prerender = false;
 
           <!-- QR-Scanner -->
           <div class="voucher-scanner-box">
-            <h3>📷 QR-Code scannen</h3>
+            <h3>QR-Code scannen</h3>
             <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kamera auf den QR-Code des Kunden halten</p>
             <div id="scanner-status" style="display: none; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.85rem; text-align: center;"></div>
             <div id="camera-select-box" style="display: none; margin-bottom: 0.5rem; text-align: center;">
@@ -375,14 +438,14 @@ export const prerender = false;
             </div>
             <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
             <div style="text-align: center;">
-              <button id="start-scanner-btn" class="btn btn-primary" style="margin-top: 1rem;">📷 Scanner starten</button>
+              <button id="start-scanner-btn" class="btn btn-primary" style="margin-top: 1rem;">Scanner starten</button>
               <button id="stop-scanner-btn" class="btn btn-secondary" style="margin-top: 1rem; display: none;">Scanner stoppen</button>
             </div>
           </div>
 
           <!-- Manuelle Code-Eingabe -->
           <div class="voucher-manual-box" style="margin-top: 1.5rem;">
-            <h3>✏️ Code manuell eingeben</h3>
+            <h3>Code manuell eingeben</h3>
             <div style="display: flex; gap: 0.5rem; max-width: 400px; margin: 0.5rem auto;">
               <input type="text" id="manual-voucher-code" placeholder="AUSZ-XXXX-XXXX" style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; text-transform: uppercase; font-family: monospace; font-size: 1rem; text-align: center;">
               <button id="lookup-voucher-btn" class="btn btn-primary">Suchen</button>
@@ -417,6 +480,49 @@ export const prerender = false;
       <!-- Ende Tab: Gutscheine -->
 
 	    </main>
+      </div><!-- /.admin-content-wrapper -->
+
+      <!-- Buchung-Bearbeiten-Modal -->
+      <div id="edit-booking-modal" class="edit-modal-overlay hidden">
+        <div class="edit-modal">
+          <div class="edit-modal-header">
+            <h3>Buchung bearbeiten</h3>
+            <button class="edit-modal-close" id="edit-modal-close">&times;</button>
+          </div>
+          <div class="edit-modal-body">
+            <input type="hidden" id="edit-booking-id" />
+            <div class="edit-form-group">
+              <label for="edit-booking-name">Name</label>
+              <input type="text" id="edit-booking-name" />
+            </div>
+            <div class="edit-form-group">
+              <label for="edit-booking-email">E-Mail</label>
+              <input type="email" id="edit-booking-email" />
+            </div>
+            <div class="edit-form-group">
+              <label for="edit-booking-phone">Telefon</label>
+              <input type="text" id="edit-booking-phone" />
+            </div>
+            <div class="edit-form-group">
+              <label for="edit-booking-participants">Anzahl Personen</label>
+              <input type="number" id="edit-booking-participants" min="1" max="20" />
+            </div>
+            <div class="edit-form-group" id="edit-participant-names-group">
+              <label>Teilnehmernamen</label>
+              <div id="edit-participant-names-list"></div>
+            </div>
+            <div class="edit-form-group">
+              <label for="edit-booking-notes">Notizen (Admin)</label>
+              <textarea id="edit-booking-notes" rows="4" placeholder="Interne Notizen zur Buchung..."></textarea>
+            </div>
+          </div>
+          <div class="edit-modal-footer">
+            <button class="btn btn-secondary" id="edit-modal-cancel">Abbrechen</button>
+            <button class="btn btn-primary" id="edit-modal-save">Speichern</button>
+          </div>
+        </div>
+      </div>
+
   </div>
 
 	  <script>
@@ -458,6 +564,104 @@ export const prerender = false;
       div.textContent = text;
       return div.innerHTML;
     }
+
+    // Lokales Datum als YYYY-MM-DD (kein UTC-Problem!)
+    function toLocalDateStr(d: Date): string {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    // ========== EDIT BOOKING MODAL ==========
+    function openEditBookingModal(booking: any) {
+      const modal = document.getElementById('edit-booking-modal')!;
+      (document.getElementById('edit-booking-id') as HTMLInputElement).value = booking.id;
+      (document.getElementById('edit-booking-name') as HTMLInputElement).value = booking.name || '';
+      (document.getElementById('edit-booking-email') as HTMLInputElement).value = booking.email || '';
+      (document.getElementById('edit-booking-phone') as HTMLInputElement).value = booking.phone || '';
+      (document.getElementById('edit-booking-participants') as HTMLInputElement).value = String(booking.participants || 1);
+      (document.getElementById('edit-booking-notes') as HTMLTextAreaElement).value = booking.notes || '';
+      renderEditParticipantNames(booking.participants || 1, booking.participantNames || []);
+      modal.classList.remove('hidden');
+    }
+
+    function closeEditBookingModal() {
+      document.getElementById('edit-booking-modal')!.classList.add('hidden');
+    }
+
+    function renderEditParticipantNames(count: number, names: string[]) {
+      const container = document.getElementById('edit-participant-names-list')!;
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        html += `<div class="edit-participant-name-row">
+          <span>${i + 1}.</span>
+          <input type="text" class="edit-pname-input" placeholder="Name Teilnehmer ${i + 1}" value="${escapeHtml(names[i] || '')}" />
+        </div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    // Teilnehmeranzahl-Änderung → Felder anpassen
+    document.getElementById('edit-booking-participants')?.addEventListener('input', (e) => {
+      const count = parseInt((e.target as HTMLInputElement).value, 10) || 1;
+      const existing = Array.from(document.querySelectorAll('.edit-pname-input')).map((el) => (el as HTMLInputElement).value);
+      renderEditParticipantNames(count, existing);
+    });
+
+    // Modal schließen
+    document.getElementById('edit-modal-close')?.addEventListener('click', closeEditBookingModal);
+    document.getElementById('edit-modal-cancel')?.addEventListener('click', closeEditBookingModal);
+    document.getElementById('edit-booking-modal')?.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).id === 'edit-booking-modal') closeEditBookingModal();
+    });
+
+    // Speichern
+    document.getElementById('edit-modal-save')?.addEventListener('click', async () => {
+      const id = (document.getElementById('edit-booking-id') as HTMLInputElement).value;
+      const name = (document.getElementById('edit-booking-name') as HTMLInputElement).value.trim();
+      const email = (document.getElementById('edit-booking-email') as HTMLInputElement).value.trim();
+      const phone = (document.getElementById('edit-booking-phone') as HTMLInputElement).value.trim();
+      const participants = parseInt((document.getElementById('edit-booking-participants') as HTMLInputElement).value, 10);
+      const notes = (document.getElementById('edit-booking-notes') as HTMLTextAreaElement).value.trim();
+      const participantNames = Array.from(document.querySelectorAll('.edit-pname-input')).map((el) => (el as HTMLInputElement).value.trim()).filter(Boolean);
+
+      if (!participants || participants <= 0) {
+        alert('Bitte eine gültige Personenzahl eingeben.');
+        return;
+      }
+
+      const saveBtn = document.getElementById('edit-modal-save') as HTMLButtonElement;
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Speichern...';
+
+      try {
+        const response = await fetch('/api/admin/bookings', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id, name, email, phone, participants, participantNames, notes }),
+        });
+
+        if (response.ok) {
+          closeEditBookingModal();
+          await loadBookings();
+          await loadSlots();
+        } else {
+          const result = await response.json().catch(() => null);
+          alert(result?.error || 'Fehler beim Aktualisieren der Buchung');
+        }
+      } catch (error) {
+        console.error('Error updating booking:', error);
+        alert('Fehler beim Aktualisieren der Buchung');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Speichern';
+      }
+    });
+    // ========== END EDIT BOOKING MODAL ==========
 
     // Speichert die URL für das ausgewählte Bild (für Vorschau)
     let workshopImageUrlMap: Record<string, string> = {};
@@ -561,6 +765,7 @@ export const prerender = false;
     document.getElementById('twofa-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const code = (document.getElementById('twofa-code') as HTMLInputElement)?.value;
+      const trustDevice = (document.getElementById('twofa-trust') as HTMLInputElement)?.checked || false;
 
       try {
         const response = await fetch('/api/admin/verify-2fa', {
@@ -569,7 +774,8 @@ export const prerender = false;
           body: JSON.stringify({
             action: 'verify',
             sessionId: pending2FASessionId,
-            code
+            code,
+            trustDevice
           })
         });
 
@@ -787,9 +993,9 @@ export const prerender = false;
 	            // Event-Typ Badge
 	            let eventBadge = '';
 	            if (slot.eventType === 'kindergeburtstag') {
-	              eventBadge = '<span class="event-badge event-kindergeburtstag">🎂 Kindergeburtstag</span>';
+	              eventBadge = '<span class="event-badge event-kindergeburtstag">Kindergeburtstag</span>';
 	            } else if (slot.eventType === 'stammtisch') {
-	              eventBadge = '<span class="event-badge event-stammtisch">🍷 Stammtisch</span>';
+	              eventBadge = '<span class="event-badge event-stammtisch">Stammtisch</span>';
 	            }
 
 	            return `
@@ -843,7 +1049,7 @@ export const prerender = false;
 		    function updateDashboard(bookings: any[]) {
 		      const today = new Date();
 		      today.setHours(0, 0, 0, 0);
-		      const todayStr = today.toISOString().split('T')[0];
+		      const todayStr = toLocalDateStr(today);
 		      const sevenDaysAhead = new Date(today);
 		      sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
 
@@ -954,11 +1160,15 @@ export const prerender = false;
 		            return true;
 		          })
 		          .sort((a, b) => {
+		            // Offene Anfragen (pending) immer zuerst
+		            if (a.status === 'pending' && b.status !== 'pending') return -1;
+		            if (a.status !== 'pending' && b.status === 'pending') return 1;
+
 		            const aDateBase = a.slotDate || (a.createdAt ? String(a.createdAt).split('T')[0] : '');
 		            const bDateBase = b.slotDate || (b.createdAt ? String(b.createdAt).split('T')[0] : '');
-		
+
 		            if (!aDateBase || !bDateBase) return 0;
-		
+
 		            const aDate = new Date(`${aDateBase}T${a.slotTime || '00:00'}:00`);
 		            const bDate = new Date(`${bDateBase}T${b.slotTime || '00:00'}:00`);
 		            return aDate.getTime() - bDate.getTime();
@@ -980,10 +1190,10 @@ export const prerender = false;
 		                : '';
 
 		              const status = booking.status || 'confirmed';
-		              let statusLabel = 'Bestätigt';
+		              let statusLabel = 'Zugesagt';
 		              let statusClass = 'booking-status--confirmed';
 		              if (status === 'pending') {
-		                statusLabel = 'Neu / unbestätigt';
+		                statusLabel = 'Neue Anfrage – bitte bestätigen';
 		                statusClass = 'booking-status--pending';
 		              } else if (status === 'cancelled') {
 		                statusLabel = 'Abgesagt';
@@ -1006,12 +1216,14 @@ export const prerender = false;
 		                    <div class="booking-customer">
 		                      <div><strong>${booking.name}</strong>${booking.email ? ` (${booking.email})` : ''}</div>
 		                      <div>${booking.participants} Person(en)</div>
+		                      ${booking.participantNames && booking.participantNames.length > 0 ? `<div class="booking-participant-names">Teilnehmer: ${booking.participantNames.map((n: string) => escapeHtml(n)).join(', ')}</div>` : ''}
+		                      ${booking.notes ? `<div class="booking-notes">${escapeHtml(booking.notes)}</div>` : ''}
 		                    </div>
 		                  </div>
 		                  <div class="slot-actions booking-actions">
-		                    ${showConfirm ? `<button class="btn btn-success btn-confirm-booking" data-id="${booking.id}">✓ Bestätigen</button>` : ''}
-		                    ${showCancel ? `<button class="btn btn-danger btn-cancel-booking" data-id="${booking.id}">✕ Absagen</button>` : ''}
-		                    <button class="btn btn-secondary btn-edit-booking" data-id="${booking.id}">✎ Bearbeiten</button>
+		                    ${showConfirm ? `<button class="btn btn-success btn-confirm-booking" data-id="${booking.id}">Zusagen</button>` : ''}
+		                    ${showCancel ? `<button class="btn btn-danger btn-cancel-booking" data-id="${booking.id}">Absagen</button>` : ''}
+		                    <button class="btn btn-secondary btn-edit-booking" data-id="${booking.id}">Bearbeiten</button>
 		                  </div>
 		                </div>
 		              `;
@@ -1040,50 +1252,14 @@ export const prerender = false;
 		            });
 		          });
 		
-		          // Edit-Handler (Teilnehmerzahl & Notizen mit einfachen Prompts bearbeiten)
+		          // Edit-Handler → Modal öffnen
 		          listEl.querySelectorAll('.btn-edit-booking').forEach((btn) => {
-		            btn.addEventListener('click', async (e) => {
+		            btn.addEventListener('click', (e) => {
 		              const id = (e.target as HTMLElement).dataset.id;
 		              if (!id) return;
-
 		              const booking = (activeBookings as any[]).find((b) => b.id === id);
 		              if (!booking) return;
-
-		              const participantsInput = prompt('Anzahl Personen', String(booking.participants || 1));
-		              if (participantsInput === null) return;
-		              const participants = parseInt(participantsInput, 10);
-		              if (!Number.isFinite(participants) || participants <= 0) {
-		                alert('Bitte eine gültige Personenzahl eingeben.');
-		                return;
-		              }
-
-		              const notesInput = prompt('Notizen (optional)', booking.notes || '');
-		              try {
-		                const response = await fetch('/api/admin/bookings', {
-		                  method: 'PUT',
-		                  headers: {
-		                    'Authorization': `Basic ${authCredentials}`,
-		                    'Content-Type': 'application/json',
-		                  },
-		                  body: JSON.stringify({
-		                    id,
-		                    participants,
-		                    notes: notesInput ?? '',
-		                  }),
-		                });
-		
-		                if (response.ok) {
-		                  await loadBookings();
-		                  await loadSlots();
-		                } else {
-		                  const result = await response.json().catch(() => null);
-		                  const message = result?.error || 'Fehler beim Aktualisieren der Buchung';
-		                  alert(message);
-		                }
-		              } catch (error) {
-		                console.error('Error updating booking:', error);
-		                alert('Fehler beim Aktualisieren der Buchung');
-		              }
+		              openEditBookingModal(booking);
 		            });
 		          });
 		        }
@@ -1249,9 +1425,27 @@ export const prerender = false;
 	    // Setze Mindestdatum auf heute
 	    const dateInput = document.getElementById('slot-date') as HTMLInputElement;
 	    if (dateInput) {
-	      const today = new Date().toISOString().split('T')[0];
+	      const today = toLocalDateStr(new Date());
 	      dateInput.min = today;
 	    }
+
+    // ========== SIDEBAR TOGGLE ==========
+    const sidebar = document.getElementById('admin-sidebar');
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    function toggleSidebar() {
+      sidebar?.classList.toggle('open');
+      sidebarOverlay?.classList.toggle('visible');
+    }
+
+    function closeSidebar() {
+      sidebar?.classList.remove('open');
+      sidebarOverlay?.classList.remove('visible');
+    }
+
+    hamburgerBtn?.addEventListener('click', toggleSidebar);
+    sidebarOverlay?.addEventListener('click', closeSidebar);
 
     // ========== TAB NAVIGATION ==========
     const tabButtons = document.querySelectorAll('.admin-nav__btn');
@@ -1261,12 +1455,21 @@ export const prerender = false;
       btn.addEventListener('click', () => {
         const tabName = btn.getAttribute('data-tab');
 
+        // Close sidebar on mobile after tab click
+        closeSidebar();
+
         // Deaktiviere alle Tabs
         tabButtons.forEach(b => b.classList.remove('active'));
         tabContents.forEach(t => t.classList.add('hidden'));
 
         // Aktiviere gewählten Tab
         btn.classList.add('active');
+        // Update topbar title
+        const topbarTitle = document.querySelector('.topbar-title');
+        if (topbarTitle) {
+          const label = btn.querySelector('.nav-label')?.textContent || tabName;
+          topbarTitle.textContent = label;
+        }
         const targetTab = document.getElementById(`tab-${tabName}`);
         if (targetTab) {
           targetTab.classList.remove('hidden');
@@ -1278,7 +1481,11 @@ export const prerender = false;
               renderWeekCalendar();
             });
           } else if (tabName === 'termine') {
-            Promise.all([loadSlots(), loadBookings()]);
+            loadSlots();
+          } else if (tabName === 'kunden') {
+            loadBookings();
+          } else if (tabName === 'anfragen') {
+            loadInquiries();
           } else if (tabName === 'workshops') {
             Promise.all([loadWorkshopImageOptions(), loadWorkshops(), loadWorkshopBookings()]);
           } else if (tabName === 'galerie') {
@@ -1882,7 +2089,7 @@ export const prerender = false;
                 `<option value="${c.id}" ${category === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
               ).join('')}
             </select>
-            <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}">🗑️</button>
+            <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}"></button>
           </div>
         </div>
       `;
@@ -2144,7 +2351,7 @@ export const prerender = false;
     function renderOverview() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString().split('T')[0];
+      const todayStr = toLocalDateStr(today);
 
       // Heutige Termine rendern
       const todayBookings = cachedBookings.filter(b =>
@@ -2165,14 +2372,15 @@ export const prerender = false;
         if (todayListEl) {
           todayListEl.innerHTML = todayBookings.map(b => {
             const statusClass = b.status === 'pending' ? 'status-pending' : 'status-confirmed';
-            const statusLabel = b.status === 'pending' ? '⏳ Offen' : '✅ Bestätigt';
+            const statusLabel = b.status === 'pending' ? 'Offen' : 'Bestätigt';
             return `
               <div class="today-booking-card ${statusClass}">
                 <div class="today-booking-time">${b.slotTime || '?'}${b.slotEndTime ? ' - ' + b.slotEndTime : ''} Uhr</div>
                 <div class="today-booking-info">
                   <strong>${escapeHtml(b.name || '')}</strong>
                   <span>${b.participants || 1} Person(en)</span>
-                  ${b.notes ? `<span class="today-booking-note">📝 ${escapeHtml(b.notes)}</span>` : ''}
+                  ${b.participantNames && b.participantNames.length > 0 ? `<span class="today-booking-participants">${b.participantNames.map((n: string) => escapeHtml(n)).join(', ')}</span>` : ''}
+                  ${b.notes ? `<span class="today-booking-note">${escapeHtml(b.notes)}</span>` : ''}
                 </div>
                 <div class="today-booking-status ${statusClass}">${statusLabel}</div>
                 <div class="today-booking-actions">
@@ -2208,7 +2416,7 @@ export const prerender = false;
       // Offene Anfragen
       const pendingCount = cachedBookings.filter(b => b.status === 'pending').length;
       if (pendingCount > 0) {
-        warnings.push(`🔔 <strong>${pendingCount} offene Anfrage${pendingCount > 1 ? 'n' : ''}</strong> warten auf Bestätigung`);
+        warnings.push(`<strong>${pendingCount} offene Anfrage${pendingCount > 1 ? 'n' : ''}</strong> warten auf Bestätigung`);
       }
 
       // Doppelbelegungen prüfen
@@ -2225,7 +2433,7 @@ export const prerender = false;
               const a = slots[i], b = slots[j];
               if (a.time && b.time && a.endTime && b.endTime) {
                 if (a.time < b.endTime && b.time < a.endTime) {
-                  warnings.push(`⚠️ <strong>Zeitüberlappung</strong> am ${formatDate(date)}: ${a.time}-${a.endTime} und ${b.time}-${b.endTime}`);
+                  warnings.push(`<strong>Zeitüberlappung</strong> am ${formatDate(date)}: ${a.time}-${a.endTime} und ${b.time}-${b.endTime}`);
                 }
               }
             }
@@ -2239,7 +2447,7 @@ export const prerender = false;
         return slotDate >= today && s.available === 0 && s.eventType === 'normal';
       });
       if (fullSlots.length > 0) {
-        warnings.push(`📌 <strong>${fullSlots.length} Termin${fullSlots.length > 1 ? 'e' : ''}</strong> ausgebucht`);
+        warnings.push(`<strong>${fullSlots.length} Termin${fullSlots.length > 1 ? 'e' : ''}</strong> ausgebucht`);
       }
 
       if (warningsEl && warningsListEl) {
@@ -2292,7 +2500,7 @@ export const prerender = false;
       if (!calEl) return;
 
       const days = getWeekDates(calendarWeekOffset);
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = toLocalDateStr(new Date());
 
       // Wochenlabel
       const startStr = days[0].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
@@ -2305,7 +2513,7 @@ export const prerender = false;
       const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
       days.forEach((day, idx) => {
-        const dateStr = day.toISOString().split('T')[0];
+        const dateStr = toLocalDateStr(day);
         const isToday = dateStr === todayStr;
         const isPast = day < new Date(todayStr + 'T00:00:00');
 
@@ -2337,8 +2545,8 @@ export const prerender = false;
             const booked = slot.maxCapacity - slot.available;
 
             let badge = '';
-            if (slot.eventType === 'kindergeburtstag') badge = '🎂';
-            else if (slot.eventType === 'stammtisch') badge = '🍷';
+            if (slot.eventType === 'kindergeburtstag') badge = 'KG';
+            else if (slot.eventType === 'stammtisch') badge = 'ST';
 
             html += `
               <div class="cal-slot ${utilizationClass}">
@@ -2378,7 +2586,7 @@ export const prerender = false;
 
       const dateObj = new Date(dateStr + 'T00:00:00');
       const formatted = dateObj.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-      titleEl.textContent = `📅 ${formatted}`;
+      titleEl.textContent = `${formatted}`;
 
       const daySlots = cachedSlots.filter((s: any) => s.date === dateStr);
       const dayBookings = cachedBookings.filter((b: any) => b.slotDate === dateStr && b.status !== 'cancelled');
@@ -2393,8 +2601,8 @@ export const prerender = false;
           const booked = slot.maxCapacity - slot.available;
 
           let badge = '';
-          if (slot.eventType === 'kindergeburtstag') badge = '🎂 Kindergeburtstag';
-          else if (slot.eventType === 'stammtisch') badge = '🍷 Stammtisch';
+          if (slot.eventType === 'kindergeburtstag') badge = 'KG Kindergeburtstag';
+          else if (slot.eventType === 'stammtisch') badge = 'ST Stammtisch';
 
           html += `<div class="day-detail-slot">`;
           html += `<div class="day-detail-slot-header">`;
@@ -2417,6 +2625,7 @@ export const prerender = false;
                     ${b.participants ? b.participants + ' Person(en)' : ''}
                     ${b.email ? ' · ' + escapeHtml(b.email) : ''}
                     ${b.phone ? ' · ' + escapeHtml(b.phone) : ''}
+                    ${b.participantNames && b.participantNames.length > 0 ? `<br>Teilnehmer: Teilnehmer: ${b.participantNames.map((n: string) => escapeHtml(n)).join(', ')}` : ''}
                   </div>
                   <span class="day-detail-booking-status ${statusClass}">${statusLabel}</span>
                 </div>
@@ -2552,13 +2761,13 @@ export const prerender = false;
       el.style.display = 'block';
       el.innerHTML = `
         <div style="background: ${isActive ? '#f0fdf4' : '#fef2f2'}; border: 2px solid ${isActive ? '#16a34a' : '#dc2626'}; border-radius: 16px; padding: 1.5rem; text-align: center; max-width: 400px; margin: 0 auto;">
-          <div style="font-size: 3rem;">${isActive ? '✅' : '⚠️'}</div>
+          <div style="font-size: 1.5rem; font-weight: bold; color: ${isActive ? '#16a34a' : '#dc2626'};">${isActive ? 'Gültig' : 'Ungültig'}</div>
           <h3 style="color: ${isActive ? '#16a34a' : '#dc2626'}; margin: 0.5rem 0;">${isActive ? 'Gutschein gültig' : (voucher.status === 'redeemed' ? 'Bereits eingelöst' : 'Abgelaufen')}</h3>
           <p style="font-family: monospace; font-size: 1.25rem; letter-spacing: 2px; margin: 0.5rem 0;">${escapeHtml(voucher.code)}</p>
           <p style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">${formatCents(voucher.amount)}</p>
           <p style="font-size: 0.85rem; color: #666;">${escapeHtml(voucher.customerEmail || '')}${voucher.customerName ? ' (' + escapeHtml(voucher.customerName) + ')' : ''}</p>
           ${voucher.redeemedAt ? `<p style="font-size: 0.8rem; color: #999;">Eingelöst: ${formatVoucherDate(voucher.redeemedAt)}</p>` : ''}
-          ${isActive ? `<button onclick="adminRedeemVoucher('${escapeHtml(voucher.code)}')" style="margin-top: 1rem; background: #dc2626; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">🎟️ Jetzt einlösen</button>` : ''}
+          ${isActive ? `<button onclick="adminRedeemVoucher('${escapeHtml(voucher.code)}')" style="margin-top: 1rem; background: #dc2626; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">Jetzt einlösen</button>` : ''}
         </div>`;
     }
 
@@ -2811,6 +3020,8 @@ export const prerender = false;
 
           if (activeTab === 'termine' || activeTab === 'uebersicht') {
             await Promise.all([loadSlots(), loadBookings()]);
+          } else if (activeTab === 'kunden') {
+            await loadBookings();
           } else if (activeTab === 'workshops') {
             await Promise.all([loadWorkshops(), loadWorkshopBookings()]);
           } else if (activeTab === 'gutscheine') {
@@ -2858,6 +3069,131 @@ export const prerender = false;
       });
       observer.observe(adminPanel, { attributes: true, attributeFilter: ['class'] });
     }
+
+    // ========== ANFRAGEN (Besondere Anlässe) ==========
+    const INQUIRY_EVENT_LABELS: Record<string, string> = {
+      kindergeburtstag: 'Kindergeburtstag',
+      jga: 'JGA',
+      stammtisch: 'Stammtisch',
+      firmen_event: 'Firmen-Event',
+      privater_anlass: 'Privater Anlass',
+      sonstiges: 'Sonstiges',
+    };
+    const INQUIRY_STATUS_LABELS: Record<string, string> = {
+      'new': 'Neu',
+      contacted: 'Kontaktiert',
+      confirmed: 'Bestätigt',
+      cancelled: 'Abgesagt',
+    };
+    const INQUIRY_STATUS_COLORS: Record<string, string> = {
+      'new': '#e65100',
+      contacted: '#1565c0',
+      confirmed: '#2e7d32',
+      cancelled: '#999',
+    };
+
+    let allInquiries: any[] = [];
+
+    async function loadInquiries() {
+      try {
+        const res = await fetch(`/api/inquiries`, {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+        if (!res.ok) return;
+        allInquiries = await res.json();
+        renderInquiries();
+      } catch (err) {
+        console.error('Fehler beim Laden der Anfragen:', err);
+      }
+    }
+
+    function renderInquiries() {
+      const list = document.getElementById('inquiries-list');
+      const noData = document.getElementById('no-inquiries');
+      if (!list || !noData) return;
+
+      const activeFilter = document.querySelector('[data-inquiry-filter].active')?.getAttribute('data-inquiry-filter') || 'new';
+      const filtered = activeFilter === 'all' ? allInquiries : allInquiries.filter(i => i.status === activeFilter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        noData.classList.remove('hidden');
+        return;
+      }
+      noData.classList.add('hidden');
+
+      list.innerHTML = filtered.map(inq => {
+        const eventLabel = INQUIRY_EVENT_LABELS[inq.eventType] || inq.eventType;
+        const statusLabel = INQUIRY_STATUS_LABELS[inq.status] || inq.status;
+        const statusColor = INQUIRY_STATUS_COLORS[inq.status] || '#666';
+        const date = inq.preferredDate || '–';
+        const created = new Date(inq.createdAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        return `<div class="inquiry-card" data-inquiry-id="${inq.id}">
+          <div class="inquiry-card-header">
+            <span class="inquiry-event-badge">${eventLabel}</span>
+            <span class="inquiry-status-badge" style="background:${statusColor}">${statusLabel}</span>
+          </div>
+          <div class="inquiry-card-body">
+            <div class="inquiry-info"><strong>${inq.name}</strong></div>
+            <div class="inquiry-info">${inq.email} · ${inq.phone || '–'}</div>
+            <div class="inquiry-info">Wunschdatum: ${date} · ${inq.participants} Person(en)</div>
+            ${inq.message ? `<div class="inquiry-message">${inq.message}</div>` : ''}
+            ${inq.adminNotes ? `<div class="inquiry-admin-notes">Notiz: ${inq.adminNotes}</div>` : ''}
+            <div class="inquiry-meta">Eingegangen: ${created}</div>
+          </div>
+          <div class="inquiry-card-actions">
+            ${inq.status === 'new' ? `<button class="btn btn-sm btn-primary" onclick="updateInquiryStatus('${inq.id}', 'contacted')">Kontaktiert</button>` : ''}
+            ${inq.status !== 'confirmed' && inq.status !== 'cancelled' ? `<button class="btn btn-sm btn-success" onclick="updateInquiryStatus('${inq.id}', 'confirmed')">Bestätigt</button>` : ''}
+            ${inq.status !== 'cancelled' ? `<button class="btn btn-sm btn-danger" onclick="updateInquiryStatus('${inq.id}', 'cancelled')">Absagen</button>` : ''}
+            <button class="btn btn-sm btn-secondary" onclick="editInquiryNotes('${inq.id}')">Notiz</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Inquiry-Filter click handler
+    document.querySelectorAll('[data-inquiry-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-inquiry-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderInquiries();
+      });
+    });
+
+    // Global functions for inquiry actions
+    (window as any).updateInquiryStatus = async function(id: string, status: string) {
+      try {
+        const res = await fetch('/api/inquiries', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${authCredentials}` },
+          body: JSON.stringify({ id, status }),
+        });
+        if (res.ok) {
+          await loadInquiries();
+        } else {
+          alert('Fehler beim Aktualisieren.');
+        }
+      } catch (err) {
+        alert('Verbindungsfehler.');
+      }
+    };
+
+    (window as any).editInquiryNotes = async function(id: string) {
+      const inq = allInquiries.find(i => i.id === id);
+      const notes = prompt('Admin-Notiz:', inq?.adminNotes || '');
+      if (notes === null) return;
+      try {
+        const res = await fetch('/api/inquiries', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${authCredentials}` },
+          body: JSON.stringify({ id, adminNotes: notes }),
+        });
+        if (res.ok) await loadInquiries();
+      } catch (err) {
+        alert('Fehler beim Speichern.');
+      }
+    };
 
     // Seite verlassen: Refresh stoppen
     document.addEventListener('visibilitychange', () => {
