@@ -1,0 +1,74 @@
+name: Deploy to K3s
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm deployment'
+        required: true
+        default: 'deploy'
+
+env:
+  SERVER_IP: "2a01:4f8:202:1129:2447:2447:1:901"
+  REGISTRY: "[2a01:4f8:202:1129:2447:2447:1:900]:5000"
+  IMAGE_NAME: "keramik-auszeit-de"
+  K8S_NAMESPACE: "default"
+  K8S_DEPLOYMENT: "keramik-auszeit-de"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'deploy'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ env.SERVER_IP }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Copy source to server
+        run: |
+          rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no" \
+            ./ root@[${{ env.SERVER_IP }}]:/tmp/build-keramik-auszeit/
+
+      - name: Build, push and deploy on server
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
+            root@${{ env.SERVER_IP }} << 'DEPLOY_SCRIPT'
+          set -e
+
+          cd /tmp/build-keramik-auszeit
+
+          echo "==> Building Docker image..."
+          docker build --no-cache -t "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" .
+
+          echo "==> Pushing to private registry..."
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+
+          echo "==> Deploying to K3s..."
+          kubectl set image deployment/${{ env.K8S_DEPLOYMENT }} \
+            ${{ env.IMAGE_NAME }}=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout restart deployment/${{ env.K8S_DEPLOYMENT }} -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT }} -n ${{ env.K8S_NAMESPACE }} --timeout=120s
+
+          echo "==> Cleaning up build directory..."
+          rm -rf /tmp/build-keramik-auszeit
+
+          echo "==> Deployment successful!"
+          DEPLOY_SCRIPT
+
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
+            root@${{ env.SERVER_IP }} \
+            "kubectl get pods -n ${{ env.K8S_NAMESPACE }} -l app=${{ env.IMAGE_NAME }}"

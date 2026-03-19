@@ -192,6 +192,50 @@ cp .env.example .env
 
 ---
 
+## iPhone / Mobile Deployment (GitHub Actions)
+
+Die App kann direkt vom iPhone aus deployed werden – über die **GitHub Mobile App** und einen GitHub Actions Workflow.
+
+### Einmalige Einrichtung
+
+1. **SSH Key als GitHub Secret hinterlegen:**
+   - Gehe zu GitHub → Repository → Settings → Secrets and variables → Actions
+   - Neues Secret anlegen: `SSH_PRIVATE_KEY`
+   - Inhalt: Der private SSH Key (ed25519), der Root-Zugang zum Server hat
+
+2. **K8s Deployment-Name prüfen:**
+   - Der Workflow nutzt standardmäßig `keramik-auszeit-de` als Deployment-Name
+   - Falls anders, in `.github/workflows/deploy.yml` die `env`-Variablen anpassen:
+     - `K8S_DEPLOYMENT`: Name des Kubernetes Deployments
+     - `K8S_NAMESPACE`: Namespace (Standard: `default`)
+
+3. **GitHub App auf dem iPhone installieren:**
+   - App Store → "GitHub" suchen und installieren
+   - Mit deinem GitHub-Account einloggen
+
+### Vom iPhone deployen
+
+1. **GitHub App** öffnen
+2. Zum Repository **Auszeit** navigieren
+3. Tab **Actions** antippen
+4. Workflow **"Deploy to K3s"** auswählen
+5. **"Run workflow"** antippen
+6. Bei "Type deploy to confirm" → `deploy` eingeben
+7. **"Run workflow"** bestätigen
+
+Der Workflow:
+- Kopiert den Code per rsync auf den Server
+- Baut das Docker Image direkt auf dem Server
+- Pusht in die private Registry
+- Updated das K3s Deployment
+- Zeigt den Status der Pods an
+
+### Workflow-Status
+
+In der GitHub App siehst du live den Fortschritt. Grüner Haken = erfolgreich deployed.
+
+---
+
 ## Git Workflow
 
 ```bash
@@ -202,5 +246,5 @@ git commit -m "Beschreibung der Änderung"
 # Auf GitHub pushen
 git push origin main
 
-# Dann deployen (siehe oben: Schnell-Deployment)
+# Dann deployen (siehe oben: Schnell-Deployment oder iPhone Deployment)
 ```
