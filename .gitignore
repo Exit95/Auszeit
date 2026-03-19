@@ -57,3 +57,14 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.env.local
+.env.production
+*.pem
+*.key
+*.crt
+id_rsa*
+id_ed25519*
+*.db
+*.sqlite
+*.db-shm
+*.db-wal

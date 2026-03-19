@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-danapfel-digital-de
+  namespace: websites
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-danapfel-digital-de
+  template:
+    metadata:
+      labels:
+        app: test-danapfel-digital-de
+    spec:
+      containers:
+        - name: test-danapfel-digital-de
+          image: 10.1.9.0:5000/test-danapfel-digital-de:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-danapfel-digital-de
+  namespace: websites
+spec:
+  selector:
+    app: test-danapfel-digital-de
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-danapfel-digital-de
+  namespace: websites
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: websites-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - test-danapfel-digital.de
+      secretName: test-danapfel-digital-de-tls
+  rules:
+    - host: test-danapfel-digital.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: test-danapfel-digital-de
+                port:
+                  number: 80

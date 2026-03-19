@@ -19,7 +19,7 @@ function getS3Client(): S3Client {
     const secretKey = process.env.S3_SECRET_ACCESS_KEY || process.env.S3_SECRET_KEY || '';
 
     _s3Client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT || 'https://nbg1.your-objectstorage.com',
+      endpoint: process.env.S3_ENDPOINT || '',
       region: process.env.S3_REGION || 'eu-central',
       credentials: {
         accessKeyId: accessKey,
@@ -59,7 +59,6 @@ const PRODUCT_CATEGORIES = [
 // GET - Liste aller Bilder (aus gallery/ UND products/)
 export const GET: APIRoute = async () => {
   try {
-    const endpoint = process.env.S3_ENDPOINT || '';
     const bucket = getBucket();
     const allImages: Array<{
       filename: string;
@@ -81,9 +80,11 @@ export const GET: APIRoute = async () => {
     if (galleryResponse.Contents) {
       for (const obj of galleryResponse.Contents) {
         if (obj.Key && !obj.Key.endsWith('/')) {
+          const fname = obj.Key.replace(`${PREFIX}/`, '');
           allImages.push({
-            filename: obj.Key.replace(`${PREFIX}/`, ''),
-            url: `${endpoint}/${bucket}/${obj.Key}`,
+            filename: fname,
+            // Proxy-URL statt direkte S3-URL (MinIO ist intern nicht erreichbar)
+            url: `/uploads/gallery/${fname}`,
             size: obj.Size || 0,
             date: obj.LastModified || new Date(),
             source: 'gallery',
@@ -107,7 +108,8 @@ export const GET: APIRoute = async () => {
             const filename = obj.Key.split('/').pop() || '';
             allImages.push({
               filename: `products/${cat.id}/${filename}`,
-              url: `${endpoint}/${bucket}/${obj.Key}`,
+              // Proxy-URL statt direkte S3-URL
+              url: `/products/${cat.id}/${filename}`,
               size: obj.Size || 0,
               date: obj.LastModified || new Date(),
               source: 'products',
@@ -212,7 +214,7 @@ export const POST: APIRoute = async ({ request }) => {
           ACL: 'public-read',
         }));
 
-        const url = `${process.env.S3_ENDPOINT}/${getBucket()}/${key}`;
+        const url = `/uploads/gallery/${filename}`;
         resolve(new Response(JSON.stringify({ success: true, url, filename }), {
           headers: { 'Content-Type': 'application/json' },
         }));

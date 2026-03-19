@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hartmann-gruenwerk-de
+  namespace: websites
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hartmann-gruenwerk-de
+  template:
+    metadata:
+      labels:
+        app: hartmann-gruenwerk-de
+    spec:
+      containers:
+        - name: hartmann-gruenwerk-de
+          image: 10.1.9.0:5000/hartmann-gruenwerk-de:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+          envFrom:
+            - secretRef:
+                name: hartmann-secrets
+          resources:
+            limits:
+              memory: 384Mi
+            requests:
+              memory: 96Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hartmann-gruenwerk-de
+  namespace: websites
+spec:
+  selector:
+    app: hartmann-gruenwerk-de
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hartmann-gruenwerk-de
+  namespace: websites
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: websites-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - hartmann-gruenwerk.de
+        - www.hartmann-gruenwerk.de
+      secretName: hartmann-gruenwerk-de-tls
+  rules:
+    - host: hartmann-gruenwerk.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hartmann-gruenwerk-de
+                port:
+                  number: 80
+    - host: www.hartmann-gruenwerk.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hartmann-gruenwerk-de
+                port:
+                  number: 80

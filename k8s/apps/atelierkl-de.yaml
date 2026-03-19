@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atelierkl-de
+  namespace: websites
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: atelierkl-de
+  template:
+    metadata:
+      labels:
+        app: atelierkl-de
+    spec:
+      containers:
+        - name: atelierkl-de
+          image: 10.1.9.0:5000/atelierkl-de:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+          envFrom:
+            - secretRef:
+                name: s3-credentials
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: atelierkl-de
+  namespace: websites
+spec:
+  selector:
+    app: atelierkl-de
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: atelierkl-de
+  namespace: websites
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: websites-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - atelierkl.de
+        - www.atelierkl.de
+      secretName: atelierkl-de-tls
+  rules:
+    - host: atelierkl.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: atelierkl-de
+                port:
+                  number: 80
+    - host: www.atelierkl.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: atelierkl-de
+                port:
+                  number: 80

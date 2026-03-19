@@ -272,17 +272,13 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
   <body>
     <a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>
 
+    <!-- Desktop Nav -->
     <nav class="site-nav" id="site-nav" aria-label="Hauptnavigation">
       <div class="site-nav__inner">
         <a href="#main-content" class="site-nav__brand">Atelier Auszeit</a>
-        <button class="site-nav__toggle" id="nav-toggle" aria-label="Navigation öffnen" aria-expanded="false">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
-        </button>
-        <ul class="site-nav__links" id="nav-links">
+
+        <!-- Desktop Links -->
+        <ul class="site-nav__links" id="nav-links-desktop">
           <li><a href="#calendar-section" class="site-nav__link">Termin buchen</a></li>
           <li><a href="#special-events" class="site-nav__link">Besondere Anlässe</a></li>
           <li><a href="#workshops" class="site-nav__link">Workshops</a></li>
@@ -291,8 +287,87 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
           <li><a href="#gutschein-section" class="site-nav__link">Gutschein</a></li>
           <li><a href="#kontakt" class="site-nav__link">Kontakt</a></li>
         </ul>
+
+        <!-- Pinselstrich-Hamburger Button -->
+        <button class="brush-toggle" id="nav-toggle" aria-label="Menü öffnen" aria-expanded="false">
+          <svg class="brush-toggle__icon" viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path class="brush-line brush-line--1" d="M5 8.5C8 7.8 14 8.2 27 8.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+            <path class="brush-line brush-line--2" d="M7 16C12 15.6 20 16.3 25 16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+            <path class="brush-line brush-line--3" d="M5 23.5C10 24.1 18 23.2 27 23.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
     </nav>
+
+    <!-- Fullscreen Canvas Overlay Menü (Mobile) -->
+    <div class="canvas-menu" id="canvas-menu" aria-hidden="true">
+      <div class="canvas-menu__bg"></div>
+      <div class="canvas-menu__content">
+        <!-- Schließen-Button -->
+        <button class="canvas-menu__close" id="canvas-close" aria-label="Menü schließen">
+          <svg viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 7C12 12 20 20 25 25" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M25 7C20 12 12 20 7 25" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <!-- Dekorative Keramik-Elemente -->
+        <div class="canvas-menu__deco canvas-menu__deco--1" aria-hidden="true"></div>
+        <div class="canvas-menu__deco canvas-menu__deco--2" aria-hidden="true"></div>
+        <div class="canvas-menu__deco canvas-menu__deco--3" aria-hidden="true"></div>
+
+        <!-- Atelier Brand -->
+        <div class="canvas-menu__brand">
+          <span class="canvas-menu__brand-script">Atelier</span>
+          <span class="canvas-menu__brand-serif">Auszeit</span>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="canvas-menu__nav" aria-label="Mobile Navigation">
+          <a href="#calendar-section" class="canvas-menu__link" style="--i:0">
+            <span class="canvas-menu__link-num">01</span>
+            <span class="canvas-menu__link-text">Termin buchen</span>
+            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
+          </a>
+          <a href="#special-events" class="canvas-menu__link" style="--i:1">
+            <span class="canvas-menu__link-num">02</span>
+            <span class="canvas-menu__link-text">Besondere Anlässe</span>
+            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
+          </a>
+          <a href="#workshops" class="canvas-menu__link" style="--i:2">
+            <span class="canvas-menu__link-num">03</span>
+            <span class="canvas-menu__link-text">Workshops</span>
+            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
+          </a>
+          <a href="#angebote" class="canvas-menu__link" style="--i:3">
+            <span class="canvas-menu__link-num">04</span>
+            <span class="canvas-menu__link-text">Angebot</span>
+            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
+          </a>
+          <a href="#galerie" class="canvas-menu__link" style="--i:4">
+            <span class="canvas-menu__link-num">05</span>
+            <span class="canvas-menu__link-text">Galerie</span>
+            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
+          </a>
+          <a href="#gutschein-section" class="canvas-menu__link" style="--i:5">
+            <span class="canvas-menu__link-num">06</span>
+            <span class="canvas-menu__link-text">Gutschein</span>
+            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
+          </a>
+          <a href="#kontakt" class="canvas-menu__link" style="--i:6">
+            <span class="canvas-menu__link-num">07</span>
+            <span class="canvas-menu__link-text">Kontakt</span>
+            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
+          </a>
+        </nav>
+
+        <!-- Footer im Menü -->
+        <div class="canvas-menu__footer">
+          <p>Feldstiege 6a · 48599 Gronau</p>
+          <p>+49 176 34255005</p>
+        </div>
+      </div>
+    </div>
 
 	    <main id="main-content">
       <slot />
@@ -300,29 +375,37 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <script src="../scripts/scroll-animations.js"></script>
     <script src="../scripts/modal.js"></script>
     <script>
-      // Mobile Navigation Toggle
+      // Canvas Menu - Fullscreen Overlay
       const navToggle = document.getElementById('nav-toggle');
-      const navLinks = document.getElementById('nav-links');
+      const canvasMenu = document.getElementById('canvas-menu');
+      const canvasClose = document.getElementById('canvas-close');
 
-      navToggle?.addEventListener('click', () => {
-        const isOpen = navLinks?.classList.toggle('open');
-        navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      function openMenu() {
+        canvasMenu?.classList.add('is-open');
+        canvasMenu?.setAttribute('aria-hidden', 'false');
+        navToggle?.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeMenu() {
+        canvasMenu?.classList.remove('is-open');
+        canvasMenu?.setAttribute('aria-hidden', 'true');
+        navToggle?.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+
+      navToggle?.addEventListener('click', openMenu);
+      canvasClose?.addEventListener('click', closeMenu);
+
+      // Links schließen das Menü
+      canvasMenu?.querySelectorAll('.canvas-menu__link').forEach(link => {
+        link.addEventListener('click', closeMenu);
       });
 
-      // Schließe Menü wenn ein Link geklickt wird
-      navLinks?.querySelectorAll('.site-nav__link').forEach(link => {
-        link.addEventListener('click', () => {
-          navLinks.classList.remove('open');
-          navToggle?.setAttribute('aria-expanded', 'false');
-        });
-      });
-
-      // Schließe Menü bei Klick außerhalb
-      document.addEventListener('click', (e) => {
-        const nav = document.getElementById('site-nav');
-        if (nav && !nav.contains(e.target as Node) && navLinks?.classList.contains('open')) {
-          navLinks.classList.remove('open');
-          navToggle?.setAttribute('aria-expanded', 'false');
+      // Escape schließt das Menü
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && canvasMenu?.classList.contains('is-open')) {
+          closeMenu();
         }
       });
     </script>
@@ -492,56 +575,291 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     background: rgba(255, 255, 255, 0.1);
   }
 
-  .site-nav__toggle {
+  /* ── Pinselstrich Hamburger Button ──────────────────────── */
+  .brush-toggle {
     display: none;
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.9);
     cursor: pointer;
-    padding: var(--space-1);
-    border-radius: 6px;
-    transition: background 0.15s ease;
+    padding: 6px;
+    border-radius: 8px;
+    transition: color 0.2s ease;
+    position: relative;
+    z-index: 102;
   }
 
-  .site-nav__toggle:hover {
-    background: rgba(255, 255, 255, 0.1);
+  .brush-toggle:hover { color: #fff; }
+
+  .brush-toggle__icon { display: block; }
+
+  .brush-line {
+    transition: all 0.4s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+    transform-origin: center;
   }
 
   @media (max-width: 767px) {
-    .site-nav__toggle {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    .brush-toggle { display: flex; align-items: center; justify-content: center; }
 
-    .site-nav__links {
-      display: none;
-      position: absolute;
-      top: 52px;
-      left: 0;
-      right: 0;
-      background: rgba(66, 52, 48, 0.98);
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0;
-      padding: var(--space-2) 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-    }
+    .site-nav__links { display: none; }
+  }
 
-    .site-nav__links.open {
-      display: flex;
-    }
+  /* ── Canvas Menu Overlay ──────────────────────────────────── */
+  .canvas-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    pointer-events: none;
+    visibility: hidden;
+  }
 
-    .site-nav__link {
-      padding: 0.75rem var(--gutter, 1.5rem);
-      border-radius: 0;
-      font-size: 0.9rem;
-    }
+  .canvas-menu.is-open {
+    pointer-events: auto;
+    visibility: visible;
+  }
 
-    .site-nav__link:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
+  /* Hintergrund */
+  .canvas-menu__bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(207, 168, 116, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(217, 108, 74, 0.1) 0%, transparent 50%),
+      linear-gradient(145deg, #3a2c28 0%, #423430 35%, #4a3835 65%, #3d302c 100%);
+    opacity: 0;
+    transition: opacity 0.45s ease;
+  }
+
+  .canvas-menu.is-open .canvas-menu__bg { opacity: 1; }
+
+  /* Content Container */
+  .canvas-menu__content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 5rem 2rem 3rem;
+    overflow-y: auto;
+  }
+
+  /* Schließen Button */
+  .canvas-menu__close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.25s ease;
+    z-index: 5;
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .canvas-menu.is-open .canvas-menu__close {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+    transition-delay: 0.3s;
+  }
+
+  .canvas-menu__close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Dekorative Keramik-Kreise (wie Tonscheiben / Farbkleckse) */
+  .canvas-menu__deco {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .canvas-menu__deco--1 {
+    width: 280px;
+    height: 280px;
+    top: -60px;
+    right: -80px;
+    background: radial-gradient(circle, rgba(207, 168, 116, 0.12) 0%, transparent 70%);
+    transform: scale(0.3);
+  }
+
+  .canvas-menu__deco--2 {
+    width: 200px;
+    height: 200px;
+    bottom: 10%;
+    left: -50px;
+    background: radial-gradient(circle, rgba(217, 108, 74, 0.1) 0%, transparent 70%);
+    transform: scale(0.3);
+  }
+
+  .canvas-menu__deco--3 {
+    width: 120px;
+    height: 120px;
+    top: 40%;
+    right: 8%;
+    background: radial-gradient(circle, rgba(242, 235, 229, 0.06) 0%, transparent 70%);
+    transform: scale(0.3);
+  }
+
+  .canvas-menu.is-open .canvas-menu__deco {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .canvas-menu.is-open .canvas-menu__deco--1 { transition-delay: 0.15s; }
+  .canvas-menu.is-open .canvas-menu__deco--2 { transition-delay: 0.25s; }
+  .canvas-menu.is-open .canvas-menu__deco--3 { transition-delay: 0.35s; }
+
+  /* Brand im Menü */
+  .canvas-menu__brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .canvas-menu.is-open .canvas-menu__brand {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.1s;
+  }
+
+  .canvas-menu__brand-script {
+    font-family: var(--font-script, 'Dancing Script', cursive);
+    font-size: 1.1rem;
+    color: var(--accent-caramel, #CFA874);
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+
+  .canvas-menu__brand-serif {
+    font-family: var(--font-serif, 'Cinzel', serif);
+    font-size: 1.6rem;
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  /* Navigation Links */
+  .canvas-menu__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .canvas-menu__link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 4px;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.85);
+    position: relative;
+    opacity: 0;
+    transform: translateX(-30px);
+    transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(0.15s + var(--i, 0) * 0.06s);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .canvas-menu__link:last-child { border-bottom: none; }
+
+  .canvas-menu.is-open .canvas-menu__link {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .canvas-menu__link-num {
+    font-family: var(--font-serif, 'Cinzel', serif);
+    font-size: 0.65rem;
+    color: var(--accent-caramel, #CFA874);
+    opacity: 0.6;
+    min-width: 22px;
+    letter-spacing: 0.05em;
+  }
+
+  .canvas-menu__link-text {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 1.15rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+  }
+
+  /* Pinselstrich-Underline beim Hover */
+  .canvas-menu__link-stroke {
+    position: absolute;
+    bottom: 10px;
+    left: 38px;
+    right: 4px;
+    height: 3px;
+    background: var(--accent-caramel, #CFA874);
+    border-radius: 2px;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity: 0.5;
+  }
+
+  .canvas-menu__link:hover .canvas-menu__link-stroke,
+  .canvas-menu__link:focus .canvas-menu__link-stroke {
+    transform: scaleX(1);
+  }
+
+  .canvas-menu__link:hover .canvas-menu__link-text {
+    color: #fff;
+    transform: translateX(4px);
+  }
+
+  .canvas-menu__link:hover .canvas-menu__link-num {
+    opacity: 1;
+  }
+
+  /* Active-Effekt */
+  .canvas-menu__link:active .canvas-menu__link-text {
+    transform: translateX(2px);
+  }
+
+  /* Footer im Menü */
+  .canvas-menu__footer {
+    margin-top: 2.5rem;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(15px);
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .canvas-menu.is-open .canvas-menu__footer {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.55s;
+  }
+
+  .canvas-menu__footer p {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.7;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Desktop: Canvas Menu versteckt ──────────────────────── */
+  @media (min-width: 768px) {
+    .canvas-menu { display: none; }
   }
 
   .footer {

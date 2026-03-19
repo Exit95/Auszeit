@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mariadb-backup
+  namespace: websites
+spec:
+  schedule: "0 3 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          nodeSelector:
+            kubernetes.io/hostname: k3s-server
+          containers:
+          - name: backup
+            image: mariadb:11
+            command: ["/bin/sh", "-c"]
+            args:
+            - |
+              TIMESTAMP=$(date +%Y-%m-%d-%H%M)
+              mariadb-dump -h keramik-auszeit-mariadb -u root -p${MARIADB_ROOT_PASSWORD} --all-databases --single-transaction | gzip > /backups/auszeit-${TIMESTAMP}.sql.gz
+              cd /backups && ls -1t auszeit-*.sql.gz | tail -n +8 | xargs -r rm -f
+            envFrom:
+            - secretRef:
+                name: mariadb-secrets
+            volumeMounts:
+            - name: backup-dir
+              mountPath: /backups
+          volumes:
+          - name: backup-dir
+            hostPath:
+              path: /srv/backups/keramik-db
+              type: DirectoryOrCreate
+          restartPolicy: OnFailure

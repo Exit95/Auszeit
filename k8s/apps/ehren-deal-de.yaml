@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ehren-deal-de
+  namespace: websites
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ehren-deal-de
+  template:
+    metadata:
+      labels:
+        app: ehren-deal-de
+    spec:
+      containers:
+        - name: ehren-deal-de
+          image: 10.1.9.0:5000/ehren-deal-de:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ehren-deal-de
+  namespace: websites
+spec:
+  selector:
+    app: ehren-deal-de
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ehren-deal-de
+  namespace: websites
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: websites-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - ehren-deal.de
+        - www.ehren-deal.de
+      secretName: ehren-deal-de-tls
+  rules:
+    - host: ehren-deal.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ehren-deal-de
+                port:
+                  number: 80
+    - host: www.ehren-deal.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ehren-deal-de
+                port:
+                  number: 80

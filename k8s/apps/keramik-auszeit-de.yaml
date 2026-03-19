@@ -1,0 +1,163 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keramik-auszeit-mariadb
+  namespace: websites
+spec:
+  serviceName: keramik-auszeit-mariadb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keramik-auszeit-mariadb
+  template:
+    metadata:
+      labels:
+        app: keramik-auszeit-mariadb
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-server
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - secretRef:
+                name: mariadb-secrets
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/mysql
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 128Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: db-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keramik-auszeit-mariadb
+  namespace: websites
+spec:
+  clusterIP: None
+  selector:
+    app: keramik-auszeit-mariadb
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keramik-auszeit-de
+  namespace: websites
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keramik-auszeit-de
+  template:
+    metadata:
+      labels:
+        app: keramik-auszeit-de
+    spec:
+      containers:
+        - name: keramik-auszeit-de
+          image: 10.1.9.0:5000/keramik-auszeit-de:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: DB_HOST
+              value: "keramik-auszeit-mariadb"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_ENABLED
+              value: "true"
+            - name: DUAL_WRITE
+              value: "true"
+            - name: JSON_FALLBACK
+              value: "false"
+            - name: DB_NAME
+              value: "auszeit_prod"
+            - name: DB_USER
+              value: "auszeit_user"
+            - name: BOOKING_EMAIL
+              value: "keramik-auszeit@web.de"
+            - name: FROM_EMAIL
+              value: "keramik-auszeit@web.de"
+            - name: S3_PREFIX
+              value: "Auszeit/"
+          envFrom:
+            - secretRef:
+                name: keramik-secrets
+            - secretRef:
+                name: s3-credentials
+          resources:
+            limits:
+              memory: 384Mi
+            requests:
+              memory: 96Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keramik-auszeit-de
+  namespace: websites
+spec:
+  selector:
+    app: keramik-auszeit-de
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keramik-auszeit-de
+  namespace: websites
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: websites-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - keramik-auszeit.de
+        - www.keramik-auszeit.de
+      secretName: keramik-auszeit-de-tls
+  rules:
+    - host: keramik-auszeit.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keramik-auszeit-de
+                port:
+                  number: 80
+    - host: www.keramik-auszeit.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keramik-auszeit-de
+                port:
+                  number: 80

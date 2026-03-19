@@ -15,7 +15,7 @@ function getS3Client(): S3Client {
     const secretKey = process.env.S3_SECRET_ACCESS_KEY || process.env.S3_SECRET_KEY || '';
 
     _s3Client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT || 'https://nbg1.your-objectstorage.com',
+      endpoint: process.env.S3_ENDPOINT || '',
       region: process.env.S3_REGION || 'eu-central',
       credentials: {
         accessKeyId: accessKey,

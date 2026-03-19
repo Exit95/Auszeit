@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: danapfel-de
+  namespace: websites
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: danapfel-de
+  template:
+    metadata:
+      labels:
+        app: danapfel-de
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-server
+      containers:
+        - name: danapfel-de
+          image: 10.1.9.0:5000/danapfel-de:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: ORIGIN
+              value: "https://danapfel-digital.de"
+            - name: DATA_DIR
+              value: "/app/data"
+          envFrom:
+            - secretRef:
+                name: danapfel-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          resources:
+            limits:
+              memory: 768Mi
+            requests:
+              memory: 256Mi
+      volumes:
+        - name: data
+          hostPath:
+            path: /srv/data/danapfel-digital
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: danapfel-de
+  namespace: websites
+spec:
+  selector:
+    app: danapfel-de
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: danapfel-de
+  namespace: websites
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: websites-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - danapfel-digital.de
+        - www.danapfel-digital.de
+      secretName: danapfel-de-tls
+  rules:
+    - host: danapfel-digital.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: danapfel-de
+                port:
+                  number: 80
+    - host: www.danapfel-digital.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: danapfel-de
+                port:
+                  number: 80

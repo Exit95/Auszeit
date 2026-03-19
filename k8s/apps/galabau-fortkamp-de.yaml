@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: galabau-fortkamp-de
+  namespace: websites
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: galabau-fortkamp-de
+  template:
+    metadata:
+      labels:
+        app: galabau-fortkamp-de
+    spec:
+      containers:
+        - name: galabau-fortkamp-de
+          image: 10.1.9.0:5000/galabau-fortkamp.de:latest
+          ports:
+            - containerPort: 4321
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "4321"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: S3_PREFIX
+              value: "Fortkamp/"
+          envFrom:
+            - secretRef:
+                name: s3-credentials
+            - secretRef:
+                name: galabau-secrets
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: galabau-fortkamp-de
+  namespace: websites
+spec:
+  selector:
+    app: galabau-fortkamp-de
+  ports:
+    - port: 80
+      targetPort: 4321
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: galabau-fortkamp-de
+  namespace: websites
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: websites-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - galabau-fortkamp.de
+        - www.galabau-fortkamp.de
+      secretName: galabau-fortkamp-de-tls
+  rules:
+    - host: galabau-fortkamp.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: galabau-fortkamp-de
+                port:
+                  number: 80
+    - host: www.galabau-fortkamp.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: galabau-fortkamp-de
+                port:
+                  number: 80

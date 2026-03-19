@@ -11,11 +11,17 @@ class BookingCalendar {
         }
 
         // Default-Konfiguration
+        // minDate auf Tagesbeginn normalisieren, damit heute buchbar bleibt
+        const minD = new Date(options.minDate || new Date());
+        minD.setHours(0, 0, 0, 0);
+        const maxD = new Date(options.maxDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)));
+        maxD.setHours(23, 59, 59, 999);
+
         this.config = {
             locale: options.locale || 'de',
             firstDayOfWeek: options.firstDayOfWeek || 1, // 0 = Sonntag, 1 = Montag
-            minDate: options.minDate || new Date(),
-            maxDate: options.maxDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+            minDate: minD,
+            maxDate: maxD,
             timeSlots: {
                 enabled: options.timeSlots?.enabled !== false,
                 start: options.timeSlots?.start || '09:00',

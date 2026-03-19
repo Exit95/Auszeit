@@ -117,34 +117,57 @@
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
   }
 
-  .gf-btn {
-    padding: 8px 18px;
+  /* :global nötig weil Kategorie-Buttons dynamisch per JS erstellt werden
+     und kein Astro scoped data-Attribut bekommen */
+  :global(.gf-btn) {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 20px;
     border-radius: 999px;
-    border: 1.5px solid rgba(66, 52, 48, 0.15);
-    background: rgba(255, 255, 255, 0.5);
-    color: var(--color-text-secondary, #5D4E43);
-    font-size: 0.85rem;
-    font-weight: 500;
+    border: 1.5px solid rgba(66, 52, 48, 0.12);
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--brand-espresso, #423430);
+    font-size: 0.84rem;
+    font-weight: 550;
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: all 0.2s ease;
     font-family: inherit;
     white-space: nowrap;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 3px rgba(66, 52, 48, 0.06);
+    line-height: 1.3;
   }
 
-  .gf-btn:hover {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: rgba(66, 52, 48, 0.25);
-    transform: translateY(-1px);
+  :global(.gf-btn:hover) {
+    background: #fff;
+    border-color: var(--accent-caramel, #CFA874);
+    color: var(--brand-espresso, #423430);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 52, 48, 0.1);
   }
 
-  .gf-btn.active {
+  :global(.gf-btn:active) {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(66, 52, 48, 0.08);
+  }
+
+  :global(.gf-btn.active) {
     background: var(--brand-espresso, #423430);
     color: #fff;
     border-color: var(--brand-espresso, #423430);
-    box-shadow: 0 2px 8px rgba(66, 52, 48, 0.2);
+    box-shadow: 0 3px 12px rgba(66, 52, 48, 0.25);
+    font-weight: 600;
+  }
+
+  :global(.gf-btn.active:hover) {
+    background: var(--color-clay-brown, #5D4E43);
+    border-color: var(--color-clay-brown, #5D4E43);
+    box-shadow: 0 4px 14px rgba(66, 52, 48, 0.3);
   }
 
   /* ── Body ────────────────────────────────────────────────── */
@@ -230,7 +253,8 @@
     column-gap: 16px;
   }
 
-  .g-item {
+  /* :global nötig weil Grid-Items dynamisch per JS innerHTML erstellt werden */
+  :global(.g-item) {
     break-inside: avoid;
     margin-bottom: 16px;
     border-radius: 14px;
@@ -248,14 +272,14 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .g-item img {
+  :global(.g-item img) {
     width: 100%;
     height: auto;
     display: block;
     transition: transform 0.4s ease;
   }
 
-  .g-item__hover {
+  :global(.g-item__hover) {
     position: absolute;
     inset: 0;
     background: linear-gradient(
@@ -272,7 +296,7 @@
     color: #fff;
   }
 
-  .g-item__hover-icon {
+  :global(.g-item__hover-icon) {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -285,16 +309,16 @@
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
-  .g-item:hover {
+  :global(.g-item:hover) {
     transform: translateY(-4px);
     box-shadow: 0 12px 32px rgba(66, 52, 48, 0.15);
   }
 
-  .g-item:hover img {
+  :global(.g-item:hover img) {
     transform: scale(1.03);
   }
 
-  .g-item:hover .g-item__hover {
+  :global(.g-item:hover .g-item__hover) {
     opacity: 1;
   }
 
@@ -438,31 +462,31 @@
   /* ── Responsive ──────────────────────────────────────────── */
   @media (max-width: 1024px) {
     .galerie__masonry { columns: 3; column-gap: 14px; }
-    .g-item { margin-bottom: 14px; border-radius: 12px; }
+    :global(.g-item) { margin-bottom: 14px; border-radius: 12px; }
   }
 
   @media (max-width: 767px) {
     .galerie { padding: var(--space-8, 4rem) 0 var(--space-6, 3rem); }
     .galerie__masonry { columns: 2; column-gap: 10px; }
-    .g-item { margin-bottom: 10px; border-radius: 10px; }
+    :global(.g-item) { margin-bottom: 10px; border-radius: 10px; }
     .galerie__head { margin-bottom: var(--space-4, 2rem); }
-    .gf-btn { padding: 7px 14px; font-size: 0.8rem; }
+    :global(.gf-btn) { padding: 8px 16px; font-size: 0.8rem; }
     .glb__arrow { width: 40px; height: 40px; }
     .glb__stage { max-width: 90vw; }
   }
 
   @media (max-width: 479px) {
     .galerie__masonry { columns: 2; column-gap: 8px; }
-    .g-item { margin-bottom: 8px; border-radius: 8px; }
-    .galerie__filter { gap: 6px; }
-    .gf-btn { padding: 6px 12px; font-size: 0.78rem; }
+    :global(.g-item) { margin-bottom: 8px; border-radius: 8px; }
+    .galerie__filter { gap: 7px; }
+    :global(.gf-btn) { padding: 7px 14px; font-size: 0.78rem; }
   }
 
   /* ── Touch: Hover-Effekte nur auf Nicht-Touch ────────────── */
   @media (hover: none) {
-    .g-item:hover { transform: none; box-shadow: none; }
-    .g-item:hover img { transform: none; }
-    .g-item__hover { display: none; }
+    :global(.g-item:hover) { transform: none; box-shadow: none; }
+    :global(.g-item:hover img) { transform: none; }
+    :global(.g-item__hover) { display: none; }
   }
 </style>
 
