@@ -14,8 +14,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const csp = [
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline' https://unpkg.com https://js.stripe.com",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "font-src 'self' https://fonts.gstatic.com data:",
+        "style-src 'self' 'unsafe-inline'",
+        "font-src 'self' data:",
         "img-src 'self' data: blob:",
         "connect-src 'self' https://api.stripe.com",
         "frame-src https://js.stripe.com https://www.google.com https://maps.google.com",
