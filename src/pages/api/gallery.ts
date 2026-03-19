@@ -1,40 +1,11 @@
 import type { APIRoute } from 'astro';
 import { Readable } from 'stream';
 import Busboy from 'busboy';
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command,
-} from '@aws-sdk/client-s3';
+import { isS3Configured, listS3Objects, uploadToS3, deleteFromS3, getS3Key, getContentType } from '../../lib/s3-storage';
 import { sanitizeFilename, isPathSafe } from '../../lib/sanitize';
-
-// S3 Client (Lazy-loaded)
-let _s3Client: S3Client | null = null;
-
-function getS3Client(): S3Client {
-  if (!_s3Client) {
-    // Unterstützt beide Varianten der Umgebungsvariablen
-    const accessKey = process.env.S3_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY || '';
-    const secretKey = process.env.S3_SECRET_ACCESS_KEY || process.env.S3_SECRET_KEY || '';
-
-    _s3Client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT || 'https://nbg1.your-objectstorage.com',
-      region: process.env.S3_REGION || 'eu-central',
-      credentials: {
-        accessKeyId: accessKey,
-        secretAccessKey: secretKey,
-      },
-      forcePathStyle: true,
-    });
-  }
-  return _s3Client;
-}
-
-const getBucket = () => process.env.S3_BUCKET || 'danapfel-digital';
-const PREFIX = 'Auszeit/gallery';
-
 import { validateCredentials } from '../../lib/totp';
+
+const GALLERY_PREFIX = 'gallery';
 
 // Auth check - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
@@ -48,19 +19,23 @@ function checkAuth(request: Request): boolean {
   return validation.valid;
 }
 
-// Kategorien und ihre Pfade im products-Ordner
+// Kategorien und ihre Pfade im products-Ordner (passend zu Offerings.astro)
 const PRODUCT_CATEGORIES = [
-  { id: 'tassen', path: 'Auszeit/products/tassen' },
-  { id: 'teller', path: 'Auszeit/products/teller' },
-  { id: 'spardosen', path: 'Auszeit/products/spardosen' },
-  { id: 'anhaenger', path: 'Auszeit/products/weihnachtsanhaenger' },
+  { id: 'tassen', folder: 'tassen' },
+  { id: 'teller', folder: 'teller' },
+  { id: 'spardosen', folder: 'spardosen' },
+  { id: 'anhaenger', folder: 'anhaenger' },
 ];
 
 // GET - Liste aller Bilder (aus gallery/ UND products/)
 export const GET: APIRoute = async () => {
+  if (!isS3Configured()) {
+    return new Response(JSON.stringify([]), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
-    const endpoint = process.env.S3_ENDPOINT || '';
-    const bucket = getBucket();
     const allImages: Array<{
       filename: string;
       url: string;
@@ -71,50 +46,49 @@ export const GET: APIRoute = async () => {
     }> = [];
 
     // 1. Bilder aus gallery/ laden
-    const galleryResponse = await getS3Client().send(
-      new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: `${PREFIX}/`,
-      })
-    );
+    try {
+      const galleryKey = getS3Key(`${GALLERY_PREFIX}/`);
+      const galleryObjects = await listS3Objects(galleryKey);
 
-    if (galleryResponse.Contents) {
-      for (const obj of galleryResponse.Contents) {
-        if (obj.Key && !obj.Key.endsWith('/')) {
-          allImages.push({
-            filename: obj.Key.replace(`${PREFIX}/`, ''),
-            url: `${endpoint}/${bucket}/${obj.Key}`,
-            size: obj.Size || 0,
-            date: obj.LastModified || new Date(),
-            source: 'gallery',
-          });
+      for (const obj of galleryObjects) {
+        if (obj.key && !obj.key.endsWith('/')) {
+          const filename = obj.key.split('/').pop() || '';
+          if (/\.(jpg|jpeg|png|gif|webp)$/i.test(filename)) {
+            allImages.push({
+              filename,
+              url: obj.url,
+              size: obj.size,
+              date: obj.lastModified,
+              source: 'gallery',
+            });
+          }
         }
       }
+    } catch (error) {
+      console.warn('Konnte Gallery-Bilder nicht laden:', error);
     }
 
     // 2. Bilder aus products/ laden (mit Kategorie-Mapping)
     for (const cat of PRODUCT_CATEGORIES) {
-      const productsResponse = await getS3Client().send(
-        new ListObjectsV2Command({
-          Bucket: bucket,
-          Prefix: `${cat.path}/`,
-        })
-      );
+      try {
+        const productKey = getS3Key(`products/${cat.folder}/`);
+        const productObjects = await listS3Objects(productKey);
 
-      if (productsResponse.Contents) {
-        for (const obj of productsResponse.Contents) {
-          if (obj.Key && !obj.Key.endsWith('/') && /\.(jpg|jpeg|png|gif|webp)$/i.test(obj.Key)) {
-            const filename = obj.Key.split('/').pop() || '';
+        for (const obj of productObjects) {
+          if (obj.key && !obj.key.endsWith('/') && /\.(jpg|jpeg|png|gif|webp)$/i.test(obj.key)) {
+            const filename = obj.key.split('/').pop() || '';
             allImages.push({
               filename: `products/${cat.id}/${filename}`,
-              url: `${endpoint}/${bucket}/${obj.Key}`,
-              size: obj.Size || 0,
-              date: obj.LastModified || new Date(),
+              url: obj.url,
+              size: obj.size,
+              date: obj.lastModified,
               source: 'products',
               category: cat.id,
             });
           }
         }
+      } catch (error) {
+        console.warn(`Konnte Produkt-Bilder für ${cat.id} nicht laden:`, error);
       }
     }
 
@@ -138,6 +112,13 @@ export const POST: APIRoute = async ({ request }) => {
   if (!checkAuth(request)) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (!isS3Configured()) {
+    return new Response(JSON.stringify({ error: 'S3 not configured' }), {
+      status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
@@ -189,7 +170,7 @@ export const POST: APIRoute = async ({ request }) => {
         }
 
         const filename = `${Date.now()}.${ext}`;
-        const key = `${PREFIX}/${filename}`;
+        const key = getS3Key(`${GALLERY_PREFIX}/${filename}`);
 
         // Validate path safety
         if (!isPathSafe(key)) {
@@ -199,20 +180,9 @@ export const POST: APIRoute = async ({ request }) => {
           return;
         }
 
-        const mimeTypes: Record<string, string> = {
-          jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-          gif: 'image/gif', webp: 'image/webp',
-        };
+        const mimeType = getContentType(filename);
+        const url = await uploadToS3(fileBuffer, key, mimeType);
 
-        await getS3Client().send(new PutObjectCommand({
-          Bucket: getBucket(),
-          Key: key,
-          Body: fileBuffer,
-          ContentType: mimeTypes[ext] || 'application/octet-stream',
-          ACL: 'public-read',
-        }));
-
-        const url = `${process.env.S3_ENDPOINT}/${getBucket()}/${key}`;
         resolve(new Response(JSON.stringify({ success: true, url, filename }), {
           headers: { 'Content-Type': 'application/json' },
         }));
@@ -238,6 +208,13 @@ export const DELETE: APIRoute = async ({ request }) => {
     });
   }
 
+  if (!isS3Configured()) {
+    return new Response(JSON.stringify({ error: 'S3 not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const url = new URL(request.url);
     const rawFilename = url.searchParams.get('filename');
@@ -258,11 +235,8 @@ export const DELETE: APIRoute = async ({ request }) => {
       });
     }
 
-    const key = `${PREFIX}/${filename}`;
-    await getS3Client().send(new DeleteObjectCommand({
-      Bucket: getBucket(),
-      Key: key,
-    }));
+    const key = getS3Key(`${GALLERY_PREFIX}/${filename}`);
+    await deleteFromS3(key);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' },
@@ -275,4 +249,3 @@ export const DELETE: APIRoute = async ({ request }) => {
     });
   }
 };
-

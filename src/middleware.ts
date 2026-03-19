@@ -18,7 +18,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
         "font-src 'self' https://fonts.gstatic.com data:",
         "img-src 'self' data: blob: https://*.your-objectstorage.com https://nbg1.your-objectstorage.com",
         "connect-src 'self' https://*.your-objectstorage.com https://api.stripe.com",
-        "frame-src https://js.stripe.com",
+        "frame-src https://js.stripe.com https://www.google.com https://maps.google.com",
         "frame-ancestors 'self'",
         "form-action 'self'",
         "base-uri 'self'",
