@@ -1,14 +1,40 @@
 export const content = {
   hero: {
-    title: 'Atelier Auszeit',
-    subtitle: 'Keramik · Malatelier',
-    claim: 'Auszeit für Kopf und Hände',
+    title: 'Keramik Auszeit',
+    subtitle: 'Dein Malatelier in Gronau',
+    claim: 'Deine kreative Auszeit in Gronau',
+    subline: 'Keramik bemalen, abschalten, Freude mitnehmen',
     ctaPrimary: 'Termin buchen',
-    ctaSecondary: 'WhatsApp',
-    ctaTertiary: 'Instagram',
+    ctaSecondary: 'Entdecke unsere Keramik',
   },
-  intro: {
-    text: 'In ruhiger Atmosphäre kannst du deine eigene Keramik bemalen. Lass den Alltag hinter dir und gestalte dein persönliches Unikat.',
+  wasErwartet: {
+    title: 'Was dich erwartet',
+    items: [
+      {
+        title: 'Keramik bemalen',
+        text: 'Wähle deinen Rohling, nimm dir Zeit und gestalte dein ganz eigenes Stück.',
+        image: '/becher.jpeg',
+        link: '#keramik-preise',
+      },
+      {
+        title: 'Workshops',
+        text: 'Lerne neue Techniken in unseren kreativen Workshops.',
+        image: '/teller.jpeg',
+        link: '/workshops',
+      },
+      {
+        title: 'Besondere Anlässe',
+        text: 'Kindergeburtstag, JGA oder Firmen-Event — wir machen es unvergesslich.',
+        image: '/spardose.jpeg',
+        link: '/events',
+      },
+      {
+        title: 'Gutscheine',
+        text: 'Das perfekte Geschenk für kreative Köpfe.',
+        image: '/anhänger.png',
+        link: '/gutscheine',
+      },
+    ],
   },
   process: {
     title: 'So funktioniert es',
@@ -36,7 +62,7 @@ export const content = {
       { name: 'Tassen', price: 'ab 14,50€', image: '/becher.jpeg' },
       { name: 'Teller', price: 'ab 12,50€', image: '/teller.jpeg' },
       { name: 'Spardosen & Krüge & Boxen', price: 'ab 8,00€', image: '/spardose.jpeg' },
-      { name: 'Weihnachtsanhänger', price: 'ab 6,00€', image: '/anhänger.png' },
+      { name: 'Anhänger', price: 'ab 6,00€', image: '/anhänger.png' },
     ],
     note: 'Abholbereit nach 10 bis 14 Tagen.',
     pricing: [
@@ -86,6 +112,43 @@ export const content = {
       },
     ],
   },
+  events: {
+    title: 'Besondere Anlässe',
+    subtitle: 'Feiert gemeinsam kreativ — wir kümmern uns um den Rest.',
+    types: [
+      {
+        id: 'kindergeburtstag',
+        title: 'Kindergeburtstag',
+        text: 'Kreativ feiern mit Freunden. Jedes Kind bemalt sein eigenes Keramik-Stück und nimmt ein selbstgemachtes Geschenk mit nach Hause.',
+        features: ['Ab 6 Jahren', 'Bis zu 10 Kinder', 'Ca. 2 Stunden', 'Alle Materialien inklusive'],
+      },
+      {
+        id: 'jga',
+        title: 'JGA',
+        text: 'Euer Junggesellenabschied wird kreativ. Gemeinsam bemalen, lachen und ein Andenken schaffen, das bleibt.',
+        features: ['Flexible Gruppengröße', 'Getränke möglich', 'Ca. 2-3 Stunden', 'Exklusive Atmosphäre'],
+      },
+      {
+        id: 'firmen_event',
+        title: 'Firmen-Event',
+        text: 'Teambuilding mal anders. Kreatives Arbeiten bringt Teams zusammen — entspannt und ohne Leistungsdruck.',
+        features: ['Individuelle Planung', 'Flexible Termine', 'Rechnungsstellung möglich', 'Ab 8 Personen'],
+      },
+      {
+        id: 'privater_anlass',
+        title: 'Privater Anlass',
+        text: 'Stammtisch, Freundinnen-Abend oder einfach ein besonderer Nachmittag — wir richten es für euch her.',
+        features: ['Flexible Gruppengröße', 'Individuelle Absprache', 'Gemütliche Atmosphäre'],
+      },
+    ],
+  },
+  pageMeta: {
+    galerie: { title: 'Galerie — Keramik Auszeit', description: 'Lass dich inspirieren: Entdecke Keramik-Unikate aus unserem Malatelier in Gronau.' },
+    workshops: { title: 'Workshops — Keramik Auszeit', description: 'Kreative Workshops in Gronau: Lerne neue Techniken und gestalte besondere Keramik-Stücke.' },
+    gutscheine: { title: 'Gutscheine — Keramik Auszeit', description: 'Verschenke kreative Auszeit: Gutscheine für Keramik bemalen in Gronau.' },
+    events: { title: 'Besondere Anlässe — Keramik Auszeit', description: 'Kindergeburtstag, JGA, Firmen-Event: Feiert kreativ in unserem Keramik-Malatelier in Gronau.' },
+    faq: { title: 'Häufige Fragen — Keramik Auszeit', description: 'Alles was du wissen musst: Preise, Ablauf, Buchung und mehr zu Keramik Auszeit in Gronau.' },
+  },
   contact: {
     title: 'Kontakt & Standort',
     address: {
@@ -102,6 +165,6 @@ export const content = {
       { text: 'Impressum', href: '#impressum' },
       { text: 'Datenschutz', href: '#datenschutz' },
     ],
-    copyright: '© 2025 Atelier Auszeit · Irena Woschkowiak',
+    copyright: '© 2026 Keramik Auszeit — Irena Woschkowiak',
   },
 };
