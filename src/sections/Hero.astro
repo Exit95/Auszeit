@@ -3,19 +3,17 @@ import Button from "../components/Button.astro";
 import { content } from "../data/content";
 ---
 
-<section class="hero" aria-label="Willkommen bei Atelier Auszeit">
+<section class="hero" aria-label="Willkommen bei Keramik Auszeit">
   <div class="hero__content">
     <div class="hero__logo-card">
-      <div class="hero__logo-card-inner">
-        <img
-          src="/auszeit2.png"
-          alt="Atelier Auszeit Keramik Malatelier Logo in Gronau, Nordrhein-Westfalen"
-          class="hero__logo-image"
-          width="400"
-          height="400"
-          loading="eager"
-        />
-      </div>
+      <img
+        src="/auszeit2.png"
+        alt="Keramik Auszeit — Malatelier in Gronau"
+        class="hero__logo-image"
+        width="400"
+        height="400"
+        loading="eager"
+      />
     </div>
     <h1 class="hero__claim">{content.hero.claim}</h1>
     <p class="hero__sub">{content.hero.subline}</p>
@@ -23,12 +21,11 @@ import { content } from "../data/content";
       <Button href="#termin-buchen" variant="primary" size="large">
         {content.hero.ctaPrimary}
       </Button>
-      <a href="#keramik-preise" class="hero__cta-outline">
+      <a href="#keramik-preise" class="hero__cta-secondary">
         {content.hero.ctaSecondary}
       </a>
     </nav>
   </div>
-  <div class="hero__fade-bottom" aria-hidden="true"></div>
 </section>
 
 <style>
@@ -36,31 +33,17 @@ import { content } from "../data/content";
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 60vh;
-    background: linear-gradient(
-      135deg,
-      var(--brand-espresso, #423430) 0%,
-      var(--color-sienna, #A0522D) 60%,
-      var(--bg-cream, #F2EBE5) 100%
-    );
-    padding: var(--space-2) var(--gutter);
+    min-height: 70vh;
+    background: var(--bg-cream);
+    padding: var(--space-8) var(--gutter) var(--space-10);
     text-align: center;
     position: relative;
-    overflow: hidden;
-  }
-
-  .hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.5;
   }
 
   .hero__content {
     position: relative;
     z-index: 1;
-    max-width: 800px;
+    max-width: 680px;
     width: 100%;
     animation: fadeIn var(--duration-slow) var(--easing);
   }
@@ -68,45 +51,33 @@ import { content } from "../data/content";
   .hero__logo-card {
     display: flex;
     justify-content: center;
-    margin-bottom: var(--space-1);
-  }
-
-  .hero__logo-card-inner {
-    background: transparent;
-    padding: var(--space-3) var(--space-4);
-    border-radius: 20px;
-    box-shadow: none;
-    border: 0;
-    max-width: min(440px, 85vw);
-    backdrop-filter: none;
+    margin-bottom: var(--space-4);
   }
 
   .hero__logo-image {
     width: 100%;
+    max-width: 320px;
     height: auto;
     display: block;
     margin: 0 auto;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
   }
 
   .hero__claim {
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: var(--text-hero, clamp(2.5rem, 4vw + 1rem, 4rem));
+    font-family: var(--font-serif);
+    font-size: var(--text-4xl);
     font-weight: 700;
-    color: #fff;
-    text-align: center;
-    margin: 0 0 0.75rem;
-    line-height: 1.2;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+    color: var(--brand-espresso);
+    margin: 0 0 var(--space-2);
+    line-height: 1.15;
   }
 
   .hero__sub {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    color: rgba(255, 255, 255, 0.82);
-    text-align: center;
-    font-size: clamp(1rem, 1.8vw, 1.2rem);
-    max-width: 520px;
-    margin: 0 auto 2rem;
+    font-family: var(--font-sans);
+    color: var(--color-text-secondary);
+    font-size: clamp(1rem, 1.5vw, 1.15rem);
+    max-width: 460px;
+    margin: 0 auto var(--space-6);
     line-height: 1.65;
   }
 
@@ -117,84 +88,21 @@ import { content } from "../data/content";
     gap: var(--space-3);
   }
 
-  .hero__cta-outline {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 650;
-    font-size: 15px;
-    border-radius: 14px;
-    border: 2px solid rgba(255, 255, 255, 0.75);
-    color: #fff;
-    background: transparent;
+  .hero__cta-secondary {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-sienna);
     text-decoration: none;
-    white-space: nowrap;
-    min-height: 52px;
-    padding: 14px 20px;
-    transition: border-color 140ms ease, background 140ms ease, color 140ms ease, transform 140ms ease;
+    padding: 0.6rem 1.5rem;
+    border: 2px solid var(--color-sienna);
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .hero__cta-outline:hover {
-    border-color: #fff;
-    background: rgba(255, 255, 255, 0.12);
-    transform: translateY(-1px);
-  }
-
-  .hero__cta-outline:active {
-    transform: translateY(0);
-  }
-
-  /* Linen texture transition at the bottom edge */
-  .hero__fade-bottom {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent 0%, var(--bg-linen, #EDE4DA) 100%);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  /* Sehr kleine Bildschirme (< 375px) */
-  @media (max-width: 374px) {
-    .hero {
-      padding: var(--space-2) var(--gutter);
-    }
-
-    .hero__logo-card-inner {
-      padding: var(--space-3) var(--space-3);
-      border-radius: 18px;
-    }
-
-    .hero__actions {
-      width: 100%;
-      gap: var(--space-2);
-      margin: 0 auto;
-    }
-
-    .hero__cta-outline {
-      width: 100%;
-      font-size: 14px;
-      padding: 12px 18px;
-    }
-  }
-
-  /* Kleine Smartphones (375px - 479px) */
-  @media (min-width: 375px) and (max-width: 479px) {
-    .hero__actions {
-      width: 100%;
-      max-width: 320px;
-      margin: 0 auto;
-    }
-  }
-
-  /* Größere Smartphones (480px - 639px) */
-  @media (min-width: 480px) and (max-width: 639px) {
-    .hero__actions {
-      max-width: 400px;
-      margin: 0 auto;
-    }
+  .hero__cta-secondary:hover {
+    background: var(--color-sienna);
+    color: #fff;
   }
 
   @media (min-width: 640px) {
@@ -205,25 +113,29 @@ import { content } from "../data/content";
   }
 
   @media (max-width: 639px) {
+    .hero {
+      min-height: auto;
+      padding: var(--space-6) var(--gutter) var(--space-8);
+    }
+
+    .hero__logo-image {
+      max-width: 240px;
+    }
+
     .hero__actions {
       width: 100%;
       max-width: 300px;
     }
 
-    .hero__cta-outline {
+    .hero__cta-secondary {
       width: 100%;
+      text-align: center;
     }
   }
 
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @media (prefers-reduced-motion: reduce) {
