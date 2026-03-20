@@ -4,7 +4,7 @@ import { content } from '../data/content';
 ---
 
 <section class="process">
-  <div class="container">
+  <div class="container animate-on-scroll">
     <h2 class="process__title">{content.process.title}</h2>
     <div class="process__steps">
       {
@@ -24,7 +24,7 @@ import { content } from '../data/content';
 <style>
   .process {
     padding: var(--space-12) var(--gutter);
-    background-color: var(--color-soft-cream, #FAF8F3);
+    background-color: var(--bg-paper, #FAF7F2);
   }
 
   .container {
@@ -33,8 +33,8 @@ import { content } from '../data/content';
   }
 
   .process__title {
-    font-family: var(--font-serif);
-    color: var(--color-clay-brown);
+    font-family: var(--font-serif, 'Lora', serif);
+    color: var(--brand-espresso, #423430);
     text-align: center;
     margin-bottom: var(--space-8);
   }

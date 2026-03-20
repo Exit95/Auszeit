@@ -1,10 +1,11 @@
 ---
 import WhatsAppLink from "../components/WhatsAppLink.astro";
+import InstagramLink from "../components/InstagramLink.astro";
 import { content } from "../data/content";
 ---
 
 <section class="contact" id="kontakt" style="scroll-margin-top: 60px;" aria-labelledby="contact-title">
-  <div class="container">
+  <div class="container animate-on-scroll">
     <h2 id="contact-title" class="contact__title">{content.contact.title}</h2>
     <div class="contact__grid">
       <address class="contact__info">
@@ -40,6 +41,12 @@ import { content } from "../data/content";
               text="WhatsApp"
             />
           </div>
+          <div class="contact__instagram">
+            <InstagramLink
+              url="https://www.instagram.com/auszeit_keramik_malatelier/"
+              text="Instagram"
+            />
+          </div>
         </div>
       </address>
       <div class="contact__map">
@@ -62,7 +69,7 @@ import { content } from "../data/content";
 <style>
   .contact {
     padding: var(--space-12) var(--gutter);
-    background-color: var(--color-background);
+    background-color: var(--bg-paper, #FAF7F2);
   }
 
   .container {
@@ -71,8 +78,8 @@ import { content } from "../data/content";
   }
 
   .contact__title {
-    font-family: var(--font-serif);
-    color: var(--color-clay-brown);
+    font-family: var(--font-serif, 'Lora', serif);
+    color: var(--brand-espresso, #423430);
     text-align: center;
     margin-bottom: var(--space-8);
   }
@@ -95,30 +102,35 @@ import { content } from "../data/content";
   }
 
   .contact__block h3 {
-    font-family: var(--font-serif);
-    color: var(--color-clay-brown);
+    font-family: var(--font-serif, 'Lora', serif);
+    color: var(--brand-espresso, #423430);
     margin-bottom: var(--space-2);
     font-size: 1.125rem;
   }
 
   .contact__block p {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
     color: var(--color-text-secondary);
     line-height: 1.6;
     margin-bottom: var(--space-1);
   }
 
   .contact__block a {
-    color: var(--color-terracotta);
+    color: var(--accent-terra, #D96C4A);
     text-decoration: underline;
     transition: color var(--duration-normal) var(--easing);
   }
 
   .contact__block a:hover {
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso, #423430);
   }
 
   .contact__whatsapp {
     margin-top: var(--space-3);
+  }
+
+  .contact__instagram {
+    margin-top: var(--space-2);
   }
 
   .contact__map {
@@ -136,7 +148,7 @@ import { content } from "../data/content";
     align-items: center;
     justify-content: center;
     gap: var(--space-3);
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso, #423430);
   }
 
   .map-placeholder svg {
