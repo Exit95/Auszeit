@@ -6,80 +6,45 @@ interface Props {
   number: number;
 }
 
-const { title, text, number } = Astro.props;
+const { title, text } = Astro.props;
 ---
 
 <div class="step-item">
-  <div class="step-item__marker">
-    <span class="step-item__number">{number}</span>
-    <span class="step-item__line"></span>
-  </div>
-  <div class="step-item__content">
-    <h3>{title}</h3>
-    <p>{text}</p>
-  </div>
+  <div class="step-item__bar" />
+  <h3 class="step-item__title">{title}</h3>
+  <p class="step-item__text">{text}</p>
 </div>
 
 <style>
   .step-item {
-    display: flex;
-    gap: var(--space-4);
-    align-items: flex-start;
-  }
-
-  .step-item__marker {
-    flex-shrink: 0;
+    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--space-2);
-    margin-top: 0.15rem;
   }
 
-  .step-item__number {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    background: var(--color-sienna, #A0522D);
-    color: #fff;
-    font-family: var(--font-serif, 'Lora', serif);
-    font-size: 0.875rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .step-item__line {
-    width: 2px;
-    flex: 1;
-    min-height: 1.5rem;
-    background: var(--color-sienna, #A0522D);
-    opacity: 0.25;
+  .step-item__bar {
+    width: 40px;
+    height: 3px;
     border-radius: 2px;
+    background: var(--accent-terra, #D96C4A);
+    margin-bottom: var(--space-1);
   }
 
-  .step-item__content {
-    flex: 1;
-    padding-bottom: var(--space-4);
-  }
-
-  .step-item__content h3 {
+  .step-item__title {
     font-family: var(--font-serif, 'Lora', serif);
     color: var(--brand-espresso, #423430);
-    margin-bottom: var(--space-2);
+    margin: 0;
+    font-size: 1.15rem;
   }
 
-  .step-item__content p {
+  .step-item__text {
     font-family: var(--font-sans, 'Source Sans 3', sans-serif);
     color: var(--color-text-secondary);
-    line-height: 1.6;
-  }
-
-  @media (max-width: 640px) {
-    .step-item {
-      text-align: left;
-    }
+    line-height: 1.65;
+    font-size: 0.9rem;
+    margin: 0;
+    max-width: 280px;
   }
 </style>
