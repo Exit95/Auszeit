@@ -5,16 +5,14 @@ import { content } from "../data/content";
 
 <section class="hero" aria-label="Willkommen bei Keramik Auszeit">
   <div class="hero__content">
-    <div class="hero__logo-card">
-      <img
-        src="/auszeit2.png"
-        alt="Keramik Auszeit — Malatelier in Gronau"
-        class="hero__logo-image"
-        width="400"
-        height="400"
-        loading="eager"
-      />
-    </div>
+    <img
+      src="/auszeit2.png"
+      alt="Keramik Auszeit — Malatelier in Gronau"
+      class="hero__logo"
+      width="180"
+      height="180"
+      loading="eager"
+    />
     <h1 class="hero__claim">{content.hero.claim}</h1>
     <p class="hero__sub">{content.hero.subline}</p>
     <nav class="hero__actions" aria-label="Hauptaktionen">
@@ -33,34 +31,26 @@ import { content } from "../data/content";
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 70vh;
-    background: var(--bg-cream);
-    padding: var(--space-8) var(--gutter) var(--space-10);
+    padding: var(--space-10) var(--gutter) var(--space-12);
     text-align: center;
-    position: relative;
+    background: #fff;
   }
 
   .hero__content {
-    position: relative;
-    z-index: 1;
-    max-width: 680px;
+    max-width: 600px;
     width: 100%;
-    animation: fadeIn var(--duration-slow) var(--easing);
+    animation: heroFade 0.6s ease;
   }
 
-  .hero__logo-card {
-    display: flex;
-    justify-content: center;
-    margin-bottom: var(--space-4);
-  }
-
-  .hero__logo-image {
-    width: 100%;
-    max-width: 320px;
-    height: auto;
+  .hero__logo {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
     display: block;
-    margin: 0 auto;
-    border-radius: var(--radius-lg);
+    margin: 0 auto var(--space-5);
+    box-shadow: 0 4px 20px rgba(66, 52, 48, 0.12);
+    border: 3px solid var(--bg-linen);
   }
 
   .hero__claim {
@@ -68,17 +58,16 @@ import { content } from "../data/content";
     font-size: var(--text-4xl);
     font-weight: 700;
     color: var(--brand-espresso);
-    margin: 0 0 var(--space-2);
+    margin: 0 0 var(--space-3);
     line-height: 1.15;
   }
 
   .hero__sub {
     font-family: var(--font-sans);
     color: var(--color-text-secondary);
-    font-size: clamp(1rem, 1.5vw, 1.15rem);
-    max-width: 460px;
+    font-size: 1.1rem;
     margin: 0 auto var(--space-6);
-    line-height: 1.65;
+    line-height: 1.6;
   }
 
   .hero__actions {
@@ -114,12 +103,12 @@ import { content } from "../data/content";
 
   @media (max-width: 639px) {
     .hero {
-      min-height: auto;
-      padding: var(--space-6) var(--gutter) var(--space-8);
+      padding: var(--space-8) var(--gutter) var(--space-8);
     }
 
-    .hero__logo-image {
-      max-width: 240px;
+    .hero__logo {
+      width: 110px;
+      height: 110px;
     }
 
     .hero__actions {
@@ -133,14 +122,12 @@ import { content } from "../data/content";
     }
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
+  @keyframes heroFade {
+    from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero__content {
-      animation: none;
-    }
+    .hero__content { animation: none; }
   }
 </style>
