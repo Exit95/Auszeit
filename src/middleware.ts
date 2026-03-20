@@ -4,7 +4,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const response = await next();
 
     // Basic Security Headers
-    response.headers.set('X-Frame-Options', 'ALLOW-FROM https://danapfel-digital.de');
+    // X-Frame-Options wird von CSP frame-ancestors ersetzt (ALLOW-FROM ist deprecated)
+    // Nicht setzen, da es sonst iframe-Embedding auf danapfel-digital.de blockiert
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
@@ -29,8 +30,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Cross-Origin Policies
     response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
-    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-    response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+    response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
+    response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
     // Note: Cross-Origin-Embedder-Policy set to 'unsafe-none' to allow external images
     response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
 
