@@ -4,7 +4,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const response = await next();
 
     // Basic Security Headers
-    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    response.headers.set('X-Frame-Options', 'ALLOW-FROM https://danapfel-digital.de');
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
@@ -19,7 +19,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
         "img-src 'self' data: blob:",
         "connect-src 'self' https://api.stripe.com",
         "frame-src https://js.stripe.com https://www.google.com https://maps.google.com",
-        "frame-ancestors 'self'",
+        "frame-ancestors 'self' https://danapfel-digital.de",
         "form-action 'self'",
         "base-uri 'self'",
         "object-src 'none'",

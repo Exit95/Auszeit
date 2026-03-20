@@ -93,9 +93,9 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta property="og:image" content={fullOgImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Keramik Auszeit - Keramik Malatelier in Gronau" />
+    <meta property="og:image:alt" content="Malatelier Auszeit - Keramik Malatelier in Gronau" />
     <meta property="og:locale" content="de_DE" />
-    <meta property="og:site_name" content="Keramik Auszeit — Malatelier in Gronau" />
+    <meta property="og:site_name" content="Malatelier Auszeit | Malatelier in Gronau" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -103,7 +103,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={fullOgImage} />
-    <meta name="twitter:image:alt" content="Keramik Auszeit - Keramik Malatelier in Gronau" />
+    <meta name="twitter:image:alt" content="Malatelier Auszeit - Keramik Malatelier in Gronau" />
 
     <!-- Canonical URL -->
     <link rel="canonical" href={fullUrl} />
@@ -116,8 +116,8 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
           {
             "@type": ["LocalBusiness", "Store", "ArtStudio"],
             "@id": "https://keramik-auszeit.de/#business",
-            "name": "Keramik Auszeit",
-            "alternateName": ["Keramik Auszeit", "Auszeit Keramik", "Keramik Gronau"],
+            "name": "Malatelier Auszeit",
+            "alternateName": ["Malatelier Auszeit", "Auszeit Keramik", "Keramik Gronau"],
             "description": "Keramik selbst bemalen in Gronau (Westfalen) und Umgebung. Kreative Workshops, Kindergeburtstage, JGA und individuelle Termine. Große Auswahl: Tassen, Teller, Spardosen. Perfekt für Epe, Ochtrup, Ahaus, Enschede.",
             "url": "https://keramik-auszeit.de",
             "telephone": "+49 176 34255005",
@@ -231,7 +231,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             "@type": "WebSite",
             "@id": "https://keramik-auszeit.de/#website",
             "url": "https://keramik-auszeit.de",
-            "name": "Keramik Auszeit — Malatelier in Gronau",
+            "name": "Malatelier Auszeit | Malatelier in Gronau",
             "description": "Keramik bemalen in Gronau, Epe, Ochtrup und Umgebung",
             "publisher": {"@id": "https://keramik-auszeit.de/#business"},
             "potentialAction": {
@@ -245,7 +245,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             "@type": "WebPage",
             "@id": "https://keramik-auszeit.de/#webpage",
             "url": "https://keramik-auszeit.de",
-            "name": "Keramik bemalen Gronau | Keramik Auszeit | Irena Woschkowiak",
+            "name": "Keramik bemalen Gronau | Malatelier Auszeit | Irena Woschkowiak",
             "isPartOf": {"@id": "https://keramik-auszeit.de/#website"},
             "about": {"@id": "https://keramik-auszeit.de/#business"},
             "description": "Keramik selbst bemalen in Gronau (Westfalen). Workshops, Kindergeburtstage, JGA. Auch für Epe, Ochtrup, Ahaus, Enschede. Jetzt Termin buchen!",
@@ -274,7 +274,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <!-- Desktop Nav -->
     <nav class="site-nav" id="site-nav" aria-label="Hauptnavigation">
       <div class="site-nav__inner">
-        <a href="/" class="site-nav__brand">Keramik Auszeit</a>
+        <a href="/" class="site-nav__brand">Malatelier Auszeit</a>
 
         <!-- Desktop Links -->
         <ul class="site-nav__links" id="nav-links-desktop">
@@ -438,7 +438,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             </div>
           </div>
         </div>
-        <p class="footer__copyright">&copy; 2026 Keramik Auszeit &mdash; Irena Woschkowiak</p>
+        <p class="footer__copyright">&copy; 2026 Malatelier Auszeit · Irena Woschkowiak</p>
       </div>
     </footer>
 
@@ -537,11 +537,11 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(93, 78, 67, 0.96);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(207, 168, 116, 0.15);
-    box-shadow: 0 1px 8px rgba(66, 52, 48, 0.10);
+    background: rgba(66, 52, 48, 0.97);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
     transition: background 0.2s ease;
   }
 
@@ -896,7 +896,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
   }
 
   .footer {
-    background-color: var(--color-clay-brown, #5D4E43);
+    background-color: var(--brand-espresso, #423430);
     color: var(--color-off-white);
     padding: var(--space-8, 3rem) var(--gutter);
   }
