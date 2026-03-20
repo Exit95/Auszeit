@@ -323,34 +323,28 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
         <!-- Navigation Links -->
         <nav class="canvas-menu__nav" aria-label="Mobile Navigation">
           <a href="/#keramik-preise" class="canvas-menu__link" style="--i:0">
-            <span class="canvas-menu__link-num">01</span>
+            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
             <span class="canvas-menu__link-text">Keramik bemalen</span>
-            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
           </a>
           <a href="/workshops" class="canvas-menu__link" style="--i:1">
-            <span class="canvas-menu__link-num">02</span>
+            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
             <span class="canvas-menu__link-text">Workshops</span>
-            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
           </a>
           <a href="/events" class="canvas-menu__link" style="--i:2">
-            <span class="canvas-menu__link-num">03</span>
+            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
             <span class="canvas-menu__link-text">Besondere Anlässe</span>
-            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
           </a>
           <a href="/galerie" class="canvas-menu__link" style="--i:3">
-            <span class="canvas-menu__link-num">04</span>
+            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
             <span class="canvas-menu__link-text">Galerie</span>
-            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
           </a>
           <a href="/gutscheine" class="canvas-menu__link" style="--i:4">
-            <span class="canvas-menu__link-num">05</span>
+            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
             <span class="canvas-menu__link-text">Gutscheine</span>
-            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
           </a>
           <a href="/#termin-buchen" class="canvas-menu__link canvas-menu__link--cta" style="--i:5">
-            <span class="canvas-menu__link-num">06</span>
+            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
             <span class="canvas-menu__link-text">Termin buchen</span>
-            <span class="canvas-menu__link-stroke" aria-hidden="true"></span>
           </a>
         </nav>
 
@@ -816,41 +810,21 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     transform: translateX(0);
   }
 
-  .canvas-menu__link-num {
-    font-family: var(--font-serif, 'Cinzel', serif);
-    font-size: 0.65rem;
-    color: var(--accent-caramel, #CFA874);
-    opacity: 0.6;
-    min-width: 22px;
-    letter-spacing: 0.05em;
+  .canvas-menu__link-accent {
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--accent-terra, #D96C4A);
+    flex-shrink: 0;
+    transition: width 0.2s ease;
   }
 
   .canvas-menu__link-text {
-    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
     font-size: 1.15rem;
     font-weight: 400;
     letter-spacing: 0.02em;
     transition: all 0.2s ease;
-  }
-
-  /* Pinselstrich-Underline beim Hover */
-  .canvas-menu__link-stroke {
-    position: absolute;
-    bottom: 10px;
-    left: 38px;
-    right: 4px;
-    height: 3px;
-    background: var(--accent-caramel, #CFA874);
-    border-radius: 2px;
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-    opacity: 0.5;
-  }
-
-  .canvas-menu__link:hover .canvas-menu__link-stroke,
-  .canvas-menu__link:focus .canvas-menu__link-stroke {
-    transform: scaleX(1);
   }
 
   .canvas-menu__link:hover .canvas-menu__link-text {
@@ -858,11 +832,10 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     transform: translateX(4px);
   }
 
-  .canvas-menu__link:hover .canvas-menu__link-num {
-    opacity: 1;
+  .canvas-menu__link:hover .canvas-menu__link-accent {
+    width: 36px;
   }
 
-  /* Active-Effekt */
   .canvas-menu__link:active .canvas-menu__link-text {
     transform: translateX(2px);
   }
