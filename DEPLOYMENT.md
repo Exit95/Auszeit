@@ -192,47 +192,53 @@ cp .env.example .env
 
 ---
 
-## iPhone / Mobile Deployment (GitHub Actions)
+## iPhone / Mobile Deployment (SSH)
 
-Die App kann direkt vom iPhone aus deployed werden – über die **GitHub Mobile App** und einen GitHub Actions Workflow.
+Die App kann direkt vom iPhone aus deployed werden – per SSH-App (Termius oder Blink Shell).
 
 ### Einmalige Einrichtung
 
-1. **SSH Key als GitHub Secret hinterlegen:**
-   - Gehe zu GitHub → Repository → Settings → Secrets and variables → Actions
-   - Neues Secret anlegen: `SSH_PRIVATE_KEY`
-   - Inhalt: Der private SSH Key (ed25519), der Root-Zugang zum Server hat
+1. **Deploy-Script auf den Server kopieren:**
+   ```bash
+   scp deploy-k3s.sh root@[2a01:4f8:202:1129:2447:2447:1:901]:/opt/auszeit/deploy-k3s.sh
+   ```
 
-2. **K8s Deployment-Name prüfen:**
-   - Der Workflow nutzt standardmäßig `keramik-auszeit-de` als Deployment-Name
-   - Falls anders, in `.github/workflows/deploy.yml` die `env`-Variablen anpassen:
-     - `K8S_DEPLOYMENT`: Name des Kubernetes Deployments
-     - `K8S_NAMESPACE`: Namespace (Standard: `default`)
+2. **Repo auf dem Server klonen** (falls noch nicht vorhanden):
+   ```bash
+   ssh root@2a01:4f8:202:1129:2447:2447:1:901
+   git clone https://github.com/Exit95/Auszeit.git /opt/auszeit
+   cp deploy-k3s.sh /opt/auszeit/
+   chmod +x /opt/auszeit/deploy-k3s.sh
+   ```
 
-3. **GitHub App auf dem iPhone installieren:**
-   - App Store → "GitHub" suchen und installieren
-   - Mit deinem GitHub-Account einloggen
+3. **SSH-App auf dem iPhone installieren:**
+   - App Store → **Termius** (kostenlos) installieren
+   - Neuen Host anlegen:
+     - Hostname: `2a01:4f8:202:1129:2447:2447:1:901`
+     - Username: `root`
+     - SSH Key hinterlegen (oder Passwort)
+   - **Snippet** anlegen (für 1-Tap Deployment):
+     - Name: `Deploy Auszeit`
+     - Befehl: `cd /opt/auszeit && ./deploy-k3s.sh`
 
 ### Vom iPhone deployen
 
-1. **GitHub App** öffnen
-2. Zum Repository **Auszeit** navigieren
-3. Tab **Actions** antippen
-4. Workflow **"Deploy to K3s"** auswählen
-5. **"Run workflow"** antippen
-6. Bei "Type deploy to confirm" → `deploy` eingeben
-7. **"Run workflow"** bestätigen
+1. **Termius** öffnen
+2. Zum Server verbinden (1 Tap)
+3. **Snippet "Deploy Auszeit"** ausführen (1 Tap)
 
-Der Workflow:
-- Kopiert den Code per rsync auf den Server
-- Baut das Docker Image direkt auf dem Server
-- Pusht in die private Registry
-- Updated das K3s Deployment
-- Zeigt den Status der Pods an
+Das Script macht automatisch:
+- `git pull` (neuester Code)
+- Docker Image bauen
+- Push zur privaten Registry
+- K3s Deployment aktualisieren
+- Pod-Status anzeigen
 
-### Workflow-Status
+### Alternativ: Manuell per SSH
 
-In der GitHub App siehst du live den Fortschritt. Grüner Haken = erfolgreich deployed.
+```bash
+ssh root@2a01:4f8:202:1129:2447:2447:1:901 "cd /opt/auszeit && ./deploy-k3s.sh"
+```
 
 ---
 
