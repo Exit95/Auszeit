@@ -51,8 +51,8 @@ const { question, answer } = Astro.props;
 
 <style>
   .faq-item {
-    background-color: var(--color-off-white);
-    border: 2px solid var(--color-warm-beige);
+    background-color: var(--bg-paper, #FAF7F2);
+    border: 2px solid var(--color-border, rgba(66, 52, 48, 0.14));
     border-radius: var(--radius);
     overflow: hidden;
     transition: all var(--duration-normal) var(--easing);
@@ -61,7 +61,7 @@ const { question, answer } = Astro.props;
   .faq-item:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-2px);
-    border-color: var(--color-terracotta);
+    border-color: var(--color-sienna, #A0522D);
   }
 
   .faq-item__question {
@@ -72,8 +72,9 @@ const { question, answer } = Astro.props;
     padding: var(--space-4);
     cursor: pointer;
     user-select: none;
+    font-family: var(--font-serif);
     font-weight: 600;
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso, #423430);
     list-style: none;
   }
 
@@ -85,7 +86,7 @@ const { question, answer } = Astro.props;
     flex-shrink: 0;
     width: 24px;
     height: 24px;
-    color: var(--color-terracotta);
+    color: var(--color-sienna, #A0522D);
     transition: transform var(--duration-normal) var(--easing);
   }
 
@@ -95,6 +96,7 @@ const { question, answer } = Astro.props;
 
   .faq-item__answer {
     padding: 0 var(--space-4) var(--space-4) var(--space-4);
+    font-family: var(--font-sans);
     color: var(--color-text-secondary);
     line-height: 1.6;
   }

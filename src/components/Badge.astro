@@ -18,6 +18,7 @@ const { variant, label, className = "" } = Astro.props;
     align-items: center;
     padding: 0.25rem 0.625rem;
     border-radius: var(--radius-full);
+    font-family: var(--font-sans);
     font-size: 0.6875rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -31,13 +32,13 @@ const { variant, label, className = "" } = Astro.props;
   }
 
   .badge--available {
-    background-color: #16a34a;
-    color: white;
+    background-color: var(--accent-caramel, #CFA874);
+    color: var(--brand-espresso, #423430);
   }
 
   .badge--warning {
-    background-color: #f59e0b;
-    color: white;
+    background-color: var(--accent-caramel, #CFA874);
+    color: var(--brand-espresso, #423430);
   }
 </style>
 
