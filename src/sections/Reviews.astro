@@ -3,10 +3,10 @@
 const MAX_COMMENT_LENGTH = 400;
 ---
 
-<section id="bewertungen" class="reviews">
+<section id="bewertungen" class="reviews animate-on-scroll">
   <div class="container">
-    <h2 class="reviews__title">Kundenbewertungen</h2>
-    <p class="reviews__subtitle">Was unsere Kunden über uns sagen</p>
+    <h2 class="reviews__title">Stimmen unserer Gäste</h2>
+    <p class="reviews__subtitle">Was unsere Gäste über uns sagen</p>
 
     <!-- Karussell Container -->
     <div class="reviews-carousel">
@@ -32,46 +32,58 @@ const MAX_COMMENT_LENGTH = 400;
     <!-- Pagination Dots -->
     <div class="carousel-dots" id="carousel-dots"></div>
 
-    <!-- Bewertungsformular -->
-    <div class="review-form-container">
-      <h3>Ihre Meinung ist uns wichtig!</h3>
-      <p>Teilen Sie Ihre Erfahrung mit uns</p>
+    <!-- Toggle-Button für Bewertungsformular -->
+    <div class="review-toggle-wrapper">
+      <button id="review-toggle-btn" class="btn btn--secondary btn--large" type="button" aria-expanded="false" aria-controls="review-form-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        Bewertung schreiben
+      </button>
+    </div>
 
-      <form id="review-form" class="review-form">
-        <div class="form-group">
-          <label for="review-name">Ihr Name *</label>
-          <input type="text" id="review-name" name="name" required placeholder="Max Mustermann" maxlength="50">
-        </div>
+    <!-- Bewertungsformular (expandable) -->
+    <div id="review-form-wrapper" class="review-form-wrapper" aria-hidden="true">
+      <div class="review-form-container">
+        <h3>Deine Meinung zählt!</h3>
+        <p>Teile deine Erfahrung mit uns</p>
 
-        <div class="form-group">
-          <label for="review-rating">Bewertung *</label>
-          <div class="star-rating">
-            <input type="radio" id="star5" name="rating" value="5" required>
-            <label for="star5" title="5 Sterne">★</label>
-            <input type="radio" id="star4" name="rating" value="4">
-            <label for="star4" title="4 Sterne">★</label>
-            <input type="radio" id="star3" name="rating" value="3">
-            <label for="star3" title="3 Sterne">★</label>
-            <input type="radio" id="star2" name="rating" value="2">
-            <label for="star2" title="2 Sterne">★</label>
-            <input type="radio" id="star1" name="rating" value="1">
-            <label for="star1" title="1 Stern">★</label>
+        <form id="review-form" class="review-form">
+          <div class="form-group">
+            <label for="review-name">Dein Name *</label>
+            <input type="text" id="review-name" name="name" required placeholder="Max Mustermann" maxlength="50">
           </div>
+
+          <div class="form-group">
+            <label for="review-rating">Deine Bewertung *</label>
+            <div class="star-rating">
+              <input type="radio" id="star5" name="rating" value="5" required>
+              <label for="star5" title="5 Sterne">★</label>
+              <input type="radio" id="star4" name="rating" value="4">
+              <label for="star4" title="4 Sterne">★</label>
+              <input type="radio" id="star3" name="rating" value="3">
+              <label for="star3" title="3 Sterne">★</label>
+              <input type="radio" id="star2" name="rating" value="2">
+              <label for="star2" title="2 Sterne">★</label>
+              <input type="radio" id="star1" name="rating" value="1">
+              <label for="star1" title="1 Stern">★</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="review-comment">Deine Bewertung * <span class="char-counter"><span id="char-count">0</span>/{MAX_COMMENT_LENGTH}</span></label>
+            <textarea id="review-comment" name="comment" required rows="4" placeholder="Teile deine Erfahrung..." maxlength={MAX_COMMENT_LENGTH}></textarea>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--large">Bewertung absenden</button>
+          <p class="form-note">Deine Bewertung wird nach Prüfung veröffentlicht.</p>
+        </form>
+
+        <div id="review-success" class="success-message" style="display: none;">
+          ✅ Vielen Dank für deine Bewertung! Sie wird nach Prüfung veröffentlicht.
         </div>
-
-        <div class="form-group">
-          <label for="review-comment">Ihre Bewertung * <span class="char-counter"><span id="char-count">0</span>/{MAX_COMMENT_LENGTH}</span></label>
-          <textarea id="review-comment" name="comment" required rows="4" placeholder="Teilen Sie Ihre Erfahrung..." maxlength={MAX_COMMENT_LENGTH}></textarea>
-        </div>
-
-        <button type="submit" class="btn btn--primary btn--large">Bewertung absenden</button>
-        <p class="form-note">Ihre Bewertung wird nach Prüfung veröffentlicht.</p>
-      </form>
-
-      <div id="review-success" class="success-message" style="display: none;">
-        ✅ Vielen Dank für Ihre Bewertung! Sie wird nach Prüfung veröffentlicht.
+        <div id="review-error" class="error-message" style="display: none;"></div>
       </div>
-      <div id="review-error" class="error-message" style="display: none;"></div>
     </div>
   </div>
 </section>
@@ -79,7 +91,7 @@ const MAX_COMMENT_LENGTH = 400;
 <style>
   .reviews {
     padding: var(--space-12) var(--gutter);
-    background-color: var(--color-background);
+    background-color: var(--bg-linen);
   }
 
   .container {
@@ -89,12 +101,13 @@ const MAX_COMMENT_LENGTH = 400;
 
   .reviews__title {
     font-family: var(--font-serif);
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso);
     text-align: center;
     margin-bottom: var(--space-2);
   }
 
   .reviews__subtitle {
+    font-family: var(--font-sans);
     text-align: center;
     color: var(--color-text-secondary);
     margin-bottom: var(--space-8);
@@ -128,7 +141,7 @@ const MAX_COMMENT_LENGTH = 400;
     border-radius: 50%;
     background: white;
     border: 2px solid var(--color-warm-beige);
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -139,8 +152,8 @@ const MAX_COMMENT_LENGTH = 400;
   }
 
   .carousel-btn:hover {
-    background: var(--color-terracotta);
-    border-color: var(--color-terracotta);
+    background: var(--accent-terra);
+    border-color: var(--accent-terra);
     color: white;
     transform: scale(1.1);
   }
@@ -155,7 +168,7 @@ const MAX_COMMENT_LENGTH = 400;
     display: flex;
     justify-content: center;
     gap: var(--space-2);
-    margin-bottom: var(--space-10);
+    margin-bottom: var(--space-8);
   }
 
   :global(.carousel-dot) {
@@ -169,11 +182,11 @@ const MAX_COMMENT_LENGTH = 400;
   }
 
   :global(.carousel-dot:hover) {
-    background: var(--color-clay-brown);
+    background: var(--brand-espresso);
   }
 
   :global(.carousel-dot.active) {
-    background: var(--color-terracotta);
+    background: var(--accent-terra);
     transform: scale(1.2);
   }
 
@@ -209,7 +222,7 @@ const MAX_COMMENT_LENGTH = 400;
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--color-terracotta) 0%, var(--color-clay-brown) 100%);
+    background: linear-gradient(90deg, var(--accent-terra) 0%, var(--color-sienna) 100%);
   }
 
   :global(.review-card):hover {
@@ -233,7 +246,7 @@ const MAX_COMMENT_LENGTH = 400;
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-terracotta) 0%, var(--color-clay-brown) 100%);
+    background: linear-gradient(135deg, var(--accent-terra) 0%, var(--color-sienna) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -258,7 +271,7 @@ const MAX_COMMENT_LENGTH = 400;
 
   :global(.review-card__name) {
     font-weight: var(--font-weight-semibold);
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso);
     font-size: 0.95rem;
     margin-bottom: 2px;
     white-space: nowrap;
@@ -299,7 +312,7 @@ const MAX_COMMENT_LENGTH = 400;
   }
 
   :global(.review-card__star.filled) {
-    color: var(--color-terracotta);
+    color: var(--accent-terra);
   }
 
   :global(.review-card__rating-text) {
@@ -352,10 +365,28 @@ const MAX_COMMENT_LENGTH = 400;
     padding: var(--space-8);
   }
 
+  /* Toggle button wrapper */
+  .review-toggle-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--space-6);
+  }
+
+  /* Expandable form wrapper */
+  .review-form-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .review-form-wrapper.is-open {
+    max-height: 800px;
+  }
+
   .review-form-container {
     max-width: 600px;
     margin: 0 auto;
-    background: var(--color-soft-cream);
+    background: var(--bg-paper);
     padding: var(--space-6);
     border-radius: var(--radius-base);
     box-shadow: var(--shadow-md);
@@ -364,7 +395,7 @@ const MAX_COMMENT_LENGTH = 400;
 
   .review-form-container h3 {
     font-family: var(--font-serif);
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso);
     margin-bottom: var(--space-2);
   }
 
@@ -381,7 +412,7 @@ const MAX_COMMENT_LENGTH = 400;
     display: block;
     margin-bottom: var(--space-2);
     font-weight: var(--font-weight-medium);
-    color: var(--color-clay-brown);
+    color: var(--brand-espresso);
   }
 
   .form-group input[type="text"],
@@ -399,7 +430,7 @@ const MAX_COMMENT_LENGTH = 400;
   .form-group input[type="text"]:focus,
   .form-group textarea:focus {
     outline: none;
-    border-color: var(--color-terracotta);
+    border-color: var(--accent-terra);
   }
 
   .star-rating {
@@ -423,7 +454,7 @@ const MAX_COMMENT_LENGTH = 400;
   .star-rating input:checked ~ label,
   .star-rating label:hover,
   .star-rating label:hover ~ label {
-    color: var(--color-terracotta);
+    color: var(--accent-terra);
   }
 
   .form-note {
@@ -498,17 +529,34 @@ const MAX_COMMENT_LENGTH = 400;
   }
 
   .btn--primary {
-    background-color: var(--color-terracotta);
+    background-color: var(--accent-terra);
     color: var(--color-off-white);
   }
 
   .btn--primary:hover {
-    background-color: var(--color-clay-brown);
+    background-color: var(--brand-espresso);
     transform: translateY(-1px);
     box-shadow: var(--shadow-lg);
   }
 
   .btn--primary:active {
+    transform: translateY(0);
+  }
+
+  .btn--secondary {
+    background-color: transparent;
+    color: var(--brand-espresso);
+    border-color: var(--brand-espresso);
+  }
+
+  .btn--secondary:hover {
+    background-color: var(--brand-espresso);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .btn--secondary:active {
     transform: translateY(0);
   }
 
@@ -666,7 +714,7 @@ const MAX_COMMENT_LENGTH = 400;
       if (!container) return;
 
       if (allReviews.length === 0) {
-        container.innerHTML = '<p class="loading">Noch keine Bewertungen vorhanden. Seien Sie der Erste!</p>';
+        container.innerHTML = '<p class="loading">Noch keine Bewertungen vorhanden. Sei die Erste!</p>';
         return;
       }
 
@@ -799,6 +847,25 @@ const MAX_COMMENT_LENGTH = 400;
   document.getElementById('carousel-prev')?.addEventListener('click', () => goToPage(currentPage - 1));
   document.getElementById('carousel-next')?.addEventListener('click', () => goToPage(currentPage + 1));
 
+  // Expandable form toggle
+  const toggleBtn = document.getElementById('review-toggle-btn');
+  const formWrapper = document.getElementById('review-form-wrapper');
+
+  if (toggleBtn && formWrapper) {
+    toggleBtn.addEventListener('click', () => {
+      const isOpen = formWrapper.classList.toggle('is-open');
+      toggleBtn.setAttribute('aria-expanded', String(isOpen));
+      formWrapper.setAttribute('aria-hidden', String(!isOpen));
+
+      if (isOpen) {
+        // Smooth scroll to form after transition starts
+        setTimeout(() => {
+          formWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      }
+    });
+  }
+
   // Zeichenzähler für das Formular
   const commentTextarea = document.getElementById('review-comment') as HTMLTextAreaElement;
   const charCountSpan = document.getElementById('char-count');
@@ -859,7 +926,7 @@ const MAX_COMMENT_LENGTH = 400;
       } catch (error) {
         const errorMsg = document.getElementById('review-error');
         if (errorMsg) {
-          errorMsg.textContent = '❌ Fehler beim Absenden. Bitte versuchen Sie es später erneut.';
+          errorMsg.textContent = '❌ Fehler beim Absenden. Bitte versuche es später erneut.';
           errorMsg.style.display = 'block';
         }
       }
@@ -869,4 +936,3 @@ const MAX_COMMENT_LENGTH = 400;
   // Bewertungen beim Laden der Seite anzeigen
   loadReviews();
 </script>
-
