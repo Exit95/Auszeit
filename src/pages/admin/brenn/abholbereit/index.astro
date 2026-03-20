@@ -1,0 +1,79 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Abholbereit" activeNav="abholbereit">
+  <div class="brenn-card">
+    <h2>Abholbereite Aufträge</h2>
+    <div id="abholbereit-content" class="brenn-loading">Wird geladen…</div>
+  </div>
+</BrennLayout>
+
+<script is:inline>
+  async function loadAbholbereit() {
+    try {
+      const data = await brennFetch('/api/admin/brenn/orders?status=ABHOLBEREIT&limit=100');
+      renderAbholbereit(data.data.orders);
+    } catch(e) {
+      document.getElementById('abholbereit-content').innerHTML = '<p style="color:#dc2626">Fehler beim Laden</p>';
+    }
+  }
+
+  function renderAbholbereit(orders) {
+    const el = document.getElementById('abholbereit-content');
+    if (!orders.length) {
+      el.innerHTML = '<div class="brenn-empty-state"><p>Keine abholbereiten Aufträge</p><small>Aufträge werden hier angezeigt, sobald sie den Status "Abholbereit" erreichen.</small></div>';
+      return;
+    }
+
+    let html = '';
+    orders.forEach(o => {
+      const itemsSummary = (o.items || []).map(i => i.quantity + '× ' + i.item_type).join(', ') || '-';
+      html += '<div class="brenn-item-card">';
+      html += '<div class="brenn-item-card__info">';
+      html += '<div class="brenn-item-card__type">' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) + '</div>';
+      html += '<div class="brenn-item-card__desc">';
+      html += '<a href="/admin/brenn/auftraege/' + o.id + '/">' + escapeHtml(o.reference_code) + '</a>';
+      html += ' · ' + escapeHtml(itemsSummary);
+      html += '</div>';
+      html += '<div class="brenn-item-card__meta">';
+      html += '<span>Besuch: ' + formatDate(o.visit_date) + '</span>';
+      if (o.storage_code) html += '<span>Lagerort: ' + escapeHtml(o.storage_code) + '</span>';
+      html += '</div></div>';
+      html += '<div class="brenn-item-card__actions">';
+      html += '<button class="brenn-btn brenn-btn--success" onclick="abholungDurchfuehren(' + o.id + ',\'' + escapeHtml(o.reference_code) + '\',\'' + escapeHtml(o.first_name + ' ' + o.last_name) + '\')">Abgeholt</button>';
+      html += '</div></div>';
+    });
+    el.innerHTML = html;
+  }
+
+  async function abholungDurchfuehren(orderId, refCode, customerName) {
+    const confirmed = await brennConfirm(
+      'Abholung: ' + refCode,
+      'Auftrag als abgeholt markieren?',
+      '<div class="brenn-form-group"><label>Abgeholt von</label>' +
+      '<input type="text" class="brenn-input" id="pickup-name" value="' + escapeHtml(customerName) + '" /></div>' +
+      '<div class="brenn-form-group"><label>Notiz (optional)</label>' +
+      '<input type="text" class="brenn-input" id="pickup-note" /></div>'
+    );
+    if (!confirmed) return;
+
+    const pickedUpBy = document.getElementById('pickup-name').value.trim();
+    if (!pickedUpBy) { brennToast('Name erforderlich', 'error'); return; }
+
+    try {
+      await brennFetch('/api/admin/brenn/orders/' + orderId + '/pickup', {
+        method: 'POST',
+        body: JSON.stringify({
+          picked_up_by: pickedUpBy,
+          pickup_note: document.getElementById('pickup-note').value.trim() || null
+        })
+      });
+      brennToast('Abholung erfolgreich');
+      loadAbholbereit();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  if (getBrennAuth()) loadAbholbereit();
+</script>

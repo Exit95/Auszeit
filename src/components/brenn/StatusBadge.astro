@@ -1,0 +1,72 @@
+---
+interface Props {
+  status: string;
+  size?: 'small' | 'normal';
+}
+
+const { status, size = 'normal' } = Astro.props;
+
+const statusConfig: Record<string, { label: string; cssClass: string }> = {
+  'ERFASST': { label: 'Erfasst', cssClass: 'status--erfasst' },
+  'WARTET_AUF_BRENNEN': { label: 'Wartet auf Brennen', cssClass: 'status--wartet' },
+  'IM_BRENNOFEN': { label: 'Im Brennofen', cssClass: 'status--ofen' },
+  'GEBRANNT': { label: 'Gebrannt', cssClass: 'status--gebrannt' },
+  'ABHOLBEREIT': { label: 'Abholbereit', cssClass: 'status--abholbereit' },
+  'ABGEHOLT': { label: 'Abgeholt', cssClass: 'status--abgeholt' },
+  'PROBLEM': { label: 'Problem', cssClass: 'status--problem' },
+};
+
+const config = statusConfig[status] || { label: status, cssClass: '' };
+---
+
+<span class={`brenn-badge ${config.cssClass} ${size === 'small' ? 'brenn-badge--small' : ''}`}>
+  {config.label}
+</span>
+
+<style>
+  .brenn-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-full, 999px);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+  }
+
+  .brenn-badge--small {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.5rem;
+  }
+
+  .status--erfasst {
+    background-color: #9ca3af;
+    color: #fff;
+  }
+  .status--wartet {
+    background-color: #f59e0b;
+    color: #fff;
+  }
+  .status--ofen {
+    background-color: #ea580c;
+    color: #fff;
+  }
+  .status--gebrannt {
+    background-color: #3b82f6;
+    color: #fff;
+  }
+  .status--abholbereit {
+    background-color: #22c55e;
+    color: #fff;
+  }
+  .status--abgeholt {
+    background-color: #d1d5db;
+    color: #374151;
+  }
+  .status--problem {
+    background-color: #ef4444;
+    color: #fff;
+  }
+</style>

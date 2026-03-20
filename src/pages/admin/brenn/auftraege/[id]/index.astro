@@ -1,0 +1,221 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../../layouts/BrennLayout.astro';
+const { id } = Astro.params;
+---
+
+<BrennLayout title="Auftragsdetail" activeNav="auftraege">
+  <div id="order-detail" class="brenn-loading" data-order-id={id}>Wird geladen…</div>
+</BrennLayout>
+
+<script is:inline>
+  const orderId = document.getElementById('order-detail').dataset.orderId;
+  let orderData = null;
+  let storageLocations = [];
+
+  async function loadOrderDetail() {
+    try {
+      const [data, locData] = await Promise.all([
+        brennFetch('/api/admin/brenn/orders/' + orderId),
+        brennFetch('/api/admin/brenn/storage-locations')
+      ]);
+      orderData = data.data;
+      storageLocations = (locData.data || []).filter(l => l.is_active);
+      renderOrderDetail();
+    } catch(e) {
+      document.getElementById('order-detail').innerHTML =
+        '<div class="brenn-card"><p style="color:#dc2626">Auftrag nicht gefunden.</p>' +
+        '<a href="/admin/brenn/auftraege/" class="brenn-btn brenn-btn--secondary" style="margin-top:1rem">Zurück zur Liste</a></div>';
+    }
+  }
+
+  function renderOrderDetail() {
+    const o = orderData.order;
+    const items = orderData.items;
+    const logs = orderData.status_log;
+
+    let html = '';
+
+    // Header
+    html += '<div class="brenn-card" style="margin-bottom:1rem">';
+    html += '<div class="brenn-order-header">';
+    html += '<div>';
+    html += '<div class="brenn-order-header__ref">' + escapeHtml(o.reference_code) + '</div>';
+    html += '<div class="brenn-order-header__info">';
+    html += 'Kunde: <a href="/admin/brenn/kunden/' + o.customer_id + '/">' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) + '</a><br>';
+    html += 'Besuchsdatum: ' + formatDate(o.visit_date);
+    if (o.storage_code) html += '<br>Lagerort: ' + escapeHtml(o.storage_code);
+    html += '</div>';
+    if (o.notes) html += '<div style="font-size:0.8125rem;color:#999;margin-top:0.5rem;font-style:italic">' + escapeHtml(o.notes) + '</div>';
+    html += '</div>';
+    html += '<div style="text-align:right">' + statusBadgeHtml(o.overall_status);
+    html += '<br><a href="/admin/brenn/auftraege/" class="brenn-btn brenn-btn--secondary brenn-btn--small" style="margin-top:0.5rem">Zurück</a>';
+    html += '</div></div>';
+
+    // Aktionsleiste
+    html += '<div class="brenn-action-bar">';
+    const nonProblemItems = items.filter(i => i.status !== 'PROBLEM' && i.status !== 'ABGEHOLT');
+    const allSameStatus = nonProblemItems.length > 0 && nonProblemItems.every(i => i.status === nonProblemItems[0].status);
+    if (allSameStatus && NEXT_STATUS[nonProblemItems[0].status]) {
+      const nextSt = NEXT_STATUS[nonProblemItems[0].status];
+      html += '<button class="brenn-btn brenn-btn--primary brenn-btn--small" onclick="bulkNextStatus(\'' + nextSt + '\')">Alle: ' + escapeHtml(STATUS_LABELS[nextSt]) + '</button>';
+    }
+    if (o.overall_status === 'ABHOLBEREIT') {
+      html += '<button class="brenn-btn brenn-btn--success brenn-btn--small" onclick="performPickup()">Abholung durchführen</button>';
+    }
+    html += '<button class="brenn-btn brenn-btn--danger brenn-btn--small" onclick="setOrderProblem()">Problem melden</button>';
+
+    // Lagerort setzen
+    html += '<select class="brenn-select" style="width:auto;min-width:140px;font-size:0.8125rem" onchange="setAllStorage(this.value)">';
+    html += '<option value="">Lagerort setzen…</option>';
+    storageLocations.forEach(l => {
+      html += '<option value="' + l.id + '">' + escapeHtml(l.code) + '</option>';
+    });
+    html += '</select>';
+    html += '</div>';
+    html += '</div>';
+
+    // Werkstücke
+    html += '<div class="brenn-card" style="margin-bottom:1rem">';
+    html += '<h3>Werkstücke (' + items.length + ')</h3>';
+    items.forEach(item => {
+      const nextSt = NEXT_STATUS[item.status];
+      html += '<div class="brenn-item-card">';
+      html += '<div class="brenn-item-card__info">';
+      html += '<div class="brenn-item-card__type">' + escapeHtml(item.quantity) + '× ' + escapeHtml(item.item_type) + '</div>';
+      if (item.description) html += '<div class="brenn-item-card__desc">' + escapeHtml(item.description) + '</div>';
+      html += '<div class="brenn-item-card__meta">' + statusBadgeHtml(item.status);
+      if (item.storage_code) html += '<span>' + escapeHtml(item.storage_code) + '</span>';
+      html += '</div></div>';
+      html += '<div class="brenn-item-card__actions">';
+      if (nextSt) {
+        html += '<button class="brenn-btn brenn-btn--primary brenn-btn--small" onclick="changeItemStatus(' + item.id + ',\'' + nextSt + '\')">' + escapeHtml(STATUS_LABELS[nextSt]) + '</button>';
+      }
+      if (item.status === 'PROBLEM' && item.previous_status) {
+        html += '<button class="brenn-btn brenn-btn--warning brenn-btn--small" onclick="changeItemStatus(' + item.id + ',\'' + item.previous_status + '\')">Zurück: ' + escapeHtml(STATUS_LABELS[item.previous_status]) + '</button>';
+      }
+      if (item.status !== 'PROBLEM' && item.status !== 'ABGEHOLT') {
+        html += '<button class="brenn-btn brenn-btn--danger brenn-btn--small" onclick="changeItemStatus(' + item.id + ',\'PROBLEM\')">Problem</button>';
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    // Statushistorie
+    html += '<div class="brenn-card">';
+    html += '<h3>Statushistorie</h3>';
+    if (logs.length === 0) {
+      html += '<p style="color:#999;font-size:0.875rem">Noch keine Einträge</p>';
+    } else {
+      html += '<div class="brenn-timeline">';
+      logs.forEach(log => {
+        html += '<div class="brenn-timeline__entry">';
+        html += '<div class="brenn-timeline__time">' + new Date(log.created_at).toLocaleString('de-DE') + '</div>';
+        html += '<div class="brenn-timeline__text">';
+        html += escapeHtml(log.entity_type === 'ORDER' ? 'Auftrag' : 'Werkstück');
+        if (log.old_status) html += ': ' + escapeHtml(STATUS_LABELS[log.old_status] || log.old_status) + ' → ';
+        else html += ': ';
+        html += escapeHtml(STATUS_LABELS[log.new_status] || log.new_status);
+        html += '</div>';
+        if (log.note) html += '<div class="brenn-timeline__note">' + escapeHtml(log.note) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    document.getElementById('order-detail').innerHTML = html;
+  }
+
+  async function changeItemStatus(itemId, newStatus) {
+    try {
+      await brennFetch('/api/admin/brenn/orders/' + orderId + '/items/' + itemId + '/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ new_status: newStatus })
+      });
+      brennToast('Status geändert');
+      loadOrderDetail();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  async function bulkNextStatus(newStatus) {
+    const items = orderData.items.filter(i => i.status !== 'PROBLEM' && i.status !== 'ABGEHOLT');
+    const itemIds = items.map(i => i.id);
+    try {
+      await brennFetch('/api/admin/brenn/orders/' + orderId + '/items/bulk-status', {
+        method: 'PATCH',
+        body: JSON.stringify({ item_ids: itemIds, new_status: newStatus })
+      });
+      brennToast('Alle Werkstücke: ' + STATUS_LABELS[newStatus]);
+      loadOrderDetail();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  async function performPickup() {
+    const confirmed = await brennConfirm(
+      'Abholung durchführen',
+      'Auftrag ' + orderData.order.reference_code + ' als abgeholt markieren?',
+      '<div class="brenn-form-group"><label>Abgeholt von</label>' +
+      '<input type="text" class="brenn-input" id="pickup-name" value="' +
+      escapeHtml(orderData.order.first_name + ' ' + orderData.order.last_name) + '" /></div>' +
+      '<div class="brenn-form-group"><label>Notiz (optional)</label>' +
+      '<input type="text" class="brenn-input" id="pickup-note" /></div>'
+    );
+    if (!confirmed) return;
+
+    const pickedUpBy = document.getElementById('pickup-name').value.trim();
+    if (!pickedUpBy) { brennToast('Name der abholenden Person erforderlich', 'error'); return; }
+
+    try {
+      await brennFetch('/api/admin/brenn/orders/' + orderId + '/pickup', {
+        method: 'POST',
+        body: JSON.stringify({
+          picked_up_by: pickedUpBy,
+          pickup_note: document.getElementById('pickup-note').value.trim() || null
+        })
+      });
+      brennToast('Abholung erfolgreich durchgeführt');
+      loadOrderDetail();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  async function setOrderProblem() {
+    const items = orderData.items.filter(i => i.status !== 'PROBLEM' && i.status !== 'ABGEHOLT');
+    if (items.length === 0) { brennToast('Keine Werkstücke für Problemmeldung verfügbar', 'error'); return; }
+
+    const confirmed = await brennConfirm('Problem melden', 'Alle aktiven Werkstücke als Problem markieren?');
+    if (!confirmed) return;
+
+    for (const item of items) {
+      try {
+        await brennFetch('/api/admin/brenn/orders/' + orderId + '/items/' + item.id + '/status', {
+          method: 'PATCH',
+          body: JSON.stringify({ new_status: 'PROBLEM' })
+        });
+      } catch(e) { /* continue */ }
+    }
+    brennToast('Problem gemeldet');
+    loadOrderDetail();
+  }
+
+  async function setAllStorage(locationId) {
+    if (!locationId) return;
+    try {
+      await brennFetch('/api/admin/brenn/orders/' + orderId, {
+        method: 'PATCH',
+        body: JSON.stringify({ storage_location_id: Number(locationId) })
+      });
+      // Items auch aktualisieren
+      for (const item of orderData.items) {
+        await brennFetch('/api/admin/brenn/orders/' + orderId + '/items/' + item.id, {
+          method: 'PATCH',
+          body: JSON.stringify({ storage_location_id: Number(locationId) })
+        });
+      }
+      brennToast('Lagerort gesetzt');
+      loadOrderDetail();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  if (getBrennAuth()) loadOrderDetail();
+</script>

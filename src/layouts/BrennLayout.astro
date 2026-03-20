@@ -1,0 +1,312 @@
+---
+export const prerender = false;
+
+interface Props {
+  title: string;
+  activeNav?: string;
+}
+
+const { title, activeNav = '' } = Astro.props;
+
+const navItems = [
+  { href: '/admin/brenn/', label: 'Dashboard', key: 'dashboard' },
+  { href: '/admin/brenn/auftraege/', label: 'Aufträge', key: 'auftraege' },
+  { href: '/admin/brenn/brennliste/', label: 'Brennliste', key: 'brennliste' },
+  { href: '/admin/brenn/abholbereit/', label: 'Abholbereit', key: 'abholbereit' },
+  { href: '/admin/brenn/abgeholt/', label: 'Archiv', key: 'abgeholt' },
+  { href: '/admin/brenn/kunden/', label: 'Kunden', key: 'kunden' },
+  { href: '/admin/brenn/einstellungen/', label: 'Einstellungen', key: 'einstellungen' },
+];
+---
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title} | Brenn-Verwaltung | Atelier Auszeit</title>
+  <link rel="stylesheet" href="/brenn-admin-styles.css">
+</head>
+<body>
+  <div class="brenn-layout">
+    <header class="brenn-header">
+      <div>
+        <h1>{title}</h1>
+      </div>
+      <div class="brenn-header__actions">
+        <div class="brenn-search-wrapper" id="global-search-wrapper">
+          <input
+            type="search"
+            class="brenn-search-input"
+            placeholder="Suchen…"
+            id="global-search-input"
+            autocomplete="off"
+          />
+          <div class="brenn-search-results hidden" id="global-search-results"></div>
+        </div>
+        <a href="/admin" class="brenn-btn brenn-btn--secondary brenn-btn--small">Admin</a>
+      </div>
+    </header>
+
+    <nav class="brenn-nav">
+      {navItems.map(item => (
+        <a href={item.href} class={activeNav === item.key ? 'active' : ''}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <main>
+      <slot />
+    </main>
+  </div>
+
+  <!-- Login Overlay -->
+  <div id="brenn-login-overlay" class="brenn-modal-overlay">
+    <div class="brenn-modal">
+      <div class="brenn-modal__header">
+        <h3>Brenn-Verwaltung Login</h3>
+      </div>
+      <div class="brenn-modal__body">
+        <form id="brenn-login-form">
+          <div class="brenn-form-group">
+            <label for="brenn-login-user">Benutzername</label>
+            <input type="text" id="brenn-login-user" class="brenn-input" value="admin" required />
+          </div>
+          <div class="brenn-form-group">
+            <label for="brenn-login-pass">Passwort</label>
+            <input type="password" id="brenn-login-pass" class="brenn-input" required />
+          </div>
+          <div id="brenn-login-error" class="hidden" style="color: #dc2626; font-size: 0.8125rem; margin-bottom: 0.75rem;"></div>
+          <button type="submit" class="brenn-btn brenn-btn--primary brenn-btn--large" style="width:100%;">Anmelden</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="brenn-toast" class="brenn-toast"></div>
+
+  <!-- Bestätigungs-Modal -->
+  <div id="brenn-confirm-modal" class="brenn-modal-overlay">
+    <div class="brenn-modal">
+      <div class="brenn-modal__header">
+        <h3 id="confirm-modal-title">Bestätigung</h3>
+      </div>
+      <div class="brenn-modal__body">
+        <p id="confirm-modal-message"></p>
+        <div id="confirm-modal-form" class="hidden" style="margin-top: 1rem;"></div>
+      </div>
+      <div class="brenn-modal__footer">
+        <button class="brenn-btn brenn-btn--secondary" onclick="brennCloseConfirm()">Abbrechen</button>
+        <button class="brenn-btn brenn-btn--primary" id="confirm-modal-ok">Bestätigen</button>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    // ─── Auth Helper ──────────────────────────────────────
+    function getBrennAuth() {
+      return sessionStorage.getItem('brenn_auth') || '';
+    }
+
+    function setBrennAuth(auth) {
+      sessionStorage.setItem('brenn_auth', auth);
+    }
+
+    function brennFetch(url, options = {}) {
+      const auth = getBrennAuth();
+      if (!auth) {
+        showBrennLogin();
+        return Promise.reject(new Error('Nicht angemeldet'));
+      }
+      return fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + auth,
+          ...(options.headers || {}),
+        },
+      }).then(async res => {
+        if (res.status === 401) {
+          sessionStorage.removeItem('brenn_auth');
+          showBrennLogin();
+          throw new Error('Nicht autorisiert');
+        }
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Ein Fehler ist aufgetreten.');
+        }
+        return data;
+      });
+    }
+
+    function showBrennLogin() {
+      document.getElementById('brenn-login-overlay').classList.add('active');
+    }
+
+    // ─── Toast ────────────────────────────────────────────
+    function brennToast(msg, type = 'success') {
+      const el = document.getElementById('brenn-toast');
+      el.textContent = msg;
+      el.className = 'brenn-toast brenn-toast--' + type + ' show';
+      setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // ─── Confirm Modal ────────────────────────────────────
+    let _confirmResolve = null;
+
+    function brennConfirm(title, message, formHtml) {
+      return new Promise(resolve => {
+        _confirmResolve = resolve;
+        document.getElementById('confirm-modal-title').textContent = title;
+        document.getElementById('confirm-modal-message').textContent = message;
+        const formEl = document.getElementById('confirm-modal-form');
+        if (formHtml) {
+          formEl.innerHTML = formHtml;
+          formEl.classList.remove('hidden');
+        } else {
+          formEl.innerHTML = '';
+          formEl.classList.add('hidden');
+        }
+        document.getElementById('brenn-confirm-modal').classList.add('active');
+      });
+    }
+
+    function brennCloseConfirm() {
+      document.getElementById('brenn-confirm-modal').classList.remove('active');
+      if (_confirmResolve) { _confirmResolve(false); _confirmResolve = null; }
+    }
+
+    document.getElementById('confirm-modal-ok').addEventListener('click', () => {
+      document.getElementById('brenn-confirm-modal').classList.remove('active');
+      if (_confirmResolve) { _confirmResolve(true); _confirmResolve = null; }
+    });
+
+    // ─── Status Helpers ───────────────────────────────────
+    const STATUS_LABELS = {
+      'ERFASST': 'Erfasst',
+      'WARTET_AUF_BRENNEN': 'Wartet auf Brennen',
+      'IM_BRENNOFEN': 'Im Brennofen',
+      'GEBRANNT': 'Gebrannt',
+      'ABHOLBEREIT': 'Abholbereit',
+      'ABGEHOLT': 'Abgeholt',
+      'PROBLEM': 'Problem',
+    };
+
+    const NEXT_STATUS = {
+      'ERFASST': 'WARTET_AUF_BRENNEN',
+      'WARTET_AUF_BRENNEN': 'IM_BRENNOFEN',
+      'IM_BRENNOFEN': 'GEBRANNT',
+      'GEBRANNT': 'ABHOLBEREIT',
+      'ABHOLBEREIT': 'ABGEHOLT',
+    };
+
+    function statusBadgeHtml(status) {
+      const label = STATUS_LABELS[status] || status;
+      return '<span class="brenn-status brenn-status--' + status + '">' + escapeHtml(label) + '</span>';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // ─── Global Search ────────────────────────────────────
+    (function() {
+      const input = document.getElementById('global-search-input');
+      const results = document.getElementById('global-search-results');
+      let timeout;
+
+      input.addEventListener('input', () => {
+        clearTimeout(timeout);
+        const q = input.value.trim();
+        if (q.length < 2) { results.classList.add('hidden'); return; }
+        timeout = setTimeout(async () => {
+          try {
+            const data = await brennFetch('/api/admin/brenn/search?q=' + encodeURIComponent(q));
+            renderSearchResults(data.data);
+          } catch(e) { results.classList.add('hidden'); }
+        }, 300);
+      });
+
+      input.addEventListener('blur', () => {
+        setTimeout(() => results.classList.add('hidden'), 200);
+      });
+
+      input.addEventListener('focus', () => {
+        if (input.value.trim().length >= 2 && results.children.length > 0) {
+          results.classList.remove('hidden');
+        }
+      });
+
+      function renderSearchResults(data) {
+        let html = '';
+        if (data.orders && data.orders.length > 0) {
+          html += '<div class="brenn-search-results__group">Aufträge</div>';
+          data.orders.forEach(o => {
+            html += '<a class="brenn-search-results__item" href="/admin/brenn/auftraege/' + o.id + '/">' +
+              escapeHtml(o.reference_code) + ' – ' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) +
+              '<small>' + statusBadgeHtml(o.overall_status) + ' · ' + formatDate(o.visit_date) + '</small></a>';
+          });
+        }
+        if (data.customers && data.customers.length > 0) {
+          html += '<div class="brenn-search-results__group">Kunden</div>';
+          data.customers.forEach(c => {
+            html += '<a class="brenn-search-results__item" href="/admin/brenn/kunden/' + c.id + '/">' +
+              escapeHtml(c.last_name) + ', ' + escapeHtml(c.first_name) +
+              '<small>' + escapeHtml(c.email || c.phone || '') + '</small></a>';
+          });
+        }
+        if (!html) {
+          html = '<div class="brenn-search-results__item">Keine Ergebnisse</div>';
+        }
+        results.innerHTML = html;
+        results.classList.remove('hidden');
+      }
+    })();
+
+    // ─── Auth Check on Load ───────────────────────────────
+    (function() {
+      const auth = getBrennAuth();
+      if (!auth) {
+        showBrennLogin();
+      }
+    })();
+
+    // ─── Login form handler ─────────────────────────────
+    document.getElementById('brenn-login-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('brenn-login-user').value;
+      const password = document.getElementById('brenn-login-pass').value;
+      const errorEl = document.getElementById('brenn-login-error');
+      const credentials = btoa(username + ':' + password);
+
+      try {
+        const res = await fetch('/api/admin/brenn/dashboard', {
+          headers: { 'Authorization': 'Basic ' + credentials }
+        });
+        if (res.ok) {
+          setBrennAuth(credentials);
+          document.getElementById('brenn-login-overlay').classList.remove('active');
+          errorEl.classList.add('hidden');
+          window.location.reload();
+        } else {
+          errorEl.textContent = 'Ungültige Anmeldedaten';
+          errorEl.classList.remove('hidden');
+        }
+      } catch(err) {
+        errorEl.textContent = 'Verbindungsfehler';
+        errorEl.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

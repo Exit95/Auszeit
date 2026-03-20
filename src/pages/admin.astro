@@ -67,6 +67,7 @@ export const prerender = false;
       <button class="admin-nav__btn" data-tab="galerie">Galerie</button>
       <button class="admin-nav__btn" data-tab="bewertungen">Bewertungen</button>
       <button class="admin-nav__btn" data-tab="gutscheine">🎟️ Gutscheine</button>
+      <a class="admin-nav__btn" id="brenn-nav-link" href="/admin/brenn/" style="text-decoration:none">🔥 Brenn-Verwaltung</a>
     </nav>
 
 	    		<main class="admin-main">
@@ -485,6 +486,7 @@ export const prerender = false;
         // Superuser oder Admin ohne 2FA - direkter Login
         if (!result.requires2FA) {
           authCredentials = result.credentials;
+          sessionStorage.setItem('brenn_auth', result.credentials);
           document.getElementById('login-screen')?.classList.add('hidden');
           document.getElementById('admin-panel')?.classList.remove('hidden');
 
@@ -538,6 +540,7 @@ export const prerender = false;
 
         if (result.success) {
           authCredentials = result.credentials;
+          sessionStorage.setItem('brenn_auth', result.credentials);
           document.getElementById('twofa-screen')?.classList.add('hidden');
           document.getElementById('admin-panel')?.classList.remove('hidden');
 
@@ -579,6 +582,7 @@ export const prerender = false;
     document.getElementById('logout-btn')?.addEventListener('click', () => {
       authCredentials = '';
       pending2FASessionId = '';
+      sessionStorage.removeItem('brenn_auth');
       document.getElementById('admin-panel')?.classList.add('hidden');
       document.getElementById('twofa-screen')?.classList.add('hidden');
       document.getElementById('setup-2fa-btn')?.classList.add('hidden');

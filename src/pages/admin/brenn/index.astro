@@ -1,0 +1,152 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Brenn-Dashboard" activeNav="dashboard">
+  <!-- KPI Kacheln -->
+  <div class="brenn-kpi-grid" id="kpi-grid">
+    <a href="/admin/brenn/auftraege/?status=WARTET_AUF_BRENNEN" class="brenn-kpi brenn-kpi--wartet">
+      <div class="brenn-kpi__value" id="kpi-wartet">–</div>
+      <div class="brenn-kpi__label">Wartet auf Brennen</div>
+    </a>
+    <a href="/admin/brenn/brennliste/?status=IM_BRENNOFEN" class="brenn-kpi brenn-kpi--ofen">
+      <div class="brenn-kpi__value" id="kpi-ofen">–</div>
+      <div class="brenn-kpi__label">Im Brennofen</div>
+    </a>
+    <a href="/admin/brenn/abholbereit/" class="brenn-kpi brenn-kpi--abholbereit">
+      <div class="brenn-kpi__value" id="kpi-abholbereit">–</div>
+      <div class="brenn-kpi__label">Abholbereit</div>
+    </a>
+    <div class="brenn-kpi brenn-kpi--ueberfaellig hidden" id="kpi-ueberfaellig-wrapper">
+      <div class="brenn-kpi__value" id="kpi-ueberfaellig">0</div>
+      <div class="brenn-kpi__label">Überfällig</div>
+    </div>
+    <a href="/admin/brenn/abgeholt/" class="brenn-kpi brenn-kpi--abgeholt">
+      <div class="brenn-kpi__value" id="kpi-abgeholt">–</div>
+      <div class="brenn-kpi__label">Heute abgeholt</div>
+    </a>
+    <div class="brenn-kpi brenn-kpi--problem hidden" id="kpi-probleme-wrapper">
+      <div class="brenn-kpi__value" id="kpi-probleme">0</div>
+      <div class="brenn-kpi__label">Probleme</div>
+    </div>
+  </div>
+
+  <!-- Operative Listen -->
+  <div class="brenn-dashboard-lists">
+    <!-- Nächste Schritte -->
+    <div class="brenn-card">
+      <h3>Nächste Schritte</h3>
+      <div id="next-steps-list" class="brenn-loading">Wird geladen…</div>
+    </div>
+
+    <!-- Abholbereit -->
+    <div class="brenn-card">
+      <h3>Abholbereit</h3>
+      <div id="abholbereit-list" class="brenn-loading">Wird geladen…</div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:1.5rem">
+    <a href="/admin/brenn/auftraege/neu/" class="brenn-btn brenn-btn--primary brenn-btn--large">Neuer Auftrag</a>
+  </div>
+</BrennLayout>
+
+<script is:inline>
+  async function loadDashboard() {
+    try {
+      const data = await brennFetch('/api/admin/brenn/dashboard');
+      const d = data.data;
+      const c = d.counters;
+
+      document.getElementById('kpi-wartet').textContent = c.wartet_auf_brennen;
+      document.getElementById('kpi-ofen').textContent = c.im_brennofen;
+      document.getElementById('kpi-abholbereit').textContent = c.abholbereit;
+      document.getElementById('kpi-abgeholt').textContent = c.heute_abgeholt;
+
+      if (c.ueberfaellig > 0) {
+        document.getElementById('kpi-ueberfaellig').textContent = c.ueberfaellig;
+        document.getElementById('kpi-ueberfaellig-wrapper').classList.remove('hidden');
+      }
+      if (c.probleme > 0) {
+        document.getElementById('kpi-probleme').textContent = c.probleme;
+        document.getElementById('kpi-probleme-wrapper').classList.remove('hidden');
+      }
+
+      // Nächste Schritte
+      const nsEl = document.getElementById('next-steps-list');
+      if (d.next_steps.length === 0) {
+        nsEl.innerHTML = '<div class="brenn-empty-state"><p>Alles erledigt!</p></div>';
+      } else {
+        let html = '';
+        d.next_steps.forEach(o => {
+          const action = o.overall_status === 'ERFASST' ? 'Lagerort setzen' : 'Abholbereit machen';
+          html += '<div class="brenn-item-card">' +
+            '<div class="brenn-item-card__info">' +
+            '<div class="brenn-item-card__type"><a href="/admin/brenn/auftraege/' + o.id + '/">' + escapeHtml(o.reference_code) + '</a></div>' +
+            '<div class="brenn-item-card__desc">' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) + '</div>' +
+            '<div class="brenn-item-card__meta">' + statusBadgeHtml(o.overall_status) + '</div>' +
+            '</div>' +
+            '<div class="brenn-item-card__actions">' +
+            '<a href="/admin/brenn/auftraege/' + o.id + '/" class="brenn-btn brenn-btn--primary brenn-btn--small">' + action + '</a>' +
+            '</div></div>';
+        });
+        nsEl.innerHTML = html;
+      }
+
+      // Abholbereit-Liste
+      const abEl = document.getElementById('abholbereit-list');
+      if (d.abholbereit_list.length === 0) {
+        abEl.innerHTML = '<div class="brenn-empty-state"><p>Keine abholbereiten Aufträge</p></div>';
+      } else {
+        let html = '';
+        d.abholbereit_list.forEach(o => {
+          html += '<div class="brenn-item-card">' +
+            '<div class="brenn-item-card__info">' +
+            '<div class="brenn-item-card__type">' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) + '</div>' +
+            '<div class="brenn-item-card__desc"><a href="/admin/brenn/auftraege/' + o.id + '/">' + escapeHtml(o.reference_code) + '</a>' +
+            (o.items_summary ? ' · ' + escapeHtml(o.items_summary) : '') + '</div>' +
+            '<div class="brenn-item-card__meta">';
+          if (o.storage_code) html += '<span>' + escapeHtml(o.storage_code) + '</span>';
+          html += '</div></div>' +
+            '<div class="brenn-item-card__actions">' +
+            '<button class="brenn-btn brenn-btn--success brenn-btn--small" onclick="dashPickup(' + o.id + ',\'' + escapeHtml(o.reference_code) + '\',\'' + escapeHtml(o.first_name + ' ' + o.last_name) + '\')">Abgeholt</button>' +
+            '</div></div>';
+        });
+        abEl.innerHTML = html;
+      }
+    } catch(e) {
+      document.getElementById('next-steps-list').innerHTML = '<p style="color:#dc2626">Fehler beim Laden</p>';
+      document.getElementById('abholbereit-list').innerHTML = '';
+    }
+  }
+
+  async function dashPickup(orderId, refCode, customerName) {
+    const confirmed = await brennConfirm(
+      'Abholung: ' + refCode,
+      'Auftrag als abgeholt markieren?',
+      '<div class="brenn-form-group"><label>Abgeholt von</label>' +
+      '<input type="text" class="brenn-input" id="pickup-name" value="' + escapeHtml(customerName) + '" /></div>' +
+      '<div class="brenn-form-group"><label>Notiz (optional)</label>' +
+      '<input type="text" class="brenn-input" id="pickup-note" /></div>'
+    );
+    if (!confirmed) return;
+
+    const pickedUpBy = document.getElementById('pickup-name').value.trim();
+    if (!pickedUpBy) { brennToast('Name erforderlich', 'error'); return; }
+
+    try {
+      await brennFetch('/api/admin/brenn/orders/' + orderId + '/pickup', {
+        method: 'POST',
+        body: JSON.stringify({
+          picked_up_by: pickedUpBy,
+          pickup_note: document.getElementById('pickup-note').value.trim() || null
+        })
+      });
+      brennToast('Abholung erfolgreich');
+      loadDashboard();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  if (getBrennAuth()) loadDashboard();
+</script>
