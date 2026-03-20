@@ -37,6 +37,7 @@ h3,
 h4,
 h5,
 h6 {
+  font-family: var(--font-serif);
   line-height: 1.2;
   font-weight: 600;
 }
@@ -172,4 +173,17 @@ a {
     transform: none;
     transition: none;
   }
+}
+
+/* Section background utilities */
+.section--linen {
+  background-color: var(--bg-linen);
+}
+.section--paper {
+  background-color: var(--bg-paper);
+}
+
+/* Color utilities */
+.text-sienna {
+  color: var(--color-sienna);
 }
