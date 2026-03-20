@@ -34,6 +34,12 @@
       <image:caption>Handgefertigte Weihnachtsanhänger</image:caption>
     </image:image>
   </url>
-  
+
+  <url><loc>https://keramik-auszeit.de/galerie</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://keramik-auszeit.de/workshops</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://keramik-auszeit.de/gutscheine</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://keramik-auszeit.de/events</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://keramik-auszeit.de/faq</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
 </urlset>
 
