@@ -15,7 +15,11 @@ interface WorkshopBooking {
 // Buchungen laden um aktuelle Teilnehmerzahl zu berechnen
 async function getWorkshopBookings(): Promise<WorkshopBooking[]> {
   if (isS3Configured()) {
-    return await readJsonFromS3<WorkshopBooking[]>('workshop-bookings.json', []);
+    try {
+      return await readJsonFromS3<WorkshopBooking[]>('workshop-bookings.json', []);
+    } catch {
+      // S3 nicht erreichbar (lokal), Fallback
+    }
   }
   try {
     const filePath = path.join(process.cwd(), 'data', 'workshop-bookings.json');

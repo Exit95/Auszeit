@@ -354,12 +354,20 @@ export async function getWorkshops(): Promise<Workshop[]> {
     }
   }
   if (isS3Configured()) {
-    return await readJsonFromS3<Workshop[]>(WORKSHOPS_FILENAME, []);
+    try {
+      return await readJsonFromS3<Workshop[]>(WORKSHOPS_FILENAME, []);
+    } catch (err) {
+      console.warn('[Storage] S3-Lesefehler bei Workshops, Fallback auf lokal:', err);
+    }
   }
-  await ensureDataDir();
-  await ensureFile(WORKSHOPS_FILE, []);
-  const data = await fs.readFile(WORKSHOPS_FILE, 'utf-8');
-  return JSON.parse(data);
+  try {
+    await ensureDataDir();
+    await ensureFile(WORKSHOPS_FILE, []);
+    const data = await fs.readFile(WORKSHOPS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
 }
 
 export async function saveWorkshops(workshops: Workshop[]): Promise<void> {
