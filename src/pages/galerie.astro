@@ -1,0 +1,8 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Galerie from '../sections/Galerie.astro';
+import { content } from '../data/content';
+---
+<MainLayout title={content.pageMeta.galerie.title} description={content.pageMeta.galerie.description}>
+  <Galerie />
+</MainLayout>

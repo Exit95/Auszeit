@@ -1,0 +1,8 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Workshops from '../sections/Workshops.astro';
+import { content } from '../data/content';
+---
+<MainLayout title={content.pageMeta.workshops.title} description={content.pageMeta.workshops.description}>
+  <Workshops />
+</MainLayout>

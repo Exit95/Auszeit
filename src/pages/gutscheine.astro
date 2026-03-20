@@ -1,0 +1,8 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Gutschein from '../sections/Gutschein.astro';
+import { content } from '../data/content';
+---
+<MainLayout title={content.pageMeta.gutscheine.title} description={content.pageMeta.gutscheine.description}>
+  <Gutschein />
+</MainLayout>
