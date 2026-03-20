@@ -2,37 +2,26 @@
 // prerender disabled - Offerings.astro needs to load images from S3 at runtime
 import MainLayout from '../layouts/MainLayout.astro';
 import Hero from '../sections/Hero.astro';
-import BookingCalendar from '../components/BookingCalendar.astro';
-import Process from '../sections/Process.astro';
-import Workshops from '../sections/Workshops.astro';
-import FAQ from '../sections/FAQ.astro';
+import WasErwartet from '../sections/WasErwartet.astro';
 import Offerings from '../sections/Offerings.astro';
-import Gutschein from '../sections/Gutschein.astro';
+import Process from '../sections/Process.astro';
+import BookingCalendar from '../components/BookingCalendar.astro';
 import Reviews from '../sections/Reviews.astro';
+import Profil from '../sections/Profil.astro';
 import Contact from '../sections/Contact.astro';
-import AnlassAnfragen from '../sections/AnlassAnfragen.astro';
-import Galerie from '../sections/Galerie.astro';
-import TrustQuotes from '../sections/TrustQuotes.astro';
 
 // SEO-optimierter Title und Description für lokale Suche
 const seoTitle = "Keramik bemalen Gronau | Atelier Auszeit | Workshops & Kindergeburtstage";
 const seoDescription = "Keramik selbst bemalen in Gronau (Westfalen) ✓ Kreative Workshops ✓ Kindergeburtstage ✓ JGA ✓ Auch für Epe, Ochtrup, Ahaus, Enschede. Jetzt Termin buchen bei Irena Woschkowiak!";
 ---
 
-<MainLayout
-  title={seoTitle}
-  description={seoDescription}
->
+<MainLayout title={seoTitle} description={seoDescription}>
   <Hero />
+  <WasErwartet />
   <Offerings />
-  <TrustQuotes />
   <Process />
   <BookingCalendar title="Termin buchen" />
-  <AnlassAnfragen />
-  <Workshops />
-  <Galerie />
-  <Gutschein />
   <Reviews />
-  <FAQ />
+  <Profil />
   <Contact />
 </MainLayout>
