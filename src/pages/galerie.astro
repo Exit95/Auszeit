@@ -4,5 +4,44 @@ import Galerie from '../sections/Galerie.astro';
 import { content } from '../data/content';
 ---
 <MainLayout title={content.pageMeta.galerie.title} description={content.pageMeta.galerie.description}>
+
+  <section class="galerie-intro">
+    <div class="galerie-intro__inner">
+      <p class="galerie-intro__text">
+        Entdecke handbemalte Keramik aus unserem Atelier in Gronau — jedes Stück erzählt seine eigene Geschichte.
+      </p>
+    </div>
+  </section>
+
   <Galerie />
+
 </MainLayout>
+
+<style>
+  .galerie-intro {
+    background: var(--bg-linen, #EDE4DA);
+    padding: 3rem var(--gutter, 1.5rem) 2.5rem;
+  }
+
+  .galerie-intro__inner {
+    max-width: var(--max-width, 1080px);
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .galerie-intro__text {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    color: var(--brand-espresso, #423430);
+    line-height: 1.75;
+    max-width: 560px;
+    margin: 0 auto;
+    opacity: 0.85;
+  }
+
+  @media (max-width: 767px) {
+    .galerie-intro {
+      padding: 2rem var(--gutter, 1.5rem) 1.75rem;
+    }
+  }
+</style>
