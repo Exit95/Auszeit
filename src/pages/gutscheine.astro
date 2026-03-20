@@ -4,5 +4,217 @@ import Gutschein from '../sections/Gutschein.astro';
 import { content } from '../data/content';
 ---
 <MainLayout title={content.pageMeta.gutscheine.title} description={content.pageMeta.gutscheine.description}>
+
+  <!-- Page Hero -->
+  <section class="gutschein-hero">
+    <div class="gutschein-hero__inner">
+      <h1 class="gutschein-hero__title">Gutscheine</h1>
+      <p class="gutschein-hero__subtitle">Verschenke kreative Auszeit — das perfekte Geschenk für alle, die gerne gestalten.</p>
+    </div>
+  </section>
+
+  <!-- Voucher Options (Stripe Checkout) -->
   <Gutschein />
+
+  <!-- How It Works -->
+  <section class="how-it-works">
+    <div class="how-it-works__container">
+      <h2 class="how-it-works__heading">So einfach geht's</h2>
+      <div class="how-it-works__steps">
+
+        <div class="step-card">
+          <span class="step-card__number">1</span>
+          <h3 class="step-card__title">Gutschein wählen</h3>
+          <p class="step-card__text">Wähle einen Betrag: 25 €, 50 € oder deinen Wunschbetrag.</p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-card__number">2</span>
+          <h3 class="step-card__title">Sicher bezahlen</h3>
+          <p class="step-card__text">Sichere Zahlung über Stripe. Du erhältst den Gutschein-Code sofort per E-Mail.</p>
+        </div>
+
+        <div class="step-card">
+          <span class="step-card__number">3</span>
+          <h3 class="step-card__title">Verschenken &amp; einlösen</h3>
+          <p class="step-card__text">Drucke den Code aus oder verschicke ihn digital. Einfach bei der Buchung angeben.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="gutschein-faq">
+    <div class="gutschein-faq__container">
+      <h2 class="gutschein-faq__heading">Häufige Fragen</h2>
+      <div class="gutschein-faq__list">
+
+        <div class="faq-item">
+          <h3 class="faq-item__question">Wie lange ist der Gutschein gültig?</h3>
+          <p class="faq-item__answer">Gutscheine sind unbegrenzt gültig.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3 class="faq-item__question">Kann ich den Betrag aufteilen?</h3>
+          <p class="faq-item__answer">Ja, der Gutschein kann auf mehrere Besuche aufgeteilt werden.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3 class="faq-item__question">Wie löse ich einen Gutschein ein?</h3>
+          <p class="faq-item__answer">Gib den Code einfach bei der Terminbuchung an oder bringe ihn zum Besuch mit.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
 </MainLayout>
+
+<style>
+  /* ── Hero ────────────────────────────────────────────────── */
+  .gutschein-hero {
+    background: var(--bg-linen, #EDE4DA);
+    padding: var(--space-10, 5rem) var(--gutter, 1.25rem) var(--space-8, 4rem);
+    text-align: center;
+  }
+
+  .gutschein-hero__inner {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .gutschein-hero__title {
+    font-family: var(--font-serif, 'Lora', Georgia, serif);
+    font-size: var(--text-hero, clamp(2.5rem, 4vw + 1rem, 4rem));
+    color: var(--brand-espresso, #423430);
+    margin: 0 0 var(--space-3, 0.75rem);
+    line-height: 1.15;
+  }
+
+  .gutschein-hero__subtitle {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
+    color: var(--color-sienna, #A0522D);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ── How It Works ────────────────────────────────────────── */
+  .how-it-works {
+    background: var(--bg-paper, #FAF7F2);
+    padding: var(--space-10, 5rem) var(--gutter, 1.25rem);
+  }
+
+  .how-it-works__container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .how-it-works__heading {
+    font-family: var(--font-serif, 'Lora', Georgia, serif);
+    font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2rem);
+    color: var(--brand-espresso, #423430);
+    text-align: center;
+    margin: 0 0 var(--space-8, 4rem);
+  }
+
+  .how-it-works__steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5, 1.5rem);
+  }
+
+  .step-card {
+    background: #fff;
+    border: 1px solid rgba(66, 52, 48, 0.08);
+    border-radius: 16px;
+    padding: var(--space-6, 2.5rem) var(--space-4, 1.25rem) var(--space-5, 1.5rem);
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(66, 52, 48, 0.07);
+  }
+
+  .step-card__number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--accent-terra, #D96C4A);
+    color: #fff;
+    font-family: var(--font-serif, 'Lora', Georgia, serif);
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: var(--space-3, 0.75rem);
+  }
+
+  .step-card__title {
+    font-family: var(--font-serif, 'Lora', Georgia, serif);
+    font-size: 1.125rem;
+    color: var(--brand-espresso, #423430);
+    margin: 0 0 var(--space-2, 0.5rem);
+  }
+
+  .step-card__text {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary, #6b5a54);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  @media (max-width: 639px) {
+    .how-it-works__steps {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ── FAQ ─────────────────────────────────────────────────── */
+  .gutschein-faq {
+    background: var(--bg-cream, #F2EBE5);
+    padding: var(--space-10, 5rem) var(--gutter, 1.25rem);
+  }
+
+  .gutschein-faq__container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .gutschein-faq__heading {
+    font-family: var(--font-serif, 'Lora', Georgia, serif);
+    font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2rem);
+    color: var(--brand-espresso, #423430);
+    text-align: center;
+    margin: 0 0 var(--space-8, 4rem);
+  }
+
+  .gutschein-faq__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 1.25rem);
+  }
+
+  .faq-item {
+    background: #fff;
+    border: 1px solid rgba(66, 52, 48, 0.08);
+    border-radius: 14px;
+    padding: var(--space-4, 1.25rem) var(--space-5, 1.5rem);
+    box-shadow: 0 2px 10px rgba(66, 52, 48, 0.06);
+  }
+
+  .faq-item__question {
+    font-family: var(--font-serif, 'Lora', Georgia, serif);
+    font-size: 1.0625rem;
+    color: var(--brand-espresso, #423430);
+    margin: 0 0 var(--space-2, 0.5rem);
+  }
+
+  .faq-item__answer {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary, #6b5a54);
+    line-height: 1.6;
+    margin: 0;
+  }
+</style>
