@@ -1,28 +1,57 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ============================================
+# Malatelier Auszeit - Deploy via Jump-Host (PVE)
+# ============================================
+
 set -euo pipefail
 
-# Project: Keramik Auszeit
-# Domain: keramik-auszeit.de
-REGISTRY="10.1.9.0:5000"
-IMAGE_NAME="keramik-auszeit-de"
-TAG="${1:-latest}"
-IMAGE="${REGISTRY}/${IMAGE_NAME}:${TAG}"
-K3S_SERVER="root@10.1.9.100"
-K3S_KEY="~/.ssh/danapfel"
 APP_NAME="keramik-auszeit-de"
-NAMESPACE="websites"
+REGISTRY_IP="2a01:4f8:202:1129:2447:2447:1:900"
+DOCKER_IP="2a01:4f8:202:1129:2447:2447:1:901"
+IMAGE="[${REGISTRY_IP}]:5000/${APP_NAME}:latest"
+PVE_HOST="DanapfelPVE"
+TMP_ARCHIVE="/tmp/${APP_NAME}-src.tar.gz"
+REMOTE_BUILD="/tmp/${APP_NAME}-build"
 
-echo "=== Building ${IMAGE_NAME} ==="
-docker build -t "${IMAGE}" .
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
+log()  { echo -e "${GREEN}[deploy]${NC} $1"; }
+fail() { echo -e "${RED}[error]${NC} $1"; exit 1; }
 
-echo "=== Pushing to Registry ==="
-docker push "${IMAGE}"
+log "1/6  Projekt packen ..."
+tar czf "${TMP_ARCHIVE}" \
+  --exclude=node_modules --exclude=.git --exclude=dist \
+  --exclude=.superpowers --exclude=.env \
+  -C "$(pwd)" .
+log "     $(du -h ${TMP_ARCHIVE} | cut -f1) gepackt"
 
-echo "=== Deploying to K3s ==="
-ssh -i "${K3S_KEY}" "${K3S_SERVER}" "kubectl rollout restart deployment/${APP_NAME} -n ${NAMESPACE}"
+log "2/6  Archiv zum Jump-Host (PVE) senden ..."
+scp "${TMP_ARCHIVE}" "${PVE_HOST}:${TMP_ARCHIVE}" || fail "SCP zum PVE fehlgeschlagen"
 
-echo "=== Waiting for rollout ==="
-ssh -i "${K3S_KEY}" "${K3S_SERVER}" "kubectl rollout status deployment/${APP_NAME} -n ${NAMESPACE} --timeout=120s"
+log "3/6  Archiv zum Registry-Server weiterleiten ..."
+ssh "${PVE_HOST}" "scp ${TMP_ARCHIVE} root@[${REGISTRY_IP}]:${TMP_ARCHIVE}" || fail "SCP zum Registry-Server fehlgeschlagen"
 
-echo "=== Done ==="
-ssh -i "${K3S_KEY}" "${K3S_SERVER}" "kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME}"
+log "4/6  Docker Image bauen und pushen ..."
+ssh "${PVE_HOST}" "ssh root@${REGISTRY_IP} '\
+  rm -rf ${REMOTE_BUILD} && \
+  mkdir -p ${REMOTE_BUILD} && \
+  cd ${REMOTE_BUILD} && \
+  tar xzf ${TMP_ARCHIVE} && \
+  docker build --no-cache -t ${IMAGE} . && \
+  docker push ${IMAGE} && \
+  rm -rf ${REMOTE_BUILD} ${TMP_ARCHIVE} \
+'" || fail "Remote Build/Push fehlgeschlagen"
+
+log "5/6  Container deployen ..."
+ssh "${PVE_HOST}" "ssh root@${DOCKER_IP} '\
+  cd /srv/docker/apps && \
+  docker compose pull ${APP_NAME} && \
+  docker compose up -d --force-recreate ${APP_NAME} \
+'" || fail "Deploy fehlgeschlagen"
+
+log "6/6  Aufräumen ..."
+rm -f "${TMP_ARCHIVE}"
+ssh "${PVE_HOST}" "rm -f ${TMP_ARCHIVE}" 2>/dev/null || true
+
+log "Fertig! https://keramik-auszeit.de"

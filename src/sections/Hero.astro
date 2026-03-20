@@ -33,7 +33,11 @@ import { content } from "../data/content";
     justify-content: center;
     padding: var(--space-10) var(--gutter) var(--space-12);
     text-align: center;
-    background: #fff;
+    background: linear-gradient(
+      160deg,
+      var(--color-clay-brown) 0%,
+      var(--bg-sand) 100%
+    );
   }
 
   .hero__content {
@@ -57,14 +61,15 @@ import { content } from "../data/content";
     font-family: var(--font-serif);
     font-size: var(--text-4xl);
     font-weight: 700;
-    color: var(--brand-espresso);
+    color: #fff;
     margin: 0 0 var(--space-3);
     line-height: 1.15;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
   }
 
   .hero__sub {
     font-family: var(--font-sans);
-    color: var(--color-text-secondary);
+    color: rgba(255, 255, 255, 0.8);
     font-size: 1.1rem;
     margin: 0 0 var(--space-6);
     line-height: 1.6;
@@ -81,17 +86,17 @@ import { content } from "../data/content";
     font-family: var(--font-sans);
     font-weight: 600;
     font-size: 0.95rem;
-    color: var(--color-sienna);
+    color: #fff;
     text-decoration: none;
     padding: 0.6rem 1.5rem;
-    border: 2px solid var(--color-sienna);
+    border: 2px solid rgba(255, 255, 255, 0.6);
     border-radius: var(--radius-sm);
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
 
   .hero__cta-secondary:hover {
-    background: var(--color-sienna);
-    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #fff;
   }
 
   @media (min-width: 640px) {
