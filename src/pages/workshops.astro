@@ -4,5 +4,101 @@ import Workshops from '../sections/Workshops.astro';
 import { content } from '../data/content';
 ---
 <MainLayout title={content.pageMeta.workshops.title} description={content.pageMeta.workshops.description}>
+  <section class="page-hero">
+    <div class="page-hero__inner">
+      <h1 class="page-hero__title">Workshops</h1>
+      <p class="page-hero__subtitle">
+        Lerne neue Techniken und gestalte besondere Keramik-Stücke — in unseren kreativen Workshops in Gronau.
+      </p>
+    </div>
+  </section>
+
   <Workshops />
+
+  <section class="workshops-cta">
+    <p class="workshops-cta__text">Du möchtest über neue Workshops informiert werden?</p>
+    <div class="workshops-cta__links">
+      <a href="https://wa.me/4917634255005">WhatsApp</a>
+      <a href="mailto:keramik-auszeit@web.de">E-Mail</a>
+    </div>
+  </section>
 </MainLayout>
+
+<style>
+  /* ── Page Hero ─────────────────────────────────────────────────── */
+  .page-hero {
+    background: var(--bg-linen, #EDE4DA);
+    padding: 4rem 1.5rem 3.5rem;
+    text-align: center;
+  }
+
+  .page-hero__inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .page-hero__title {
+    font-family: var(--font-serif, 'Lora', Georgia, serif);
+    font-size: var(--text-hero, clamp(2.5rem, 4vw + 1rem, 4rem));
+    color: var(--brand-espresso, #423430);
+    margin: 0 0 1rem;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  .page-hero__subtitle {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
+    color: var(--color-sienna, #A0522D);
+    margin: 0;
+    line-height: 1.6;
+    max-width: 600px;
+    margin-inline: auto;
+  }
+
+  /* ── CTA ────────────────────────────────────────────────────────── */
+  .workshops-cta {
+    background: var(--bg-linen, #EDE4DA);
+    padding: 3rem 1.5rem;
+    text-align: center;
+  }
+
+  .workshops-cta__text {
+    font-family: var(--font-serif, 'Lora', Georgia, serif);
+    font-size: 1.4rem;
+    color: var(--brand-espresso, #423430);
+    margin: 0 0 1.5rem;
+  }
+
+  .workshops-cta__links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .workshops-cta__links a {
+    display: inline-block;
+    padding: 0.65rem 1.75rem;
+    border-radius: 999px;
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+    background: var(--accent-terra, #D96C4A);
+    color: #fff;
+  }
+
+  .workshops-cta__links a:hover {
+    background: var(--brand-espresso, #423430);
+    color: #fff;
+  }
+
+  /* ── Responsive ─────────────────────────────────────────────────── */
+  @media (max-width: 639px) {
+    .page-hero {
+      padding: 2.5rem 1rem 2rem;
+    }
+  }
+</style>
