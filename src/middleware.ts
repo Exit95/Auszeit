@@ -20,7 +20,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
         "img-src 'self' data: blob:",
         "connect-src 'self' https://api.stripe.com",
         "frame-src https://js.stripe.com https://www.google.com https://maps.google.com",
-        "frame-ancestors 'self' https://danapfel-digital.de",
+        "frame-ancestors 'self' https://danapfel-digital.de https://www.danapfel-digital.de https://*.danapfel-digital.de",
         "form-action 'self'",
         "base-uri 'self'",
         "object-src 'none'",
