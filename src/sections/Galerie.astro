@@ -3,7 +3,7 @@
 ---
 
 <section id="galerie" class="galerie" style="scroll-margin-top: 60px;">
-  <div class="galerie__head">
+  <div class="galerie__head animate-on-scroll">
     <span class="galerie__overline">Galerie</span>
     <h2 class="galerie__title">Unsere Arbeiten</h2>
     <p class="galerie__sub">Jedes Stück ist ein Unikat — lass dich inspirieren</p>
@@ -46,6 +46,23 @@
     </div>
   </div>
 
+  <!-- Instagram CTA -->
+  <div class="galerie__instagram">
+    <a
+      href="https://www.instagram.com/auszeit_keramik_malatelier/"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="galerie__instagram-link"
+    >
+      <svg class="galerie__instagram-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+        <circle cx="12" cy="12" r="4"/>
+        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+      </svg>
+      Mehr auf Instagram
+    </a>
+  </div>
+
   <!-- Lightbox -->
   <div id="glb" class="glb hidden" role="dialog" aria-modal="true">
     <div class="glb__bg" id="glb-bg"></div>
@@ -74,7 +91,7 @@
 <style>
   /* ── Section ─────────────────────────────────────────────── */
   .galerie {
-    background: var(--bg-cream, #F2EBE5);
+    background: var(--bg-paper, #FAF7F2);
     padding: var(--space-10, 5rem) 0 var(--space-8, 4rem);
   }
 
@@ -106,6 +123,7 @@
   }
 
   .galerie__sub {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
     color: var(--color-text-secondary, #5D4E43);
     font-size: 1rem;
     margin: 0 0 2rem;
@@ -261,22 +279,28 @@
     overflow: hidden;
     cursor: pointer;
     position: relative;
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--bg-sand, #E3D5CA);
     transition: transform 0.28s ease, box-shadow 0.28s ease;
     opacity: 0;
     animation: galerie-fadeIn 0.5s ease forwards;
   }
 
-  @keyframes galerie-fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
+  /* LQIP blur-up: image fades in over the warm sand placeholder */
   :global(.g-item img) {
     width: 100%;
     height: auto;
     display: block;
-    transition: transform 0.4s ease;
+    transition: transform 0.4s ease, opacity 0.35s ease;
+    opacity: 0;
+  }
+
+  :global(.g-item img.loaded) {
+    opacity: 1;
+  }
+
+  @keyframes galerie-fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   :global(.g-item__hover) {
@@ -488,6 +512,41 @@
     :global(.g-item:hover img) { transform: none; }
     :global(.g-item__hover) { display: none; }
   }
+
+  /* ── Instagram CTA ───────────────────────────────────────── */
+  .galerie__instagram {
+    text-align: center;
+    padding: var(--space-6, 3rem) var(--gutter, 1.5rem) 0;
+  }
+
+  .galerie__instagram-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 30px;
+    border-radius: 999px;
+    border: 1.5px solid var(--accent-caramel, #CFA874);
+    background: transparent;
+    color: var(--brand-espresso, #423430);
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+  }
+
+  .galerie__instagram-link:hover {
+    background: var(--brand-espresso, #423430);
+    border-color: var(--brand-espresso, #423430);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(66, 52, 48, 0.18);
+  }
+
+  .galerie__instagram-icon {
+    flex-shrink: 0;
+  }
 </style>
 
 <script>
@@ -628,6 +687,15 @@
           </div>`
         )
         .join('');
+
+      // LQIP: mark images as loaded once they finish loading
+      grid.querySelectorAll<HTMLImageElement>('.g-item img').forEach((imgEl) => {
+        if (imgEl.complete) {
+          imgEl.classList.add('loaded');
+        } else {
+          imgEl.addEventListener('load', () => imgEl.classList.add('loaded'), { once: true });
+        }
+      });
 
       // Lightbox-Click auf Items
       grid.querySelectorAll('.g-item').forEach((el) => {
