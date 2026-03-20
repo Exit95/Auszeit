@@ -1,28 +1,28 @@
 ---
 import { content } from '../data/content';
+
+const icons = [
+  // Keramik bemalen — Pinsel
+  `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z"/><path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7"/><path d="M14.5 17.5 4.5 15"/></svg>`,
+  // Workshops — Palette
+  `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2Z"/></svg>`,
+  // Besondere Anlässe — Herz/Feier
+  `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`,
+  // Gutscheine — Geschenk
+  `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>`,
+];
 ---
 
 <section class="was-erwartet animate-on-scroll" aria-labelledby="was-erwartet-title">
   <div class="was-erwartet__container">
     <h2 class="was-erwartet__title" id="was-erwartet-title">{content.wasErwartet.title}</h2>
     <div class="was-erwartet__grid">
-      {content.wasErwartet.items.map((item) => (
+      {content.wasErwartet.items.map((item, i) => (
         <a href={item.link} class="was-erwartet__card">
-          <div class="was-erwartet__card-image-wrap">
-            <img
-              src={item.image}
-              alt={item.title}
-              class="was-erwartet__card-image"
-              loading="lazy"
-              width="400"
-              height="280"
-            />
-          </div>
-          <div class="was-erwartet__card-body">
-            <h3 class="was-erwartet__card-title">{item.title}</h3>
-            <p class="was-erwartet__card-text">{item.text}</p>
-            <span class="was-erwartet__card-cta">Mehr erfahren →</span>
-          </div>
+          <div class="was-erwartet__card-icon" set:html={icons[i]} />
+          <h3 class="was-erwartet__card-title">{item.title}</h3>
+          <p class="was-erwartet__card-text">{item.text}</p>
+          <span class="was-erwartet__card-cta">Mehr erfahren →</span>
         </a>
       ))}
     </div>
@@ -63,12 +63,15 @@ import { content } from '../data/content';
   .was-erwartet__card {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    text-align: center;
     background: #fff;
     border-radius: var(--radius);
-    overflow: hidden;
+    padding: var(--space-6) var(--space-4) var(--space-4);
     box-shadow: var(--shadow-card);
     text-decoration: none;
     color: inherit;
+    gap: var(--space-2);
     transition: transform var(--duration-normal) var(--easing),
                 box-shadow var(--duration-normal) var(--easing);
   }
@@ -78,29 +81,22 @@ import { content } from '../data/content';
     box-shadow: var(--shadow-lg);
   }
 
-  .was-erwartet__card-image-wrap {
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-  }
-
-  .was-erwartet__card-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform var(--duration-slow) var(--easing);
-  }
-
-  .was-erwartet__card:hover .was-erwartet__card-image {
-    transform: scale(1.04);
-  }
-
-  .was-erwartet__card-body {
-    padding: var(--space-4);
+  .was-erwartet__card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--bg-linen);
     display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    flex: 1;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-terra);
+    margin-bottom: var(--space-1);
+    transition: background var(--duration-normal) var(--easing);
+  }
+
+  .was-erwartet__card:hover .was-erwartet__card-icon {
+    background: var(--accent-terra);
+    color: #fff;
   }
 
   .was-erwartet__card-title {
@@ -113,11 +109,10 @@ import { content } from '../data/content';
 
   .was-erwartet__card-text {
     font-family: var(--font-sans);
-    font-size: var(--text-base);
+    font-size: var(--text-sm);
     color: var(--color-text-secondary);
     line-height: 1.65;
     margin: 0;
-    flex: 1;
   }
 
   .was-erwartet__card-cta {
@@ -135,15 +130,11 @@ import { content } from '../data/content';
 
   @media (prefers-reduced-motion: reduce) {
     .was-erwartet__card,
-    .was-erwartet__card-image {
+    .was-erwartet__card-icon {
       transition: none;
     }
 
     .was-erwartet__card:hover {
-      transform: none;
-    }
-
-    .was-erwartet__card:hover .was-erwartet__card-image {
       transform: none;
     }
   }

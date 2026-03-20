@@ -15,42 +15,30 @@ const { title = "Termin buchen" } = Astro.props;
     <div class="booking-grid">
       <div id="bookingCalendar" class="booking-calendar"></div>
 
-      <!-- Profil-Karte -->
-      <div class="profile-card">
-        <div class="profile-card__image">
-          <img src="/profil.png" alt="Irena Woschkowiak" />
-        </div>
-        <div class="profile-card__content">
-          <h3>Über mich</h3>
-          <p class="profile-card__intro">
-            Willkommen in meinem Atelier! Ich bin Irena Woschkowiak und freue mich, euch die Welt der Keramikmalerei näherzubringen. Ob alleine, mit Freunden oder als Gruppe: Hier findet jeder seine kreative Auszeit.
-          </p>
-          <ul class="profile-card__facts">
-            <li>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              Inhaberin & Keramik-Künstlerin
-            </li>
-            <li>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              Gronau (Westfalen)
-            </li>
-            <li>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              Gruppen &amp; Einzeltermine
-            </li>
-          </ul>
-        </div>
+      <!-- Buchungs-Info -->
+      <div class="booking-info-card">
+        <h3>So funktioniert's</h3>
+        <ul class="booking-info__steps">
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Wähle einen freien Termin im Kalender</span>
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+            <span>Trage deine Daten und Personenzahl ein</span>
+          </li>
+          <li>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Du erhältst eine Bestätigung per E-Mail</span>
+          </li>
+        </ul>
+        <p class="booking-info__note">Kostenlose Stornierung bis 24h vorher möglich.</p>
       </div>
     </div>
 
@@ -168,76 +156,54 @@ const { title = "Termin buchen" } = Astro.props;
     box-shadow: 0 6px 16px rgba(66, 52, 48, 0.06);
   }
 
-  /* Profil-Karte */
-  .profile-card {
+  /* Buchungs-Info-Karte */
+  .booking-info-card {
     background: rgba(255, 255, 255, 0.62);
     border-radius: 14px;
-    overflow: hidden;
+    padding: var(--space-5);
     border: 1px solid rgba(66, 52, 48, 0.10);
     box-shadow: 0 6px 16px rgba(66, 52, 48, 0.06);
     position: sticky;
     top: var(--space-4);
   }
 
-  /* Profil während des Buchungsvorgangs auf kleineren Bildschirmen ausblenden */
-  @media (max-width: 1023px) {
-    .profile-card--hide-during-booking {
-      display: none;
-    }
-  }
-
-  .profile-card__image {
-    width: 100%;
-    aspect-ratio: 1;
-    overflow: hidden;
-  }
-
-  .profile-card__image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .profile-card__content {
-    padding: var(--space-5);
-  }
-
-  .profile-card__content h3 {
+  .booking-info-card h3 {
     font-family: var(--font-serif);
     color: var(--brand-espresso, #423430);
-    margin-bottom: var(--space-2);
+    margin: 0 0 var(--space-4);
     font-size: 1.25rem;
-    letter-spacing: -0.01em;
   }
 
-  .profile-card__intro {
-    color: var(--color-text-secondary);
-    line-height: 1.6;
-    margin-bottom: var(--space-3);
-    font-size: 0.9rem;
-  }
-
-  .profile-card__facts {
+  .booking-info__steps {
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin: 0 0 var(--space-4);
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--space-3);
   }
 
-  .profile-card__facts li {
+  .booking-info__steps li {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-2);
-    color: var(--brand-espresso, #423430);
-    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 
-  .profile-card__facts svg {
+  .booking-info__steps svg {
     flex-shrink: 0;
     color: var(--accent-terra, #D96C4A);
+    margin-top: 2px;
+  }
+
+  .booking-info__note {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+    margin: 0;
+    font-style: italic;
   }
 
   .booking-form {
