@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Auszeit Brennsystem",
+    "slug": "auszeit-brennsystem",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#8B6F47"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "de.keramik-auszeit.brennsystem"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#8B6F47"
+      },
+      "package": "de.keramikauszeit.brennsystem"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-image-picker"
+    ]
+  }
+}
