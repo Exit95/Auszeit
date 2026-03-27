@@ -44,6 +44,11 @@ const { title = "Termin buchen" } = Astro.props;
 
     <!-- Buchungsformular -->
     <div id="bookingForm" class="booking-form hidden">
+      <div class="booking-trust">
+        <div class="booking-trust__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p class="booking-trust__quote">"Ein wunderschöner Nachmittag! Wir kommen wieder."</p>
+        <span class="booking-trust__source">— Google Bewertung</span>
+      </div>
       <h3>Buchung bestätigen</h3>
       <div class="booking-details">
         <p><strong>Datum:</strong> <span id="selectedDate"></span></p>
@@ -111,6 +116,18 @@ const { title = "Termin buchen" } = Astro.props;
 </section>
 
 <style>
+  .booking-trust {
+    text-align: center;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #FAF7F2;
+    border-radius: 12px;
+    border-left: 3px solid #D96C4A;
+  }
+  .booking-trust__stars { color: #FBBC05; font-size: 1.1rem; letter-spacing: 2px; }
+  .booking-trust__quote { font-style: italic; color: #423430; font-size: 0.95rem; margin: 6px 0; }
+  .booking-trust__source { font-size: 0.8rem; color: #6B5D56; }
+
   .booking-section {
     padding: var(--space-8) var(--gutter);
   }
