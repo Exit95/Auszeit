@@ -907,6 +907,27 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
         Website abgerufen werden.
       </p>
     </Modal>
+
+  <div class="mobile-cta-bar" id="mobile-cta-bar">
+    <a href="tel:+4917634255005" class="mobile-cta-bar__phone" aria-label="Anrufen">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      Anrufen
+    </a>
+    <a href="#termin-buchen" class="mobile-cta-bar__book">Jetzt Termin buchen</a>
+  </div>
+
+  <script is:inline>
+  (function() {
+    var bar = document.getElementById('mobile-cta-bar');
+    var booking = document.getElementById('termin-buchen');
+    if (!bar || !booking) return;
+    var io = new IntersectionObserver(function(entries) {
+      bar.style.transform = entries[0].isIntersecting ? 'translateY(100%)' : 'translateY(0)';
+      bar.style.transition = 'transform 0.3s ease';
+    }, { threshold: 0.1 });
+    io.observe(booking);
+  })();
+  </script>
   </body>
 </html>
 
@@ -924,6 +945,54 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
 	    /* Kein horizontaler Scroll */
 	    body {
 	      overflow-x: hidden;
+	    }
+
+	    /* ── Sticky Mobile CTA Bar ── */
+	    .mobile-cta-bar {
+	      display: none;
+	      position: fixed;
+	      bottom: 0;
+	      left: 0;
+	      right: 0;
+	      z-index: 999;
+	      padding: 8px 12px;
+	      padding-bottom: max(8px, env(safe-area-inset-bottom));
+	      background: #fff;
+	      border-top: 1px solid #E0D6CC;
+	      box-shadow: 0 -2px 12px rgba(66, 52, 48, 0.1);
+	      gap: 8px;
+	    }
+	    @media (max-width: 768px) {
+	      .mobile-cta-bar { display: flex; }
+	      body { padding-bottom: 70px; }
+	    }
+	    .mobile-cta-bar__phone {
+	      display: flex;
+	      align-items: center;
+	      justify-content: center;
+	      gap: 6px;
+	      padding: 12px 16px;
+	      background: #FAF7F2;
+	      color: #423430;
+	      border-radius: 8px;
+	      text-decoration: none;
+	      font-weight: 600;
+	      font-size: 0.9rem;
+	      white-space: nowrap;
+	    }
+	    .mobile-cta-bar__book {
+	      flex: 1;
+	      display: flex;
+	      align-items: center;
+	      justify-content: center;
+	      padding: 12px 20px;
+	      background: #D96C4A;
+	      color: #fff;
+	      border-radius: 8px;
+	      text-decoration: none;
+	      font-weight: 700;
+	      font-size: 0.95rem;
+	      white-space: nowrap;
 	    }
 	  </style>
 
