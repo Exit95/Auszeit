@@ -145,12 +145,12 @@
     -webkit-appearance: none;
     display: inline-flex;
     align-items: center;
-    padding: 9px 20px;
+    padding: 12px 20px;
     border-radius: 999px;
     border: 1.5px solid rgba(66, 52, 48, 0.12);
     background: rgba(255, 255, 255, 0.65);
     color: var(--brand-espresso, #423430);
-    font-size: 0.84rem;
+    font-size: 0.875rem;
     font-weight: 550;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -504,6 +504,12 @@
     :global(.g-item) { margin-bottom: 8px; border-radius: 8px; }
     .galerie__filter { gap: 7px; }
     :global(.gf-btn) { padding: 7px 14px; font-size: 0.78rem; }
+  }
+
+  @media (max-width: 374px) {
+    .galerie__masonry {
+      columns: 1;
+    }
   }
 
   /* ── Touch: Hover-Effekte nur auf Nicht-Touch ────────────── */
