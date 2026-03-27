@@ -110,12 +110,35 @@ const { title = "Termin buchen" } = Astro.props;
       </form>
     </div>
 
+    <!-- Mini-FAQ -->
+    <div class="booking-faq-section">
+      <h4 class="booking-faq-title">Häufige Fragen</h4>
+      <details class="booking-faq">
+        <summary>Was kostet ein Besuch?</summary>
+        <p>Keramikstück ab 6 € + Farb-/Brennpauschale (10–20 € je nach Anzahl). Farben und Pinsel inklusive.</p>
+      </details>
+      <details class="booking-faq">
+        <summary>Kann ich kostenlos stornieren?</summary>
+        <p>Ja, bis 24 Stunden vorher kostenlos per Link in der Bestätigungs-E-Mail.</p>
+      </details>
+      <details class="booking-faq">
+        <summary>Wie lange dauert ein Besuch?</summary>
+        <p>Plane ca. 1,5 bis 2,5 Stunden ein — nimm dir Zeit, es gibt kein Limit.</p>
+      </details>
+    </div>
+
     <!-- Erfolgs-/Fehlermeldung -->
     <div id="message" class="message hidden"></div>
   </div>
 </section>
 
 <style>
+  .booking-faq-section { margin-top: 24px; }
+  .booking-faq-title { font-size: 1rem; font-weight: 600; color: #423430; margin-bottom: 8px; }
+  .booking-faq { border-bottom: 1px solid #E0D6CC; padding: 12px 0; }
+  .booking-faq summary { font-weight: 600; font-size: 0.9rem; color: #423430; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+  .booking-faq p { font-size: 0.875rem; color: #6B5D56; line-height: 1.6; margin: 8px 0 0; padding-left: 4px; }
+
   .booking-trust {
     text-align: center;
     padding: 16px;
