@@ -912,6 +912,19 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
 
 	  <style is:global>
 	    @import "../styles/global.css";
+
+	    /* Deutsche Silbentrennung */
+	    html {
+	      -webkit-hyphens: auto;
+	      hyphens: auto;
+	      word-break: break-word;
+	      overflow-wrap: break-word;
+	    }
+
+	    /* Kein horizontaler Scroll */
+	    body {
+	      overflow-x: hidden;
+	    }
 	  </style>
 
 	  <style>
