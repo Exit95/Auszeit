@@ -1,0 +1,193 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Statistiken" activeNav="statistiken">
+  <div id="stats-content" class="brenn-loading">Wird geladen…</div>
+</BrennLayout>
+
+<script is:inline>
+  const MONAT_NAMEN = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+  async function loadStats() {
+    try {
+      const data = await brennFetch('/api/admin/brenn/stats');
+      const s = data.data;
+      renderStats(s);
+    } catch(e) {
+      console.error('Stats error:', e);
+      document.getElementById('stats-content').innerHTML =
+        '<div class="brenn-card"><p style="color:#dc2626">Fehler: ' + escapeHtml(e.message || String(e)) + '</p></div>';
+    }
+  }
+
+  function renderStats(s) {
+    let html = '';
+
+    // Gesamtzahlen
+    html += '<div class="brenn-stats-grid">';
+    html += statCard(s.gesamt.kunden, 'Kunden', '#A0522D');
+    html += statCard(s.gesamt.auftraege, 'Aufträge', '#D96C4A');
+    html += statCard(s.gesamt.werkstuecke, 'Werkstücke', '#B1735C');
+    html += statCard(s.gesamt.buchungen, 'Buchungen', '#423430');
+    html += '</div>';
+
+    // Abholquote
+    html += '<div class="brenn-card" style="margin-bottom:1rem">';
+    html += '<h3>Abholquote</h3>';
+    html += '<div class="brenn-stats-grid" style="margin-bottom:1rem">';
+    html += statCard(s.abholquote.abgeholt, 'Abgeholt', '#5CB85C');
+    html += statCard(s.abholquote.wartet_auf_abholung, 'Wartet', '#E8833A');
+    html += statCard(s.abholquote.quote_prozent + '%', 'Quote', s.abholquote.quote_prozent > 70 ? '#5CB85C' : '#E8833A');
+    html += '</div>';
+    // Fortschrittsbalken
+    html += '<div style="background:#EDE4DA;border-radius:8px;height:12px;overflow:hidden">';
+    html += '<div style="background:#5CB85C;height:100%;width:' + s.abholquote.quote_prozent + '%;border-radius:8px;transition:width 0.5s"></div>';
+    html += '</div>';
+    html += '</div>';
+
+    // Aufträge pro Monat
+    html += '<div class="brenn-card" style="margin-bottom:1rem">';
+    html += '<h3>Aufträge pro Monat</h3>';
+    if (s.auftraege_pro_monat.length > 0) {
+      const maxVal = Math.max(...s.auftraege_pro_monat.map(m => m.anzahl));
+      html += '<div class="brenn-chart">';
+      s.auftraege_pro_monat.forEach(m => {
+        const pct = maxVal > 0 ? (m.anzahl / maxVal) * 100 : 0;
+        const monatParts = m.monat.split('-');
+        const label = MONAT_NAMEN[parseInt(monatParts[1]) - 1] + ' ' + monatParts[0].slice(2);
+        html += '<div class="brenn-chart__bar-wrapper">';
+        html += '<div class="brenn-chart__bar" style="height:' + pct + '%"></div>';
+        html += '<div class="brenn-chart__value">' + m.anzahl + '</div>';
+        html += '<div class="brenn-chart__label">' + label + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<p style="color:#999">Noch keine Daten</p>';
+    }
+    html += '</div>';
+
+    // Beliebteste Keramik-Typen
+    html += '<div class="brenn-card" style="margin-bottom:1rem">';
+    html += '<h3>Beliebteste Keramik</h3>';
+    if (s.beliebte_typen.length > 0) {
+      const maxTyp = s.beliebte_typen[0].anzahl;
+      s.beliebte_typen.forEach((t, i) => {
+        const pct = maxTyp > 0 ? (t.anzahl / maxTyp) * 100 : 0;
+        html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">';
+        html += '<div style="width:100px;font-size:0.875rem;color:#423430;font-weight:600">' + escapeHtml(t.typ) + '</div>';
+        html += '<div style="flex:1;background:#EDE4DA;border-radius:6px;height:24px;overflow:hidden">';
+        html += '<div style="background:' + (i === 0 ? '#D96C4A' : '#B1735C') + ';height:100%;width:' + pct + '%;border-radius:6px;transition:width 0.5s"></div>';
+        html += '</div>';
+        html += '<div style="width:40px;text-align:right;font-size:0.875rem;font-weight:bold;color:#423430">' + t.anzahl + '</div>';
+        html += '</div>';
+      });
+    } else {
+      html += '<p style="color:#999">Noch keine Daten</p>';
+    }
+    html += '</div>';
+
+    // Kunden-Wachstum
+    html += '<div class="brenn-card" style="margin-bottom:1rem">';
+    html += '<h3>Neue Kunden pro Monat</h3>';
+    if (s.kunden_wachstum.length > 0) {
+      const maxKunden = Math.max(...s.kunden_wachstum.map(m => m.neue_kunden));
+      html += '<div class="brenn-chart">';
+      s.kunden_wachstum.forEach(m => {
+        const pct = maxKunden > 0 ? (m.neue_kunden / maxKunden) * 100 : 0;
+        const monatParts = m.monat.split('-');
+        const label = MONAT_NAMEN[parseInt(monatParts[1]) - 1] + ' ' + monatParts[0].slice(2);
+        html += '<div class="brenn-chart__bar-wrapper">';
+        html += '<div class="brenn-chart__bar brenn-chart__bar--green" style="height:' + pct + '%"></div>';
+        html += '<div class="brenn-chart__value">' + m.neue_kunden + '</div>';
+        html += '<div class="brenn-chart__label">' + label + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<p style="color:#999">Noch keine Daten</p>';
+    }
+    html += '</div>';
+
+    document.getElementById('stats-content').innerHTML = html;
+  }
+
+  function statCard(value, label, color) {
+    return '<div class="brenn-stat-card" style="border-top:3px solid ' + color + '">' +
+      '<div class="brenn-stat-card__value" style="color:' + color + '">' + value + '</div>' +
+      '<div class="brenn-stat-card__label">' + label + '</div>' +
+      '</div>';
+  }
+
+  loadStats();
+</script>
+
+<style>
+  .brenn-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .brenn-stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(66,52,48,0.06);
+  }
+  .brenn-stat-card__value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+    font-family: 'Lora', Georgia, serif;
+  }
+  .brenn-stat-card__label {
+    font-size: 0.8125rem;
+    color: #6B5D56;
+  }
+  .brenn-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 160px;
+    padding-bottom: 2rem;
+    position: relative;
+  }
+  .brenn-chart__bar-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    position: relative;
+  }
+  .brenn-chart__bar {
+    width: 100%;
+    max-width: 40px;
+    background: #D96C4A;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    transition: height 0.5s ease;
+  }
+  .brenn-chart__bar--green {
+    background: #5CB85C;
+  }
+  .brenn-chart__value {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #423430;
+    margin-bottom: 2px;
+  }
+  .brenn-chart__label {
+    font-size: 0.625rem;
+    color: #9B8E88;
+    position: absolute;
+    bottom: -20px;
+    white-space: nowrap;
+  }
+</style>

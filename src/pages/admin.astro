@@ -87,6 +87,14 @@ export const prerender = false;
           <button class="admin-nav__btn" data-tab="gutscheine">
             <span class="nav-label">Gutscheine</span>
           </button>
+          <div style="margin-top:0.5rem; border-top:1px solid var(--c-sidebar-hover, #2E2820); padding-top:0.75rem;">
+            <button class="admin-nav__btn" data-tab="statistiken">
+              <span class="nav-label">Statistiken</span>
+            </button>
+            <a href="/admin/brenn/" class="admin-nav__btn" style="text-decoration:none; display:flex; align-items:center;">
+              <span class="nav-label">Brenn-Verwaltung</span>
+            </a>
+          </div>
         </nav>
         <div class="sidebar-footer">
           <button id="setup-2fa-btn" class="btn btn-secondary btn-sidebar hidden" title="2FA einrichten">2FA</button>
@@ -491,6 +499,16 @@ export const prerender = false;
         </section>
       </div>
       <!-- Ende Tab: Gutscheine -->
+
+      <!-- Tab: Statistiken -->
+      <div id="tab-statistiken" class="admin-tab hidden">
+        <section>
+          <h2>Statistiken</h2>
+          <div id="admin-stats-content" style="min-height:200px">
+            <p style="color:#999">Wird geladen…</p>
+          </div>
+        </section>
+      </div>
 
 	    </main>
       </div><!-- /.admin-content-wrapper -->
@@ -1544,6 +1562,8 @@ export const prerender = false;
             loadGalleryData();
           } else if (tabName === 'bewertungen') {
             loadReviews();
+          } else if (tabName === 'statistiken') {
+            loadAdminStats();
           }
         }
       });
@@ -3279,6 +3299,109 @@ export const prerender = false;
         loadBookings();
       }
     });
+    // ========== STATISTIKEN ==========
+    const MONAT_NAMEN = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+    async function loadAdminStats() {
+      const el = document.getElementById('admin-stats-content');
+      if (!el) return;
+      try {
+        const res = await fetch('/api/admin/brenn/stats');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        const s = data.data;
+        let html = '';
+
+        // Gesamtzahlen
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-bottom:2rem">';
+        html += adminStatCard(s.gesamt.kunden, 'Kunden gesamt', '#A0522D');
+        html += adminStatCard(s.gesamt.auftraege, 'Aufträge gesamt', '#D96C4A');
+        html += adminStatCard(s.gesamt.werkstuecke, 'Werkstücke', '#B1735C');
+        html += adminStatCard(s.gesamt.buchungen, 'Buchungen', '#423430');
+        html += adminStatCard(s.abholquote.abgeholt, 'Abgeholt', '#5CB85C');
+        html += adminStatCard(s.abholquote.quote_prozent + '%', 'Abholquote', s.abholquote.quote_prozent > 70 ? '#5CB85C' : '#E8833A');
+        html += '</div>';
+
+        // Abholquote Fortschritt
+        html += '<div style="background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">';
+        html += '<h3 style="margin:0 0 0.75rem;color:#423430;font-size:1rem">Abholquote</h3>';
+        html += '<div style="display:flex;align-items:center;gap:1rem">';
+        html += '<div style="flex:1;background:#EDE4DA;border-radius:8px;height:16px;overflow:hidden">';
+        html += '<div style="background:linear-gradient(90deg,#5CB85C,#4CAE4C);height:100%;width:' + s.abholquote.quote_prozent + '%;border-radius:8px;transition:width 0.5s"></div></div>';
+        html += '<span style="font-weight:700;color:#423430;font-size:1.1rem">' + s.abholquote.quote_prozent + '%</span></div>';
+        html += '<div style="display:flex;gap:2rem;margin-top:0.75rem;font-size:0.8125rem;color:#6B5D56">';
+        html += '<span>' + s.abholquote.abgeholt + ' abgeholt</span>';
+        html += '<span>' + s.abholquote.wartet_auf_abholung + ' warten</span>';
+        html += '<span>' + s.abholquote.gesamt_bearbeitet + ' bearbeitet</span></div></div>';
+
+        // Aufträge pro Monat
+        if (s.auftraege_pro_monat.length > 0) {
+          html += '<div style="background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">';
+          html += '<h3 style="margin:0 0 1rem;color:#423430;font-size:1rem">Aufträge pro Monat</h3>';
+          const maxVal = Math.max(...s.auftraege_pro_monat.map(m => m.anzahl));
+          html += '<div style="display:flex;align-items:flex-end;gap:6px;height:140px;padding-bottom:2rem;position:relative">';
+          s.auftraege_pro_monat.forEach(m => {
+            const pct = maxVal > 0 ? (m.anzahl / maxVal) * 100 : 0;
+            const parts = m.monat.split('-');
+            const label = MONAT_NAMEN[parseInt(parts[1]) - 1] + ' ' + parts[0].slice(2);
+            html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative">';
+            html += '<div style="font-size:0.75rem;font-weight:700;color:#423430;margin-bottom:2px">' + m.anzahl + '</div>';
+            html += '<div style="width:100%;max-width:40px;background:linear-gradient(180deg,#D96C4A,#B1735C);border-radius:4px 4px 0 0;min-height:4px;height:' + pct + '%;transition:height 0.5s"></div>';
+            html += '<div style="font-size:0.625rem;color:#9B8E88;margin-top:4px;position:absolute;bottom:-20px">' + label + '</div>';
+            html += '</div>';
+          });
+          html += '</div></div>';
+        }
+
+        // Beliebteste Keramik
+        if (s.beliebte_typen.length > 0) {
+          html += '<div style="background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">';
+          html += '<h3 style="margin:0 0 1rem;color:#423430;font-size:1rem">Beliebteste Keramik</h3>';
+          const maxT = s.beliebte_typen[0].anzahl;
+          s.beliebte_typen.forEach((t, i) => {
+            const pct = maxT > 0 ? (t.anzahl / maxT) * 100 : 0;
+            const colors = ['#D96C4A', '#B1735C', '#A0522D', '#8B4726', '#6B5D56'];
+            const c = colors[Math.min(i, colors.length - 1)];
+            html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
+            html += '<div style="width:90px;font-size:0.875rem;color:#423430;font-weight:600">' + t.typ + '</div>';
+            html += '<div style="flex:1;background:#EDE4DA;border-radius:6px;height:22px;overflow:hidden">';
+            html += '<div style="background:' + c + ';height:100%;width:' + pct + '%;border-radius:6px;transition:width 0.5s"></div></div>';
+            html += '<div style="width:35px;text-align:right;font-size:0.875rem;font-weight:700;color:#423430">' + t.anzahl + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+
+        // Kunden-Wachstum
+        if (s.kunden_wachstum.length > 0) {
+          html += '<div style="background:#fff;border-radius:12px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">';
+          html += '<h3 style="margin:0 0 1rem;color:#423430;font-size:1rem">Neue Kunden pro Monat</h3>';
+          const maxK = Math.max(...s.kunden_wachstum.map(m => m.neue_kunden));
+          html += '<div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding-bottom:2rem;position:relative">';
+          s.kunden_wachstum.forEach(m => {
+            const pct = maxK > 0 ? (m.neue_kunden / maxK) * 100 : 0;
+            const parts = m.monat.split('-');
+            const label = MONAT_NAMEN[parseInt(parts[1]) - 1] + ' ' + parts[0].slice(2);
+            html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative">';
+            html += '<div style="font-size:0.75rem;font-weight:700;color:#423430;margin-bottom:2px">' + m.neue_kunden + '</div>';
+            html += '<div style="width:100%;max-width:40px;background:linear-gradient(180deg,#5CB85C,#4CAE4C);border-radius:4px 4px 0 0;min-height:4px;height:' + pct + '%;transition:height 0.5s"></div>';
+            html += '<div style="font-size:0.625rem;color:#9B8E88;margin-top:4px;position:absolute;bottom:-20px">' + label + '</div>';
+            html += '</div>';
+          });
+          html += '</div></div>';
+        }
+
+        el.innerHTML = html;
+      } catch(e) {
+        el.innerHTML = '<p style="color:#dc2626">Statistiken konnten nicht geladen werden: ' + (e.message || e) + '</p>';
+      }
+    }
+
+    function adminStatCard(value, label, color) {
+      return '<div style="background:#fff;border-radius:10px;padding:1.25rem 1rem;text-align:center;border-top:3px solid ' + color + ';box-shadow:0 2px 8px rgba(0,0,0,0.04)">' +
+        '<div style="font-size:1.75rem;font-weight:700;color:' + color + ';line-height:1">' + value + '</div>' +
+        '<div style="font-size:0.75rem;color:#6B5D56;margin-top:0.25rem">' + label + '</div></div>';
+    }
   </script>
 </body>
 </html>

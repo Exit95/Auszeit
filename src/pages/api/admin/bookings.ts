@@ -8,6 +8,7 @@ import { validateCredentials } from '../../../lib/totp';
 import { createICalEvent } from '../../../lib/ical-helper';
 import { getCancelUrl } from '../../../lib/cancel-token';
 import { bookingConfirmedCustomerHtml } from '../../../lib/email-templates';
+import { syncBookingToBrenn } from '../../../lib/server/brenn/booking-sync';
 
 // Authentifizierung - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
@@ -220,7 +221,25 @@ Dein Atelier Auszeit
 					console.error('❌ Fehler beim Versand der Bestätigungs-E-Mail nach Admin-Bestätigung:', err);
 				}
 
-				return new Response(JSON.stringify({ success: true, customerEmailSent, emailError }), {
+				// Brenn-Verwaltung: Kunden + Aufträge automatisch erstellen
+				let brennSync = { synced: false, customersCreated: 0, ordersCreated: 0, reason: '' };
+				try {
+					const allSlots = await getTimeSlots();
+					const bookingSlot = allSlots.find((s) => s.id === updated.slotId);
+					brennSync = await syncBookingToBrenn({
+						id: updated.id,
+						name: updated.name,
+						email: updated.email,
+						phone: updated.phone,
+						participants: updated.participants,
+						participantNames: updated.participantNames,
+						date: bookingSlot?.date,
+					});
+				} catch (err: any) {
+					console.error('[Brenn-Sync] Fehler bei Buchung', id, ':', err.message);
+				}
+
+				return new Response(JSON.stringify({ success: true, customerEmailSent, emailError, brennSync }), {
 					status: 200,
 					headers: { 'Content-Type': 'application/json' },
 				});

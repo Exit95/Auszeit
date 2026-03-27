@@ -1,7 +1,33 @@
 import { defineMiddleware } from 'astro/middleware';
 
 export const onRequest = defineMiddleware(async (context, next) => {
+    const url = new URL(context.request.url);
+
+    // CORS für Brenn-API (Mobile App)
+    if (url.pathname.startsWith('/api/admin/brenn')) {
+        const origin = context.request.headers.get('Origin') || '';
+        if (context.request.method === 'OPTIONS') {
+            return new Response(null, {
+                status: 204,
+                headers: {
+                    'Access-Control-Allow-Origin': origin,
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                    'Access-Control-Max-Age': '86400',
+                },
+            });
+        }
+    }
+
     const response = await next();
+
+    // CORS-Headers für Brenn-API
+    if (url.pathname.startsWith('/api/admin/brenn')) {
+        const origin = context.request.headers.get('Origin') || '';
+        response.headers.set('Access-Control-Allow-Origin', origin);
+        response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
 
     // Basic Security Headers
     // X-Frame-Options wird von CSP frame-ancestors ersetzt (ALLOW-FROM ist deprecated)

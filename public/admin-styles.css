@@ -2,30 +2,30 @@
    DESIGN SYSTEM — Atelier Auszeit Admin
    ============================================ */
 :root {
-  /* Brand Colors */
-  --c-primary: #8B6F47;
-  --c-primary-dark: #6F5838;
-  --c-primary-light: #A68B5B;
-  --c-accent: #C17B5C;
-  --c-accent-dark: #A66A4D;
+  /* Brand Colors — abgestimmt auf keramik-auszeit.de */
+  --c-primary: #A0522D;       /* Sienna */
+  --c-primary-dark: #423430;  /* Espresso */
+  --c-primary-light: #B1735C; /* Sienna hell */
+  --c-accent: #D96C4A;        /* Terra */
+  --c-accent-dark: #C25A38;   /* Terra dunkel */
 
   /* Neutrals */
-  --c-bg: #F4F0EB;
+  --c-bg: #FAF7F2;            /* Paper */
   --c-bg-card: #FFFFFF;
-  --c-bg-muted: #FAF8F5;
-  --c-border: #E8D5C4;
-  --c-border-light: #F0E8DF;
-  --c-text: #333333;
-  --c-text-muted: #777777;
-  --c-text-light: #AAAAAA;
+  --c-bg-muted: #EDE4DA;      /* Linen */
+  --c-border: #D4C4B0;        /* Sand border */
+  --c-border-light: #E3D5CA;  /* Sand */
+  --c-text: #423430;          /* Espresso */
+  --c-text-muted: #5D4E43;    /* Clay-Brown */
+  --c-text-light: #8A7B70;
 
   /* Sidebar */
-  --c-sidebar: #1E1A14;
-  --c-sidebar-hover: #2E2820;
-  --c-sidebar-active: #3A3228;
-  --c-sidebar-text: #C4B8A8;
+  --c-sidebar: #423430;       /* Espresso */
+  --c-sidebar-hover: #5D4E43; /* Clay-Brown */
+  --c-sidebar-active: #6B5C51;
+  --c-sidebar-text: #D4C4B0;
   --c-sidebar-text-active: #FFFFFF;
-  --c-sidebar-accent: #C17B5C;
+  --c-sidebar-accent: #D96C4A; /* Terra */
 
   /* Status Colors */
   --c-success: #16a34a;

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # ============================================
-# Malatelier Auszeit - Deploy via Jump-Host (PVE)
+# Malatelier Auszeit - Deploy via PVE → Docker-Server
+# Registry läuft auf localhost:5000 des Docker-Servers (10.1.9.100)
 # ============================================
 
 set -euo pipefail
 
 APP_NAME="keramik-auszeit-de"
-REGISTRY_IP="2a01:4f8:202:1129:2447:2447:1:900"
-DOCKER_IP="2a01:4f8:202:1129:2447:2447:1:901"
-IMAGE="[${REGISTRY_IP}]:5000/${APP_NAME}:latest"
+IMAGE="localhost:5000/${APP_NAME}:latest"
 PVE_HOST="DanapfelPVE"
+DOCKER_HOST="root@10.1.9.100"
+SSH_KEY="/root/.ssh/danapfel"
 TMP_ARCHIVE="/tmp/${APP_NAME}-src.tar.gz"
 REMOTE_BUILD="/tmp/${APP_NAME}-build"
 
@@ -26,14 +27,14 @@ tar czf "${TMP_ARCHIVE}" \
   -C "$(pwd)" .
 log "     $(du -h ${TMP_ARCHIVE} | cut -f1) gepackt"
 
-log "2/6  Archiv zum Jump-Host (PVE) senden ..."
+log "2/6  Archiv zum PVE senden ..."
 scp "${TMP_ARCHIVE}" "${PVE_HOST}:${TMP_ARCHIVE}" || fail "SCP zum PVE fehlgeschlagen"
 
-log "3/6  Archiv zum Registry-Server weiterleiten ..."
-ssh "${PVE_HOST}" "scp ${TMP_ARCHIVE} root@[${REGISTRY_IP}]:${TMP_ARCHIVE}" || fail "SCP zum Registry-Server fehlgeschlagen"
+log "3/6  Archiv zum K3s-Server weiterleiten ..."
+ssh "${PVE_HOST}" "scp -i ${SSH_KEY} ${TMP_ARCHIVE} ${DOCKER_HOST}:${TMP_ARCHIVE}" || fail "SCP zum K3s-Server fehlgeschlagen"
 
-log "4/6  Docker Image bauen und pushen ..."
-ssh "${PVE_HOST}" "ssh root@${REGISTRY_IP} '\
+log "4/6  Docker Image bauen und in Registry pushen ..."
+ssh "${PVE_HOST}" "ssh -i ${SSH_KEY} ${DOCKER_HOST} '\
   rm -rf ${REMOTE_BUILD} && \
   mkdir -p ${REMOTE_BUILD} && \
   cd ${REMOTE_BUILD} && \
@@ -44,7 +45,7 @@ ssh "${PVE_HOST}" "ssh root@${REGISTRY_IP} '\
 '" || fail "Remote Build/Push fehlgeschlagen"
 
 log "5/6  Container deployen ..."
-ssh "${PVE_HOST}" "ssh root@${DOCKER_IP} '\
+ssh "${PVE_HOST}" "ssh -i ${SSH_KEY} ${DOCKER_HOST} '\
   cd /srv/docker/apps && \
   docker compose pull ${APP_NAME} && \
   docker compose up -d --force-recreate ${APP_NAME} \

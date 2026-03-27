@@ -4,22 +4,31 @@
 
 <section class="profil" aria-label="Über Irena">
   <div class="profil__inner animate-on-scroll">
-    <div class="profil__image-wrap">
-      <img
-        src="/profil.png"
-        alt="Irena Woschkowiak – Inhaberin von Atelier Auszeit in Gronau"
-        class="profil__image"
-        width="280"
-        height="280"
-        loading="lazy"
-      />
+    <div class="profil__image-col">
+      <div class="profil__frame">
+        <picture>
+          <source srcset="/profil-irena.webp" type="image/webp" />
+          <img
+            src="/profil-irena.jpg"
+            alt="Irena Woschkowiak, Inhaberin von Malatelier Auszeit in Gronau"
+            class="profil__image"
+            width="800"
+            height="1064"
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
+      </div>
     </div>
-    <div class="profil__text">
+    <div class="profil__text-col">
       <span class="profil__eyebrow">Deine Gastgeberin</span>
       <h2 class="profil__name">Irena Woschkowiak</h2>
+      <div class="profil__divider" aria-hidden="true"></div>
       <p class="profil__bio">
         Willkommen in meinem kleinen Atelier in Gronau! Bei mir findest du eine entspannte, kreative Auszeit vom Alltag.
-        Ob allein, mit Freunden oder als Familie – ich zeige dir Schritt für Schritt, wie du dein eigenes Keramik-Unikat gestaltest.
+        Ob allein, mit Freunden oder als Familie: ich zeige dir Schritt für Schritt, wie du dein eigenes Keramik-Unikat gestaltest.
+      </p>
+      <p class="profil__bio">
         Keine Vorkenntnisse nötig, nur gute Laune.
       </p>
       <p class="profil__closing">Ich freue mich auf dich.</p>
@@ -31,76 +40,114 @@
 
 <style>
   .profil {
-    padding: var(--space-10) var(--gutter);
-    background: var(--bg-linen, #EDE4DA);
+    padding: clamp(3rem, 8vw, 6rem) var(--gutter);
+    background: var(--bg-paper, #FAF7F2);
   }
 
   .profil__inner {
-    max-width: 860px;
+    max-width: 900px;
     margin: 0 auto;
-    display: flex;
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
     align-items: center;
-    gap: var(--space-8);
+    gap: clamp(2rem, 5vw, 3.5rem);
   }
 
-  .profil__image-wrap {
-    flex-shrink: 0;
+  /* Bild-Spalte */
+  .profil__image-col {
+    position: relative;
+  }
+
+  .profil__frame {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow:
+      0 20px 60px rgba(66, 52, 48, 0.12),
+      0 8px 20px rgba(66, 52, 48, 0.08);
+  }
+
+  .profil__frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    pointer-events: none;
   }
 
   .profil__image {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
     object-fit: cover;
-    border: 4px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 8px 24px rgba(66, 52, 48, 0.12);
+    object-position: center 20%;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
-  .profil__text {
-    flex: 1;
+  .profil__frame:hover .profil__image {
+    transform: scale(1.03);
+  }
+
+  /* Text-Spalte */
+  .profil__text-col {
+    padding: 1rem 0;
   }
 
   .profil__eyebrow {
     display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--accent-terra, #D96C4A);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
   }
 
   .profil__name {
     font-family: var(--font-serif, 'Lora', serif);
     color: var(--brand-espresso, #423430);
-    font-size: 1.75rem;
-    margin: 0 0 1rem;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 1.25rem;
+  }
+
+  .profil__divider {
+    width: 48px;
+    height: 3px;
+    background: var(--accent-terra, #D96C4A);
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
   }
 
   .profil__bio {
     font-family: var(--font-sans, 'Source Sans 3', sans-serif);
     color: var(--color-text-secondary, #5D4E43);
-    font-size: 1rem;
-    line-height: 1.7;
+    font-size: 1.05rem;
+    line-height: 1.8;
     margin: 0 0 0.75rem;
   }
 
   .profil__closing {
     font-family: var(--font-sans, 'Source Sans 3', sans-serif);
     color: var(--color-text-secondary, #5D4E43);
-    font-size: 1rem;
-    line-height: 1.7;
-    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    margin: 1rem 0 0.5rem;
     font-style: italic;
   }
 
   .profil__signature {
     display: block;
-    font-family: var(--font-script, 'Dancing Script', cursive);
-    font-weight: 500;
-    font-size: 1.75rem;
+    font-family: var(--font-serif, 'Lora', serif);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.8rem;
     color: var(--color-sienna, #A0522D);
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
 
   .profil__cta {
@@ -110,37 +157,53 @@
     background: var(--accent-terra, #D96C4A);
     color: #fff;
     font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-weight: 600;
-    font-size: 0.95rem;
-    padding: 0.75rem 1.75rem;
-    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 0.9rem 2.25rem;
+    border-radius: 12px;
     text-decoration: none;
-    transition: background 0.2s ease, transform 0.2s ease;
+    letter-spacing: 0.01em;
+    transition: background 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
+    box-shadow: 0 4px 16px rgba(217, 108, 74, 0.3);
   }
 
   .profil__cta:hover {
     background: var(--brand-espresso, #423430);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(66, 52, 48, 0.25);
   }
 
-  @media (max-width: 639px) {
-    .profil {
-      padding: var(--space-8) var(--gutter);
-    }
-
+  /* Tablet */
+  @media (max-width: 860px) {
     .profil__inner {
-      flex-direction: column;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 2rem;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 639px) {
+    .profil__inner {
+      grid-template-columns: 1fr;
       text-align: center;
-      gap: var(--space-4);
     }
 
-    .profil__image {
-      width: 160px;
-      height: 160px;
+    .profil__image-col {
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    .profil__frame {
+      border-radius: 20px;
+    }
+
+    .profil__divider {
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .profil__name {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
     }
   }
 </style>

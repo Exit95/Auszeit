@@ -33,7 +33,11 @@ function getS3Client(): S3Client {
         accessKeyId: accessKey,
         secretAccessKey: secretKey,
       },
-      forcePathStyle: true, // Wichtig für Hetzner
+      forcePathStyle: true,
+      requestHandler: {
+        requestTimeout: 3000,
+        connectionTimeout: 2000,
+      } as any,
     });
   }
   return _s3Client;
@@ -65,16 +69,29 @@ export function isS3Configured(): boolean {
   const secretKey = getSecretKey();
   const bucket = getBucket();
 
-  console.log('[S3] Config check:', {
-    hasEndpoint: !!endpoint,
-    hasAccessKey: !!accessKey,
-    hasSecretKey: !!secretKey,
-    hasBucket: !!bucket,
-    endpoint: endpoint ? endpoint.substring(0, 30) + '...' : 'MISSING',
-    bucket: bucket || 'MISSING'
-  });
-
   return !!(endpoint && accessKey && secretKey && bucket);
+}
+
+// S3-Erreichbarkeit vorab prüfen (cached)
+let _s3Reachable: boolean | null = null;
+
+export async function isS3Reachable(): Promise<boolean> {
+  if (_s3Reachable !== null) return _s3Reachable;
+  if (!isS3Configured()) { _s3Reachable = false; return false; }
+  try {
+    const endpoint = getEndpoint();
+    const url = new URL(endpoint);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    await fetch(`${url.origin}/`, { signal: controller.signal, method: 'HEAD' }).catch(() => {});
+    clearTimeout(timeout);
+    // Wenn fetch nicht aborted wurde, ist der Host erreichbar
+    _s3Reachable = true;
+  } catch {
+    console.warn('[S3] Endpoint nicht erreichbar, nutze lokalen Fallback');
+    _s3Reachable = false;
+  }
+  return _s3Reachable;
 }
 
 // Bild hochladen

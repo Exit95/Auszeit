@@ -1,0 +1,64 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../../layouts/BrennLayout.astro';
+const { id } = Astro.params;
+---
+
+<BrennLayout title="Kundendetail" activeNav="kunden">
+  <div id="customer-detail" class="brenn-loading" data-customer-id={id}>Wird geladen…</div>
+</BrennLayout>
+
+<script is:inline>
+  const customerId = document.getElementById('customer-detail').dataset.customerId;
+
+  async function loadCustomerDetail() {
+    try {
+      const data = await brennFetch('/api/admin/brenn/customers/' + customerId);
+      renderCustomerDetail(data.data);
+    } catch(e) {
+      document.getElementById('customer-detail').innerHTML = '<div class="brenn-card"><p style="color:#dc2626">Kunde nicht gefunden.</p><a href="/admin/brenn/kunden/" class="brenn-btn brenn-btn--secondary" style="margin-top:1rem">Zurück</a></div>';
+    }
+  }
+
+  function renderCustomerDetail(data) {
+    const c = data.customer;
+    const orders = data.orders;
+
+    let html = '<div class="brenn-card" style="margin-bottom:1rem">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem">' +
+      '<div><h2 style="margin:0">' + escapeHtml(c.first_name) + ' ' + escapeHtml(c.last_name) + '</h2>' +
+      '<div style="font-size:0.875rem;color:#666;margin-top:0.25rem">';
+
+    if (c.email) html += 'E-Mail: ' + escapeHtml(c.email) + '<br>';
+    if (c.phone) html += 'Telefon: ' + escapeHtml(c.phone);
+    html += '</div>';
+    if (c.notes) html += '<div style="font-size:0.8125rem;color:#999;margin-top:0.5rem;font-style:italic">' + escapeHtml(c.notes) + '</div>';
+    html += '</div>';
+    html += '<div><a href="/admin/brenn/kunden/" class="brenn-btn brenn-btn--secondary brenn-btn--small">Zurück</a></div>';
+    html += '</div></div>';
+
+    // Auftragshistorie
+    html += '<div class="brenn-card"><h2>Aufträge (' + orders.length + ')</h2>';
+    if (orders.length === 0) {
+      html += '<div class="brenn-empty-state"><p>Noch keine Aufträge</p></div>';
+    } else {
+      html += '<div class="brenn-table-wrapper"><table class="brenn-table brenn-table--responsive"><thead><tr>' +
+        '<th>Referenz</th><th>Besuchsdatum</th><th>Status</th><th>Lagerort</th><th></th></tr></thead><tbody>';
+      orders.forEach(o => {
+        html += '<tr>' +
+          '<td data-label="Referenz"><a href="/admin/brenn/auftraege/' + o.id + '/"><strong>' + escapeHtml(o.reference_code) + '</strong></a></td>' +
+          '<td data-label="Besuchsdatum">' + formatDate(o.visit_date) + '</td>' +
+          '<td data-label="Status">' + statusBadgeHtml(o.overall_status) + '</td>' +
+          '<td data-label="Lagerort">' + escapeHtml(o.storage_code || '-') + '</td>' +
+          '<td><a href="/admin/brenn/auftraege/' + o.id + '/" class="brenn-btn brenn-btn--secondary brenn-btn--small">Details</a></td>' +
+          '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+
+    document.getElementById('customer-detail').innerHTML = html;
+  }
+
+  loadCustomerDetail();
+</script>

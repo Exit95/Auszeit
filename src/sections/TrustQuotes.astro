@@ -156,7 +156,7 @@
         const p = el.querySelector('p');
         const cite = el.querySelector('cite');
         if (p) p.innerHTML = '„' + escapeHtml(truncate(review.comment, 160)) + '"';
-        if (cite) cite.textContent = '— ' + review.name;
+        if (cite) cite.textContent = review.name;
         el.classList.remove('trust__quote--loading', 'trust__quote--fade');
       });
     }, 400);

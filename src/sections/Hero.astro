@@ -4,17 +4,17 @@ import { content } from "../data/content";
 ---
 
 <section class="hero" aria-label="Willkommen bei Malatelier Auszeit">
+  <img
+    src="/hero-banner.webp"
+    alt="Schaufenster von Auszeit Keramik-Malatelier in Gronau"
+    class="hero__bg"
+    width="1920"
+    height="1280"
+    loading="eager"
+    fetchpriority="high"
+  />
+  <div class="hero__overlay"></div>
   <div class="hero__content">
-    <img
-      src="/auszeit2.png"
-      alt="Malatelier Auszeit | Malatelier in Gronau"
-      class="hero__logo"
-      width="339"
-      height="158"
-      loading="eager"
-    />
-    <h1 class="hero__claim">{content.hero.claim}</h1>
-    <p class="hero__sub">{content.hero.subline}</p>
     <nav class="hero__actions" aria-label="Hauptaktionen">
       <Button href="#termin-buchen" variant="primary" size="large">
         {content.hero.ctaPrimary}
@@ -25,54 +25,51 @@ import { content } from "../data/content";
     </nav>
   </div>
 </section>
+<div class="hero-fade" aria-hidden="true"></div>
 
 <style>
   .hero {
+    position: relative;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    padding: var(--space-10) var(--gutter) var(--space-12);
-    text-align: center;
+    min-height: 560px;
+    overflow: hidden;
+  }
+
+  .hero__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 35%;
+    z-index: 0;
+  }
+
+  .hero__overlay {
+    position: absolute;
+    inset: 0;
     background: linear-gradient(
-      160deg,
-      var(--color-clay-brown) 0%,
-      var(--bg-sand) 100%
+      to bottom,
+      rgba(66, 52, 48, 0.05) 0%,
+      rgba(66, 52, 48, 0.12) 50%,
+      rgba(66, 52, 48, 0.55) 100%
     );
+    z-index: 1;
   }
 
   .hero__content {
-    max-width: 640px;
+    position: relative;
+    z-index: 2;
     width: 100%;
+    max-width: var(--max-width);
+    padding: 0 var(--gutter) calc(var(--space-10) + 60px);
     display: flex;
     flex-direction: column;
     align-items: center;
+    text-align: center;
     animation: heroFade 0.6s ease;
-  }
-
-  .hero__logo {
-    display: block;
-    width: auto;
-    height: auto;
-    max-width: 280px;
-    margin-bottom: var(--space-6);
-  }
-
-  .hero__claim {
-    font-family: var(--font-serif);
-    font-size: var(--text-4xl);
-    font-weight: 700;
-    color: #fff;
-    margin: 0 0 var(--space-3);
-    line-height: 1.15;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .hero__sub {
-    font-family: var(--font-sans);
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 1.1rem;
-    margin: 0 0 var(--space-6);
-    line-height: 1.6;
   }
 
   .hero__actions {
@@ -92,11 +89,27 @@ import { content } from "../data/content";
     border: 2px solid rgba(255, 255, 255, 0.6);
     border-radius: var(--radius-sm);
     transition: background 0.15s ease, border-color 0.15s ease;
+    backdrop-filter: blur(4px);
+    background: rgba(255,255,255,0.08);
   }
 
   .hero__cta-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.18);
     border-color: #fff;
+  }
+
+  /* Sanfter Farbverlauf als Übergang zur nächsten Section */
+  .hero-fade {
+    height: 80px;
+    margin-top: -80px;
+    position: relative;
+    z-index: 4;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--bg-paper) 100%
+    );
+    pointer-events: none;
   }
 
   @media (min-width: 640px) {
@@ -108,11 +121,11 @@ import { content } from "../data/content";
 
   @media (max-width: 639px) {
     .hero {
-      padding: var(--space-8) var(--gutter);
+      min-height: 440px;
     }
 
-    .hero__logo {
-      max-width: 220px;
+    .hero__content {
+      padding-bottom: calc(var(--space-6) + 30px);
     }
 
     .hero__actions {
@@ -123,6 +136,11 @@ import { content } from "../data/content";
     .hero__cta-secondary {
       width: 100%;
       text-align: center;
+    }
+
+    .hero-fade {
+      height: 60px;
+      margin-top: -60px;
     }
   }
 

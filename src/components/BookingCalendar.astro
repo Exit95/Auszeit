@@ -665,9 +665,24 @@ const { title = "Termin buchen" } = Astro.props;
         const participantCount = parseInt(formData.get("participants") as string, 10) || 1;
         const bookerName = (formData.get("name") as string || "").trim();
         const participantNames: string[] = [bookerName];
+        let missingNames = false;
         for (let i = 2; i <= participantCount; i++) {
           const name = (formData.get(`participantName_${i}`) as string || "").trim();
-          if (name) participantNames.push(name);
+          if (!name) {
+            missingNames = true;
+          } else {
+            participantNames.push(name);
+          }
+        }
+        if (missingNames && participantCount > 1) {
+          const messageEl = document.getElementById("message");
+          if (messageEl) {
+            messageEl.textContent = "Bitte gib die Namen aller Teilnehmer an.";
+            messageEl.className = "message error";
+          }
+          submitButton.disabled = false;
+          submitButton.textContent = originalButtonText;
+          return;
         }
 
         const data = {

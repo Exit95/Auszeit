@@ -1,0 +1,150 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Kunden" activeNav="kunden">
+  <div class="brenn-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+      <h2 style="margin:0">Kundenliste</h2>
+      <button class="brenn-btn brenn-btn--primary brenn-btn--small" onclick="showNewCustomerForm()">Neuer Kunde</button>
+    </div>
+
+    <div class="brenn-filters">
+      <input type="search" class="brenn-input" id="customer-search" placeholder="Name, E-Mail oder Telefon suchen…" style="flex:1; min-width:200px;" />
+    </div>
+
+    <div id="customers-content" class="brenn-loading">Wird geladen…</div>
+    <div id="customers-pagination" class="brenn-pagination"></div>
+  </div>
+
+  <!-- Neukunde Modal -->
+  <div id="new-customer-modal" class="brenn-modal-overlay">
+    <div class="brenn-modal">
+      <div class="brenn-modal__header"><h3>Neuer Kunde</h3></div>
+      <div class="brenn-modal__body">
+        <form id="new-customer-form">
+          <div class="brenn-form-row">
+            <div class="brenn-form-group">
+              <label>Vorname <span class="required">*</span></label>
+              <input type="text" class="brenn-input" name="first_name" required maxlength="100" />
+            </div>
+            <div class="brenn-form-group">
+              <label>Nachname <span class="required">*</span></label>
+              <input type="text" class="brenn-input" name="last_name" required maxlength="100" />
+            </div>
+          </div>
+          <div class="brenn-form-group">
+            <label>E-Mail</label>
+            <input type="email" class="brenn-input" name="email" maxlength="255" />
+          </div>
+          <div class="brenn-form-group">
+            <label>Telefon</label>
+            <input type="tel" class="brenn-input" name="phone" maxlength="50" />
+          </div>
+          <div class="brenn-form-group">
+            <label>Notizen</label>
+            <textarea class="brenn-textarea" name="notes" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="brenn-modal__footer">
+        <button class="brenn-btn brenn-btn--secondary" onclick="closeNewCustomer()">Abbrechen</button>
+        <button class="brenn-btn brenn-btn--primary" onclick="saveNewCustomer()">Kunde anlegen</button>
+      </div>
+    </div>
+  </div>
+</BrennLayout>
+
+<script is:inline>
+  let currentPage = 1;
+  let searchTimeout;
+
+  document.getElementById('customer-search').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => { currentPage = 1; loadCustomers(); }, 300);
+  });
+
+  async function loadCustomers() {
+    const q = document.getElementById('customer-search').value.trim();
+    try {
+      const params = new URLSearchParams({ page: currentPage, limit: 25 });
+      if (q) params.set('q', q);
+      const data = await brennFetch('/api/admin/brenn/customers?' + params);
+      renderCustomers(data.data);
+    } catch(e) {
+      document.getElementById('customers-content').innerHTML = '<p style="color:#dc2626">Fehler beim Laden</p>';
+    }
+  }
+
+  function renderCustomers(data) {
+    const el = document.getElementById('customers-content');
+    if (!data.customers.length) {
+      el.innerHTML = '<div class="brenn-empty-state"><p>Keine Kunden gefunden</p></div>';
+      document.getElementById('customers-pagination').innerHTML = '';
+      return;
+    }
+
+    el.innerHTML = '<div class="brenn-table-wrapper"><table class="brenn-table brenn-table--responsive"><thead><tr>' +
+      '<th>Name</th><th>E-Mail</th><th>Telefon</th><th>Aufträge</th><th></th></tr></thead><tbody>' +
+      data.customers.map(c =>
+        '<tr>' +
+        '<td data-label="Name"><a href="/admin/brenn/kunden/' + c.id + '/"><strong>' + escapeHtml(c.last_name) + '</strong>, ' + escapeHtml(c.first_name) + '</a></td>' +
+        '<td data-label="E-Mail">' + escapeHtml(c.email || '-') + '</td>' +
+        '<td data-label="Telefon">' + escapeHtml(c.phone || '-') + '</td>' +
+        '<td data-label="Aufträge">' + (c.order_count || 0) + '</td>' +
+        '<td><a href="/admin/brenn/kunden/' + c.id + '/" class="brenn-btn brenn-btn--secondary brenn-btn--small">Details</a></td>' +
+        '</tr>'
+      ).join('') + '</tbody></table></div>';
+
+    renderPagination(data.pagination);
+  }
+
+  function renderPagination(p) {
+    const el = document.getElementById('customers-pagination');
+    if (p.pages <= 1) { el.innerHTML = ''; return; }
+    let html = '';
+    html += '<button ' + (p.page <= 1 ? 'disabled' : '') + ' onclick="goToPage(' + (p.page - 1) + ')">‹</button>';
+    for (let i = 1; i <= p.pages; i++) {
+      html += '<button class="' + (i === p.page ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+    }
+    html += '<button ' + (p.page >= p.pages ? 'disabled' : '') + ' onclick="goToPage(' + (p.page + 1) + ')">›</button>';
+    el.innerHTML = html;
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    loadCustomers();
+  }
+
+  function showNewCustomerForm() {
+    document.getElementById('new-customer-modal').classList.add('active');
+  }
+
+  function closeNewCustomer() {
+    document.getElementById('new-customer-modal').classList.remove('active');
+    document.getElementById('new-customer-form').reset();
+  }
+
+  async function saveNewCustomer() {
+    const form = document.getElementById('new-customer-form');
+    const fd = new FormData(form);
+    try {
+      await brennFetch('/api/admin/brenn/customers', {
+        method: 'POST',
+        body: JSON.stringify({
+          first_name: fd.get('first_name'),
+          last_name: fd.get('last_name'),
+          email: fd.get('email') || null,
+          phone: fd.get('phone') || null,
+          notes: fd.get('notes') || null
+        })
+      });
+      brennToast('Kunde angelegt');
+      closeNewCustomer();
+      loadCustomers();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  loadCustomers();
+</script>

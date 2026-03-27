@@ -143,11 +143,11 @@ export const content = {
     ],
   },
   pageMeta: {
-    galerie: { title: 'Galerie | Malatelier Auszeit', description: 'Lass dich inspirieren: Entdecke Keramik-Unikate aus unserem Malatelier in Gronau.' },
-    workshops: { title: 'Workshops | Malatelier Auszeit', description: 'Kreative Workshops in Gronau: Lerne neue Techniken und gestalte besondere Keramik-Stücke.' },
-    gutscheine: { title: 'Gutscheine | Malatelier Auszeit', description: 'Verschenke kreative Auszeit: Gutscheine für Keramik bemalen in Gronau.' },
-    events: { title: 'Besondere Anlässe | Malatelier Auszeit', description: 'Kindergeburtstag, JGA, Firmen-Event: Feiert kreativ in unserem Keramik-Malatelier in Gronau.' },
-    faq: { title: 'Häufige Fragen | Malatelier Auszeit', description: 'Alles was du wissen musst: Preise, Ablauf, Buchung und mehr zu Malatelier Auszeit in Gronau.' },
+    galerie: { title: 'Galerie | Malatelier Auszeit Gronau im Münsterland', description: 'Lass dich inspirieren: Entdecke Keramik-Unikate aus unserem Malatelier in Gronau im Münsterland. Kreative Ideen aus der Region Münster.' },
+    workshops: { title: 'Keramik Workshops Münsterland | Malatelier Auszeit Gronau', description: 'Kreative Keramik-Workshops in Gronau im Münsterland: Lerne neue Techniken und gestalte besondere Stücke. Auch für Gruppen aus Münster, Steinfurt und Borken.' },
+    gutscheine: { title: 'Gutscheine Keramik bemalen | Malatelier Auszeit Münsterland', description: 'Verschenke kreative Auszeit: Gutscheine für Keramik bemalen in Gronau im Münsterland. Perfektes Geschenk aus der Region Münster.' },
+    events: { title: 'Kindergeburtstag & JGA Keramik Münsterland | Malatelier Auszeit', description: 'Kindergeburtstag, JGA, Firmen-Event: Feiert kreativ in unserem Keramik-Malatelier in Gronau. Beliebt bei Gruppen aus Münster, Steinfurt und dem Münsterland.' },
+    faq: { title: 'Häufige Fragen | Malatelier Auszeit Gronau Münsterland', description: 'Alles was du wissen musst: Preise, Ablauf, Buchung und mehr zu Malatelier Auszeit in Gronau im Münsterland. Gut erreichbar aus Münster und Umgebung.' },
   },
   contact: {
     title: 'Kontakt & Standort',

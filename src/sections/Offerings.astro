@@ -7,10 +7,10 @@ import { isS3Configured, listS3Objects, getS3Key, readJsonFromS3 } from '../lib/
 
 // Kategorie-Mapping für Produkte (für neues Galerie-System)
 const categoryMapping: Record<string, { id: string; folder: string; mainImage: string }> = {
-  'Tassen': { id: 'tassen', folder: 'tassen', mainImage: '/becher.jpeg' },
-  'Teller': { id: 'teller', folder: 'teller', mainImage: '/teller.jpeg' },
-  'Spardosen & Krüge & Boxen': { id: 'spardosen', folder: 'spardosen', mainImage: '/spardose.jpeg' },
-  'Anhänger': { id: 'anhaenger', folder: 'anhaenger', mainImage: '/anhänger.png' },
+  'Tassen': { id: 'tassen', folder: 'tassen', mainImage: '/tasse.webp' },
+  'Teller': { id: 'teller', folder: 'teller', mainImage: '/teller.webp' },
+  'Spardosen & Krüge & Boxen': { id: 'spardosen', folder: 'spardosen', mainImage: '/spardose.webp' },
+  'Anhänger': { id: 'anhaenger', folder: 'anhaenger', mainImage: '/anhaenger.webp' },
 };
 
 async function loadGalleryMetadata(): Promise<Record<string, { category: string | null }>> {
@@ -91,38 +91,43 @@ function getImagesFromFolder(folderPath: string, mainImage: string): string[] {
 let productGalleries: Record<string, string[]> = {};
 
 if (isS3Configured()) {
-  const categories = Object.keys(categoryMapping);
-  const oldResults = await Promise.all(
-    categories.map(async (category) => ({
-      category,
-      images: await getImagesFromS3(category)
-    }))
-  );
-  for (const result of oldResults) {
-    const config = categoryMapping[result.category];
-    const localImages = config ? getImagesFromFolder(`products/${config.folder}`, config.mainImage) : [];
-    const merged = [...new Set([...result.images, ...localImages])];
-    productGalleries[result.category] = merged;
-  }
   try {
-    const [galleryImages, metadata] = await Promise.all([loadGalleryImages(), loadGalleryMetadata()]);
-    for (const [productName, config] of Object.entries(categoryMapping)) {
-      const newImages = galleryImages
-        .filter((img) => metadata[img.filename]?.category === config.id)
-        .map((img) => img.url);
-      if (newImages.length > 0) {
-        productGalleries[productName] = [...(productGalleries[productName] || [config.mainImage]), ...newImages];
+    const categories = Object.keys(categoryMapping);
+    const oldResults = await Promise.all(
+      categories.map(async (category) => ({
+        category,
+        images: await getImagesFromS3(category)
+      }))
+    );
+    for (const result of oldResults) {
+      const config = categoryMapping[result.category];
+      const localImages = config ? getImagesFromFolder(`products/${config.folder}`, config.mainImage) : [];
+      const merged = [...new Set([...result.images, ...localImages])];
+      productGalleries[result.category] = merged;
+    }
+    try {
+      const [galleryImages, metadata] = await Promise.all([loadGalleryImages(), loadGalleryMetadata()]);
+      for (const [productName, config] of Object.entries(categoryMapping)) {
+        const newImages = galleryImages
+          .filter((img) => metadata[img.filename]?.category === config.id)
+          .map((img) => img.url);
+        if (newImages.length > 0) {
+          productGalleries[productName] = [...(productGalleries[productName] || [config.mainImage]), ...newImages];
+        }
       }
+    } catch (error) {
+      console.warn('Fehler beim Laden der neuen Galerie-Daten:', error);
     }
   } catch (error) {
-    console.warn('Fehler beim Laden der neuen Galerie-Daten:', error);
+    console.warn('[Offerings] S3 nicht erreichbar, nutze lokalen Fallback:', error);
   }
-} else {
+}
+if (Object.keys(productGalleries).length === 0) {
   productGalleries = {
-    'Tassen': [...new Set(getImagesFromFolder('products/tassen', '/becher.jpeg'))],
-    'Teller': [...new Set(getImagesFromFolder('products/teller', '/teller.jpeg'))],
-    'Spardosen & Krüge & Boxen': [...new Set(getImagesFromFolder('products/spardosen', '/spardose.jpeg'))],
-    'Anhänger': [...new Set(getImagesFromFolder('products/anhaenger', '/anhänger.png'))],
+    'Tassen': [...new Set(getImagesFromFolder('products/tassen', '/tasse.webp'))],
+    'Teller': [...new Set(getImagesFromFolder('products/teller', '/teller.webp'))],
+    'Spardosen & Krüge & Boxen': [...new Set(getImagesFromFolder('products/spardosen', '/spardose.webp'))],
+    'Anhänger': [...new Set(getImagesFromFolder('products/anhaenger', '/anhaenger.webp'))],
   };
 }
 
@@ -132,32 +137,32 @@ const products = [
     name: 'Tassen',
     subtitle: 'Dein persönlicher Lieblingsbecher',
     price: 'ab 14,50€',
-    image: '/becher.jpeg',
-    images: productGalleries['Tassen'] || ['/becher.jpeg'],
-    isPng: false,
+    image: '/tasse.webp',
+    images: productGalleries['Tassen'] || ['/tasse.webp'],
+    isPng: true,
   },
   {
     name: 'Teller',
     subtitle: 'Handgemalt, einzigartig, deins',
     price: 'ab 12,50€',
-    image: '/teller.jpeg',
-    images: productGalleries['Teller'] || ['/teller.jpeg'],
-    isPng: false,
+    image: '/teller.webp',
+    images: productGalleries['Teller'] || ['/teller.webp'],
+    isPng: true,
   },
   {
     name: 'Spardosen & Krüge & Boxen',
     subtitle: 'Für jeden Anlass das passende Stück',
     price: 'ab 8,00€',
-    image: '/spardose.jpeg',
-    images: productGalleries['Spardosen & Krüge & Boxen'] || ['/spardose.jpeg'],
-    isPng: false,
+    image: '/spardose.webp',
+    images: productGalleries['Spardosen & Krüge & Boxen'] || ['/spardose.webp'],
+    isPng: true,
   },
   {
     name: 'Anhänger',
     subtitle: 'Festliche Unikate zum Verschenken',
     price: 'ab 6,00€',
-    image: '/anhänger.png',
-    images: productGalleries['Anhänger'] || ['/anhänger.png'],
+    image: '/anhaenger.webp',
+    images: productGalleries['Anhänger'] || ['/anhaenger.webp'],
     isPng: true,
   },
 ];
@@ -229,7 +234,7 @@ const products = [
 <style>
   .off {
     background: var(--bg-linen);
-    padding: var(--space-12) var(--gutter);
+    padding: var(--space-8) var(--gutter) var(--space-6);
   }
 
   .off__container {
@@ -240,7 +245,7 @@ const products = [
   /* ── Header ── */
   .off__head {
     text-align: center;
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--space-6);
   }
 
   .off__eyebrow {
@@ -271,31 +276,57 @@ const products = [
     line-height: 1.65;
   }
 
-  /* ── Product Grid ── */
+  /* ── Töpferregal Grid ── */
   .off__grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-4);
-    margin-bottom: var(--space-8);
+    gap: 0 var(--space-3);
+    align-items: end;
+    margin-bottom: 0;
+    padding-bottom: var(--space-2);
+    position: relative;
+  }
+
+  /* Regalbrett unter den Karten */
+  .off__grid::after {
+    content: '';
+    grid-column: 1 / -1;
+    height: 7px;
+    background: linear-gradient(
+      180deg,
+      var(--brand-espresso, #423430) 0%,
+      var(--bg-sand, #E3D5CA) 100%
+    );
+    border-radius: 2px;
+    box-shadow: 0 4px 14px rgba(66, 52, 48, 0.18);
+    margin-top: var(--space-2);
   }
 
   /* ── Card ── */
   .ocard {
     background: #fff;
-    border-radius: var(--radius);
+    border-radius: var(--radius, 12px) var(--radius, 12px) 0 0;
     overflow: hidden;
     cursor: pointer;
-    box-shadow: var(--shadow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 6px 18px -4px rgba(66, 52, 48, 0.12);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s ease;
+    position: relative;
   }
 
   .ocard:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-8px);
+    box-shadow: 0 16px 36px -4px rgba(66, 52, 48, 0.22);
+    z-index: 2;
   }
 
+  /* Jedes Produkt: eigene Proportion wie im echten Regal */
+  .ocard:nth-child(1) .ocard__img-wrap { aspect-ratio: 3/4; }
+  .ocard:nth-child(2) .ocard__img-wrap { aspect-ratio: 5/4; }
+  .ocard:nth-child(3) .ocard__img-wrap { aspect-ratio: 1/1; }
+  .ocard:nth-child(4) .ocard__img-wrap { aspect-ratio: 3/5; }
+
   .ocard__img-wrap {
-    aspect-ratio: 1;
     overflow: hidden;
     background: var(--bg-sand);
   }
@@ -310,7 +341,7 @@ const products = [
 
   .ocard__img--contain {
     object-fit: contain;
-    padding: 1.5rem;
+    padding: 1rem;
     background: var(--bg-sand);
   }
 
@@ -319,23 +350,23 @@ const products = [
   }
 
   .ocard__body {
-    padding: var(--space-3) var(--space-3) var(--space-4);
+    padding: var(--space-2) var(--space-3) var(--space-3);
   }
 
   .ocard__name {
     font-family: var(--font-serif);
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: var(--brand-espresso);
-    margin: 0 0 0.25rem;
+    margin: 0 0 0.2rem;
     line-height: 1.3;
   }
 
   .ocard__sub {
     font-family: var(--font-sans);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--color-text-secondary);
-    margin: 0 0 0.75rem;
-    line-height: 1.5;
+    margin: 0 0 0.5rem;
+    line-height: 1.45;
   }
 
   .ocard__footer {
@@ -346,14 +377,14 @@ const products = [
 
   .ocard__price {
     font-family: var(--font-sans);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--accent-terra);
   }
 
   .ocard__cta {
     font-family: var(--font-sans);
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--color-sienna);
     transition: color 0.15s;
@@ -367,25 +398,25 @@ const products = [
   .off__pricing {
     background: #fff;
     border-radius: var(--radius);
-    padding: var(--space-5);
-    box-shadow: var(--shadow);
-    max-width: 640px;
-    margin: 0 auto;
+    padding: var(--space-4);
+    box-shadow: 0 4px 16px rgba(66, 52, 48, 0.1);
+    max-width: 560px;
+    margin: var(--space-5) auto 0;
     text-align: center;
   }
 
   .off__pricing-title {
     font-family: var(--font-serif);
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     color: var(--brand-espresso);
-    margin: 0 0 0.35rem;
+    margin: 0 0 0.25rem;
   }
 
   .off__pricing-note {
     font-family: var(--font-sans);
     color: var(--color-text-secondary);
-    font-size: 0.85rem;
-    margin: 0 0 var(--space-4);
+    font-size: 0.82rem;
+    margin: 0 0 var(--space-3);
   }
 
   .off__tiers {
@@ -397,7 +428,7 @@ const products = [
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 0.6rem 0;
     border-bottom: 1px solid var(--color-border-soft);
   }
 
@@ -406,13 +437,13 @@ const products = [
   .otier__label {
     font-family: var(--font-sans);
     color: var(--color-text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     text-align: left;
   }
 
   .otier__price {
     font-family: var(--font-sans);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--accent-terra);
     white-space: nowrap;
@@ -425,32 +456,50 @@ const products = [
     gap: 0.5rem;
     color: var(--color-text-secondary);
     font-family: var(--font-sans);
-    font-size: 0.8rem;
-    margin: var(--space-3) 0 0;
+    font-size: 0.78rem;
+    margin: var(--space-2) 0 0;
     justify-content: center;
     opacity: 0.7;
   }
 
   /* ── Responsive ── */
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     .off__grid {
       grid-template-columns: repeat(2, 1fr);
+      gap: 0 var(--space-3);
+    }
+    .ocard:nth-child(1) .ocard__img-wrap,
+    .ocard:nth-child(2) .ocard__img-wrap { aspect-ratio: 3/4; }
+    .ocard:nth-child(3) .ocard__img-wrap,
+    .ocard:nth-child(4) .ocard__img-wrap { aspect-ratio: 1/1; }
+    /* Zweites Regalbrett simulieren */
+    .ocard:nth-child(3),
+    .ocard:nth-child(4) {
+      margin-top: var(--space-5);
+    }
+    .ocard:nth-child(3)::before,
+    .ocard:nth-child(4)::before {
+      content: '';
+      position: absolute;
+      top: calc(-1 * var(--space-3));
+      left: -2px;
+      right: -2px;
+      height: 6px;
+      background: linear-gradient(180deg, var(--brand-espresso) 0%, var(--bg-sand) 100%);
+      border-radius: 2px;
+      box-shadow: 0 4px 10px rgba(66, 52, 48, 0.12);
     }
   }
 
   @media (max-width: 480px) {
-    .off__grid {
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-3);
-    }
-    .ocard__body {
-      padding: var(--space-2);
-    }
-    .ocard__name { font-size: 0.95rem; }
-    .ocard__sub { font-size: 0.75rem; margin-bottom: 0.5rem; }
-    .ocard__price { font-size: 0.9rem; }
-    .off__pricing { padding: var(--space-4); }
-    .otier { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
+    .off__grid { gap: 0 var(--space-2); }
+    .ocard__body { padding: var(--space-2); }
+    .ocard__name { font-size: 0.92rem; }
+    .ocard__sub { font-size: 0.72rem; margin-bottom: 0.35rem; }
+    .ocard__price { font-size: 0.85rem; }
+    .ocard__cta { font-size: 0.7rem; }
+    .off__pricing { padding: var(--space-3); }
+    .otier { flex-direction: column; align-items: flex-start; gap: 0.15rem; padding: 0.5rem 0; }
     .otier__price { margin-left: 0; }
   }
 </style>

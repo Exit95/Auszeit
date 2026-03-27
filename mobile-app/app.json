@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Auszeit Brennverwaltung",
+    "slug": "auszeit-brennsystem",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c0064f8c-976b-43c4-9fee-69132fda6000"
+    },
+    "splash": {
+      "backgroundColor": "#A0522D"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "de.keramik-auszeit.brennsystem"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#A0522D"
+      },
+      "package": "de.keramikauszeit.brennsystem"
+    },
+    "plugins": [
+      "expo-image-picker",
+      "expo-asset",
+      "expo-font",
+      "expo-updates"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c0064f8c-976b-43c4-9fee-69132fda6000"
+      }
+    },
+    "owner": "danapfeldigital"
+  }
+}

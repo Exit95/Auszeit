@@ -1,45 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  
+
   <!-- Hauptseite -->
   <url>
     <loc>https://keramik-auszeit.de/</loc>
-    <lastmod>2025-12-02</lastmod>
+    <lastmod>2026-03-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    
-    <!-- Bilder für Image SEO -->
+
     <image:image>
-      <image:loc>https://keramik-auszeit.de/becher.jpeg</image:loc>
-      <image:title>Keramik Tassen bemalen</image:title>
-      <image:caption>Individuell bemalte Keramiktassen im Atelier Auszeit</image:caption>
+      <image:loc>https://keramik-auszeit.de/hero-banner.webp</image:loc>
+      <image:title>Malatelier Auszeit Gronau - Keramik Malatelier im Münsterland</image:title>
+      <image:caption>Schaufenster von Auszeit Keramik-Malatelier in Gronau im Münsterland</image:caption>
     </image:image>
-    
+
     <image:image>
-      <image:loc>https://keramik-auszeit.de/teller.jpeg</image:loc>
-      <image:title>Keramik Teller bemalen</image:title>
-      <image:caption>Handbemalte Keramikteller aus Gronau</image:caption>
+      <image:loc>https://keramik-auszeit.de/tasse.webp</image:loc>
+      <image:title>Keramik Tassen bemalen Münsterland</image:title>
+      <image:caption>Individuell bemalte Keramiktassen im Atelier Auszeit Gronau</image:caption>
     </image:image>
-    
+
     <image:image>
-      <image:loc>https://keramik-auszeit.de/spardose.jpeg</image:loc>
-      <image:title>Keramik Spardosen</image:title>
-      <image:caption>Kreative Spardosen und Krüge aus Keramik</image:caption>
+      <image:loc>https://keramik-auszeit.de/teller.webp</image:loc>
+      <image:title>Keramik Teller bemalen Gronau</image:title>
+      <image:caption>Handbemalte Keramikteller aus dem Münsterland</image:caption>
     </image:image>
-    
+
     <image:image>
-      <image:loc>https://keramik-auszeit.de/anhänger.png</image:loc>
-      <image:title>Weihnachtsanhänger aus Keramik</image:title>
-      <image:caption>Handgefertigte Weihnachtsanhänger</image:caption>
+      <image:loc>https://keramik-auszeit.de/spardose.webp</image:loc>
+      <image:title>Keramik Spardosen bemalen</image:title>
+      <image:caption>Kreative Spardosen und Krüge aus Keramik - Atelier Auszeit Gronau</image:caption>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://keramik-auszeit.de/anhaenger.webp</image:loc>
+      <image:title>Keramik Anhänger selbst gestalten</image:title>
+      <image:caption>Handgefertigte Keramik-Anhänger aus dem Malatelier in Gronau</image:caption>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://keramik-auszeit.de/products/tassen/tassen1.webp</image:loc>
+      <image:title>Bemalte Keramik Tassen Münsterland</image:title>
+      <image:caption>Kunstvoll bemalte Tassen aus dem Keramik-Malatelier Auszeit</image:caption>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://keramik-auszeit.de/products/teller/teller1.webp</image:loc>
+      <image:title>Keramik Teller Münsterland Gronau</image:title>
+      <image:caption>Handbemalter Keramikteller aus Gronau im Münsterland</image:caption>
+    </image:image>
+
+    <image:image>
+      <image:loc>https://keramik-auszeit.de/products/spardosen/spardosen.webp</image:loc>
+      <image:title>Keramik Spardosen Münsterland</image:title>
+      <image:caption>Selbst bemalte Keramik-Spardosen aus dem Atelier Auszeit in Gronau</image:caption>
     </image:image>
   </url>
 
-  <url><loc>https://keramik-auszeit.de/galerie</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://keramik-auszeit.de/workshops</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://keramik-auszeit.de/gutscheine</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://keramik-auszeit.de/events</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://keramik-auszeit.de/faq</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://keramik-auszeit.de/galerie</loc><lastmod>2026-03-27</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://keramik-auszeit.de/workshops</loc><lastmod>2026-03-27</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://keramik-auszeit.de/gutscheine</loc><lastmod>2026-03-27</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://keramik-auszeit.de/events</loc><lastmod>2026-03-27</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://keramik-auszeit.de/faq</loc><lastmod>2026-03-27</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
 
 </urlset>
-
