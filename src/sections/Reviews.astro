@@ -111,6 +111,11 @@ const MAX_COMMENT_LENGTH = 400;
         <div id="review-error" class="error-message" style="display: none;"></div>
       </div>
     </div>
+
+    <div class="reviews-cta">
+      <p class="reviews-cta__text">Überzeuge dich selbst — buche deinen Termin!</p>
+      <a href="#termin-buchen" class="reviews-cta__link">Jetzt Termin buchen</a>
+    </div>
   </div>
 </section>
 
@@ -793,6 +798,11 @@ const MAX_COMMENT_LENGTH = 400;
       padding: 0 var(--space-4);
     }
   }
+
+  .reviews-cta { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #E0D6CC; }
+  .reviews-cta__text { font-size: 1.25rem; color: #423430; margin-bottom: 1rem; }
+  .reviews-cta__link { display: inline-block; padding: 14px 32px; background: #D96C4A; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem; }
+  .reviews-cta__link:hover { background: #423430; }
 
   @media (min-width: 375px) and (max-width: 639px) {
     .reviews {
