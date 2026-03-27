@@ -13,25 +13,25 @@ export const content = {
       {
         title: 'Keramik bemalen',
         text: 'Wähle deinen Rohling, nimm dir Zeit und gestalte dein ganz eigenes Stück.',
-        image: '/becher.jpeg',
+        image: '/tasse.webp',
         link: '#keramik-preise',
       },
       {
         title: 'Workshops',
         text: 'Lerne neue Techniken in unseren kreativen Workshops.',
-        image: '/teller.jpeg',
+        image: '/teller.webp',
         link: '/workshops',
       },
       {
         title: 'Besondere Anlässe',
         text: 'Kindergeburtstag, JGA oder Firmen-Event. Wir machen es unvergesslich.',
-        image: '/spardose.jpeg',
+        image: '/spardose.webp',
         link: '/events',
       },
       {
         title: 'Gutscheine',
         text: 'Das perfekte Geschenk für kreative Köpfe.',
-        image: '/anhänger.png',
+        image: '/anhaenger.webp',
         link: '/gutscheine',
       },
     ],
@@ -59,10 +59,10 @@ export const content = {
   offerings: {
     title: 'Angebot',
     items: [
-      { name: 'Tassen', price: 'ab 14,50€', image: '/becher.jpeg' },
-      { name: 'Teller', price: 'ab 12,50€', image: '/teller.jpeg' },
-      { name: 'Spardosen & Krüge & Boxen', price: 'ab 8,00€', image: '/spardose.jpeg' },
-      { name: 'Anhänger', price: 'ab 6,00€', image: '/anhänger.png' },
+      { name: 'Tassen', price: 'ab 14,50€', image: '/tasse.webp' },
+      { name: 'Teller', price: 'ab 12,50€', image: '/teller.webp' },
+      { name: 'Spardosen & Krüge & Boxen', price: 'ab 8,00€', image: '/spardose.webp' },
+      { name: 'Anhänger', price: 'ab 6,00€', image: '/anhaenger.webp' },
     ],
     note: 'Abholbereit nach 10 bis 14 Tagen.',
     pricing: [

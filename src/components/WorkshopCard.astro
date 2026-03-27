@@ -15,7 +15,7 @@ const availableSpots = workshop.maxParticipants - currentParticipants;
 // Prüfe ob imageFilename eine URL oder ein lokaler Dateiname ist
 const imageUrl = workshop.imageFilename
   ? (workshop.imageFilename.startsWith('http') ? workshop.imageFilename : `/uploads/${workshop.imageFilename}`)
-  : "/becher.jpeg";
+  : "/tasse.webp";
 
 const location =
   (workshop as any).location || "Atelier Auszeit, Feldstiege 6a, Gronau";
