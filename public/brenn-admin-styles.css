@@ -93,9 +93,12 @@ a:hover { text-decoration: underline; }
 }
 
 .brenn-nav a {
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 1rem;
   border-radius: 8px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   font-weight: 500;
   color: #666;
   white-space: nowrap;
