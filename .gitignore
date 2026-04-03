@@ -16,6 +16,12 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+.env.*
+
+# Deployment-Konfiguration mit Secrets
+keramik-auszeit-de.yml
+*.secrets.yml
+*.secrets.yaml
 
 # data files (bookings and time slots)
 data/
