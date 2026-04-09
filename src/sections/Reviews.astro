@@ -31,8 +31,8 @@ const MAX_COMMENT_LENGTH = 400;
       </div>
     </div>
 
-    <h2 class="reviews__title">Stimmen unserer Gäste</h2>
-    <p class="reviews__subtitle">Was unsere Gäste über uns sagen</p>
+    <h2 class="reviews__title">Das sagen unsere Gäste</h2>
+    <p class="reviews__subtitle">Jede Bewertung freut uns von Herzen</p>
 
     <!-- Karussell Container -->
     <div class="reviews-carousel">
@@ -112,16 +112,12 @@ const MAX_COMMENT_LENGTH = 400;
       </div>
     </div>
 
-    <div class="reviews-cta">
-      <p class="reviews-cta__text">Überzeuge dich selbst — buche deinen Termin!</p>
-      <a href="#termin-buchen" class="reviews-cta__link">Jetzt Termin buchen</a>
-    </div>
   </div>
 </section>
 
 <style>
   .reviews {
-    padding: var(--space-12) var(--gutter);
+    padding: var(--space-10) var(--gutter);
     background-color: var(--bg-linen);
   }
 
@@ -546,7 +542,7 @@ const MAX_COMMENT_LENGTH = 400;
 
   .form-group input[type="text"]:focus,
   .form-group textarea:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--accent-terra);
   }
 
@@ -799,10 +795,6 @@ const MAX_COMMENT_LENGTH = 400;
     }
   }
 
-  .reviews-cta { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #E0D6CC; }
-  .reviews-cta__text { font-size: 1.25rem; color: #423430; margin-bottom: 1rem; }
-  .reviews-cta__link { display: inline-block; padding: 14px 32px; background: #D96C4A; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem; }
-  .reviews-cta__link:hover { background: #423430; }
 
   @media (min-width: 375px) and (max-width: 639px) {
     .reviews {

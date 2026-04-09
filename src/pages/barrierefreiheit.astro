@@ -1,0 +1,98 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+---
+<MainLayout title="Barrierefreiheitserklärung — Malatelier Auszeit" description="Erklärung zur Barrierefreiheit von keramik-auszeit.de gemäß BFSG.">
+  <section class="legal-page">
+    <div class="legal-page__inner">
+      <h1>Erklärung zur Barrierefreiheit</h1>
+
+      <p>
+        Malatelier Auszeit (Irena Woschkowiak) ist bemüht, die Website
+        <strong>keramik-auszeit.de</strong> im Einklang mit dem Barrierefreiheitsstärkungsgesetz
+        (BFSG) und der harmonisierten europäischen Norm EN 301 549 barrierefrei zugänglich zu machen.
+      </p>
+
+      <h2>Stand der Vereinbarkeit</h2>
+      <p>
+        Diese Website ist <strong>teilweise konform</strong> mit den Anforderungen der
+        EN 301 549 / WCAG 2.1 Level AA. Die nachstehend aufgeführten Inhalte sind noch nicht
+        vollständig barrierefrei.
+      </p>
+
+      <h2>Bekannte Einschränkungen</h2>
+      <ul>
+        <li>Einige Galerie-Bilder haben noch generische Alternativtexte und sind nicht individuell beschrieben.</li>
+        <li>Das Buchungsformular für besondere Anlässe enthält dynamisch generierte Felder, deren programmatische Verknüpfung mit Labels noch optimiert wird.</li>
+        <li>Google Maps (eingebettet als iframe) ist nicht vollständig barrierefrei nutzbar.</li>
+      </ul>
+
+      <h2>Erstellung dieser Erklärung</h2>
+      <p>
+        Diese Erklärung wurde am <strong>9. April 2026</strong> erstellt.
+        Die Bewertung basiert auf einer Selbstprüfung.
+      </p>
+
+      <h2>Feedback und Kontakt</h2>
+      <p>
+        Wenn du Barrieren auf dieser Website feststellst oder Informationen zur Umsetzung
+        der Barrierefreiheit benötigst, wende dich bitte an uns:
+      </p>
+      <p>
+        Irena Woschkowiak<br />
+        E-Mail: <a href="mailto:keramik-auszeit@web.de">keramik-auszeit@web.de</a><br />
+        Telefon: +49 (0) 176 34255005
+      </p>
+      <p>
+        Wir bemühen uns, jede Anfrage innerhalb von 2 Wochen zu beantworten und bestehende
+        Barrieren schnellstmöglich zu beseitigen.
+      </p>
+
+      <h2>Durchsetzungsverfahren</h2>
+      <p>
+        Sollte eine zufriedenstellende Lösung auch nach deiner Rückmeldung ausbleiben, kannst
+        du dich an die zuständige Durchsetzungsstelle wenden:
+      </p>
+      <p>
+        Überwachungsstelle des Bundes für Barrierefreiheit von Informationstechnik<br />
+        <a href="https://www.bfit-bund.de" target="_blank" rel="noopener noreferrer">www.bfit-bund.de</a>
+      </p>
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+  .legal-page {
+    padding: 3rem var(--gutter, 1.5rem);
+    background: var(--bg-paper, #FAF7F2);
+  }
+  .legal-page__inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .legal-page h1 {
+    font-family: var(--font-serif, 'Lora', serif);
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    color: var(--brand-espresso, #423430);
+    margin-bottom: 2rem;
+  }
+  .legal-page h2 {
+    font-family: var(--font-serif, 'Lora', serif);
+    font-size: 1.15rem;
+    color: var(--brand-espresso, #423430);
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .legal-page p, .legal-page li {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    color: var(--text-body, #6B5D56);
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+  }
+  .legal-page ul {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .legal-page a {
+    color: var(--accent-terra, #D96C4A);
+  }
+</style>

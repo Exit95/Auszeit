@@ -98,6 +98,23 @@ ssh -i ~/.ssh/danapfel root@10.1.9.100 "kubectl get pods -n websites -l app=kera
 ssh -i ~/.ssh/danapfel root@10.1.9.100 "kubectl exec -it -n websites statefulset/keramik-auszeit-mariadb -- mysql -u root -p"
 ```
 
+
+## Slash-Commands (`.claude/commands/`)
+
+| Command | Zweck |
+|---|---|
+| `/qa` | Vollstaendiges QA-Audit: SEO, Barrierefreiheit, Security, DSGVO, Performance |
+| `/deploy-check` | Pre-Deployment: Build, tote Links, Secrets, Dockerfile, Git-Status |
+
+## Hooks (automatisch aktiv)
+
+- **Pre-Push Build-Check:** Warnt vor `git push` wenn kein Build in der Session lief
+- **Stop-Reminder:** Zeigt uncommitted changes wenn Claude stoppt
+
+## Worktree-Config
+
+- `node_modules` wird per Symlink geteilt (spart Speicher bei Worktrees)
+
 ## Infrastruktur
 - **Server:** 148.251.51.53 (Hetzner, Proxmox VE)
 - **Docker Cluster:** 3 Nodes (10.1.9.100, .101, .102)

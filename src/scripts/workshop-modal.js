@@ -209,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
         bookingMessageDiv.className = "message error";
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = "Jetzt verbindlich anfragen";
+          submitBtn.textContent = "Meinen Platz sichern";
         }
       }
     } catch (error) {
@@ -219,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
       bookingMessageDiv.className = "message error";
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Jetzt verbindlich anfragen";
+        submitBtn.textContent = "Meinen Platz sichern";
       }
     }
   });

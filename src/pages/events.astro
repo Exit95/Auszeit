@@ -69,11 +69,11 @@ const { events, pageMeta } = content;
           </div>
           <div class="form-group">
             <label for="evtEmail">E-Mail *</label>
-            <input type="email" id="evtEmail" required placeholder="deine@email.de" />
+            <input type="email" id="evtEmail" required autocomplete="email" placeholder="deine@email.de" />
           </div>
           <div class="form-group">
             <label for="evtPhone">Telefon *</label>
-            <input type="tel" id="evtPhone" required placeholder="+49 …" />
+            <input type="tel" id="evtPhone" required autocomplete="tel" placeholder="+49 …" />
           </div>
           <div class="form-group">
             <label for="evtDate">Wunschdatum</label>
@@ -288,7 +288,7 @@ const { events, pageMeta } = content;
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--accent-terra, #a0522d);
     box-shadow: 0 0 0 3px rgba(160, 82, 45, 0.12);
   }

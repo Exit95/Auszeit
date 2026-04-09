@@ -7,8 +7,9 @@ import { content } from '../data/content';
 
   <section class="galerie-intro">
     <div class="galerie-intro__inner">
+      <h1 class="galerie-intro__title">Galerie — Handbemalte Keramik aus Gronau</h1>
       <p class="galerie-intro__text">
-        Entdecke handbemalte Keramik aus unserem Atelier in Gronau. jedes Stück erzählt seine eigene Geschichte.
+        Entdecke handbemalte Keramik aus unserem Atelier in Gronau. Jedes Stück erzählt seine eigene Geschichte.
       </p>
     </div>
   </section>
@@ -27,6 +28,14 @@ import { content } from '../data/content';
     max-width: var(--max-width, 1080px);
     margin: 0 auto;
     text-align: center;
+  }
+
+  .galerie-intro__title {
+    font-family: var(--font-serif, 'Lora', serif);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 600;
+    color: var(--brand-espresso, #423430);
+    margin-bottom: 0.75rem;
   }
 
   .galerie-intro__text {

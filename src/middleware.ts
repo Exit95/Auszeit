@@ -21,6 +21,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     const response = await next();
 
+    // Cache-Control fuer statische Assets
+    const staticExts = /\.(woff2|woff|webp|png|jpg|jpeg|svg|ico|css|js|avif)$/;
+    if (staticExts.test(url.pathname)) {
+        response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+
     // CORS-Headers für Brenn-API
     if (url.pathname.startsWith('/api/admin/brenn')) {
         const origin = context.request.headers.get('Origin') || '';

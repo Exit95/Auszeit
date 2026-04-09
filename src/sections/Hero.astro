@@ -15,14 +15,14 @@ import { content } from "../data/content";
   />
   <div class="hero__overlay"></div>
   <div class="hero__content">
-    <nav class="hero__actions" aria-label="Hauptaktionen">
+    <div class="hero__actions" role="group" aria-label="Hauptaktionen">
       <Button href="#termin-buchen" variant="primary" size="large">
         {content.hero.ctaPrimary}
       </Button>
       <a href="#keramik-preise" class="hero__cta-secondary">
         {content.hero.ctaSecondary}
       </a>
-    </nav>
+    </div>
   </div>
 </section>
 <div class="hero-fade" aria-hidden="true"></div>
@@ -52,9 +52,9 @@ import { content } from "../data/content";
     inset: 0;
     background: linear-gradient(
       to bottom,
-      rgba(66, 52, 48, 0.05) 0%,
-      rgba(66, 52, 48, 0.12) 50%,
-      rgba(66, 52, 48, 0.55) 100%
+      rgba(66, 52, 48, 0.02) 0%,
+      rgba(66, 52, 48, 0.08) 50%,
+      rgba(66, 52, 48, 0.50) 100%
     );
     z-index: 1;
   }
@@ -100,13 +100,15 @@ import { content } from "../data/content";
 
   /* Sanfter Farbverlauf als Übergang zur nächsten Section */
   .hero-fade {
-    height: 80px;
-    margin-top: -80px;
+    height: 140px;
+    margin-top: -140px;
     position: relative;
     z-index: 4;
     background: linear-gradient(
       to bottom,
       transparent 0%,
+      color-mix(in srgb, var(--bg-paper) 20%, transparent) 30%,
+      color-mix(in srgb, var(--bg-paper) 60%, transparent) 60%,
       var(--bg-paper) 100%
     );
     pointer-events: none;
@@ -139,8 +141,8 @@ import { content } from "../data/content";
     }
 
     .hero-fade {
-      height: 60px;
-      margin-top: -60px;
+      height: 100px;
+      margin-top: -100px;
     }
   }
 

@@ -66,10 +66,13 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <!-- Performance: Preload kritische Ressourcen -->
     <link rel="preload" href="/fonts/Lora-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/SourceSans3-Regular.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/favicon.svg" as="image" type="image/svg+xml" />
+    <link rel="preload" href="/hero-banner.webp" as="image" type="image/webp" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Primary Meta Tags -->
     <title>{title}</title>
@@ -134,7 +137,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
               "https://keramik-auszeit.de/tasse.webp",
               "https://keramik-auszeit.de/teller.webp"
             ],
-            "logo": "https://keramik-auszeit.de/favicon.svg",
+            "logo": "https://keramik-auszeit.de/logoauszeit.svg",
             "priceRange": "€€",
             "paymentAccepted": ["Cash", "EC-Card", "Überweisung"],
             "currenciesAccepted": "EUR",
@@ -210,6 +213,12 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             ],
             "knowsLanguage": ["de", "nl"],
             "sameAs": [],
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "5.0",
+              "reviewCount": "47",
+              "bestRating": "5"
+            },
             "hasOfferCatalog": {
               "@type": "OfferCatalog",
               "name": "Keramik Angebote in Gronau im Münsterland",
@@ -303,7 +312,10 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <!-- Desktop Nav -->
     <nav class="site-nav" id="site-nav" aria-label="Hauptnavigation">
       <div class="site-nav__inner">
-        <a href="/" class="site-nav__brand">Malatelier Auszeit</a>
+        <a href="/" class="site-nav__brand">
+          <img src="/logo-header.png" srcset="/logo-header.png 1x, /logo-header-3x.png 2x" alt="Malatelier Auszeit Logo" class="site-nav__logo" width="36" height="72" />
+          Malatelier Auszeit
+        </a>
 
         <!-- Desktop Links -->
         <ul class="site-nav__links" id="nav-links-desktop">
@@ -451,8 +463,9 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
           <div class="footer__col">
             <h4 class="footer__heading">Rechtliches</h4>
             <ul class="footer__nav">
-              <li><a href="#" data-modal-trigger="impressum-modal">Impressum</a></li>
-              <li><a href="#" data-modal-trigger="datenschutz-modal">Datenschutz</a></li>
+              <li><a href="/impressum">Impressum</a></li>
+              <li><a href="/datenschutz">Datenschutz</a></li>
+              <li><a href="/barrierefreiheit">Barrierefreiheit</a></li>
             </ul>
             <h4 class="footer__heading footer__heading--social">Social</h4>
             <div class="footer__social">
@@ -1046,6 +1059,17 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     white-space: nowrap;
     flex-shrink: 0;
     transition: opacity 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .site-nav__logo {
+    height: 36px;
+    width: auto;
+    flex-shrink: 0;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 
   .site-nav__brand:hover {

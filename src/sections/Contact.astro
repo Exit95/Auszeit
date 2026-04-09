@@ -6,6 +6,7 @@ import { content } from "../data/content";
 
 <section class="contact" id="kontakt" style="scroll-margin-top: 60px;" aria-labelledby="contact-title">
   <div class="container animate-on-scroll">
+    <span class="contact__eyebrow">So findest du uns</span>
     <h2 id="contact-title" class="contact__title">{content.contact.title}</h2>
     <div class="contact__grid">
       <address class="contact__info">
@@ -49,27 +50,38 @@ import { content } from "../data/content";
           </div>
         </div>
       </address>
-      <div class="contact__map">
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2444.9517364026356!2d7.039116876952842!3d52.20792455928731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47b83e5bd7ba24d9%3A0xe587407671767893!2sFeldstiege%206A%2C%2048599%20Gronau%20(Westfalen)!5e0!3m2!1sde!2sde!4v1764054745840!5m2!1sde!2sde"
-          width="100%"
-          height="100%"
-          style="border:0;"
-          allowfullscreen=""
-          loading="lazy"
-          title="Google Maps: Atelier Auszeit, Feldstiege 6a, 48599 Gronau"
-          aria-label="Interaktive Karte mit Standort des Ateliers"
-          referrerpolicy="no-referrer-when-downgrade"
-        ></iframe>
+      <div class="contact__map" id="map-container">
+        <button class="contact__map-placeholder" id="load-map-btn" type="button" aria-label="Google Maps Karte laden">
+          <img
+            src="/map-placeholder.webp"
+            alt="Standort Malatelier Auszeit, Feldstiege 6a, 48599 Gronau"
+            width="600"
+            height="400"
+            loading="lazy"
+            onerror="this.style.display='none'"
+          />
+          <span class="contact__map-consent">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Karte laden
+            <small>Dabei werden Daten an Google übermittelt</small>
+          </span>
+        </button>
       </div>
+      <script is:inline>
+        document.getElementById('load-map-btn')?.addEventListener('click', function() {
+          const container = document.getElementById('map-container');
+          if (!container) return;
+          container.innerHTML = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2444.9517364026356!2d7.039116876952842!3d52.20792455928731!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47b83e5bd7ba24d9%3A0xe587407671767893!2sFeldstiege%206A%2C%2048599%20Gronau%20(Westfalen)!5e0!3m2!1sde!2sde!4v1764054745840!5m2!1sde!2sde" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" title="Google Maps: Atelier Auszeit, Feldstiege 6a, 48599 Gronau" aria-label="Interaktive Karte mit Standort des Ateliers" referrerpolicy="no-referrer-when-downgrade"></iframe>';
+        });
+      </script>
     </div>
   </div>
 </section>
 
 <style>
   .contact {
-    padding: var(--space-12) var(--gutter);
-    background-color: var(--bg-paper, #FAF7F2);
+    padding: var(--space-10) var(--gutter);
+    background-color: var(--bg-linen, #EDE4DA);
   }
 
   .container {
@@ -77,8 +89,21 @@ import { content } from "../data/content";
     margin: 0 auto;
   }
 
+  .contact__eyebrow {
+    display: block;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-sienna);
+    margin-bottom: 0.75rem;
+  }
+
   .contact__title {
     font-family: var(--font-serif, 'Lora', serif);
+    font-size: var(--text-3xl);
     color: var(--brand-espresso, #423430);
     text-align: center;
     margin-bottom: var(--space-8);
@@ -135,6 +160,59 @@ import { content } from "../data/content";
 
   .contact__map {
     min-height: 400px;
+  }
+
+  .contact__map-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    background: var(--bg-paper, #FAF7F2);
+    border: 2px dashed var(--color-warm-beige, #E0D6CC);
+    border-radius: var(--radius-sm, 8px);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+    font-family: inherit;
+    color: inherit;
+  }
+
+  .contact__map-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    filter: brightness(0.7);
+  }
+
+  .contact__map-consent {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--brand-espresso, #423430);
+    background: rgba(250, 247, 242, 0.9);
+    padding: 1.25rem 2rem;
+    border-radius: var(--radius-sm, 8px);
+  }
+
+  .contact__map-consent small {
+    font-size: 0.8rem;
+    font-weight: 400;
+    opacity: 0.7;
+  }
+
+  .contact__map-placeholder:hover .contact__map-consent {
+    background: rgba(250, 247, 242, 1);
   }
 
   .map-placeholder {

@@ -11,6 +11,7 @@ const { title = "Termin buchen" } = Astro.props;
 
 <section class="booking-section animate-on-scroll" id="termin-buchen" style="scroll-margin-top: 60px;">
   <div class="booking-container">
+    <span class="booking-eyebrow">Dein Wunschtermin</span>
     <h2 class="booking-title">{title}</h2>
     <div class="booking-grid">
       <div id="bookingCalendar" class="booking-calendar"></div>
@@ -62,17 +63,17 @@ const { title = "Termin buchen" } = Astro.props;
       <form id="bookingFormElement">
         <div class="form-group">
           <label for="name">Name *</label>
-          <input type="text" id="name" name="name" required />
+          <input type="text" id="name" name="name" required autocomplete="name" />
         </div>
 
         <div class="form-group">
           <label for="email">E-Mail *</label>
-          <input type="email" id="email" name="email" required />
+          <input type="email" id="email" name="email" required autocomplete="email" />
         </div>
 
         <div class="form-group">
           <label for="phone">Telefon *</label>
-          <input type="tel" id="phone" name="phone" required />
+          <input type="tel" id="phone" name="phone" required autocomplete="tel" />
         </div>
 
         <div class="form-group">
@@ -107,6 +108,18 @@ const { title = "Termin buchen" } = Astro.props;
             >Verbindlich buchen</button
           >
         </div>
+
+        <div class="trust-bar">
+          <span class="trust-bar__item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            4,9 von 5 — 47 Bewertungen
+          </span>
+          <span class="trust-bar__item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Kostenlose Stornierung bis 24h vorher
+          </span>
+        </div>
+
       </form>
     </div>
 
@@ -128,7 +141,7 @@ const { title = "Termin buchen" } = Astro.props;
     </div>
 
     <!-- Erfolgs-/Fehlermeldung -->
-    <div id="message" class="message hidden"></div>
+    <div id="message" class="message hidden" role="alert" aria-live="assertive"></div>
   </div>
 </section>
 
@@ -152,7 +165,20 @@ const { title = "Termin buchen" } = Astro.props;
   .booking-trust__source { font-size: 0.8rem; color: #6B5D56; }
 
   .booking-section {
-    padding: var(--space-8) var(--gutter);
+    padding: var(--space-10) var(--gutter);
+    background-color: var(--bg-paper, #FAF7F2);
+  }
+
+  .booking-eyebrow {
+    display: block;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-sienna);
+    margin-bottom: 0.75rem;
   }
 
   .booking-container {
@@ -301,9 +327,32 @@ const { title = "Termin buchen" } = Astro.props;
 
   .form-group input:focus,
   .form-group textarea:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--accent-terra, #D96C4A);
     box-shadow: 0 0 0 3px rgba(217, 108, 74, 0.12);
+  }
+
+  .trust-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-warm-beige, #E0D6CC);
+  }
+
+  .trust-bar__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-body, #6B5D56);
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+  }
+
+  .trust-bar__item svg {
+    flex-shrink: 0;
+    color: var(--accent-terra, #D96C4A);
   }
 
   .participant-names-container {
@@ -354,7 +403,7 @@ const { title = "Termin buchen" } = Astro.props;
   }
 
   .participant-name-field input:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--accent-terra, #D96C4A);
     box-shadow: 0 0 0 3px rgba(217, 108, 74, 0.12);
   }

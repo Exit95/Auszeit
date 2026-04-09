@@ -6,8 +6,8 @@
   <div class="special-events-container">
     <h2 class="special-events-title">Besondere Anlässe</h2>
     <p class="special-events-subtitle">
-      Planen Sie einen besonderen Anlass? Ob Kindergeburtstag, JGA oder Firmenevent,
-      wir gestalten Ihren Wunschtermin individuell. Senden Sie uns eine unverbindliche Anfrage.
+      Du planst was Besonderes? Ob Kindergeburtstag, JGA oder Firmen-Event,
+      schreib mir einfach und ich kümmere mich um den Rest.
     </p>
 
     <div class="event-types">
@@ -26,15 +26,15 @@
       <div class="inquiry-form-grid">
         <div class="form-group">
           <label for="inquiryName">Name *</label>
-          <input type="text" id="inquiryName" required placeholder="Ihr Name">
+          <input type="text" id="inquiryName" required autocomplete="name" placeholder="Ihr Name">
         </div>
         <div class="form-group">
           <label for="inquiryEmail">E-Mail *</label>
-          <input type="email" id="inquiryEmail" required placeholder="ihre@email.de">
+          <input type="email" id="inquiryEmail" required autocomplete="email" placeholder="ihre@email.de">
         </div>
         <div class="form-group">
           <label for="inquiryPhone">Telefon *</label>
-          <input type="tel" id="inquiryPhone" required placeholder="+49 ...">
+          <input type="tel" id="inquiryPhone" required autocomplete="tel" placeholder="+49 ...">
         </div>
         <div class="form-group">
           <label for="inquiryDate">Wunschdatum</label>
@@ -157,7 +157,7 @@
   }
   .inquiry-form input:focus,
   .inquiry-form textarea:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--color-primary, #5b3e31);
     box-shadow: 0 0 0 3px rgba(91,62,49,0.1);
   }
