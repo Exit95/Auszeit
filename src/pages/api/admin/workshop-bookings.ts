@@ -4,7 +4,7 @@ import path from 'path';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-storage';
 import { FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
 import { createSmtpTransporter } from '../../../lib/smtp';
-import { sanitizeId } from '../../../lib/sanitize';
+import { sanitizeId, escapeHtml } from '../../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { logAuditEvent } from '../../../lib/audit-log';
 import { validateCredentials } from '../../../lib/totp';
@@ -202,16 +202,16 @@ export const POST: APIRoute = async ({ request }) => {
         const customerHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #8B6F47;">Deine Workshop-Buchung ist bestätigt!</h2>
-            <p>Liebe/r ${booking.name},</p>
-            <p>wir freuen uns, dir mitzuteilen, dass deine Buchung für den Workshop <strong>${workshopTitle}</strong> bestätigt wurde!</p>
+            <p>Hallo ${escapeHtml(booking.name)},</p>
+            <p>schön — deine Buchung für den Workshop <strong>${escapeHtml(workshopTitle)}</strong> ist bestätigt!</p>
 
             <div style="background-color: #F5F0E8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #8B6F47; margin-top: 0;">Workshop-Details:</h3>
-              <p><strong>Workshop:</strong> ${workshopTitle}</p>
-              <p><strong>Datum:</strong> ${workshopDate}</p>
-              <p><strong>Uhrzeit:</strong> ${workshopTime} Uhr</p>
+              <h3 style="color: #8B6F47; margin-top: 0;">Workshop-Details</h3>
+              <p><strong>Workshop:</strong> ${escapeHtml(workshopTitle)}</p>
+              <p><strong>Datum:</strong> ${escapeHtml(workshopDate)}</p>
+              <p><strong>Uhrzeit:</strong> ${escapeHtml(workshopTime)} Uhr</p>
               <p><strong>Teilnehmer:</strong> ${booking.participants}</p>
-              ${workshop?.price ? `<p><strong>Preis:</strong> ${workshop.price}</p>` : ''}
+              ${workshop?.price ? `<p><strong>Preis:</strong> ${escapeHtml(workshop.price)}</p>` : ''}
             </div>
 
             <p style="margin-top: 20px;">
@@ -221,26 +221,26 @@ export const POST: APIRoute = async ({ request }) => {
               48599 Gronau
             </p>
 
-            <p>Bei Fragen oder Änderungswünschen erreichst du uns unter:<br/>
+            <p>Bei Fragen oder Änderungswünschen meld dich gerne:<br/>
             E-Mail: keramik-auszeit@web.de<br/>
             Telefon: +49 176 34255005</p>
 
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
               <p style="font-size: 0.85rem; color: #999;">Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:<br/>
-              <a href="${cancelUrl}" style="color: #dc2626;">Workshop-Buchung stornieren</a></p>
+              <a href="${escapeHtml(cancelUrl)}" style="color: #dc2626;">Workshop-Buchung stornieren</a></p>
             </div>
 
-            <p style="margin-top: 20px;">Wir freuen uns auf dich!<br/>
-            <strong>Dein Atelier Auszeit</strong></p>
+            <p style="margin-top: 20px;">Ich freu mich auf dich!<br/>
+            <strong>Irena · Atelier Auszeit</strong></p>
           </div>
         `;
 
         const customerText = `
 Deine Workshop-Buchung ist bestätigt!
 
-Liebe/r ${booking.name},
+Hallo ${booking.name},
 
-wir freuen uns, dir mitzuteilen, dass deine Buchung für den Workshop "${workshopTitle}" bestätigt wurde!
+deine Buchung für den Workshop "${workshopTitle}" ist bestätigt.
 
 Workshop-Details:
 - Workshop: ${workshopTitle}
@@ -254,15 +254,15 @@ Atelier Auszeit
 Feldstiege 6a
 48599 Gronau
 
-Bei Fragen oder Änderungswünschen erreichst du uns unter:
+Bei Fragen oder Änderungswünschen meld dich gerne:
 E-Mail: keramik-auszeit@web.de
 Telefon: +49 176 34255005
 
 Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:
 ${cancelUrl}
 
-Wir freuen uns auf dich!
-Dein Atelier Auszeit
+Ich freu mich auf dich!
+Irena · Atelier Auszeit
 `;
 
         // Kalender-Event erstellen (mit korrekter Zeitzone)

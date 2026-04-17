@@ -3,6 +3,7 @@ import busboy from 'busboy';
 import fs from 'fs';
 import path from 'path';
 import { isS3Configured, uploadToS3, getContentType, getS3Key } from '../../lib/s3-storage';
+import { sanitizeFilename } from '../../lib/sanitize';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 const PUBLIC_DIR = path.join(process.cwd(), 'public');
@@ -121,6 +122,17 @@ export const POST: APIRoute = async ({ request }) => {
           }));
           return;
         }
+
+        // Path-Traversal-Schutz: Dateinamen auf einfachen Basename normalisieren
+        const safe = path.basename(sanitizeFilename(filename));
+        if (!safe || safe === 'unnamed') {
+          resolve(new Response(JSON.stringify({ error: 'Invalid filename' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          }));
+          return;
+        }
+        filename = safe;
 
         if (chunks.length === 0) {
           resolve(new Response(JSON.stringify({ error: 'No chunks received' }), {

@@ -7,9 +7,21 @@ import { getEnv } from './env';
  * Kein Datenbank-Eintrag nötig - das Token ist deterministisch.
  */
 function getSecret(): string {
-  // Nutze ADMIN_PASSWORD als Basis-Secret, kombiniert mit einem festen Salt
-  const adminPw = process.env.ADMIN_PASSWORD || 'auszeit-default-secret';
-  return `cancel-token-salt-${adminPw}`;
+  // Dediziertes Secret bevorzugt. Fallback auf ADMIN_PASSWORD nur zur
+  // Rueckwaertskompatibilitaet bestehender Links — in Prod sollte
+  // CANCEL_TOKEN_SECRET gesetzt sein (64 Bytes Random).
+  const dedicated = process.env.CANCEL_TOKEN_SECRET;
+  if (dedicated && dedicated.length >= 32) {
+    return `cancel-token-salt-${dedicated}`;
+  }
+  const adminPw = process.env.ADMIN_PASSWORD;
+  if (adminPw) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('CANCEL_TOKEN_SECRET not set — falling back to ADMIN_PASSWORD (deprecated)');
+    }
+    return `cancel-token-salt-${adminPw}`;
+  }
+  throw new Error('Neither CANCEL_TOKEN_SECRET nor ADMIN_PASSWORD configured');
 }
 
 export function generateCancelToken(bookingId: string): string {

@@ -100,6 +100,12 @@ const { title = "Termin buchen" } = Astro.props;
           <textarea id="notes" name="notes" rows="3"></textarea>
         </div>
 
+        <p class="booking-privacy-note">
+          Mit dem Absenden stimmst du der Verarbeitung deiner Angaben zur
+          Bearbeitung deiner Buchung zu. Details dazu in unserer
+          <a href="/datenschutz">Datenschutzerklaerung</a>.
+        </p>
+
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" id="backToCalendar"
             >Zurück</button
@@ -339,6 +345,18 @@ const { title = "Termin buchen" } = Astro.props;
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--color-warm-beige, #E0D6CC);
+  }
+
+  .booking-privacy-note {
+    margin: 0.25rem 0 0.75rem;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .booking-privacy-note a {
+    color: var(--color-accent, #B1735C);
+    text-decoration: underline;
   }
 
   .trust-bar__item {
@@ -807,7 +825,7 @@ const { title = "Termin buchen" } = Astro.props;
           if (response.ok && result.success) {
             // Erfolgsmeldung anzeigen
             messageEl.textContent =
-              "Vielen Dank! Ihre Buchung wurde erfolgreich übermittelt. Sie erhalten in Kürze eine Bestätigungs-E-Mail mit Kalender-Eintrag.";
+              "Geschafft! Deine Anfrage ist bei mir angekommen. Schau gleich in dein Postfach — die Bestaetigung mit Kalendereintrag ist schon unterwegs.";
             messageEl.className = "message success";
             messageEl.classList.remove("hidden");
 
@@ -835,7 +853,7 @@ const { title = "Termin buchen" } = Astro.props;
           console.error("Fehler bei der Buchung:", error);
           if (messageEl) {
             messageEl.textContent =
-              "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns direkt.";
+              "Das hat gerade nicht geklappt. Versuch es in einem Moment nochmal — oder schreib mir auf WhatsApp, ich helf dir sofort.";
             messageEl.className = "message error";
             messageEl.classList.remove("hidden");
 

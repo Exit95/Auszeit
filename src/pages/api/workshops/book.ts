@@ -4,7 +4,7 @@ import path from 'path';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../../lib/s3-storage';
 import { BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
 import { createSmtpTransporter } from '../../../lib/smtp';
-import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeId } from '../../../lib/sanitize';
+import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeId, escapeHtml } from '../../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
 import { getCancelUrl } from '../../../lib/cancel-token';
 
@@ -165,16 +165,16 @@ export const POST: APIRoute = async ({ request }) => {
 
 	    const adminHtml = `
 	      <h2>Neue Workshop-Buchung</h2>
-	      <p><strong>Workshop:</strong> ${workshop.title}</p>
-	      <p><strong>Datum:</strong> ${workshop.date}</p>
-	      <p><strong>Uhrzeit:</strong> ${workshop.time} Uhr</p>
-	      <p><strong>Preis:</strong> ${workshop.price}</p>
+	      <p><strong>Workshop:</strong> ${escapeHtml(workshop.title)}</p>
+	      <p><strong>Datum:</strong> ${escapeHtml(workshop.date)}</p>
+	      <p><strong>Uhrzeit:</strong> ${escapeHtml(workshop.time)} Uhr</p>
+	      <p><strong>Preis:</strong> ${escapeHtml(workshop.price)}</p>
 	      <hr />
-	      <p><strong>Name:</strong> ${name}</p>
-	      <p><strong>E-Mail:</strong> ${email}</p>
-	      <p><strong>Telefon:</strong> ${phone || 'Nicht angegeben'}</p>
+	      <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+	      <p><strong>E-Mail:</strong> ${escapeHtml(email)}</p>
+	      <p><strong>Telefon:</strong> ${escapeHtml(phone || 'Nicht angegeben')}</p>
 	      <p><strong>Teilnehmer:</strong> ${participants}</p>
-	      <p><strong>Notizen:</strong> ${notes || 'Keine'}</p>
+	      <p><strong>Notizen:</strong> ${escapeHtml(notes || 'Keine')}</p>
 	    `;
 
 	    const adminText = `
@@ -196,45 +196,45 @@ export const POST: APIRoute = async ({ request }) => {
 
 	    const customerHtml = `
 	      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-	        <h2 style="color: #8B6F47;">Vielen Dank für Ihre Workshop-Buchungsanfrage!</h2>
-	        <p>Liebe/r ${name},</p>
-	        <p>wir haben Ihre Buchungsanfrage für den Workshop <strong>${workshop.title}</strong> erhalten.</p>
-	        <p>Sie erhalten eine <strong>separate E-Mail mit der endgültigen Bestätigung</strong>, sobald wir Ihren Platz bestätigt haben.</p>
+	        <h2 style="color: #8B6F47;">Danke für deine Workshop-Anfrage!</h2>
+	        <p>Hallo ${escapeHtml(name)},</p>
+	        <p>deine Anfrage für den Workshop <strong>${escapeHtml(workshop.title)}</strong> ist bei mir angekommen.</p>
+	        <p>Du bekommst eine <strong>separate Bestätigung</strong>, sobald ich dir deinen Platz fest zugesagt habe.</p>
 
 	        <div style="background-color: #F5F0E8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-	          <h3 style="color: #8B6F47; margin-top: 0;">Ihre Angaben:</h3>
-	          <p><strong>Workshop:</strong> ${workshop.title}</p>
-	          <p><strong>Datum:</strong> ${workshop.date}</p>
-	          <p><strong>Uhrzeit:</strong> ${workshop.time} Uhr</p>
+	          <h3 style="color: #8B6F47; margin-top: 0;">Deine Angaben</h3>
+	          <p><strong>Workshop:</strong> ${escapeHtml(workshop.title)}</p>
+	          <p><strong>Datum:</strong> ${escapeHtml(workshop.date)}</p>
+	          <p><strong>Uhrzeit:</strong> ${escapeHtml(workshop.time)} Uhr</p>
 	          <p><strong>Teilnehmer:</strong> ${participants}</p>
-	          ${notes ? `<p><strong>Ihre Notizen:</strong> ${notes}</p>` : ''}
+	          ${notes ? `<p><strong>Deine Notizen:</strong> ${escapeHtml(notes)}</p>` : ''}
 	        </div>
 
-	        <p>Bei Fragen oder Änderungswünschen können Sie uns gerne kontaktieren:</p>
+	        <p>Wenn du Fragen oder Änderungswünsche hast, meld dich einfach:</p>
 	        <p>
-	          📧 E-Mail: ${bookingEmail}<br />
+	          📧 E-Mail: ${escapeHtml(bookingEmail)}<br />
 	        </p>
 
 	        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
-	          <p style="font-size: 0.85rem; color: #999;">Falls Sie Ihren Termin nicht wahrnehmen können, können Sie ihn hier stornieren:<br>
-	          <a href="${cancelUrl}" style="color: #dc2626;">Workshop-Buchung stornieren</a></p>
+	          <p style="font-size: 0.85rem; color: #999;">Falls du deinen Termin nicht wahrnehmen kannst, kannst du hier stornieren:<br>
+	          <a href="${escapeHtml(cancelUrl)}" style="color: #dc2626;">Workshop-Buchung stornieren</a></p>
 	        </div>
 
-	        <p style="margin-top: 30px;">Herzliche Grüße,<br />
-	        <strong>Irena Woschkowiak</strong><br />
+	        <p style="margin-top: 30px;">Herzliche Grüße<br />
+	        <strong>Irena</strong><br />
 	        Atelier Auszeit</p>
 	      </div>
 	    `;
 
 	    const customerText = `
-Vielen Dank für Ihre Workshop-Buchungsanfrage!
+Danke für deine Workshop-Anfrage!
 
-Liebe/r ${name},
+Hallo ${name},
 
-wir haben Ihre Buchungsanfrage für den Workshop "${workshop.title}" erhalten.
-Sie erhalten eine separate E-Mail mit der endgültigen Bestätigung, sobald wir Ihren Platz bestätigt haben.
+deine Anfrage für den Workshop "${workshop.title}" ist bei mir angekommen.
+Du bekommst eine separate Bestätigung, sobald ich dir deinen Platz fest zugesagt habe.
 
-Ihre Angaben:
+Deine Angaben:
   Workshop: ${workshop.title}
   Datum: ${workshop.date}
   Uhrzeit: ${workshop.time} Uhr
@@ -244,11 +244,11 @@ Ihre Angaben:
 Kontakt:
   E-Mail: ${bookingEmail}
 
-Falls Sie Ihren Termin nicht wahrnehmen können, können Sie ihn hier stornieren:
+Falls du deinen Termin nicht wahrnehmen kannst, kannst du hier stornieren:
 ${cancelUrl}
 
-Herzliche Grüße,
-Irena Woschkowiak
+Herzliche Grüße
+Irena
 Atelier Auszeit
 	    `;
 

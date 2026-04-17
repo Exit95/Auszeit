@@ -3,7 +3,7 @@
  * Combines session management, rate limiting, and audit logging
  */
 
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'crypto';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from './rate-limit';
 import { createSession, getSession, destroySession, sessionCookieHeader, getSessionIdFromCookie, validateSessionBinding, logoutCookieHeader } from './session';
 import { generateCsrfToken, csrfCookieHeader } from './csrf';
@@ -130,7 +130,7 @@ export function validateBasicAuth(request: Request): { valid: boolean; username?
   const authHeader = request.headers.get('Authorization');
   const adminPassword = getAdminPassword();
 
-  if (!authHeader) return { valid: false };
+  if (!authHeader || !adminPassword) return { valid: false };
 
   const [type, credentials] = authHeader.split(' ');
   if (type !== 'Basic' || !credentials) return { valid: false };
@@ -139,8 +139,13 @@ export function validateBasicAuth(request: Request): { valid: boolean; username?
     const decoded = Buffer.from(credentials, 'base64').toString();
     const [username, password] = decoded.split(':');
 
-    if (username === 'admin' && password === adminPassword) {
-      return { valid: true, username };
+    if (username === 'admin' && password !== undefined) {
+      // Timing-safe equal: gleiche Laenge via SHA-256-Digest erzwingen
+      const a = createHash('sha256').update(password).digest();
+      const b = createHash('sha256').update(adminPassword).digest();
+      if (timingSafeEqual(a, b)) {
+        return { valid: true, username };
+      }
     }
   } catch {
     // Invalid base64

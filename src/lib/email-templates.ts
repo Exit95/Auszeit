@@ -3,6 +3,8 @@
  * Alle Mails teilen dasselbe Markenbild und Layout.
  */
 
+import { escapeHtml } from './sanitize';
+
 // ── Farb-Konstanten ────────────────────────────────────────────────────────────
 const C = {
   bg:         '#f2ede8',
@@ -85,7 +87,7 @@ function h2(text: string): string {
 }
 
 function greeting(name: string): string {
-  return `<p style="margin:0 0 16px;color:${C.text};font-size:15px;line-height:1.6;">Liebe/r <strong>${name}</strong>,</p>`;
+  return `<p style="margin:0 0 16px;color:${C.text};font-size:15px;line-height:1.6;">Hallo <strong>${escapeHtml(name)}</strong>,</p>`;
 }
 
 function para(text: string): string {
@@ -97,8 +99,8 @@ function infoBox(rows: { label: string; value: string }[]): string {
     .filter(r => r.value)
     .map(r => `
       <tr>
-        <td style="padding:10px 16px;border-bottom:1px solid ${C.divider};color:${C.muted};font-size:13px;font-weight:600;white-space:nowrap;width:35%;">${r.label}</td>
-        <td style="padding:10px 16px;border-bottom:1px solid ${C.divider};color:${C.text};font-size:14px;">${r.value}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid ${C.divider};color:${C.muted};font-size:13px;font-weight:600;white-space:nowrap;width:35%;">${escapeHtml(r.label)}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid ${C.divider};color:${C.text};font-size:14px;">${escapeHtml(r.value)}</td>
       </tr>`)
     .join('');
 
@@ -107,7 +109,7 @@ function infoBox(rows: { label: string; value: string }[]): string {
          style="border:1px solid ${C.boxBorder};border-radius:10px;overflow:hidden;margin:20px 0;">
     <tr style="background:${C.box};">
       <td colspan="2" style="padding:12px 16px;border-bottom:1px solid ${C.divider};">
-        <span style="color:${C.accent};font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Ihre Angaben</span>
+        <span style="color:${C.accent};font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Deine Angaben</span>
       </td>
     </tr>
     ${cells}
@@ -121,13 +123,13 @@ function divider(): string {
 function cancelLink(url: string): string {
   return `
   <p style="margin:0;color:${C.subtle};font-size:12px;line-height:1.6;">
-    Falls Sie Ihre Buchung nicht wahrnehmen können, können Sie diese jederzeit stornieren:<br>
-    <a href="${url}" style="color:${C.danger};text-decoration:underline;">Buchung stornieren</a>
+    Falls du deinen Termin nicht wahrnehmen kannst, kannst du jederzeit stornieren:<br>
+    <a href="${escapeHtml(url)}" style="color:${C.danger};text-decoration:underline;">Buchung stornieren</a>
   </p>`;
 }
 
 function signature(): string {
-  return `<p style="margin:28px 0 0;color:${C.text};font-size:15px;line-height:1.7;">Herzliche Grüße,<br><strong>Irena Woschkowiak</strong><br><span style="color:${C.muted};font-size:13px;">Atelier Auszeit</span></p>`;
+  return `<p style="margin:28px 0 0;color:${C.text};font-size:15px;line-height:1.7;">Herzliche Grüße<br><strong>Irena</strong><br><span style="color:${C.muted};font-size:13px;">Atelier Auszeit</span></p>`;
 }
 
 function adminBadge(label: string): string {
@@ -139,8 +141,8 @@ function adminInfoBox(rows: { label: string; value: string }[]): string {
     .filter(r => r.value)
     .map(r => `
       <tr>
-        <td style="padding:9px 16px;border-bottom:1px solid ${C.divider};color:${C.muted};font-size:13px;font-weight:600;white-space:nowrap;width:35%;">${r.label}</td>
-        <td style="padding:9px 16px;border-bottom:1px solid ${C.divider};color:${C.text};font-size:14px;">${r.value}</td>
+        <td style="padding:9px 16px;border-bottom:1px solid ${C.divider};color:${C.muted};font-size:13px;font-weight:600;white-space:nowrap;width:35%;">${escapeHtml(r.label)}</td>
+        <td style="padding:9px 16px;border-bottom:1px solid ${C.divider};color:${C.text};font-size:14px;">${escapeHtml(r.value)}</td>
       </tr>`)
     .join('');
 
@@ -167,14 +169,14 @@ export function bookingRequestCustomerHtml(p: {
 }): string {
   const namesHtml = p.participantNames?.length
     ? `<p style="margin:0 0 4px;color:${C.muted};font-size:13px;font-weight:600;">Teilnehmernamen</p>
-       <ol style="margin:0 0 12px;padding-left:20px;color:${C.text};font-size:14px;">${p.participantNames.map(n => `<li>${n}</li>`).join('')}</ol>`
+       <ol style="margin:0 0 12px;padding-left:20px;color:${C.text};font-size:14px;">${p.participantNames.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol>`
     : '';
 
   const body = `
-    ${h2('Ihre Anfrage ist eingegangen')}
+    ${h2('Deine Anfrage ist angekommen')}
     ${greeting(p.name)}
-    ${para('vielen Dank für Ihre Buchungsanfrage! Wir haben diese erhalten und werden uns so schnell wie möglich bei Ihnen melden.')}
-    ${para('Sie erhalten eine <strong>separate Bestätigungs-E-Mail</strong>, sobald wir Ihren Termin fest eingeplant haben.')}
+    ${para('danke für deine Buchungsanfrage! Ist bei mir angekommen — ich melde mich schnellstmöglich bei dir.')}
+    ${para('Du bekommst eine <strong>separate Bestätigung</strong>, sobald dein Termin fest eingeplant ist.')}
     ${infoBox([
       { label: 'Datum',    value: p.date },
       { label: 'Uhrzeit', value: p.time + ' Uhr' },
@@ -205,7 +207,7 @@ export function bookingRequestAdminHtml(p: {
 }): string {
   const namesHtml = p.participantNames?.length
     ? `<p style="margin:12px 0 4px;color:${C.muted};font-size:13px;font-weight:600;">Teilnehmernamen</p>
-       <ol style="margin:0;padding-left:20px;color:${C.text};font-size:14px;">${p.participantNames.map(n => `<li>${n}</li>`).join('')}</ol>`
+       <ol style="margin:0;padding-left:20px;color:${C.text};font-size:14px;">${p.participantNames.map(n => `<li>${escapeHtml(n)}</li>`).join('')}</ol>`
     : '';
 
   const body = `
@@ -238,9 +240,9 @@ export function bookingConfirmedCustomerHtml(p: {
   cancelUrl: string;
 }): string {
   const body = `
-    ${h2('Ihr Termin ist bestätigt! ✓')}
+    ${h2('Dein Termin steht! ✓')}
     ${greeting(p.name)}
-    ${para('wir freuen uns, Ihren Termin im Atelier Auszeit offiziell zu bestätigen. Wir sind gespannt auf Ihr Werk!')}
+    ${para('dein Termin im Atelier Auszeit ist bestätigt. Ich freu mich auf dich!')}
     ${infoBox([
       { label: 'Datum',    value: p.date },
       { label: 'Uhrzeit', value: p.time + ' Uhr' },
@@ -248,8 +250,8 @@ export function bookingConfirmedCustomerHtml(p: {
       { label: 'Ort',     value: 'Atelier Auszeit, Feldstiege 6a, 48599 Gronau' },
       { label: 'Notizen', value: p.notes || '' },
     ])}
-    ${para('Bitte kommen Sie <strong>pünktlich</strong>. Farben, Pinsel und der Glasurbrand sind im Kurspreis bereits enthalten.')}
-    ${para('Bei Fragen erreichen Sie uns jederzeit per E-Mail oder Telefon. Wir helfen gerne.')}
+    ${para('Komm gerne <strong>pünktlich</strong>. Farben, Pinsel und Glasurbrand sind bereits im Preis enthalten.')}
+    ${para('Wenn du Fragen hast, schreib mir einfach oder ruf an — ich helfe dir gern.')}
     ${divider()}
     ${cancelLink(p.cancelUrl)}
     ${signature()}
@@ -272,12 +274,12 @@ export function bookingCancelledCustomerHtml(p: {
   ]) : '';
 
   const body = `
-    ${h2('Ihre Buchung wurde storniert')}
+    ${h2('Deine Buchung wurde storniert')}
     ${greeting(p.name)}
-    ${para('Ihre Buchung wurde erfolgreich storniert. Der Termin ist damit wieder freigegeben.')}
+    ${para('deine Buchung ist storniert. Der Termin ist damit wieder freigegeben.')}
     ${dateRow}
-    ${para('Falls Sie einen neuen Termin buchen möchten, besuchen Sie gerne unsere Webseite oder schreiben uns eine E-Mail.')}
-    ${para('Wir hoffen, Sie bald bei uns im Atelier begrüßen zu dürfen!')}
+    ${para('Wenn du einen neuen Termin buchen möchtest, schau gerne auf der Webseite vorbei oder schreib mir eine kurze Nachricht.')}
+    ${para('Ich freu mich, dich bald wieder im Atelier zu sehen!')}
     ${signature()}
   `;
 
@@ -295,16 +297,16 @@ export function inquiryCustomerHtml(p: {
   message?: string;
 }): string {
   const body = `
-    ${h2('Ihre Anfrage ist eingegangen')}
+    ${h2('Deine Anfrage ist angekommen')}
     ${greeting(p.name)}
-    ${para('vielen Dank für Ihre Anfrage! Wir haben diese erhalten und werden uns zeitnah bei Ihnen melden, um alle Details gemeinsam zu besprechen.')}
+    ${para('danke für deine Anfrage! Ist bei mir angekommen — ich melde mich zeitnah bei dir, damit wir alle Details gemeinsam besprechen.')}
     ${infoBox([
       { label: 'Anlass',      value: p.eventLabel },
       { label: 'Wunschdatum', value: p.preferredDate || 'Flexibel' },
       { label: 'Personen',    value: String(p.participants) },
       { label: 'Nachricht',   value: p.message || '' },
     ])}
-    ${para('Wir gestalten Ihren besonderen Anlass individuell und freuen uns darauf, etwas Einzigartiges mit Ihnen zu kreieren.')}
+    ${para('Wir planen deinen Anlass individuell — ich freu mich drauf, etwas Besonderes mit dir zu gestalten.')}
     ${signature()}
   `;
 
@@ -328,20 +330,20 @@ export function voucherPurchasedCustomerHtml(p: {
 
     <div style="background:white;border:2px dashed ${C.accent};border-radius:14px;padding:28px 20px;margin:24px 0;text-align:center;">
       <p style="margin:0 0 6px;color:${C.muted};font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Gutschein-Code</p>
-      <p style="margin:0 0 12px;color:${C.header};font-size:26px;font-weight:bold;font-family:monospace;letter-spacing:3px;">${p.code}</p>
+      <p style="margin:0 0 12px;color:${C.header};font-size:26px;font-weight:bold;font-family:monospace;letter-spacing:3px;">${escapeHtml(p.code)}</p>
       <div style="width:60px;border-top:1px solid ${C.divider};margin:0 auto 12px;"></div>
-      <p style="margin:0;color:${C.header};font-size:34px;font-weight:bold;">${p.amount}</p>
+      <p style="margin:0;color:${C.header};font-size:34px;font-weight:bold;">${escapeHtml(p.amount)}</p>
     </div>
 
     <div style="text-align:center;margin:24px 0;">
-      <img src="${p.qrDataUrl}" alt="QR-Code zum Einl\u00f6sen" width="180" height="180" style="border-radius:10px;" />
+      <img src="${escapeHtml(p.qrDataUrl)}" alt="QR-Code zum Einl\u00f6sen" width="180" height="180" style="border-radius:10px;" />
       <p style="margin:8px 0 0;color:${C.muted};font-size:12px;">QR-Code im Atelier vorzeigen</p>
     </div>
 
-    ${para('Zeige diesen Gutschein einfach im Atelier vor \u2013 der QR-Code kann direkt gescannt werden.')}
+    ${para('Zeig den Gutschein einfach im Atelier vor \u2013 der QR-Code kann direkt gescannt werden.')}
     ${divider()}
     <p style="margin:0;color:${C.subtle};font-size:12px;line-height:1.6;">
-      Einl\u00f6se-Link: <a href="${p.redeemUrl}" style="color:${C.accent};text-decoration:underline;">${p.redeemUrl}</a>
+      Einl\u00f6se-Link: <a href="${escapeHtml(p.redeemUrl)}" style="color:${C.accent};text-decoration:underline;">${escapeHtml(p.redeemUrl)}</a>
     </p>
     ${signature()}
   `;

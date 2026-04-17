@@ -26,11 +26,11 @@
       <div class="inquiry-form-grid">
         <div class="form-group">
           <label for="inquiryName">Name *</label>
-          <input type="text" id="inquiryName" required autocomplete="name" placeholder="Ihr Name">
+          <input type="text" id="inquiryName" required autocomplete="name" placeholder="Dein Name">
         </div>
         <div class="form-group">
           <label for="inquiryEmail">E-Mail *</label>
-          <input type="email" id="inquiryEmail" required autocomplete="email" placeholder="ihre@email.de">
+          <input type="email" id="inquiryEmail" required autocomplete="email" placeholder="deine@email.de">
         </div>
         <div class="form-group">
           <label for="inquiryPhone">Telefon *</label>
@@ -47,13 +47,19 @@
       </div>
 
       <div class="form-group">
-        <label for="inquiryMessage">Ihre Nachricht / Wünsche</label>
-        <textarea id="inquiryMessage" rows="4" placeholder="Erzählen Sie uns von Ihrem Anlass..."></textarea>
+        <label for="inquiryMessage">Deine Nachricht / Wünsche</label>
+        <textarea id="inquiryMessage" rows="4" placeholder="Erzähl mir kurz, was ihr vorhabt..."></textarea>
       </div>
+
+      <p class="inquiry-privacy-note">
+        Mit dem Absenden stimmst du der Verarbeitung deiner Angaben zur Bearbeitung
+        deiner Anfrage zu. Details in unserer
+        <a href="/datenschutz">Datenschutzerklaerung</a>.
+      </p>
 
       <div class="inquiry-form-actions">
         <button type="button" class="btn btn-secondary" id="inquiryBack">Zurück</button>
-        <button type="submit" class="btn btn-primary">Anfrage senden</button>
+        <button type="submit" class="btn btn-primary">Anfrage an Irena schicken</button>
       </div>
     </form>
 
@@ -161,6 +167,16 @@
     border-color: var(--color-primary, #5b3e31);
     box-shadow: 0 0 0 3px rgba(91,62,49,0.1);
   }
+  .inquiry-privacy-note {
+    margin: 0.25rem 0 0.75rem;
+    font-size: 0.82rem;
+    color: var(--color-text-secondary, #5D4E43);
+    line-height: 1.5;
+  }
+  .inquiry-privacy-note a {
+    color: var(--color-accent, #B1735C);
+    text-decoration: underline;
+  }
   .inquiry-form-actions {
     display: flex;
     gap: 1rem;
@@ -261,20 +277,20 @@
           resultDiv.classList.remove('hidden', 'success', 'error');
           if (data.success) {
             resultDiv.classList.add('success');
-            resultDiv.textContent = 'Vielen Dank! Ihre Anfrage wurde gesendet. Wir melden uns zeitnah bei Ihnen.';
+            resultDiv.textContent = 'Angekommen! Ich melde mich meist innerhalb eines Tages bei dir.';
             form.classList.add('hidden');
             form.reset();
             eventBtns.forEach(b => b.classList.remove('active'));
           } else {
             resultDiv.classList.add('error');
-            resultDiv.textContent = data.message || 'Fehler beim Senden. Bitte versuchen Sie es erneut.';
+            resultDiv.textContent = data.message || 'Hat leider nicht geklappt. Versuch es bitte nochmal.';
           }
         }
       } catch (err) {
         if (resultDiv) {
           resultDiv.classList.remove('hidden', 'success', 'error');
           resultDiv.classList.add('error');
-          resultDiv.textContent = 'Verbindungsfehler. Bitte versuchen Sie es später erneut.';
+          resultDiv.textContent = 'Verbindungsfehler. Versuch es bitte gleich nochmal.';
         }
       } finally {
         submitBtn.disabled = false;

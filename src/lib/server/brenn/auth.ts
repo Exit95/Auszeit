@@ -27,14 +27,23 @@ export function checkAuth(request: Request): boolean {
 }
 
 /**
- * Auth deaktiviert — Brenn-Verwaltung ist ohne Login zugänglich.
- * Rate-Limiting bleibt aktiv.
+ * Prueft Rate-Limit und erzwingt Basic-Auth fuer Brenn-Admin-Endpoints.
+ * Rueckgabe !== null => Anfrage abweisen.
  */
 export function requireAuth(request: Request): Response | null {
   const clientId = getClientIdentifier(request);
   const rateLimit = checkRateLimit(clientId, RATE_LIMITS.ADMIN);
   if (!rateLimit.allowed) {
     return rateLimitResponse(rateLimit);
+  }
+  if (!checkAuth(request)) {
+    return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'WWW-Authenticate': 'Basic realm="Brenn-Verwaltung"',
+      },
+    });
   }
   return null;
 }

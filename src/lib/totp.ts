@@ -14,6 +14,16 @@ import * as crypto from 'node:crypto';
 const otp = new OTP({ strategy: 'totp' });
 
 /**
+ * Timing-safe string comparison to prevent timing attacks on credentials.
+ */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+/**
  * Get the TOTP secret from environment
  * This should be set once and kept secret
  */
@@ -39,7 +49,7 @@ export function is2FAEnabled(): boolean {
 export function isSuperuser(username: string, password: string): boolean {
   const superuserPassword = process.env.SUPERUSER_PASSWORD;
   if (!superuserPassword) return false;
-  return username === 'superuser' && password === superuserPassword;
+  return username === 'superuser' && safeEqual(password, superuserPassword);
 }
 
 /**
@@ -47,7 +57,8 @@ export function isSuperuser(username: string, password: string): boolean {
  */
 export function isAdmin(username: string, password: string): boolean {
   const adminPassword = process.env.ADMIN_PASSWORD || '';
-  return username === 'admin' && password === adminPassword;
+  if (!adminPassword) return false;
+  return username === 'admin' && safeEqual(password, adminPassword);
 }
 
 /**
@@ -96,8 +107,10 @@ export function generateOtpAuthUrl(secret: string, accountName: string = 'Admin'
 export function verifyToken(token: string): boolean {
   const secret = getTotpSecret();
   if (!secret) {
-    // If no secret configured, 2FA is disabled - allow access
-    return true;
+    // Fail closed: wenn hier Aufruf stattfindet ohne konfiguriertes Secret
+    // stimmt etwas nicht — is2FAEnabled() sollte den Aufruf verhindern.
+    console.error('TOTP_SECRET not configured — denying 2FA verification');
+    return false;
   }
 
   try {

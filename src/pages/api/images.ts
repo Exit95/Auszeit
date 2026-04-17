@@ -3,6 +3,7 @@ import busboy from 'busboy';
 import fs from 'fs';
 import path from 'path';
 import { isS3Configured, uploadToS3, deleteFromS3, listS3Objects, getContentType, getS3Key } from '../../lib/s3-storage';
+import { sanitizeFilename } from '../../lib/sanitize';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 const PUBLIC_DIR = path.join(process.cwd(), 'public');
@@ -244,6 +245,17 @@ export const POST: APIRoute = async ({ request }) => {
           return;
         }
 
+        // Path-Traversal-Schutz
+        const safe = path.basename(sanitizeFilename(filename));
+        if (!safe || safe === 'unnamed') {
+          resolve(new Response(JSON.stringify({ error: 'Invalid filename' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          }));
+          return;
+        }
+        filename = safe;
+
         if (!category) {
           resolve(new Response(JSON.stringify({ error: 'Missing category' }), {
             status: 400,
@@ -358,7 +370,13 @@ export const DELETE: APIRoute = async ({ request }) => {
       });
     }
 
-    const safeName = path.basename(filename);
+    const safeName = path.basename(sanitizeFilename(filename));
+    if (!safeName || safeName === 'unnamed') {
+      return new Response(JSON.stringify({ error: 'Invalid filename' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // S3 Modus
     if (isS3Configured()) {

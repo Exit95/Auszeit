@@ -4,10 +4,12 @@ import MainLayout from '../layouts/MainLayout.astro';
 
 <MainLayout
   title="Buchung stornieren - Atelier Auszeit"
-  description="Stornieren Sie Ihre Buchung im Atelier Auszeit"
+  description="Storniere deine Buchung im Atelier Auszeit"
 >
   <section style="min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
     <div id="cancel-container" style="max-width: 500px; width: 100%; font-family: Arial, sans-serif;">
+      <h1 style="color: #8B6F47; font-family: serif; font-size: 1.9rem; margin: 0 0 1.25rem; text-align: center;">Buchung stornieren</h1>
+
       <div id="loading" style="text-align: center; padding: 3rem;">
         <p style="color: #8B6F47; font-size: 1.2rem;">Buchung wird geladen...</p>
       </div>
@@ -19,7 +21,7 @@ import MainLayout from '../layouts/MainLayout.astro';
       </div>
 
       <div id="booking-info" style="display: none;">
-        <h2 style="color: #8B6F47; font-family: serif; font-size: 1.75rem; margin-bottom: 1rem;">Buchung stornieren</h2>
+        <h2 style="color: #8B6F47; font-family: serif; font-size: 1.5rem; margin-bottom: 1rem;">Deine Buchung</h2>
         <div style="background-color: #F5F0E8; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
           <p><strong>Name:</strong> <span id="info-name"></span></p>
           <p><strong>Teilnehmer:</strong> <span id="info-participants"></span></p>
@@ -34,7 +36,7 @@ import MainLayout from '../layouts/MainLayout.astro';
         </div>
 
         <div id="cancel-form" style="display: none;">
-          <p style="margin-bottom: 1rem; color: #666;">Möchten Sie diese Buchung wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+          <p style="margin-bottom: 1rem; color: #666;">Möchtest du diese Buchung wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.</p>
           <button id="cancel-btn" style="width: 100%; padding: 0.875rem; background-color: #dc2626; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
             Buchung stornieren
           </button>
@@ -45,7 +47,7 @@ import MainLayout from '../layouts/MainLayout.astro';
       <div id="success" style="display: none; text-align: center; padding: 2rem;">
         <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
         <h2 style="color: #16a34a;">Buchung storniert</h2>
-        <p>Ihre Buchung wurde erfolgreich storniert. Vielen Dank für die rechtzeitige Absage.</p>
+        <p>Deine Buchung wurde erfolgreich storniert. Danke für die rechtzeitige Absage.</p>
         <a href="/" style="display: inline-block; margin-top: 1.5rem; padding: 0.75rem 2rem; background-color: #8B6F47; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">Zurück zur Startseite</a>
       </div>
     </div>
