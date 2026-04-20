@@ -200,7 +200,10 @@ export type RootStackParamList = {
   AtelierToday: undefined;
   AtelierBookings: undefined;
   AtelierInquiries: undefined;
+  InquiryDetail: { id: string };
+  BookingDetail: { id: string };
   AdminReviews: undefined;
+  VoucherScanner: undefined;
 };
 
 export type TabParamList = {

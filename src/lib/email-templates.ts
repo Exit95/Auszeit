@@ -64,7 +64,7 @@ function shell(bodyContent: string): string {
             <p style="margin:0 0 4px;color:${C.primary};font-size:13px;font-weight:600;">Atelier Auszeit · Irena Woschkowiak</p>
             <p style="margin:0;color:${C.muted};font-size:12px;line-height:1.7;">
               Feldstiege 6a · 48599 Gronau<br>
-              <a href="mailto:keramik-auszeit@web.de" style="color:${C.accent};text-decoration:none;">keramik-auszeit@web.de</a>
+              <a href="mailto:atelier@keramik-auszeit.de" style="color:${C.accent};text-decoration:none;">atelier@keramik-auszeit.de</a>
               &nbsp;·&nbsp;
               <a href="tel:+4917634255005" style="color:${C.accent};text-decoration:none;">+49 176 34255005</a>
             </p>
@@ -375,6 +375,38 @@ export function inquiryAdminHtml(p: {
       { label: 'Nachricht',   value: p.message || 'Keine Nachricht' },
     ])}
     ${para('Bitte im <strong>Admin-Panel</strong> unter "Anfragen" bearbeiten und den Kunden kontaktieren.')}
+  `;
+
+  return shell(body);
+}
+
+/**
+ * 8. Persönliche Antwort auf Anfrage → Kunde
+ *    Wird aus der Admin-App heraus gesendet.
+ */
+export function inquiryReplyHtml(p: {
+  name: string;
+  eventLabel: string;
+  message: string;
+  preferredDate?: string;
+  participants?: number;
+}): string {
+  // Nachricht als einfachen Fließtext mit Absätzen rendern
+  const paragraphs = p.message
+    .split(/\n{2,}/)
+    .map((block) => para(escapeHtml(block).replace(/\n/g, '<br>')))
+    .join('');
+
+  const body = `
+    ${h2('Deine Anfrage beim Atelier Auszeit')}
+    ${greeting(p.name)}
+    ${paragraphs}
+    ${infoBox([
+      { label: 'Anlass',      value: p.eventLabel },
+      { label: 'Wunschdatum', value: p.preferredDate || '' },
+      { label: 'Personen',    value: p.participants ? String(p.participants) : '' },
+    ])}
+    ${signature()}
   `;
 
   return shell(body);

@@ -20,8 +20,11 @@ import { SearchScreen } from '../screens/SearchScreen';
 import { AtelierHubScreen } from '../screens/AtelierHubScreen';
 import { TodayScreen } from '../screens/TodayScreen';
 import { BookingsScreen } from '../screens/BookingsScreen';
+import { BookingDetailScreen } from '../screens/BookingDetailScreen';
 import { InquiriesScreen } from '../screens/InquiriesScreen';
+import { InquiryDetailScreen } from '../screens/InquiryDetailScreen';
 import { AdminReviewsScreen } from '../screens/AdminReviewsScreen';
+import { VoucherScannerScreen } from '../screens/VoucherScannerScreen';
 
 import { useAuth } from '../hooks/useAuth';
 
@@ -152,9 +155,24 @@ export function AppNavigator() {
             options={{ title: 'Anfragen' }}
           />
           <Stack.Screen
+            name="InquiryDetail"
+            component={InquiryDetailScreen}
+            options={{ title: 'Anfrage' }}
+          />
+          <Stack.Screen
+            name="BookingDetail"
+            component={BookingDetailScreen}
+            options={{ title: 'Buchung' }}
+          />
+          <Stack.Screen
             name="AdminReviews"
             component={AdminReviewsScreen}
             options={{ title: 'Bewertungen' }}
+          />
+          <Stack.Screen
+            name="VoucherScanner"
+            component={VoucherScannerScreen}
+            options={{ title: 'Gutschein-Scanner', headerShown: false }}
           />
         </>
       )}

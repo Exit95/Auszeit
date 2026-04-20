@@ -78,6 +78,19 @@ class AdminApiClient {
     return response.json();
   }
 
+  async put<T>(path: string, body: unknown): Promise<T> {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      method: 'PUT',
+      headers: this.buildHeaders(),
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Netzwerkfehler' }));
+      throw new AdminApiError(response.status, err.error || 'Unbekannter Fehler');
+    }
+    return response.json();
+  }
+
   async patch<T>(path: string, body: unknown): Promise<T> {
     const response = await fetch(`${BASE_URL}${path}`, {
       method: 'PATCH',

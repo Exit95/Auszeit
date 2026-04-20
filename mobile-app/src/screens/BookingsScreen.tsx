@@ -1,16 +1,21 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Alert,
+  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Alert, AppState,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { adminApi } from '../api/adminClient';
 import { Card, EmptyState, LoadingScreen } from '../components';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
-import type { Booking, BookingStatus } from '../types';
+import type { Booking, BookingStatus, RootStackParamList } from '../types';
 
-type Filter = 'pending' | 'confirmed' | 'cancelled';
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+type Filter = 'active' | 'pending' | 'confirmed' | 'cancelled';
 
 const FILTERS: { key: Filter; label: string; color: string }[] = [
+  { key: 'active', label: 'Aktiv', color: colors.primary },
   { key: 'pending', label: 'Neu', color: colors.warning },
   { key: 'confirmed', label: 'Bestätigt', color: colors.success },
   { key: 'cancelled', label: 'Storniert', color: colors.error },
@@ -50,10 +55,11 @@ function formatCreatedAt(isoStr: string): string {
 }
 
 export function BookingsScreen() {
+  const navigation = useNavigation<Nav>();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<Filter>('pending');
+  const [activeFilter, setActiveFilter] = useState<Filter>('active');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,21 +76,76 @@ export function BookingsScreen() {
     }
   }, []);
 
-  React.useEffect(() => {
+  // Initial load + Auto-Sync alle 30 Sekunden
+  useEffect(() => {
     loadBookings();
+
+    const interval = setInterval(() => {
+      loadBookings();
+    }, 30_000);
+
+    // Bei App-Fokus sofort neu laden
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') loadBookings();
+    });
+
+    return () => {
+      clearInterval(interval);
+      sub.remove();
+    };
   }, [loadBookings]);
 
+  const today = new Date().toISOString().split('T')[0];
+
   const filtered = bookings
-    .filter(b => b.status === activeFilter)
+    .filter(b => {
+      if (activeFilter === 'active') {
+        if (b.status === 'cancelled') return false;
+        if (b.slotDate) {
+          if (b.slotDate < today) return false;
+        } else {
+          // Ohne Datum nur pending anzeigen
+          if (b.status !== 'pending') return false;
+        }
+        return true;
+      }
+      if (activeFilter === 'pending') return b.status === 'pending';
+      if (activeFilter === 'confirmed') return b.status === 'confirmed';
+      if (activeFilter === 'cancelled') return b.status === 'cancelled';
+      return true;
+    })
     .sort((a, b) => {
-      // Neueste zuerst bei pending, älteste bei confirmed/cancelled
+      // Pending immer zuerst
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+
+      // Neueste zuerst bei pending
       if (activeFilter === 'pending') {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
-      return (a.slotDate || '').localeCompare(b.slotDate || '');
+
+      // Stornierte: neueste zuerst
+      if (activeFilter === 'cancelled') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+
+      // Ohne Datum ans Ende
+      if (a.slotDate && !b.slotDate) return -1;
+      if (!a.slotDate && b.slotDate) return 1;
+      if (!a.slotDate && !b.slotDate) return 0;
+
+      // Nach Datum + Uhrzeit aufsteigend (nächster Termin zuerst)
+      const aTime = `${a.slotDate}T${a.slotTime || '00:00'}`;
+      const bTime = `${b.slotDate}T${b.slotTime || '00:00'}`;
+      return aTime.localeCompare(bTime);
     });
 
   const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  const activeCount = bookings.filter(b => {
+    if (b.status === 'cancelled') return false;
+    if (b.slotDate) return b.slotDate >= today;
+    return b.status === 'pending';
+  }).length;
 
   const handleConfirm = async (booking: Booking) => {
     Alert.alert(
@@ -142,7 +203,7 @@ export function BookingsScreen() {
       {/* Filter Tabs */}
       <View style={styles.filterRow}>
         {FILTERS.map(f => {
-          const count = bookings.filter(b => b.status === f.key).length;
+          const count = f.key === 'active' ? activeCount : bookings.filter(b => b.status === f.key).length;
           const isActive = activeFilter === f.key;
           return (
             <Pressable
@@ -195,6 +256,7 @@ export function BookingsScreen() {
         renderItem={({ item }) => {
           const isProcessing = actionLoading === item.id;
           return (
+            <Pressable onPress={() => navigation.navigate('BookingDetail', { id: item.id })}>
             <Card style={[styles.card, isProcessing && styles.cardDisabled]}>
               {/* Header: Datum + Uhrzeit */}
               <View style={styles.cardHeader}>
@@ -237,38 +299,51 @@ export function BookingsScreen() {
               {/* Eingangsdatum */}
               <Text style={styles.createdAt}>Eingegangen: {formatCreatedAt(item.createdAt)}</Text>
 
-              {/* Aktionen (nur für pending) */}
-              {activeFilter === 'pending' && (
-                <View style={styles.actionRow}>
+              {/* Aktionen */}
+              <View style={styles.actionRow}>
+                <Pressable
+                  style={[styles.actionBtn, styles.manageBtn, isProcessing && styles.btnDisabled]}
+                  onPress={() => navigation.navigate('BookingDetail', { id: item.id })}
+                >
+                  <Ionicons name="create-outline" size={16} color={colors.textOnPrimary} />
+                  <Text style={styles.actionBtnText}>Verwalten</Text>
+                </Pressable>
+                {item.status !== 'cancelled' && item.status === 'pending' && (
                   <Pressable
                     style={[styles.actionBtn, styles.confirmBtn, isProcessing && styles.btnDisabled]}
-                    onPress={() => !isProcessing && handleConfirm(item)}
+                    onPress={(e) => { e.stopPropagation?.(); if (!isProcessing) handleConfirm(item); }}
                   >
                     <Ionicons name="checkmark-circle-outline" size={16} color={colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>Bestätigen</Text>
                   </Pressable>
+                )}
+                {item.status !== 'cancelled' && (
                   <Pressable
                     style={[styles.actionBtn, styles.cancelBtn, isProcessing && styles.btnDisabled]}
-                    onPress={() => !isProcessing && handleCancel(item)}
+                    onPress={(e) => { e.stopPropagation?.(); if (!isProcessing) handleCancel(item); }}
                   >
                     <Ionicons name="close-circle-outline" size={16} color={colors.error} />
                     <Text style={[styles.actionBtnText, { color: colors.error }]}>Stornieren</Text>
                   </Pressable>
-                </View>
-              )}
+                )}
+              </View>
             </Card>
+            </Pressable>
           );
         }}
         ListEmptyComponent={
           <EmptyState
             icon={activeFilter === 'pending' ? 'checkmark-circle-outline' : 'calendar-outline'}
             title={
+              activeFilter === 'active' ? 'Keine anstehenden Buchungen' :
               activeFilter === 'pending' ? 'Keine neuen Buchungen' :
               activeFilter === 'confirmed' ? 'Keine bestätigten Buchungen' :
               'Keine stornierten Buchungen'
             }
             message={
-              activeFilter === 'pending'
+              activeFilter === 'active'
+                ? 'Derzeit stehen keine Termine an.'
+                : activeFilter === 'pending'
                 ? 'Alle Buchungen wurden bearbeitet.'
                 : 'In dieser Kategorie gibt es noch keine Buchungen.'
             }
@@ -439,6 +514,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error + '15',
     borderWidth: 1,
     borderColor: colors.error + '40',
+  },
+  manageBtn: {
+    backgroundColor: colors.primary,
   },
   btnDisabled: {
     opacity: 0.5,

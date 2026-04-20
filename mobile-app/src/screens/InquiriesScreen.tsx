@@ -1,12 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking, Alert,
+  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking, Alert, AppState,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { adminApi } from '../api/adminClient';
 import { Card, EmptyState, LoadingScreen } from '../components';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
-import type { Inquiry, InquiryStatus, InquiryEventType } from '../types';
+import type { Inquiry, InquiryStatus, InquiryEventType, RootStackParamList } from '../types';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 const EVENT_LABELS: Record<InquiryEventType, string> = {
   kindergeburtstag: 'Kindergeburtstag',
@@ -74,6 +78,7 @@ function formatCreatedAt(isoStr: string): string {
 }
 
 export function InquiriesScreen() {
+  const navigation = useNavigation<Nav>();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -93,8 +98,13 @@ export function InquiriesScreen() {
     }
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadInquiries();
+    const interval = setInterval(() => loadInquiries(), 30_000);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') loadInquiries();
+    });
+    return () => { clearInterval(interval); sub.remove(); };
   }, [loadInquiries]);
 
   const filtered = inquiries
@@ -170,6 +180,7 @@ export function InquiriesScreen() {
           />
         }
         renderItem={({ item }) => (
+          <Pressable onPress={() => navigation.navigate('InquiryDetail', { id: item.id })}>
           <Card style={styles.card}>
             {/* Event-Typ + Status */}
             <View style={styles.cardHeader}>
@@ -229,18 +240,25 @@ export function InquiriesScreen() {
 
             {/* Aktions-Buttons */}
             <View style={styles.actionRow}>
+              <Pressable
+                style={[styles.actionBtn, styles.manageBtn]}
+                onPress={() => navigation.navigate('InquiryDetail', { id: item.id })}
+              >
+                <Ionicons name="create-outline" size={16} color={colors.textOnPrimary} />
+                <Text style={styles.actionBtnText}>Verwalten</Text>
+              </Pressable>
               {item.phone && (
                 <>
                   <Pressable
                     style={[styles.actionBtn, styles.callBtn]}
-                    onPress={() => handleCall(item.phone)}
+                    onPress={(e) => { e.stopPropagation?.(); handleCall(item.phone); }}
                   >
                     <Ionicons name="call-outline" size={16} color={colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>Anrufen</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.actionBtn, styles.waBtn]}
-                    onPress={() => handleWhatsApp(item.phone, item.name)}
+                    onPress={(e) => { e.stopPropagation?.(); handleWhatsApp(item.phone, item.name); }}
                   >
                     <Ionicons name="logo-whatsapp" size={16} color={colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>WhatsApp</Text>
@@ -249,6 +267,7 @@ export function InquiriesScreen() {
               )}
             </View>
           </Card>
+          </Pressable>
         )}
         ListEmptyComponent={
           <EmptyState
@@ -399,6 +418,9 @@ const styles = StyleSheet.create({
   },
   waBtn: {
     backgroundColor: '#25D366',
+  },
+  manageBtn: {
+    backgroundColor: colors.primary,
   },
   actionBtnText: {
     fontSize: fontSize.sm,
