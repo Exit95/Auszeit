@@ -11,7 +11,10 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/c0064f8c-976b-43c4-9fee-69132fda6000"
+      "url": "https://u.expo.dev/c0064f8c-976b-43c4-9fee-69132fda6000",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 30000,
+      "enabled": true
     },
     "splash": {
       "backgroundColor": "#A0522D"
@@ -28,9 +31,11 @@
     },
     "plugins": [
       "expo-image-picker",
+      "expo-camera",
       "expo-asset",
       "expo-font",
-      "expo-updates"
+      "expo-updates",
+      "expo-notifications"
     ],
     "extra": {
       "eas": {
