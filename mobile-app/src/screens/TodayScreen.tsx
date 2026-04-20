@@ -1,12 +1,16 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking,
+  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { adminApi } from '../api/adminClient';
 import { Card, EmptyState, LoadingScreen } from '../components';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
-import type { Booking } from '../types';
+import type { Booking, RootStackParamList } from '../types';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 function getTodayString(): string {
   const now = new Date();
@@ -36,10 +40,12 @@ function formatDateLong(dateStr: string): string {
 }
 
 export function TodayScreen() {
+  const navigation = useNavigation<Nav>();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const today = getTodayString();
 
@@ -72,6 +78,31 @@ export function TodayScreen() {
     if (!phone) return;
     const cleaned = phone.replace(/\s+/g, '');
     Linking.openURL(`tel:${cleaned}`);
+  };
+
+  const handleCancel = (booking: Booking) => {
+    Alert.alert(
+      'Buchung stornieren',
+      `Buchung von ${booking.name} (heute ${formatTime(booking.slotTime)}) wirklich stornieren?`,
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Stornieren',
+          style: 'destructive',
+          onPress: async () => {
+            setCancellingId(booking.id);
+            try {
+              await adminApi.post('/api/admin/bookings', { id: booking.id, action: 'cancel' });
+              await loadBookings();
+            } catch (err: any) {
+              Alert.alert('Fehler', err?.message || 'Stornierung fehlgeschlagen');
+            } finally {
+              setCancellingId(null);
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (loading && bookings.length === 0) return <LoadingScreen />;
@@ -151,6 +182,22 @@ export function TodayScreen() {
                 <Text style={styles.actionBtnText}>{item.phone}</Text>
               </Pressable>
             )}
+            <Pressable
+              style={styles.manageBtn}
+              onPress={() => navigation.navigate('BookingDetail', { id: item.id })}
+            >
+              <Ionicons name="create-outline" size={16} color={colors.textOnPrimary} />
+              <Text style={styles.actionBtnText}>Bearbeiten</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.cancelBtn, cancellingId === item.id && styles.btnDisabled]}
+              onPress={() => cancellingId !== item.id && handleCancel(item)}
+            >
+              <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+              <Text style={[styles.actionBtnText, { color: colors.error }]}>
+                {cancellingId === item.id ? 'Storniere…' : 'Stornieren'}
+              </Text>
+            </Pressable>
           </View>
         </Card>
       )}
@@ -272,6 +319,7 @@ const styles = StyleSheet.create({
   actions: {
     marginTop: spacing.sm,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
   },
   actionBtn: {
@@ -282,6 +330,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
+  },
+  manageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+  },
+  cancelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.error + '15',
+    borderWidth: 1,
+    borderColor: colors.error + '40',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+  },
+  btnDisabled: {
+    opacity: 0.5,
   },
   actionBtnText: {
     fontSize: fontSize.sm,
