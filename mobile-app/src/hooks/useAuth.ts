@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { adminApi } from '../api/adminClient';
+import { api } from '../api/client';
 
-// Einfacher PIN-Schutz — Irena kennt den PIN
+// Legacy-PIN nur als Fallback — echter Schutz ist das Admin-Passwort
+// (validiert live im LoginScreen gegen die Server-API).
 const APP_PIN = '2468';
 const AUTH_KEY = 'brenn_authenticated';
 
@@ -31,9 +34,17 @@ export function useAuthProvider() {
 
   const init = useCallback(async () => {
     try {
+      // API-Credentials zuerst laden, damit kein Render ohne Auth passiert
+      await Promise.all([
+        adminApi.init().catch(() => {}),
+        api.init().catch(() => {}),
+      ]);
       const stored = await AsyncStorage.getItem(AUTH_KEY);
-      if (stored === 'true') {
+      if (stored === 'true' && adminApi.getCredentials()) {
         setUser({ name: 'Irena' });
+      } else if (stored === 'true' && !adminApi.getCredentials()) {
+        // Legacy-Session ohne Admin-Credentials: Nutzer muss neu einloggen
+        await AsyncStorage.removeItem(AUTH_KEY);
       }
     } catch {
       // Ignore
@@ -52,6 +63,8 @@ export function useAuthProvider() {
 
   const logout = useCallback(async () => {
     await AsyncStorage.removeItem(AUTH_KEY);
+    await adminApi.clearCredentials().catch(() => {});
+    await api.clearToken().catch(() => {});
     setUser(null);
   }, []);
 

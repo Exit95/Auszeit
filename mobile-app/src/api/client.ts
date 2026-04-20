@@ -1,9 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { adminApi } from './adminClient';
 
 // API zeigt auf die bestehenden Brenn-Endpunkte der Auszeit-Website
 // Auch im Dev-Modus auf Live-API, da DB nur auf dem Server läuft
 const API_BASE = 'https://keramik-auszeit.de/api/admin/brenn';
 
+// Die Brenn-Endpoints erwarten serverseitig Basic-Auth
+// (siehe src/lib/server/brenn/auth.ts → checkAuth).
+// Wir teilen die Credentials mit dem adminApi-Client, damit ein einziger
+// Admin-Login sowohl Atelier- als auch Brenn-Endpoints freischaltet.
 const TOKEN_KEY = 'auth_token';
 
 class ApiClient {
@@ -35,7 +40,11 @@ class ApiClient {
   ): Promise<T> {
     const headers: Record<string, string> = {};
 
-    if (this.token) {
+    // Erst Basic-Auth (neuer Weg), sonst Bearer (Legacy-Fallback)
+    const basicCreds = adminApi.getCredentials();
+    if (basicCreds) {
+      headers['Authorization'] = `Basic ${basicCreds}`;
+    } else if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
