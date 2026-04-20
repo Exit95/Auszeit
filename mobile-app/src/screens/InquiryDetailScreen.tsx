@@ -185,6 +185,28 @@ export function InquiryDetailScreen() {
     }
   };
 
+  // Wenn die Anfrage noch "neu" ist: bei Kontaktaufnahme (Mail, Anruf, WhatsApp)
+  // automatisch auf "kontaktiert" setzen.
+  const markContactedIfNew = async (via: 'whatsapp' | 'call' | 'mail') => {
+    if (!inquiry || inquiry.status !== 'new') return;
+    try {
+      const timestamp = new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+      const viaLabel =
+        via === 'whatsapp' ? 'WhatsApp' : via === 'call' ? 'Anruf' : 'Mail-App';
+      const note = `[${timestamp}] Kontakt aufgenommen via ${viaLabel}`;
+      const combinedNotes = inquiry.adminNotes ? `${inquiry.adminNotes}\n${note}` : note;
+      await adminApi.put('/api/inquiries', {
+        id: inquiry.id,
+        status: 'contacted',
+        adminNotes: combinedNotes,
+      });
+      await load();
+    } catch (err) {
+      // Nicht-blockierend: Kontaktaufnahme soll immer durchgehen
+      console.warn('Status auto-update fehlgeschlagen:', err);
+    }
+  };
+
   const handleMailto = () => {
     if (!inquiry) return;
     const subject = replySubject || `Deine Anfrage beim Atelier Auszeit`;
@@ -193,11 +215,13 @@ export function InquiryDetailScreen() {
     Linking.openURL(url).catch(() => {
       Alert.alert('Fehler', 'Kein Mail-Programm verfügbar.');
     });
+    markContactedIfNew('mail');
   };
 
   const handleCall = () => {
     if (!inquiry?.phone) return;
     Linking.openURL(`tel:${inquiry.phone.replace(/\s+/g, '')}`);
+    markContactedIfNew('call');
   };
 
   const handleWhatsApp = () => {
@@ -208,6 +232,7 @@ export function InquiryDetailScreen() {
       `Hallo ${inquiry.name},\n\nvielen Dank für deine Anfrage beim Atelier Auszeit!`,
     );
     Linking.openURL(`https://wa.me/${normalized.replace('+', '')}?text=${text}`);
+    markContactedIfNew('whatsapp');
   };
 
   const handleCancelInquiry = () => {

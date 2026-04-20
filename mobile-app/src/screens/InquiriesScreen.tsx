@@ -111,17 +111,38 @@ export function InquiriesScreen() {
     .filter(i => activeFilter === 'all' || i.status === activeFilter)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const handleCall = (phone?: string) => {
-    if (!phone) return;
-    Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`);
+  // Wenn die Anfrage noch "neu" ist, bei Kontakt automatisch auf "kontaktiert" setzen.
+  const markContacted = async (inquiry: Inquiry, via: 'whatsapp' | 'call') => {
+    if (inquiry.status !== 'new') return;
+    try {
+      const timestamp = new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+      const viaLabel = via === 'whatsapp' ? 'WhatsApp' : 'Anruf';
+      const note = `[${timestamp}] Kontakt aufgenommen via ${viaLabel}`;
+      const combinedNotes = inquiry.adminNotes ? `${inquiry.adminNotes}\n${note}` : note;
+      await adminApi.put('/api/inquiries', {
+        id: inquiry.id,
+        status: 'contacted',
+        adminNotes: combinedNotes,
+      });
+      await loadInquiries();
+    } catch (err) {
+      console.warn('Status auto-update fehlgeschlagen:', err);
+    }
   };
 
-  const handleWhatsApp = (phone?: string, name?: string) => {
-    if (!phone) return;
-    const cleaned = phone.replace(/[^0-9+]/g, '');
+  const handleCall = (inquiry: Inquiry) => {
+    if (!inquiry.phone) return;
+    Linking.openURL(`tel:${inquiry.phone.replace(/\s+/g, '')}`);
+    markContacted(inquiry, 'call');
+  };
+
+  const handleWhatsApp = (inquiry: Inquiry) => {
+    if (!inquiry.phone) return;
+    const cleaned = inquiry.phone.replace(/[^0-9+]/g, '');
     const normalized = cleaned.startsWith('0') ? '+49' + cleaned.slice(1) : cleaned;
-    const text = encodeURIComponent(`Hallo ${name || ''},\n\nvielen Dank für Ihre Anfrage beim Atelier Auszeit! Ich melde mich gerne wegen Ihrer Veranstaltung.`);
+    const text = encodeURIComponent(`Hallo ${inquiry.name || ''},\n\nvielen Dank für Ihre Anfrage beim Atelier Auszeit! Ich melde mich gerne wegen Ihrer Veranstaltung.`);
     Linking.openURL(`https://wa.me/${normalized}?text=${text}`);
+    markContacted(inquiry, 'whatsapp');
   };
 
   if (loading && inquiries.length === 0) return <LoadingScreen />;
@@ -251,14 +272,14 @@ export function InquiriesScreen() {
                 <>
                   <Pressable
                     style={[styles.actionBtn, styles.callBtn]}
-                    onPress={(e) => { e.stopPropagation?.(); handleCall(item.phone); }}
+                    onPress={(e) => { e.stopPropagation?.(); handleCall(item); }}
                   >
                     <Ionicons name="call-outline" size={16} color={colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>Anrufen</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.actionBtn, styles.waBtn]}
-                    onPress={(e) => { e.stopPropagation?.(); handleWhatsApp(item.phone, item.name); }}
+                    onPress={(e) => { e.stopPropagation?.(); handleWhatsApp(item); }}
                   >
                     <Ionicons name="logo-whatsapp" size={16} color={colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>WhatsApp</Text>
