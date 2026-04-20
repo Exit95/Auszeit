@@ -185,8 +185,13 @@ export function BookingsScreen() {
             try {
               await adminApi.post('/api/admin/bookings', { id: booking.id, action: 'cancel' });
               await loadBookings();
+              Alert.alert('Storniert', `Buchung von ${booking.name} wurde storniert.`);
             } catch (err: any) {
-              Alert.alert('Fehler', err?.message || 'Stornierung fehlgeschlagen');
+              const status = err?.status ? ` (${err.status})` : '';
+              Alert.alert(
+                'Stornierung fehlgeschlagen' + status,
+                err?.message || 'Unbekannter Fehler. Bitte Internetverbindung prüfen und erneut anmelden.',
+              );
             } finally {
               setActionLoading(null);
             }
@@ -256,7 +261,6 @@ export function BookingsScreen() {
         renderItem={({ item }) => {
           const isProcessing = actionLoading === item.id;
           return (
-            <Pressable onPress={() => navigation.navigate('BookingDetail', { id: item.id })}>
             <Card style={[styles.card, isProcessing && styles.cardDisabled]}>
               {/* Header: Datum + Uhrzeit */}
               <View style={styles.cardHeader}>
@@ -311,7 +315,7 @@ export function BookingsScreen() {
                 {item.status !== 'cancelled' && item.status === 'pending' && (
                   <Pressable
                     style={[styles.actionBtn, styles.confirmBtn, isProcessing && styles.btnDisabled]}
-                    onPress={(e) => { e.stopPropagation?.(); if (!isProcessing) handleConfirm(item); }}
+                    onPress={() => { if (!isProcessing) handleConfirm(item); }}
                   >
                     <Ionicons name="checkmark-circle-outline" size={16} color={colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>Bestätigen</Text>
@@ -320,7 +324,7 @@ export function BookingsScreen() {
                 {item.status !== 'cancelled' && (
                   <Pressable
                     style={[styles.actionBtn, styles.cancelBtn, isProcessing && styles.btnDisabled]}
-                    onPress={(e) => { e.stopPropagation?.(); if (!isProcessing) handleCancel(item); }}
+                    onPress={() => { if (!isProcessing) handleCancel(item); }}
                   >
                     <Ionicons name="close-circle-outline" size={16} color={colors.error} />
                     <Text style={[styles.actionBtnText, { color: colors.error }]}>Stornieren</Text>
@@ -328,7 +332,6 @@ export function BookingsScreen() {
                 )}
               </View>
             </Card>
-            </Pressable>
           );
         }}
         ListEmptyComponent={

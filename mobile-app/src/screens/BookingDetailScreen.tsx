@@ -168,8 +168,13 @@ export function BookingDetailScreen() {
             try {
               await adminApi.post('/api/admin/bookings', { id: booking.id, action: 'cancel' });
               await load();
+              Alert.alert('Storniert', `Buchung von ${booking.name} wurde storniert.`);
             } catch (err: any) {
-              Alert.alert('Fehler', err?.message || 'Stornierung fehlgeschlagen');
+              const status = err?.status ? ` (${err.status})` : '';
+              Alert.alert(
+                'Stornierung fehlgeschlagen' + status,
+                err?.message || 'Unbekannter Fehler. Bitte Internetverbindung prüfen und erneut anmelden.',
+              );
             } finally {
               setActionLoading(false);
             }

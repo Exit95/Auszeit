@@ -201,7 +201,6 @@ export function InquiriesScreen() {
           />
         }
         renderItem={({ item }) => (
-          <Pressable onPress={() => navigation.navigate('InquiryDetail', { id: item.id })}>
           <Card style={styles.card}>
             {/* Event-Typ + Status */}
             <View style={styles.cardHeader}>
@@ -272,14 +271,14 @@ export function InquiriesScreen() {
                 <>
                   <Pressable
                     style={[styles.actionBtn, styles.callBtn]}
-                    onPress={(e) => { e.stopPropagation?.(); handleCall(item); }}
+                    onPress={() => handleCall(item)}
                   >
                     <Ionicons name="call-outline" size={16} color={colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>Anrufen</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.actionBtn, styles.waBtn]}
-                    onPress={(e) => { e.stopPropagation?.(); handleWhatsApp(item); }}
+                    onPress={() => handleWhatsApp(item)}
                   >
                     <Ionicons name="logo-whatsapp" size={16} color={colors.textOnPrimary} />
                     <Text style={styles.actionBtnText}>WhatsApp</Text>
@@ -288,7 +287,6 @@ export function InquiriesScreen() {
               )}
             </View>
           </Card>
-          </Pressable>
         )}
         ListEmptyComponent={
           <EmptyState
