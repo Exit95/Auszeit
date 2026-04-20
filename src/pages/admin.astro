@@ -1216,6 +1216,9 @@ export const prerender = false;
 		              if (b.slotDate) {
 		                const slotDate = new Date(b.slotDate + 'T00:00:00');
 		                if (slotDate < today) return false;
+		              } else {
+		                // Buchungen ohne Slot-Datum: nur anzeigen wenn pending
+		                if (b.status !== 'pending') return false;
 		              }
 		            } else if (activeFilter === 'pending') {
 		              if (b.status !== 'pending') return false;
@@ -1239,13 +1242,20 @@ export const prerender = false;
 		            if (a.status === 'pending' && b.status !== 'pending') return -1;
 		            if (a.status !== 'pending' && b.status === 'pending') return 1;
 
-		            const aDateBase = a.slotDate || (a.createdAt ? String(a.createdAt).split('T')[0] : '');
-		            const bDateBase = b.slotDate || (b.createdAt ? String(b.createdAt).split('T')[0] : '');
+		            // Buchungen ohne Slot-Datum ans Ende
+		            if (a.slotDate && !b.slotDate) return -1;
+		            if (!a.slotDate && b.slotDate) return 1;
+		            if (!a.slotDate && !b.slotDate) return 0;
 
-		            if (!aDateBase || !bDateBase) return 0;
+		            const aDate = new Date(`${a.slotDate}T${a.slotTime || '00:00'}:00`);
+		            const bDate = new Date(`${b.slotDate}T${b.slotTime || '00:00'}:00`);
 
-		            const aDate = new Date(`${aDateBase}T${a.slotTime || '00:00'}:00`);
-		            const bDate = new Date(`${bDateBase}T${b.slotTime || '00:00'}:00`);
+		            // Stornierte: neueste Termine zuerst
+		            if (activeFilter === 'cancelled') {
+		              return bDate.getTime() - aDate.getTime();
+		            }
+
+		            // Aktive/Bestätigte: nächster Termin zuerst
 		            return aDate.getTime() - bDate.getTime();
 		          });
 

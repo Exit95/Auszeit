@@ -58,20 +58,20 @@
   /* Touch targets */
   --touch-target-min: 44px;
 
-  /* Border radius - Weichere Ecken */
-  --radius: 18px;
-  --radius-sm: 10px;
-  --radius-base: 14px;
-  --radius-lg: 24px;
+  /* Border radius - Weichere, einladendere Ecken */
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-base: 16px;
+  --radius-lg: 28px;
   --radius-full: 999px;
 
-  /* Shadows - Wärmer mit Espresso-Tönen */
-  --shadow-sm: 0 1px 2px 0 rgba(66, 52, 48, 0.06);
-  --shadow: 0 4px 12px -1px rgba(66, 52, 48, 0.10);
-  --shadow-md: 0 6px 16px -2px rgba(66, 52, 48, 0.10);
-  --shadow-lg: 0 10px 24px -3px rgba(66, 52, 48, 0.12);
-  --shadow-soft: 0 10px 30px rgba(66, 52, 48, 0.12);
-  --shadow-card: 0 10px 24px rgba(66, 52, 48, 0.10);
+  /* Shadows - Wärmer, weicher, einladender */
+  --shadow-sm: 0 1px 3px 0 rgba(66, 52, 48, 0.05);
+  --shadow: 0 4px 14px -2px rgba(66, 52, 48, 0.08);
+  --shadow-md: 0 6px 20px -3px rgba(66, 52, 48, 0.08);
+  --shadow-lg: 0 12px 28px -4px rgba(66, 52, 48, 0.10);
+  --shadow-soft: 0 12px 36px rgba(66, 52, 48, 0.10);
+  --shadow-card: 0 8px 28px rgba(66, 52, 48, 0.08);
 
   /* Typography scale & weights */
   --font-size-xs: 0.75rem;

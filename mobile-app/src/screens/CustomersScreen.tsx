@@ -1,43 +1,34 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, RefreshControl, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, EmptyState, LoadingScreen, Input } from '../components';
-import { api } from '../api/client';
+import { useCustomers } from '../queries/customers';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
-import type { Customer, RootStackParamList } from '../types';
+import type { RootStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function CustomersScreen() {
   const navigation = useNavigation<Nav>();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
 
-  const loadCustomers = useCallback(async () => {
-    try {
-      const path = '/customers?limit=500';
-      const result = await api.get<any>(path);
-      const list = result?.data?.customers || result?.data || result || [];
-      setCustomers(Array.isArray(list) ? list : []);
-    } catch (error) {
-      console.error('Kunden laden fehlgeschlagen:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [search]);
+  const { data: customers = [], isLoading, isRefetching, refetch } = useCustomers();
 
-  useFocusEffect(
-    useCallback(() => {
-      loadCustomers();
-    }, [loadCustomers])
-  );
+  const filtered = useMemo(() => {
+    if (!search.trim()) return customers;
+    const q = search.trim().toLowerCase();
+    return customers.filter(c => {
+      const fullName = `${c.first_name ?? ''} ${c.last_name ?? ''}`.toLowerCase();
+      const email = (c.email ?? '').toLowerCase();
+      const phone = (c.phone ?? '').toLowerCase();
+      return fullName.includes(q) || email.includes(q) || phone.includes(q);
+    });
+  }, [customers, search]);
 
-  if (loading && customers.length === 0) return <LoadingScreen />;
+  if (isLoading && customers.length === 0) return <LoadingScreen />;
 
   return (
     <View style={styles.container}>
@@ -52,14 +43,15 @@ export function CustomersScreen() {
         />
       </View>
 
-      <FlatList
-        data={customers}
+      <FlashList
+        data={filtered}
         keyExtractor={item => item.id.toString()}
+        estimatedItemSize={88}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); loadCustomers(); }}
+            refreshing={isRefetching}
+            onRefresh={refetch}
             colors={[colors.primary]}
           />
         }

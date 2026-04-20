@@ -3,6 +3,7 @@ import { verifyCancelToken } from '../../lib/cancel-token';
 import { getBookings, cancelBooking, getTimeSlots } from '../../lib/storage';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../lib/s3-storage';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
+import { notifyBookingCancelled } from '../../lib/push-notifications';
 import { isSmtpConfigured, FROM_EMAIL } from '../../lib/env';
 import { createSmtpTransporter } from '../../lib/smtp';
 import { bookingCancelledCustomerHtml } from '../../lib/email-templates';
@@ -188,6 +189,8 @@ export const POST: APIRoute = async ({ request }) => {
         sendCancelMail().catch(() => {});
       }
       await cancelBooking(id);
+      // Push-Notification über Kunden-Stornierung
+      notifyBookingCancelled(booking.name, slot?.date).catch(err => console.error('Push error:', err));
     }
 
     return new Response(JSON.stringify({ success: true, message: 'Buchung erfolgreich storniert' }), {

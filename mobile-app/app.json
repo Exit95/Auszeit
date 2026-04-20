@@ -21,13 +21,34 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "de.keramik-auszeit.brennsystem"
+      "bundleIdentifier": "de.keramik-auszeit.brennsystem",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Zum Fotografieren von Keramik-Aufträgen und Scannen von Gutschein-QR-Codes.",
+        "NSPhotoLibraryUsageDescription": "Zum Hochladen von Auftragsfotos aus der Galerie.",
+        "NSPhotoLibraryAddUsageDescription": "Zum Speichern von Auftragsfotos in der Galerie.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#A0522D"
       },
-      "package": "de.keramikauszeit.brennsystem"
+      "package": "de.keramikauszeit.brennsystem",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ],
+      "blockedPermissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-image-picker",
@@ -35,7 +56,16 @@
       "expo-asset",
       "expo-font",
       "expo-updates",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

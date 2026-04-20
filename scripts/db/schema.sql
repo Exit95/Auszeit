@@ -243,3 +243,14 @@ CREATE TABLE IF NOT EXISTS inquiries (
   KEY idx_inquiries_email (email),
   KEY idx_inquiries_event_type (event_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- 11. push_tokens – Expo Push-Notification Tokens für die mobile App
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS push_tokens (
+  id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  token           VARCHAR(255) NOT NULL UNIQUE,
+  platform        VARCHAR(50) NOT NULL DEFAULT 'unknown',
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

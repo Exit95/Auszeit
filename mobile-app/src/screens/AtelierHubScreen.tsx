@@ -53,7 +53,10 @@ export function AtelierHubScreen() {
     try {
       await adminApi.setCredentials('admin', password.trim());
       // Test the credentials
-      const response = await fetch('https://keramik-auszeit.de/api/admin/bookings', {
+      const apiHost =
+        (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
+        'https://keramik-auszeit.de';
+      const response = await fetch(`${apiHost}/api/admin/bookings`, {
         headers: { 'Authorization': `Basic ${adminApi.getCredentials()}` },
       });
       if (response.ok) {
@@ -138,6 +141,15 @@ export function AtelierHubScreen() {
   );
 
   const menuItems = [
+    {
+      icon: 'qr-code-outline' as const,
+      iconFocused: 'qr-code' as const,
+      title: 'Gutschein-Scanner',
+      subtitle: 'QR-Code scannen & einlösen',
+      badge: 0,
+      color: '#8B5CF6',
+      onPress: () => navigation.navigate('VoucherScanner'),
+    },
     {
       icon: 'today-outline' as const,
       iconFocused: 'today' as const,

@@ -1,12 +1,13 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking, Alert, AppState,
+  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { adminApi } from '../api/adminClient';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, EmptyState, LoadingScreen } from '../components';
+import { useInquiries, useUpdateInquiry } from '../queries/inquiries';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 import type { Inquiry, InquiryStatus, InquiryEventType, RootStackParamList } from '../types';
 
@@ -79,55 +80,33 @@ function formatCreatedAt(isoStr: string): string {
 
 export function InquiriesScreen() {
   const navigation = useNavigation<Nav>();
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<InquiryStatus | 'all'>('new');
-  const [error, setError] = useState<string | null>(null);
 
-  const loadInquiries = useCallback(async () => {
-    try {
-      setError(null);
-      const data = await adminApi.get<Inquiry[]>('/api/inquiries');
-      setInquiries(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setError(err?.message || 'Fehler beim Laden');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  const { data: inquiries = [], isLoading, isRefetching, refetch, error } = useInquiries();
+  const updateInquiry = useUpdateInquiry();
 
-  useEffect(() => {
-    loadInquiries();
-    const interval = setInterval(() => loadInquiries(), 30_000);
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') loadInquiries();
-    });
-    return () => { clearInterval(interval); sub.remove(); };
-  }, [loadInquiries]);
-
-  const filtered = inquiries
-    .filter(i => activeFilter === 'all' || i.status === activeFilter)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const filtered = useMemo(
+    () => inquiries
+      .filter(i => activeFilter === 'all' || i.status === activeFilter)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [inquiries, activeFilter],
+  );
 
   // Wenn die Anfrage noch "neu" ist, bei Kontakt automatisch auf "kontaktiert" setzen.
-  const markContacted = async (inquiry: Inquiry, via: 'whatsapp' | 'call') => {
+  const markContacted = (inquiry: Inquiry, via: 'whatsapp' | 'call') => {
     if (inquiry.status !== 'new') return;
-    try {
-      const timestamp = new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
-      const viaLabel = via === 'whatsapp' ? 'WhatsApp' : 'Anruf';
-      const note = `[${timestamp}] Kontakt aufgenommen via ${viaLabel}`;
-      const combinedNotes = inquiry.adminNotes ? `${inquiry.adminNotes}\n${note}` : note;
-      await adminApi.put('/api/inquiries', {
-        id: inquiry.id,
-        status: 'contacted',
-        adminNotes: combinedNotes,
-      });
-      await loadInquiries();
-    } catch (err) {
-      console.warn('Status auto-update fehlgeschlagen:', err);
-    }
+    const timestamp = new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    const viaLabel = via === 'whatsapp' ? 'WhatsApp' : 'Anruf';
+    const note = `[${timestamp}] Kontakt aufgenommen via ${viaLabel}`;
+    const combinedNotes = inquiry.adminNotes ? `${inquiry.adminNotes}\n${note}` : note;
+    updateInquiry.mutate(
+      { id: inquiry.id, status: 'contacted', adminNotes: combinedNotes },
+      {
+        onError: (err) => {
+          if (__DEV__) console.warn('Status auto-update fehlgeschlagen:', err);
+        },
+      },
+    );
   };
 
   const handleCall = (inquiry: Inquiry) => {
@@ -145,7 +124,9 @@ export function InquiriesScreen() {
     markContacted(inquiry, 'whatsapp');
   };
 
-  if (loading && inquiries.length === 0) return <LoadingScreen />;
+  if (isLoading && inquiries.length === 0) return <LoadingScreen />;
+
+  const errorMessage = error ? (error as Error).message : null;
 
   return (
     <View style={styles.container}>
@@ -182,21 +163,22 @@ export function InquiriesScreen() {
         }}
       />
 
-      {error && (
+      {errorMessage && (
         <View style={styles.errorBox}>
           <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>{errorMessage}</Text>
         </View>
       )}
 
-      <FlatList
+      <FlashList
         data={filtered}
         keyExtractor={item => item.id}
+        estimatedItemSize={260}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); loadInquiries(); }}
+            refreshing={isRefetching}
+            onRefresh={refetch}
             colors={[colors.accent]}
           />
         }

@@ -5,6 +5,7 @@ import { content } from '../data/content';
 
 <section class="process">
   <div class="container animate-on-scroll">
+    <span class="process__eyebrow">In 3 Schritten</span>
     <h2 class="process__title">{content.process.title}</h2>
     <div class="process__steps">
       {
@@ -23,8 +24,8 @@ import { content } from '../data/content';
 
 <style>
   .process {
-    padding: var(--space-12) var(--gutter);
-    background-color: var(--bg-paper, #FAF7F2);
+    padding: var(--space-10) var(--gutter);
+    background-color: var(--bg-linen, #EDE4DA);
   }
 
   .container {
@@ -32,8 +33,21 @@ import { content } from '../data/content';
     margin: 0 auto;
   }
 
+  .process__eyebrow {
+    display: block;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-sienna);
+    margin-bottom: 0.75rem;
+  }
+
   .process__title {
     font-family: var(--font-serif, 'Lora', serif);
+    font-size: var(--text-3xl);
     color: var(--brand-espresso, #423430);
     text-align: center;
     margin-bottom: var(--space-8);

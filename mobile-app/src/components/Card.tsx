@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
-import { View, StyleSheet, Pressable, Animated, ViewStyle } from 'react-native';
+import { View, StyleSheet, Pressable, Animated } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { colors, spacing, borderRadius } from '../theme';
 
 interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function Card({ children, onPress, style }: CardProps) {

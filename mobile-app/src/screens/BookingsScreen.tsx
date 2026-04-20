@@ -1,12 +1,13 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Alert, AppState,
+  View, Text, StyleSheet, RefreshControl, Pressable, Alert,
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { adminApi } from '../api/adminClient';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, EmptyState, LoadingScreen } from '../components';
+import { useBookings, useConfirmBooking, useCancelBooking } from '../queries/bookings';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 import type { Booking, BookingStatus, RootStackParamList } from '../types';
 
@@ -56,98 +57,61 @@ function formatCreatedAt(isoStr: string): string {
 
 export function BookingsScreen() {
   const navigation = useNavigation<Nav>();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<Filter>('active');
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const loadBookings = useCallback(async () => {
-    try {
-      setError(null);
-      const all = await adminApi.get<Booking[]>('/api/admin/bookings');
-      setBookings(Array.isArray(all) ? all : []);
-    } catch (err: any) {
-      setError(err?.message || 'Fehler beim Laden');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  const { data: bookings = [], isLoading, isRefetching, refetch, error } = useBookings();
+  const confirmMutation = useConfirmBooking();
+  const cancelMutation = useCancelBooking();
 
-  // Initial load + Auto-Sync alle 30 Sekunden
-  useEffect(() => {
-    loadBookings();
-
-    const interval = setInterval(() => {
-      loadBookings();
-    }, 30_000);
-
-    // Bei App-Fokus sofort neu laden
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') loadBookings();
-    });
-
-    return () => {
-      clearInterval(interval);
-      sub.remove();
-    };
-  }, [loadBookings]);
+  // Loading-Flag für die Karte, die gerade bearbeitet wird
+  const actionLoadingId =
+    (confirmMutation.isPending ? confirmMutation.variables : null) ??
+    (cancelMutation.isPending ? cancelMutation.variables : null);
 
   const today = new Date().toISOString().split('T')[0];
 
-  const filtered = bookings
-    .filter(b => {
-      if (activeFilter === 'active') {
-        if (b.status === 'cancelled') return false;
-        if (b.slotDate) {
-          if (b.slotDate < today) return false;
-        } else {
-          // Ohne Datum nur pending anzeigen
-          if (b.status !== 'pending') return false;
+  const { filtered, pendingCount, activeCount } = useMemo(() => {
+    const pending = bookings.filter(b => b.status === 'pending').length;
+    const active = bookings.filter(b => {
+      if (b.status === 'cancelled') return false;
+      if (b.slotDate) return b.slotDate >= today;
+      return b.status === 'pending';
+    }).length;
+
+    const list = bookings
+      .filter(b => {
+        if (activeFilter === 'active') {
+          if (b.status === 'cancelled') return false;
+          if (b.slotDate) {
+            if (b.slotDate < today) return false;
+          } else {
+            if (b.status !== 'pending') return false;
+          }
+          return true;
         }
+        if (activeFilter === 'pending') return b.status === 'pending';
+        if (activeFilter === 'confirmed') return b.status === 'confirmed';
+        if (activeFilter === 'cancelled') return b.status === 'cancelled';
         return true;
-      }
-      if (activeFilter === 'pending') return b.status === 'pending';
-      if (activeFilter === 'confirmed') return b.status === 'confirmed';
-      if (activeFilter === 'cancelled') return b.status === 'cancelled';
-      return true;
-    })
-    .sort((a, b) => {
-      // Pending immer zuerst
-      if (a.status === 'pending' && b.status !== 'pending') return -1;
-      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      })
+      .sort((a, b) => {
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        if (activeFilter === 'pending' || activeFilter === 'cancelled') {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        if (a.slotDate && !b.slotDate) return -1;
+        if (!a.slotDate && b.slotDate) return 1;
+        if (!a.slotDate && !b.slotDate) return 0;
+        const aTime = `${a.slotDate}T${a.slotTime || '00:00'}`;
+        const bTime = `${b.slotDate}T${b.slotTime || '00:00'}`;
+        return aTime.localeCompare(bTime);
+      });
 
-      // Neueste zuerst bei pending
-      if (activeFilter === 'pending') {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
+    return { filtered: list, pendingCount: pending, activeCount: active };
+  }, [bookings, activeFilter, today]);
 
-      // Stornierte: neueste zuerst
-      if (activeFilter === 'cancelled') {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
-
-      // Ohne Datum ans Ende
-      if (a.slotDate && !b.slotDate) return -1;
-      if (!a.slotDate && b.slotDate) return 1;
-      if (!a.slotDate && !b.slotDate) return 0;
-
-      // Nach Datum + Uhrzeit aufsteigend (nächster Termin zuerst)
-      const aTime = `${a.slotDate}T${a.slotTime || '00:00'}`;
-      const bTime = `${b.slotDate}T${b.slotTime || '00:00'}`;
-      return aTime.localeCompare(bTime);
-    });
-
-  const pendingCount = bookings.filter(b => b.status === 'pending').length;
-  const activeCount = bookings.filter(b => {
-    if (b.status === 'cancelled') return false;
-    if (b.slotDate) return b.slotDate >= today;
-    return b.status === 'pending';
-  }).length;
-
-  const handleConfirm = async (booking: Booking) => {
+  const handleConfirm = (booking: Booking) => {
     Alert.alert(
       'Buchung bestätigen',
       `Buchung von ${booking.name} bestätigen?\nEine Bestätigungs-E-Mail wird automatisch gesendet.`,
@@ -155,23 +119,19 @@ export function BookingsScreen() {
         { text: 'Abbrechen', style: 'cancel' },
         {
           text: 'Bestätigen',
-          onPress: async () => {
-            setActionLoading(booking.id);
-            try {
-              await adminApi.post('/api/admin/bookings', { id: booking.id, action: 'confirm' });
-              await loadBookings();
-            } catch (err: any) {
-              Alert.alert('Fehler', err?.message || 'Bestätigung fehlgeschlagen');
-            } finally {
-              setActionLoading(null);
-            }
+          onPress: () => {
+            confirmMutation.mutate(booking.id, {
+              onError: (err: any) => {
+                Alert.alert('Fehler', err?.message || 'Bestätigung fehlgeschlagen');
+              },
+            });
           },
         },
       ]
     );
   };
 
-  const handleCancel = async (booking: Booking) => {
+  const handleCancel = (booking: Booking) => {
     Alert.alert(
       'Buchung stornieren',
       `Buchung von ${booking.name} stornieren?`,
@@ -180,28 +140,29 @@ export function BookingsScreen() {
         {
           text: 'Stornieren',
           style: 'destructive',
-          onPress: async () => {
-            setActionLoading(booking.id);
-            try {
-              await adminApi.post('/api/admin/bookings', { id: booking.id, action: 'cancel' });
-              await loadBookings();
-              Alert.alert('Storniert', `Buchung von ${booking.name} wurde storniert.`);
-            } catch (err: any) {
-              const status = err?.status ? ` (${err.status})` : '';
-              Alert.alert(
-                'Stornierung fehlgeschlagen' + status,
-                err?.message || 'Unbekannter Fehler. Bitte Internetverbindung prüfen und erneut anmelden.',
-              );
-            } finally {
-              setActionLoading(null);
-            }
+          onPress: () => {
+            cancelMutation.mutate(booking.id, {
+              onSuccess: () => {
+                Alert.alert('Storniert', `Buchung von ${booking.name} wurde storniert.`);
+              },
+              onError: (err: any) => {
+                const status = err?.status ? ` (${err.status})` : '';
+                Alert.alert(
+                  'Stornierung fehlgeschlagen' + status,
+                  err?.message ||
+                    'Unbekannter Fehler. Bitte Internetverbindung prüfen und erneut anmelden.',
+                );
+              },
+            });
           },
         },
       ]
     );
   };
 
-  if (loading && bookings.length === 0) return <LoadingScreen />;
+  if (isLoading && bookings.length === 0) return <LoadingScreen />;
+
+  const errorMessage = error ? (error as Error).message : null;
 
   return (
     <View style={styles.container}>
@@ -240,26 +201,27 @@ export function BookingsScreen() {
         })}
       </View>
 
-      {error && (
+      {errorMessage && (
         <View style={styles.errorBox}>
           <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>{errorMessage}</Text>
         </View>
       )}
 
-      <FlatList
+      <FlashList
         data={filtered}
         keyExtractor={item => item.id}
+        estimatedItemSize={220}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); loadBookings(); }}
+            refreshing={isRefetching}
+            onRefresh={refetch}
             colors={[colors.accent]}
           />
         }
         renderItem={({ item }) => {
-          const isProcessing = actionLoading === item.id;
+          const isProcessing = actionLoadingId === item.id;
           return (
             <Card style={[styles.card, isProcessing && styles.cardDisabled]}>
               {/* Header: Datum + Uhrzeit */}

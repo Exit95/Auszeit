@@ -1,45 +1,25 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl, Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, StatusBadge, OrderCard, LoadingScreen, EmptyState, Button } from '../components';
-import { api } from '../api/client';
+import { OrderCard, LoadingScreen, EmptyState, Button } from '../components';
 import { useAuth } from '../hooks/useAuth';
+import { useDashboard } from '../queries/dashboard';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
-import type { DashboardResponse, RootStackParamList } from '../types';
+import type { RootStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function DashboardScreen() {
   const navigation = useNavigation<Nav>();
-  const { user, logout } = useAuth();
-  const [data, setData] = useState<DashboardResponse['data'] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { logout } = useAuth();
+  const { data, isLoading, isRefetching, refetch } = useDashboard();
 
-  const loadData = useCallback(async () => {
-    try {
-      const result = await api.get<DashboardResponse>('/dashboard');
-      setData(result.data);
-    } catch (error) {
-      console.error('Dashboard laden fehlgeschlagen:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
-
-  if (loading && !data) return <LoadingScreen />;
+  if (isLoading && !data) return <LoadingScreen />;
 
   const c = data?.counters;
 
@@ -50,8 +30,8 @@ export function DashboardScreen() {
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); loadData(); }}
+            refreshing={isRefetching}
+            onRefresh={refetch}
             colors={[colors.accent]}
           />
         }

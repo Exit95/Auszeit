@@ -7,6 +7,8 @@ import * as Updates from 'expo-updates';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { AuthContext, useAuthProvider } from './src/hooks/useAuth';
 import { LoadingScreen } from './src/components/LoadingScreen';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { QueryProvider } from './src/providers/QueryProvider';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 // OTA-Updates beim App-Start explizit prüfen und sofort anwenden.
@@ -22,7 +24,7 @@ async function applyUpdatesIfAny() {
     }
   } catch (err) {
     // Non-fatal — App startet trotzdem mit dem eingebetteten Bundle
-    console.warn('[OTA] Update-Check fehlgeschlagen:', err);
+    if (__DEV__) console.warn('[OTA] Update-Check fehlgeschlagen:', err);
   }
 }
 
@@ -31,9 +33,9 @@ export default function App() {
   usePushNotifications();
 
   useEffect(() => {
-    // OTA-Check zuerst; init läuft nur einmal beim ersten Render.
     applyUpdatesIfAny();
     auth.init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (auth.loading) {
@@ -41,21 +43,25 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <AuthContext.Provider
-        value={{
-          user: auth.user,
-          loading: auth.loading,
-          login: auth.login,
-          logout: auth.logout,
-          isAuthenticated: auth.isAuthenticated,
-        }}
-      >
-        <NavigationContainer>
-          <AppNavigator />
-          <StatusBar style="dark" />
-        </NavigationContainer>
-      </AuthContext.Provider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <QueryProvider>
+          <AuthContext.Provider
+            value={{
+              user: auth.user,
+              loading: auth.loading,
+              login: auth.login,
+              logout: auth.logout,
+              isAuthenticated: auth.isAuthenticated,
+            }}
+          >
+            <NavigationContainer>
+              <AppNavigator />
+              <StatusBar style="light" backgroundColor="#A0522D" />
+            </NavigationContainer>
+          </AuthContext.Provider>
+        </QueryProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

@@ -209,6 +209,10 @@ const products = [
       ))}
     </div>
 
+    <p class="off__more">
+      ... und noch vieles mehr im Atelier! Schau vorbei und entdecke unsere ganze Auswahl vor Ort.
+    </p>
+
     <!-- Pricing -->
     <div class="off__pricing">
       <h3 class="off__pricing-title">Farb- &amp; Brennpauschale</h3>
@@ -234,7 +238,7 @@ const products = [
 <style>
   .off {
     background: var(--bg-linen);
-    padding: var(--space-8) var(--gutter) var(--space-6);
+    padding: var(--space-10) var(--gutter);
   }
 
   .off__container {
@@ -403,6 +407,15 @@ const products = [
     max-width: 560px;
     margin: var(--space-5) auto 0;
     text-align: center;
+  }
+
+  .off__more {
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--color-text-secondary, #6B5D56);
+    font-style: italic;
+    margin: var(--space-4) 0 0;
   }
 
   .off__pricing-title {

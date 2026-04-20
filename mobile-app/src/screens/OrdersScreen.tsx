@@ -1,14 +1,15 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, RefreshControl, Pressable,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FlashList } from '@shopify/flash-list';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { OrderCard, EmptyState, LoadingScreen } from '../components';
-import { api } from '../api/client';
-import { colors, spacing, fontSize, fontWeight, borderRadius, statusColors, statusLabels } from '../theme';
-import type { Order, RootStackParamList, OrderStatus } from '../types';
+import { useOrders } from '../queries/orders';
+import { colors, spacing, fontSize, borderRadius, statusColors, statusLabels } from '../theme';
+import type { RootStackParamList, OrderStatus } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -18,36 +19,15 @@ const STATUS_FILTERS: (OrderStatus | 'alle')[] = [
 
 export function OrdersScreen() {
   const navigation = useNavigation<Nav>();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<OrderStatus | 'alle'>('alle');
 
-  const loadOrders = useCallback(async () => {
-    try {
-      const params = activeFilter !== 'alle' ? `?status=${activeFilter}&limit=500` : '?limit=500';
-      const result = await api.get<any>(`/orders${params}`);
-      const list = result?.data?.orders || result?.data || result || [];
-      setOrders(Array.isArray(list) ? list : []);
-    } catch (error) {
-      console.error('Aufträge laden fehlgeschlagen:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [activeFilter]);
+  const { data: orders = [], isLoading, isRefetching, refetch } = useOrders(activeFilter);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadOrders();
-    }, [loadOrders])
-  );
-
-  if (loading && orders.length === 0) return <LoadingScreen />;
+  if (isLoading && orders.length === 0) return <LoadingScreen />;
 
   return (
     <View style={styles.container}>
-      {/* Status Filter */}
+      {/* Status Filter (horizontal, wenig Items → FlatList ok) */}
       <FlatList
         horizontal
         data={STATUS_FILTERS}
@@ -59,7 +39,7 @@ export function OrdersScreen() {
           const color = item === 'alle' ? colors.primary : statusColors[item];
           return (
             <Pressable
-              onPress={() => { setActiveFilter(item); setLoading(true); }}
+              onPress={() => setActiveFilter(item)}
               style={[
                 styles.filterChip,
                 isActive && { backgroundColor: color + '20', borderColor: color },
@@ -77,14 +57,15 @@ export function OrdersScreen() {
       />
 
       {/* Auftragsliste */}
-      <FlatList
+      <FlashList
         data={orders}
         keyExtractor={item => item.id.toString()}
+        estimatedItemSize={140}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); loadOrders(); }}
+            refreshing={isRefetching}
+            onRefresh={refetch}
             colors={[colors.primary]}
           />
         }

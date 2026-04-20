@@ -8,6 +8,7 @@ import { validateCredentials } from '../../../lib/totp';
 import { createICalEvent } from '../../../lib/ical-helper';
 import { getCancelUrl } from '../../../lib/cancel-token';
 import { bookingConfirmedCustomerHtml } from '../../../lib/email-templates';
+import { notifyBookingCancelled } from '../../../lib/push-notifications';
 import { syncBookingToBrenn } from '../../../lib/server/brenn/booking-sync';
 
 // Authentifizierung - akzeptiert Superuser und Admin
@@ -165,7 +166,7 @@ Feldstiege 6a
 48599 Gronau
 
 Bei Fragen oder Änderungswünschen erreichst du uns unter:
-E-Mail: keramik-auszeit@web.de
+E-Mail: atelier@keramik-auszeit.de
 Telefon: +49 176 34255005
 
 Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:
@@ -252,12 +253,22 @@ Dein Atelier Auszeit
 		}
 
 		// Standard: Buchung stornieren (Rückwärtskompatibilität ohne action-Flag)
+		// Buchungsinfos für Push-Notification holen bevor storniert wird
+		const [bookings, slots] = await Promise.all([getBookings(), getTimeSlots()]);
+		const bookingToCancel = bookings.find(b => b.id === id);
+
 		const success = await cancelBooking(id);
 		if (!success) {
 			return new Response(JSON.stringify({ error: 'Booking not found' }), {
 				status: 404,
 				headers: { 'Content-Type': 'application/json' },
 			});
+		}
+
+		// Push-Notification über Stornierung
+		if (bookingToCancel) {
+			const slot = slots.find(s => s.id === bookingToCancel.slotId);
+			notifyBookingCancelled(bookingToCancel.name, slot?.date).catch(err => console.error('Push error:', err));
 		}
 
 		return new Response(JSON.stringify({ success: true }), {

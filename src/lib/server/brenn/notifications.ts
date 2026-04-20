@@ -105,7 +105,7 @@ export async function sendPickupReadyEmail(data: PickupNotificationData): Promis
           <p style="margin: 4px 0; font-size: 13px;">
             <a href="tel:+4917634255005" style="color: #A0522D; text-decoration: none;">+49 176 34255005</a>
             &nbsp;·&nbsp;
-            <a href="mailto:keramik-auszeit@web.de" style="color: #A0522D; text-decoration: none;">keramik-auszeit@web.de</a>
+            <a href="mailto:atelier@keramik-auszeit.de" style="color: #A0522D; text-decoration: none;">atelier@keramik-auszeit.de</a>
           </p>
           <p style="margin: 12px 0 0; font-size: 12px; color: #C4B5A8;">
             <a href="https://keramik-auszeit.de" style="color: #A0522D; text-decoration: none;">keramik-auszeit.de</a>
@@ -131,7 +131,7 @@ Du kannst deine Keramik zu unseren Öffnungszeiten abholen.
 Bitte hole sie innerhalb von 6 Wochen ab. Nicht abgeholte Keramik wird danach gespendet.
 
 Malatelier Auszeit · Feldstiege 6a · 48599 Gronau
-+49 176 34255005 · keramik-auszeit@web.de`;
++49 176 34255005 · atelier@keramik-auszeit.de`;
 
     await transporter.sendMail({
       from: `"Malatelier Auszeit" <${FROM_EMAIL}>`,

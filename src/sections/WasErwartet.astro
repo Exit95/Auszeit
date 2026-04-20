@@ -11,6 +11,7 @@ const accentColors = [
 
 <section class="was-erwartet animate-on-scroll" aria-labelledby="was-erwartet-title">
   <div class="was-erwartet__container">
+    <span class="was-erwartet__eyebrow">Auf einen Blick</span>
     <h2 class="was-erwartet__title" id="was-erwartet-title">{content.wasErwartet.title}</h2>
     <div class="was-erwartet__grid">
       {content.wasErwartet.items.map((item, i) => (
@@ -27,13 +28,25 @@ const accentColors = [
 
 <style>
   .was-erwartet {
-    padding: var(--space-12) var(--gutter);
+    padding: var(--space-10) var(--gutter);
     background: var(--bg-paper);
   }
 
   .was-erwartet__container {
     max-width: var(--max-width);
     margin: 0 auto;
+  }
+
+  .was-erwartet__eyebrow {
+    display: block;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-sienna);
+    margin-bottom: 0.75rem;
   }
 
   .was-erwartet__title {

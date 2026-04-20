@@ -7,6 +7,7 @@ import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } f
 import { createICalEvent } from '../../lib/ical-helper';
 import { getCancelUrl } from '../../lib/cancel-token';
 import { bookingRequestCustomerHtml, bookingRequestAdminHtml } from '../../lib/email-templates';
+import { notifyNewBooking } from '../../lib/push-notifications';
 
 export const POST: APIRoute = async ({ request }) => {
 	  // Rate limiting
@@ -228,6 +229,9 @@ export const POST: APIRoute = async ({ request }) => {
       // Starte E-Mail-Versand im Hintergrund (nicht awaiten!)
       sendEmails().catch(err => console.error('Background email error:', err));
       emailSent = true; // Wir gehen davon aus, dass es klappt
+
+      // Push-Notification an App senden
+      notifyNewBooking(name, participants, date, time).catch(err => console.error('Push notification error:', err));
     } else {
       console.warn('⚠️ SMTP nicht konfiguriert - E-Mail wird nicht gesendet');
       emailError = 'SMTP nicht konfiguriert';

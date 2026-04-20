@@ -1,37 +1,46 @@
-// Admin API Client — verwendet Basic Auth gegen die Astro-Backend-Endpunkte
-// Die Credentials sind dieselben wie im Web-Admin (admin:ADMIN_PASSWORD)
-// Da in der App kein TOTP nötig ist, nutzen wir das superuser-Konto.
-// Die Credentials werden per Base64 kodiert und als Basic Auth Header mitgeschickt.
-//
-// ACHTUNG: Aktuell sind die Credentials hardcoded auf 'admin' + leeres Passwort,
-// da kein separates Auth-System für die App existiert. Die /api/admin/bookings
-// Endpunkte prüfen per validateCredentials() — was admin:ADMIN_PASSWORD oder
-// superuser:SUPERUSER_PASSWORD akzeptiert. Da wir das Passwort nicht kennen,
-// versuchen wir zuerst ohne Auth — der Endpunkt kann nur 401 zurückgeben.
-//
-// Stattdessen: Wir speichern die Credentials in AsyncStorage nach Login.
+// Admin API Client — verwendet Basic Auth gegen die Astro-Backend-Endpunkte.
+// Credentials werden per expo-secure-store verschlüsselt gespeichert
+// (Android: EncryptedSharedPreferences, iOS: Keychain). KEIN AsyncStorage!
 
+import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'https://keramik-auszeit.de';
+const BASE_URL =
+  (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
+  'https://keramik-auszeit.de';
 const CREDS_KEY = 'admin_credentials';
+const LEGACY_ASYNC_KEY = 'admin_credentials'; // gleicher Key, migriert aus AsyncStorage
 
 class AdminApiClient {
   private credentials: string | null = null; // base64(user:pass)
 
   async init(): Promise<void> {
-    this.credentials = await AsyncStorage.getItem(CREDS_KEY);
+    this.credentials = await SecureStore.getItemAsync(CREDS_KEY);
+
+    // One-time Migration: alte AsyncStorage-Creds in SecureStore übernehmen
+    if (!this.credentials) {
+      try {
+        const legacy = await AsyncStorage.getItem(LEGACY_ASYNC_KEY);
+        if (legacy) {
+          await SecureStore.setItemAsync(CREDS_KEY, legacy);
+          await AsyncStorage.removeItem(LEGACY_ASYNC_KEY);
+          this.credentials = legacy;
+        }
+      } catch {
+        // Migration optional — bei Fehler einfach ohne fortfahren
+      }
+    }
   }
 
   async setCredentials(username: string, password: string): Promise<void> {
     const encoded = btoa(`${username}:${password}`);
     this.credentials = encoded;
-    await AsyncStorage.setItem(CREDS_KEY, encoded);
+    await SecureStore.setItemAsync(CREDS_KEY, encoded);
   }
 
   async clearCredentials(): Promise<void> {
     this.credentials = null;
-    await AsyncStorage.removeItem(CREDS_KEY);
+    await SecureStore.deleteItemAsync(CREDS_KEY);
   }
 
   getCredentials(): string | null {

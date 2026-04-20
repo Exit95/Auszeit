@@ -1,9 +1,14 @@
+import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { adminApi } from './adminClient';
 
 // API zeigt auf die bestehenden Brenn-Endpunkte der Auszeit-Website
-// Auch im Dev-Modus auf Live-API, da DB nur auf dem Server läuft
-const API_BASE = 'https://keramik-auszeit.de/api/admin/brenn';
+// Auch im Dev-Modus auf Live-API, da DB nur auf dem Server läuft.
+// EXPO_PUBLIC_API_HOST erlaubt lokalen CORS-Proxy im Web-Dev-Build.
+const API_HOST =
+  (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
+  'https://keramik-auszeit.de';
+const API_BASE = `${API_HOST}/api/admin/brenn`;
 
 // Die Brenn-Endpoints erwarten serverseitig Basic-Auth
 // (siehe src/lib/server/brenn/auth.ts → checkAuth).
@@ -15,17 +20,31 @@ class ApiClient {
   private token: string | null = null;
 
   async init(): Promise<void> {
-    this.token = await AsyncStorage.getItem(TOKEN_KEY);
+    this.token = await SecureStore.getItemAsync(TOKEN_KEY);
+
+    // Migration: alte AsyncStorage-Tokens übernehmen
+    if (!this.token) {
+      try {
+        const legacy = await AsyncStorage.getItem(TOKEN_KEY);
+        if (legacy) {
+          await SecureStore.setItemAsync(TOKEN_KEY, legacy);
+          await AsyncStorage.removeItem(TOKEN_KEY);
+          this.token = legacy;
+        }
+      } catch {
+        // Migration optional
+      }
+    }
   }
 
   async setToken(token: string): Promise<void> {
     this.token = token;
-    await AsyncStorage.setItem(TOKEN_KEY, token);
+    await SecureStore.setItemAsync(TOKEN_KEY, token);
   }
 
   async clearToken(): Promise<void> {
     this.token = null;
-    await AsyncStorage.removeItem(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
   }
 
   getToken(): string | null {

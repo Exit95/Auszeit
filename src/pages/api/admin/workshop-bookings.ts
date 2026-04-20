@@ -222,7 +222,7 @@ export const POST: APIRoute = async ({ request }) => {
             </p>
 
             <p>Bei Fragen oder Änderungswünschen meld dich gerne:<br/>
-            E-Mail: keramik-auszeit@web.de<br/>
+            E-Mail: atelier@keramik-auszeit.de<br/>
             Telefon: +49 176 34255005</p>
 
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
@@ -255,7 +255,7 @@ Feldstiege 6a
 48599 Gronau
 
 Bei Fragen oder Änderungswünschen meld dich gerne:
-E-Mail: keramik-auszeit@web.de
+E-Mail: atelier@keramik-auszeit.de
 Telefon: +49 176 34255005
 
 Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:

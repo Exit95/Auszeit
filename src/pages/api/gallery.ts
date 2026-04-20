@@ -69,21 +69,21 @@ export const GET: APIRoute = async () => {
       category?: string;
     }> = [];
 
-    // 1. Bilder aus gallery/ laden
-    const galleryResponse = await getS3Client().send(
-      new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: `${PREFIX}/`,
-      })
-    );
+    // Alle S3-Anfragen parallel starten (gallery + alle product-Kategorien)
+    const [galleryResponse, ...productResponses] = await Promise.all([
+      getS3Client().send(new ListObjectsV2Command({ Bucket: bucket, Prefix: `${PREFIX}/` })),
+      ...PRODUCT_CATEGORIES.map(cat =>
+        getS3Client().send(new ListObjectsV2Command({ Bucket: bucket, Prefix: `${cat.path}/` }))
+      ),
+    ]);
 
+    // 1. Bilder aus gallery/
     if (galleryResponse.Contents) {
       for (const obj of galleryResponse.Contents) {
         if (obj.Key && !obj.Key.endsWith('/')) {
           const fname = obj.Key.replace(`${PREFIX}/`, '');
           allImages.push({
             filename: fname,
-            // Proxy-URL statt direkte S3-URL (MinIO ist intern nicht erreichbar)
             url: `/uploads/gallery/${fname}`,
             size: obj.Size || 0,
             date: obj.LastModified || new Date(),
@@ -93,22 +93,15 @@ export const GET: APIRoute = async () => {
       }
     }
 
-    // 2. Bilder aus products/ laden (mit Kategorie-Mapping)
-    for (const cat of PRODUCT_CATEGORIES) {
-      const productsResponse = await getS3Client().send(
-        new ListObjectsV2Command({
-          Bucket: bucket,
-          Prefix: `${cat.path}/`,
-        })
-      );
-
-      if (productsResponse.Contents) {
-        for (const obj of productsResponse.Contents) {
+    // 2. Bilder aus products/ (parallel geladen)
+    productResponses.forEach((resp, i) => {
+      const cat = PRODUCT_CATEGORIES[i];
+      if (resp.Contents) {
+        for (const obj of resp.Contents) {
           if (obj.Key && !obj.Key.endsWith('/') && /\.(jpg|jpeg|png|gif|webp)$/i.test(obj.Key)) {
             const filename = obj.Key.split('/').pop() || '';
             allImages.push({
               filename: `products/${cat.id}/${filename}`,
-              // Proxy-URL statt direkte S3-URL
               url: `/products/${cat.id}/${filename}`,
               size: obj.Size || 0,
               date: obj.LastModified || new Date(),
@@ -118,13 +111,16 @@ export const GET: APIRoute = async () => {
           }
         }
       }
-    }
+    });
 
     // Nach Datum sortieren
     allImages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return new Response(JSON.stringify(allImages), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=120, stale-while-revalidate=300',
+      },
     });
   } catch (error) {
     console.error('Error listing gallery:', error);

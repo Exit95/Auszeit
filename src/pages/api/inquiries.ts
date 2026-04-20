@@ -7,6 +7,7 @@ import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeDat
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
 import type { InquiryEventType } from '../../lib/storage';
 import { validateCredentials } from '../../lib/totp';
+import { notifyNewInquiry } from '../../lib/push-notifications';
 
 const VALID_EVENT_TYPES: InquiryEventType[] = ['kindergeburtstag', 'jga', 'stammtisch', 'firmen_event', 'privater_anlass', 'sonstiges'];
 
@@ -101,6 +102,9 @@ export const POST: APIRoute = async ({ request }) => {
       };
       sendNotification().catch(err => console.error('Background inquiry email error:', err));
     }
+
+    // Push-Notification an App
+    notifyNewInquiry(name, eventType).catch(err => console.error('Push notification error:', err));
 
     return new Response(JSON.stringify({ success: true, message: 'Ihre Anfrage wurde erfolgreich gesendet!', inquiry }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (err) {

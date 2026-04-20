@@ -5,3 +5,4 @@ export { Input } from './Input';
 export { EmptyState } from './EmptyState';
 export { LoadingScreen } from './LoadingScreen';
 export { OrderCard } from './OrderCard';
+export { ErrorBoundary } from './ErrorBoundary';

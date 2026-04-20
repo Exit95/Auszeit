@@ -351,7 +351,7 @@ export function OrderDetailScreen() {
           order.items.map(item => (
             <View key={item.id} style={styles.itemRow}>
               <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.item_type || item.item_type_name || 'Keramik'}</Text>
+                <Text style={styles.itemName}>{item.item_type_name || 'Keramik'}</Text>
                 <Text style={styles.itemQty}>{item.quantity}x</Text>
               </View>
               <StatusBadge status={item.status} size="sm" />
@@ -402,7 +402,7 @@ export function OrderDetailScreen() {
           <Pressable
             onPress={pickAndUploadPhoto}
             disabled={uploading}
-            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.cardBg, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.border }}
+            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.surface, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.border }}
           >
             <Ionicons name="images" size={18} color={colors.primary} />
             <Text style={{ color: colors.primary, fontWeight: '600', fontSize: fontSize.sm }}>Galerie</Text>
@@ -633,4 +633,42 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.bold,
   },
   meta: { fontSize: fontSize.xs, color: colors.textLight, marginTop: spacing.md, textAlign: 'center', lineHeight: 18 },
+  statusProgress: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xs,
+  },
+  statusStep: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.border,
+  },
+  statusDotDone: {
+    backgroundColor: colors.accent,
+  },
+  statusDotCurrent: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.accent,
+    borderWidth: 2,
+    borderColor: colors.accentLight,
+  },
+  statusStepText: {
+    fontSize: 10,
+    color: colors.textLight,
+    textAlign: 'center',
+  },
+  statusStepTextCurrent: {
+    color: colors.accent,
+    fontWeight: fontWeight.semibold,
+  },
 });
