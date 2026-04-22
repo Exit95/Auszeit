@@ -180,6 +180,19 @@ export interface Inquiry {
   createdAt: string;
 }
 
+export type SlotEventType = 'normal' | 'kindergeburtstag' | 'stammtisch';
+
+export interface TimeSlot {
+  id: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM Startzeit
+  endTime?: string; // HH:MM Endzeit, optional
+  maxCapacity: number;
+  available: number;
+  createdAt: string;
+  eventType?: SlotEventType;
+}
+
 export interface Review {
   id: string;
   name: string;
@@ -200,6 +213,8 @@ export type RootStackParamList = {
   AtelierToday: undefined;
   AtelierBookings: undefined;
   AtelierInquiries: undefined;
+  AtelierSlots: undefined;
+  SlotForm: { id?: string; defaultDate?: string };
   InquiryDetail: { id: string };
   BookingDetail: { id: string };
   AdminReviews: undefined;

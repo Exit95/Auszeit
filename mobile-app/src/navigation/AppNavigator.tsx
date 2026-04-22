@@ -23,6 +23,8 @@ import { BookingsScreen } from '../screens/BookingsScreen';
 import { BookingDetailScreen } from '../screens/BookingDetailScreen';
 import { InquiriesScreen } from '../screens/InquiriesScreen';
 import { InquiryDetailScreen } from '../screens/InquiryDetailScreen';
+import { SlotsScreen } from '../screens/SlotsScreen';
+import { SlotFormScreen } from '../screens/SlotFormScreen';
 import { AdminReviewsScreen } from '../screens/AdminReviewsScreen';
 import { VoucherScannerScreen } from '../screens/VoucherScannerScreen';
 
@@ -163,6 +165,18 @@ export function AppNavigator() {
             name="BookingDetail"
             component={BookingDetailScreen}
             options={{ title: 'Buchung' }}
+          />
+          <Stack.Screen
+            name="AtelierSlots"
+            component={SlotsScreen}
+            options={{ title: 'Termine' }}
+          />
+          <Stack.Screen
+            name="SlotForm"
+            component={SlotFormScreen}
+            options={({ route }) => ({
+              title: route.params?.id ? 'Termin bearbeiten' : 'Neuer Termin',
+            })}
           />
           <Stack.Screen
             name="AdminReviews"

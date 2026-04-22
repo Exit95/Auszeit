@@ -173,6 +173,15 @@ export function AtelierHubScreen() {
       onPress: () => navigation.navigate('AtelierBookings'),
     },
     {
+      icon: 'time-outline' as const,
+      iconFocused: 'time' as const,
+      title: 'Termine verwalten',
+      subtitle: 'Zeitslots anlegen, bearbeiten, löschen',
+      badge: 0,
+      color: colors.primary,
+      onPress: () => navigation.navigate('AtelierSlots'),
+    },
+    {
       icon: 'mail-outline' as const,
       iconFocused: 'mail' as const,
       title: 'Anfragen',
