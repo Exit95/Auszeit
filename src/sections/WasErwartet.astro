@@ -1,141 +1,121 @@
 ---
-import { content } from '../data/content';
-
-const accentColors = [
-  'var(--accent-terra)',
-  'var(--color-sienna)',
-  'var(--accent-caramel)',
-  'var(--brand-espresso)',
-];
+import Photo from '../components/Photo.astro';
+import Brush from '../components/Brush.astro';
 ---
 
-<section class="was-erwartet animate-on-scroll" aria-labelledby="was-erwartet-title">
-  <div class="was-erwartet__container">
-    <span class="was-erwartet__eyebrow">Auf einen Blick</span>
-    <h2 class="was-erwartet__title" id="was-erwartet-title">{content.wasErwartet.title}</h2>
-    <div class="was-erwartet__grid">
-      {content.wasErwartet.items.map((item, i) => (
-        <a href={item.link} class="was-erwartet__card" style={`--card-accent: ${accentColors[i]}`}>
-          <div class="was-erwartet__card-accent" />
-          <h3 class="was-erwartet__card-title">{item.title}</h3>
-          <p class="was-erwartet__card-text">{item.text}</p>
-          <span class="was-erwartet__card-cta">Mehr erfahren →</span>
-        </a>
-      ))}
+<section class="blk" id="erwartet">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Was dich erwartet</span>
+      <h2>Vier Wege, kreativ zu werden</h2>
+      <Brush />
+    </div>
+    <div class="offer-grid">
+      <a class="ocard" href="/galerie">
+        <Photo
+          src="/fotos/sh-child.jpg"
+          alt="Konzentriert beim Bemalen eines Keramikstuecks"
+          loading="lazy"
+        />
+        <div class="ocard__b">
+          <h3>Keramik bemalen</h3>
+          <p>Such dir in Ruhe einen Rohling, lass dich von den Farben inspirieren und gestalte etwas, das nur dir gehoert.</p>
+          <div class="more">Ab 14,50 &euro;</div>
+        </div>
+      </a>
+      <a class="ocard" href="/workshops">
+        <Photo
+          src="/fotos/sh-irena-help.jpg"
+          alt="Gemeinsam Keramik bemalen im Workshop"
+          loading="lazy"
+        />
+        <div class="ocard__b">
+          <h3>Workshops</h3>
+          <p>Gemeinsam Neues ausprobieren, voneinander lernen und dabei eine richtig gute Zeit haben.</p>
+          <div class="more">Zu den Terminen</div>
+        </div>
+      </a>
+      <a class="ocard" href="/events">
+        <Photo
+          src="/fotos/sh-group.jpg"
+          alt="Gruppe bemalt gemeinsam Keramik am grossen Tisch"
+          loading="lazy"
+        />
+        <div class="ocard__b">
+          <h3>Besondere Anlaesse</h3>
+          <p>Kindergeburtstag, JGA oder Firmen-Event: zusammen kreativ sein verbindet. Wir kuemmern uns um alles.</p>
+          <div class="more">Anfragen</div>
+        </div>
+      </a>
+      <a class="ocard" href="/gutscheine">
+        <Photo
+          src="/fotos/sh-cup.jpg"
+          alt="Handbemalte Auszeit-Tasse"
+          loading="lazy"
+        />
+        <div class="ocard__b">
+          <h3>Gutscheine</h3>
+          <p>Verschenke eine Auszeit, die wirklich von Herzen kommt.</p>
+          <div class="more">Ab 25 &euro;</div>
+        </div>
+      </a>
     </div>
   </div>
 </section>
 
 <style>
-  .was-erwartet {
-    padding: var(--space-10) var(--gutter);
-    background: var(--bg-paper);
-  }
-
-  .was-erwartet__container {
-    max-width: var(--max-width);
-    margin: 0 auto;
-  }
-
-  .was-erwartet__eyebrow {
-    display: block;
-    text-align: center;
-    font-family: var(--font-sans);
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-sienna);
-    margin-bottom: 0.75rem;
-  }
-
-  .was-erwartet__title {
-    font-family: var(--font-serif);
-    font-size: var(--text-3xl);
-    color: var(--brand-espresso);
-    text-align: center;
-    margin: 0 0 var(--space-8);
-  }
-
-  .was-erwartet__grid {
+  .offer-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.6rem;
+    margin-top: 3rem;
   }
 
-  @media (min-width: 640px) {
-    .was-erwartet__grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  .was-erwartet__card {
+  .ocard {
+    text-decoration: none;
+    color: inherit;
     display: flex;
     flex-direction: column;
     background: #fff;
-    border-radius: var(--radius);
-    padding: var(--space-5) var(--space-4) var(--space-4);
-    box-shadow: var(--shadow-card);
-    text-decoration: none;
-    color: inherit;
-    gap: var(--space-2);
-    position: relative;
+    border-radius: var(--r-md);
     overflow: hidden;
-    transition: transform var(--duration-normal) var(--easing),
-                box-shadow var(--duration-normal) var(--easing);
+    box-shadow: var(--shadow-card);
+    transition: transform .22s, box-shadow .22s;
   }
 
-  .was-erwartet__card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+  .ocard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 26px 50px -22px rgba(58, 45, 36, .42);
   }
 
-  .was-erwartet__card-accent {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--card-accent);
+  .ocard :global(img) {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    width: 100%;
   }
 
-  .was-erwartet__card-title {
-    font-family: var(--font-serif);
-    font-size: var(--text-xl);
-    color: var(--brand-espresso);
-    margin: 0;
-    line-height: 1.3;
+  .ocard__b {
+    padding: 1.2rem 1.3rem 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
-  .was-erwartet__card-text {
-    font-family: var(--font-sans);
-    font-size: var(--text-base);
-    color: var(--color-text-secondary);
-    line-height: 1.65;
-    margin: 0;
+  .ocard h3 {
+    font-size: 1.3rem;
+  }
+
+  .ocard p {
+    font-size: .94rem;
+    color: var(--ink-2);
+    margin-top: .4rem;
     flex: 1;
   }
 
-  .was-erwartet__card-cta {
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
+  .more {
+    margin-top: .9rem;
     font-weight: 600;
-    color: var(--card-accent);
-    margin-top: var(--space-1);
-    transition: opacity var(--duration-fast) var(--easing);
-  }
-
-  .was-erwartet__card:hover .was-erwartet__card-cta {
-    opacity: 0.8;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .was-erwartet__card {
-      transition: none;
-    }
-
-    .was-erwartet__card:hover {
-      transform: none;
-    }
+    font-size: .9rem;
+    color: var(--terra);
   }
 </style>
