@@ -23,7 +23,7 @@ fail() { echo -e "${RED}[error]${NC} $1"; exit 1; }
 log "1/6  Projekt packen ..."
 tar czf "${TMP_ARCHIVE}" \
   --exclude=node_modules --exclude=.git --exclude=dist \
-  --exclude=.superpowers --exclude=.env \
+  --exclude=.superpowers --exclude=.env --exclude='*Auszeit Keramik*' --exclude='*Auszeit_Galerie*' \
   -C "$(pwd)" .
 log "     $(du -h ${TMP_ARCHIVE} | cut -f1) gepackt"
 
