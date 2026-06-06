@@ -213,6 +213,23 @@ section.blk {
   margin-inline: auto;
 }
 
+/* Page header block (used on sub-pages) */
+.pagehead {
+  padding: clamp(2.5rem, 5vw, 4rem) 0 0;
+}
+
+.pagehead h1 {
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  margin: 0.6rem 0 0;
+}
+
+.pagehead .lead {
+  color: var(--ink-2);
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  max-width: 52ch;
+}
+
 /* Scroll-Animationen */
 .animate-on-scroll {
   opacity: 0;
