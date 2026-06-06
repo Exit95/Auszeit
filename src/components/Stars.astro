@@ -1,0 +1,5 @@
+---
+interface Props { label?: string; }
+const { label = 'Fuenf von fuenf Sternen' } = Astro.props;
+---
+<span class="stars" role="img" aria-label={label}>★★★★★</span>
