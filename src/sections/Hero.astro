@@ -1,157 +1,117 @@
 ---
-import Button from "../components/Button.astro";
-import { content } from "../data/content";
+import Button from '../components/Button.astro';
+import Photo from '../components/Photo.astro';
+import Stars from '../components/Stars.astro';
 ---
 
-<section class="hero" aria-label="Willkommen bei Malatelier Auszeit">
-  <img
-    src="/hero-banner.webp"
-    alt="Schaufenster von Auszeit Keramik-Malatelier in Gronau"
-    class="hero__bg"
-    width="1920"
-    height="1280"
-    loading="eager"
-    fetchpriority="high"
-  />
-  <div class="hero__overlay"></div>
-  <div class="hero__content">
-    <div class="hero__actions" role="group" aria-label="Hauptaktionen">
-      <Button href="#termin-buchen" variant="terra">
-        {content.hero.ctaPrimary}
-      </Button>
-      <a href="#keramik-preise" class="hero__cta-secondary">
-        {content.hero.ctaSecondary}
-      </a>
+<section class="hero" aria-label="Malatelier Auszeit">
+  <div class="hero__text">
+    <span class="eyebrow">Malatelier Auszeit · Gronau</span>
+    <h1>Dein Ort zum Ankommen und <em>Kreativsein</em></h1>
+    <p class="sub">Keramik bemalen, durchatmen, gluecklich nach Hause gehen. Wir glasieren und brennen fuer dich, abholbereit in 10 bis 14 Tagen.</p>
+    <div class="cta">
+      <Button href="#buchen">Termin buchen</Button>
+      <a class="link-ul" href="/galerie">Unsere Keramik ansehen</a>
+    </div>
+    <div class="trust">
+      <Stars label="Fuenf von fuenf Sternen" />
+      bei Google, von echten Gaesten aus dem Muensterland
     </div>
   </div>
+  <div class="hero__img">
+    <Photo
+      src="/fotos/sh-hero.jpg"
+      alt="Beim Bemalen mit Pinsel im Atelier"
+      loading="eager"
+      fetchpriority="high"
+      width={1000}
+      height={1500}
+    />
+    <div class="hero__cap">Mitten im Atelier, Gronau</div>
+  </div>
 </section>
-<div class="hero-fade" aria-hidden="true"></div>
 
 <style>
   .hero {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    min-height: 560px;
-    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    padding-top: clamp(1rem, 2vw, 2rem);
   }
 
-  .hero__bg {
+  @media (min-width: 860px) {
+    .hero {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+  }
+
+  .hero__text {
+    padding: clamp(2rem, 4vw, 4rem) var(--gutter);
+  }
+
+  .hero h1 {
+    font-size: clamp(2.6rem, 5.4vw, 4.4rem);
+    margin: 1rem 0 1.1rem;
+    max-width: 13ch;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--terra);
+  }
+
+  .hero .sub {
+    font-size: 1.12rem;
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 42ch;
+  }
+
+  .hero .cta {
+    display: flex;
+    gap: 1.3rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+
+  .hero .trust {
+    margin-top: 1.7rem;
+    font-size: .9rem;
+    color: var(--meta);
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .hero__img {
+    position: relative;
+    min-height: clamp(340px, 46vw, 560px);
+    margin: clamp(1rem, 2vw, 1.6rem);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .hero__img :global(img) {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center 35%;
-    z-index: 0;
   }
 
-  .hero__overlay {
+  .hero__cap {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(66, 52, 48, 0.02) 0%,
-      rgba(66, 52, 48, 0.08) 50%,
-      rgba(66, 52, 48, 0.50) 100%
-    );
-    z-index: 1;
-  }
-
-  .hero__content {
-    position: relative;
-    z-index: 2;
+    left: 0;
+    bottom: 0;
     width: 100%;
-    max-width: var(--max-width);
-    padding: 0 var(--gutter) calc(var(--space-10) + 60px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    animation: heroFade 0.6s ease;
-  }
-
-  .hero__actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  .hero__cta-secondary {
-    font-family: var(--font-sans);
-    font-weight: 600;
-    font-size: 0.95rem;
     color: #fff;
-    text-decoration: none;
-    padding: 0.6rem 1.5rem;
-    border: 2px solid rgba(255, 255, 255, 0.6);
-    border-radius: var(--radius-sm);
-    transition: background 0.15s ease, border-color 0.15s ease;
-    backdrop-filter: blur(4px);
-    background: rgba(255,255,255,0.08);
-  }
-
-  .hero__cta-secondary:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: #fff;
-  }
-
-  /* Sanfter Farbverlauf als Übergang zur nächsten Section */
-  .hero-fade {
-    height: 140px;
-    margin-top: -140px;
-    position: relative;
-    z-index: 4;
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      color-mix(in srgb, var(--bg-paper) 20%, transparent) 30%,
-      color-mix(in srgb, var(--bg-paper) 60%, transparent) 60%,
-      var(--bg-paper) 100%
-    );
-    pointer-events: none;
-  }
-
-  @media (min-width: 640px) {
-    .hero__actions {
-      flex-direction: row;
-      justify-content: center;
-    }
-  }
-
-  @media (max-width: 639px) {
-    .hero {
-      min-height: 440px;
-    }
-
-    .hero__content {
-      padding-bottom: calc(var(--space-6) + 30px);
-    }
-
-    .hero__actions {
-      width: 100%;
-      max-width: 300px;
-    }
-
-    .hero__cta-secondary {
-      width: 100%;
-      text-align: center;
-    }
-
-    .hero-fade {
-      height: 100px;
-      margin-top: -100px;
-    }
-  }
-
-  @keyframes heroFade {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero__content { animation: none; }
+    font-size: .74rem;
+    letter-spacing: .04em;
+    padding: 3rem 1.2rem 1rem;
+    background: linear-gradient(transparent, rgba(58, 45, 36, .5));
   }
 </style>
