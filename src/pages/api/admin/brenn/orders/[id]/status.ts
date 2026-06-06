@@ -4,6 +4,7 @@ import { requireAuth, jsonSuccess, jsonError } from '../../../../../../lib/serve
 import { isValidTransition, isValidStatus, calculateOverallStatus } from '../../../../../../lib/server/brenn/status';
 import type { Status } from '../../../../../../lib/server/brenn/status';
 import { sendPickupReadyEmail } from '../../../../../../lib/server/brenn/notifications';
+import { notifyOrderReady } from '../../../../../../lib/push-notifications';
 
 export const PATCH: APIRoute = async ({ params, request }) => {
   const authErr = requireAuth(request);
@@ -70,15 +71,20 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         [updatedOrder.storage_location_id, order.customer_id]
       );
       const cust = (custRows as any[])[0];
+      const custName = cust ? `${cust.first_name ?? ''} ${cust.last_name ?? ''}`.trim() : '';
       if (cust?.email) {
         sendPickupReadyEmail({
           orderId: updatedOrder.id,
-          customerName: `${cust.first_name} ${cust.last_name}`.trim(),
+          customerName: custName,
           customerEmail: cust.email,
           referenceCode: updatedOrder.reference_code,
           storageCode: cust.storage_code,
         }).catch(err => console.error('[Brenn] Pickup-Email Fehler:', err));
       }
+
+      // Push an die Betreiberin (Irena): Auftrag ist abholbereit.
+      notifyOrderReady(updatedOrder.id, updatedOrder.reference_code, custName || undefined)
+        .catch(err => console.error('[Brenn] Push notifyOrderReady Fehler:', err));
     }
 
     return jsonSuccess(updatedOrder);

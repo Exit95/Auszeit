@@ -3,6 +3,7 @@ import { getPool, withTransaction } from '../../../../../../../../lib/database';
 import { requireAuth, jsonSuccess, jsonError } from '../../../../../../../../lib/server/brenn/auth';
 import { isValidTransition, isValidStatus, calculateOverallStatus } from '../../../../../../../../lib/server/brenn/status';
 import type { Status } from '../../../../../../../../lib/server/brenn/status';
+import { notifyOrderReadyForOrder } from '../../../../../../../../lib/push-notifications';
 
 export const PATCH: APIRoute = async ({ params, request }) => {
   const authErr = requireAuth(request);
@@ -35,6 +36,8 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         400
       );
     }
+
+    let becameReady = false;
 
     await withTransaction(async (conn) => {
       const updateFields: string[] = ['status = ?'];
@@ -86,8 +89,17 @@ export const PATCH: APIRoute = async ({ params, request }) => {
            VALUES ('ORDER', ?, ?, ?, ?, ?)`,
           [params.id, oldOverall, newOverall, 'admin', 'Automatisch berechnet']
         );
+        if (oldOverall !== 'ABHOLBEREIT' && newOverall === 'ABHOLBEREIT') {
+          becameReady = true;
+        }
       }
     });
+
+    if (becameReady && params.id) {
+      notifyOrderReadyForOrder(params.id).catch(err =>
+        console.error('[Brenn] Push notifyOrderReady (Item) Fehler:', err)
+      );
+    }
 
     const [updated] = await pool.execute('SELECT * FROM painted_order_items WHERE id = ?', [params.itemId]);
     return jsonSuccess((updated as any[])[0]);

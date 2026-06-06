@@ -5,16 +5,18 @@ import Brush from '../components/Brush.astro';
 
 <section class="blk" id="angebot">
   <div class="wrap">
-    <div class="head">
-      <span class="eyebrow">Angebot und Preise</span>
-      <h2>Transparent, ohne Überraschungen</h2>
-      <Brush />
-    </div>
     <div class="price-split">
-      <div class="price-photos">
+      <div class="price-left">
+        <div class="head">
+          <span class="eyebrow">Angebot und Preise</span>
+          <h2>Transparent, ohne&nbsp;Überraschungen</h2>
+          <Brush />
+        </div>
+        <div class="price-photos">
         <Photo src="/fotos/sh-tiles.jpg" alt="Bemalte Keramikkacheln mit verschiedenen Motiven" />
         <Photo src="/fotos/sh-dachs.jpg" alt="Schale mit Dackelmotiv" />
         <Photo src="/fotos/sh-vase.jpg" alt="Handbemalte Vase mit Sprenkeln" />
+        </div>
       </div>
       <div class="price-card">
         <h3>Rohlinge</h3>
@@ -24,6 +26,7 @@ import Brush from '../components/Brush.astro';
           <li><span>Spardosen, Krüge und Boxen</span><span class="p">ab 8,00 €</span></li>
           <li><span>Anhänger</span><span class="p">ab 6,00 €</span></li>
         </ul>
+        <p class="more-note">Und immer wieder etwas Ungewöhnliches, unser Sortiment überrascht.</p>
         <div class="pauschale">
           <b>Farb- und Brennpauschale pro Person</b>
           <ul>
@@ -32,7 +35,7 @@ import Brush from '../components/Brush.astro';
             <li><span>7 bis 9 Teile</span><span>20,00 €</span></li>
           </ul>
         </div>
-        <p class="price-note">Farben, Pinsel und Brennen immer inklusive. Abholbereit nach 10 bis 14 Tagen.</p>
+        <p class="price-note">Farben und Pinsel inklusive. Abholbereit nach 10 bis 14 Tagen.</p>
       </div>
     </div>
   </div>
@@ -43,7 +46,6 @@ import Brush from '../components/Brush.astro';
     display: grid;
     grid-template-columns: 1fr;
     gap: 2.5rem;
-    margin-top: 3rem;
     align-items: start;
   }
 
@@ -51,6 +53,16 @@ import Brush from '../components/Brush.astro';
     .price-split {
       grid-template-columns: 7fr 5fr;
     }
+  }
+
+  .price-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .head h2 {
+    hyphens: none;
   }
 
   .price-photos {
@@ -105,6 +117,12 @@ import Brush from '../components/Brush.astro';
     color: var(--terra);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+  }
+
+  .more-note {
+    margin-top: .6rem;
+    font-size: .85rem;
+    color: var(--ink-2);
   }
 
   .price-note {

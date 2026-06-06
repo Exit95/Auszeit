@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, ScrollView, RefreshControl, Pressable,
+  View, Text, StyleSheet, FlatList, RefreshControl, Pressable,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { OrderCard, EmptyState, LoadingScreen } from '../components';
+import { OrderCard, EmptyState, LoadingScreen, FilterChips, ScreenHeader } from '../components';
+import type { FilterChip } from '../components';
 import { useOrders } from '../queries/orders';
-import { colors, spacing, fontSize, fontWeight, borderRadius, statusColors, statusLabels } from '../theme';
+import { colors, spacing, statusColors, statusLabels } from '../theme';
 import type { RootStackParamList, OrderStatus } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -14,6 +15,15 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 const STATUS_FILTERS: (OrderStatus | 'alle')[] = [
   'alle', 'ERFASST', 'WARTET_AUF_BRENNEN', 'IM_BRENNOFEN', 'GEBRANNT', 'ABHOLBEREIT', 'ABGEHOLT', 'STORNIERT',
 ];
+
+const FILTERS: FilterChip[] = STATUS_FILTERS.map(s => ({
+  key: s,
+  label: s === 'alle' ? 'Alle' : statusLabels[s],
+}));
+
+function filterColor(key: string): string {
+  return key === 'alle' ? colors.primary : (statusColors[key] || colors.primary);
+}
 
 export function OrdersScreen() {
   const navigation = useNavigation<Nav>();
@@ -24,29 +34,14 @@ export function OrdersScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Filter-Pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-        style={styles.filterScroll}
-      >
-        {STATUS_FILTERS.map(item => {
-          const isActive = item === activeFilter;
-          const color = item === 'alle' ? colors.primary : (statusColors[item] || colors.primary);
-          return (
-            <Pressable
-              key={item}
-              onPress={() => setActiveFilter(item)}
-              style={[styles.chip, isActive && { backgroundColor: color, borderColor: color }]}
-            >
-              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                {item === 'alle' ? 'Alle' : statusLabels[item]}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <ScreenHeader title="Aufträge" subtitle="Brennverwaltung" icon="document-text" />
+
+      <FilterChips
+        filters={FILTERS}
+        activeFilter={activeFilter}
+        onSelect={(key) => setActiveFilter(key as OrderStatus | 'alle')}
+        getColor={filterColor}
+      />
 
       {/* Auftragsliste */}
       <FlatList
@@ -93,36 +88,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  filterScroll: {
-    flexGrow: 0,
-    flexShrink: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  filterRow: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.xs,
-    alignItems: 'center',
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: borderRadius.full,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignSelf: 'center',
-  },
-  chipText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.inkSecondary,
-  },
-  chipTextActive: {
-    color: '#fff',
-    fontWeight: fontWeight.semibold,
   },
   listContent: {
     padding: spacing.md,

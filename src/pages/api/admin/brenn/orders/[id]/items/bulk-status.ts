@@ -4,6 +4,7 @@ import { requireAuth, jsonSuccess, jsonError } from '../../../../../../../lib/se
 import { isValidTransition, isValidStatus, calculateOverallStatus } from '../../../../../../../lib/server/brenn/status';
 import { validateBulkStatus } from '../../../../../../../lib/server/brenn/validation';
 import type { Status } from '../../../../../../../lib/server/brenn/status';
+import { notifyOrderReadyForOrder } from '../../../../../../../lib/push-notifications';
 
 export const PATCH: APIRoute = async ({ params, request }) => {
   const authErr = requireAuth(request);
@@ -61,6 +62,8 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       }
     }
 
+    let becameReady = false;
+
     await withTransaction(async (conn) => {
       for (const item of items) {
         const updateFields: string[] = ['status = ?'];
@@ -111,8 +114,17 @@ export const PATCH: APIRoute = async ({ params, request }) => {
            VALUES ('ORDER', ?, ?, ?, ?, ?)`,
           [params.id, oldOverall, newOverall, 'admin', 'Automatisch berechnet (Bulk)']
         );
+        if (oldOverall !== 'ABHOLBEREIT' && newOverall === 'ABHOLBEREIT') {
+          becameReady = true;
+        }
       }
     });
+
+    if (becameReady && params.id) {
+      notifyOrderReadyForOrder(params.id).catch(err =>
+        console.error('[Brenn] Push notifyOrderReady (Bulk) Fehler:', err)
+      );
+    }
 
     // Aktualisierte Items zurückgeben
     const [updated] = await pool.execute(

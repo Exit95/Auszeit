@@ -2,20 +2,20 @@
 // Exakt abgestimmt auf das Website-Redesign "Warmes Atelier-Editorial".
 // OKLCH-Palette der Website, hier als hex-Äquivalente.
 //   bg #F7F1EA · surface #FFFFFF · card #F0E9E0 · ink #3A2D24 · ink-2 #6B5143
-//   meta #9B847A · terra #D96C4A · terra-h #C85A38 · caramel #CFA874 · hair #E2D8CF
+//   meta #9B847A · terra #996b5b · terra-h #7a5548 · caramel #CFA874 · hair #E2D8CF
 
 export const colors = {
-  // Primär (Terrakotta — der CTA-/Akzentton der Website)
-  primary: '#D96C4A',       // terra
-  primaryLight: '#E8956E',
-  primaryDark: '#C85A38',   // terra-h (Hover/Dark)
+  // Primär (Terra — aus dem Logo, besser Kontrast, mehr Markentreue)
+  primary: '#996b5b',       // terra
+  primaryLight: '#b79286',
+  primaryDark: '#7a5548',   // terra-h (Hover/Dark)
 
   // Akzent (identisch mit primary — Terra ist der eine Brand-Akzent)
-  accent: '#D96C4A',        // terra
-  accentLight: '#E8956E',
+  accent: '#996b5b',        // terra
+  accentLight: '#b79286',
 
   // Sekundärer Akzent (Goldton)
-  secondary: '#CFA874',     // caramel
+  secondary: '#d9ac93',     // caramel — Logo-Peach
 
   // Marke — Espresso-Dunkel (Alias auf ink, damit Bestandscode weiterläuft)
   brandEspresso: '#3A2D24', // = ink

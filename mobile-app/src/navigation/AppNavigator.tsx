@@ -77,7 +77,7 @@ function TabNavigator() {
       <Tab.Screen
         name="Orders"
         component={OrdersScreen}
-        options={{ title: 'Aufträge' }}
+        options={{ title: 'Aufträge', headerShown: false }}
       />
       <Tab.Screen
         name="Customers"
@@ -154,7 +154,7 @@ export function AppNavigator() {
           <Stack.Screen
             name="AtelierInquiries"
             component={InquiriesScreen}
-            options={{ title: 'Anfragen' }}
+            options={{ title: '' }}
           />
           <Stack.Screen
             name="InquiryDetail"

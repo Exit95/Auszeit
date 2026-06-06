@@ -86,14 +86,21 @@ export async function sendPushNotification(message: PushMessage): Promise<void> 
 
 // ─── Vorgefertigte Notifications ────────────────────────────────────────────────
 
+// Deep-Link-Ziele. Die App (App.tsx linking-config) liest `data.url` aus der
+// Notification-Payload und navigiert beim Antippen zum passenden Screen.
+//   auszeit://atelier/bookings   → Buchungsliste
+//   auszeit://atelier/inquiries  → Anfragenliste
+//   auszeit://order/:id          → Auftrags-Detail (Brennverwaltung)
+const DEEP_LINK = 'auszeit://';
+
 export async function notifyNewBooking(name: string, participants: number, date?: string, time?: string): Promise<void> {
   const dateStr = date ? ` am ${formatDateDE(date)}` : '';
   const timeStr = time ? ` um ${time.substring(0, 5)} Uhr` : '';
 
   await sendPushNotification({
-    title: '📋 Neue Buchung',
+    title: 'Neue Buchung',
     body: `${name} (${participants} Pers.)${dateStr}${timeStr}`,
-    data: { type: 'booking', action: 'new' },
+    data: { type: 'booking', action: 'new', url: `${DEEP_LINK}atelier/bookings` },
   });
 }
 
@@ -101,9 +108,9 @@ export async function notifyBookingCancelled(name: string, date?: string): Promi
   const dateStr = date ? ` (${formatDateDE(date)})` : '';
 
   await sendPushNotification({
-    title: '❌ Stornierung',
+    title: 'Stornierung',
     body: `${name}${dateStr} hat storniert`,
-    data: { type: 'booking', action: 'cancelled' },
+    data: { type: 'booking', action: 'cancelled', url: `${DEEP_LINK}atelier/bookings` },
   });
 }
 
@@ -112,15 +119,57 @@ export async function notifyNewInquiry(name: string, eventType: string): Promise
     kindergeburtstag: 'Kindergeburtstag',
     jga: 'JGA',
     stammtisch: 'Stammtisch',
-    firmen: 'Firmenevent',
-    other: 'Sonstiges',
+    firmen_event: 'Firmen-Event',
+    privater_anlass: 'Privater Anlass',
+    sonstiges: 'Sonstiges',
   };
 
   await sendPushNotification({
-    title: '✉️ Neue Anfrage',
+    title: 'Neue Anfrage',
     body: `${name} — ${typeMap[eventType] || eventType}`,
-    data: { type: 'inquiry', action: 'new' },
+    data: { type: 'inquiry', action: 'new', url: `${DEEP_LINK}atelier/inquiries` },
   });
+}
+
+/**
+ * Brennauftrag ist abholbereit. Wird gesendet, sobald der Overall-Status eines
+ * Auftrags auf ABHOLBEREIT wechselt (manuell oder über Item-Status-Neuberechnung).
+ */
+export async function notifyOrderReady(
+  orderId: number | string,
+  referenceCode: string,
+  customerName?: string,
+): Promise<void> {
+  const nameStr = customerName ? ` — ${customerName}` : '';
+
+  await sendPushNotification({
+    title: 'Abholbereit',
+    body: `Auftrag ${referenceCode}${nameStr} ist abholbereit`,
+    data: { type: 'order', action: 'ready', url: `${DEEP_LINK}order/${orderId}` },
+  });
+}
+
+/**
+ * Convenience: lädt reference_code + Kundenname zu einer Auftrags-ID und
+ * sendet die Abholbereit-Notification. Wird von den Item-Status-Endpunkten
+ * genutzt, wo nur die Order-ID vorliegt.
+ */
+export async function notifyOrderReadyForOrder(orderId: number | string): Promise<void> {
+  try {
+    const rows = await query<RowDataPacket[]>(
+      `SELECT po.reference_code, c.first_name, c.last_name
+       FROM painted_orders po
+       LEFT JOIN customers c ON c.id = po.customer_id
+       WHERE po.id = ?`,
+      [orderId]
+    );
+    const row = rows[0];
+    if (!row) return;
+    const name = `${row.first_name ?? ''} ${row.last_name ?? ''}`.trim();
+    await notifyOrderReady(orderId, row.reference_code, name || undefined);
+  } catch (err) {
+    console.error('[Push] notifyOrderReadyForOrder DB-Fehler:', err);
+  }
 }
 
 function formatDateDE(dateStr: string): string {

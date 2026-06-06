@@ -202,6 +202,24 @@ export interface Review {
   approved: boolean;
 }
 
+// Gutscheine (Backend: /api/admin/vouchers)
+export type VoucherStatus = 'active' | 'redeemed' | 'expired';
+
+export interface Voucher {
+  id: string;
+  code: string;               // z. B. AUSZ-7K3D-91LM
+  amount: number;             // Betrag in Cent
+  status: VoucherStatus;
+  customerEmail: string;
+  customerName?: string;
+  stripeSessionId: string;
+  stripePaymentIntentId?: string;
+  createdAt: string;
+  redeemedAt?: string;
+  redeemedBy?: string;        // Admin-Name, der eingelöst hat
+  note?: string;              // optionale Notiz bei Einlösung
+}
+
 // Navigation
 export type RootStackParamList = {
   Login: undefined;
@@ -219,6 +237,7 @@ export type RootStackParamList = {
   BookingDetail: { id: string };
   AdminReviews: undefined;
   VoucherScanner: undefined;
+  Vouchers: undefined;
 };
 
 export type TabParamList = {

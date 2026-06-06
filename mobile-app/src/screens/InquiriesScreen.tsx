@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, ScrollView, RefreshControl, Pressable, Linking,
+  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { EmptyState, LoadingScreen } from '../components';
+import { EmptyState, LoadingScreen, FilterChips, ScreenHeader } from '../components';
+import type { FilterChip } from '../components';
 import { useInquiries, useUpdateInquiry } from '../queries/inquiries';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 import type { Inquiry, InquiryStatus, InquiryEventType, RootStackParamList } from '../types';
@@ -33,6 +34,10 @@ const STATUS_COLORS: Record<InquiryStatus, string> = {
   confirmed: colors.success,
   cancelled: colors.error,
 };
+
+function filterColor(key: string): string {
+  return STATUS_COLORS[key as InquiryStatus] || colors.primary;
+}
 
 const STATUS_LABELS: Record<InquiryStatus, string> = {
   new: 'Neu',
@@ -76,6 +81,17 @@ export function InquiriesScreen() {
     [inquiries, activeFilter],
   );
 
+  const filterChips: FilterChip[] = useMemo(
+    () => STATUS_FILTERS.map(f => ({
+      key: f.key,
+      label: f.label,
+      count: f.key === 'all'
+        ? inquiries.length
+        : inquiries.filter(i => i.status === f.key).length,
+    })),
+    [inquiries],
+  );
+
   const markContacted = (inquiry: Inquiry, via: 'whatsapp' | 'call') => {
     if (inquiry.status !== 'new') return;
     const timestamp = new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
@@ -103,32 +119,14 @@ export function InquiriesScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Filter-Pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-        style={styles.filterScroll}
-      >
-        {STATUS_FILTERS.map(f => {
-          const count = f.key === 'all'
-            ? inquiries.length
-            : inquiries.filter(i => i.status === f.key).length;
-          const isActive = activeFilter === f.key;
-          const color = STATUS_COLORS[f.key as InquiryStatus] || colors.primary;
-          return (
-            <Pressable
-              key={f.key}
-              onPress={() => setActiveFilter(f.key)}
-              style={[styles.chip, isActive && { backgroundColor: color, borderColor: color }]}
-            >
-              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                {f.label}{count > 0 ? ` (${count})` : ''}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <ScreenHeader title="Anfragen" subtitle="Event-Anfragen" icon="mail" />
+
+      <FilterChips
+        filters={filterChips}
+        activeFilter={activeFilter}
+        onSelect={(key) => setActiveFilter(key as InquiryStatus | 'all')}
+        getColor={filterColor}
+      />
 
       {error && (
         <View style={styles.errorBox}>
@@ -224,36 +222,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  filterScroll: {
-    flexGrow: 0,
-    flexShrink: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  filterRow: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.xs,
-    alignItems: 'center',
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: borderRadius.full,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignSelf: 'center',
-  },
-  chipText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.inkSecondary,
-  },
-  chipTextActive: {
-    color: '#fff',
-    fontWeight: fontWeight.semibold,
   },
   errorBox: {
     margin: spacing.md,

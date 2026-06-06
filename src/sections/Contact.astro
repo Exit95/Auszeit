@@ -81,7 +81,7 @@ import { content } from "../data/content";
 <style>
   .contact {
     padding: var(--space-10) var(--gutter);
-    background-color: var(--bg-linen, #EDE4DA);
+    background-color: var(--surface);
   }
 
   .container {
@@ -97,14 +97,14 @@ import { content } from "../data/content";
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-sienna);
+    color: var(--terra);
     margin-bottom: 0.75rem;
   }
 
   .contact__title {
     font-family: var(--font-serif, 'Lora', serif);
-    font-size: var(--text-3xl);
-    color: var(--brand-espresso, #423430);
+    font-size: var(--text-h2);
+    color: var(--ink);
     text-align: center;
     margin-bottom: var(--space-8);
   }
@@ -128,7 +128,7 @@ import { content } from "../data/content";
 
   .contact__block h3 {
     font-family: var(--font-serif, 'Lora', serif);
-    color: var(--brand-espresso, #423430);
+    color: var(--ink);
     margin-bottom: var(--space-2);
     font-size: 1.125rem;
   }
@@ -141,13 +141,13 @@ import { content } from "../data/content";
   }
 
   .contact__block a {
-    color: var(--accent-terra, #D96C4A);
+    color: var(--terra);
     text-decoration: underline;
-    transition: color var(--duration-normal) var(--easing);
+    transition: color var(--dur-mid) var(--ease-smooth);
   }
 
   .contact__block a:hover {
-    color: var(--brand-espresso, #423430);
+    color: var(--terra-h);
   }
 
   .contact__whatsapp {
@@ -169,8 +169,8 @@ import { content } from "../data/content";
     width: 100%;
     height: 100%;
     min-height: 400px;
-    background: var(--bg-paper, #FAF7F2);
-    border: 2px dashed var(--color-warm-beige, #E0D6CC);
+    background: var(--bg);
+    border: 2px dashed var(--hair);
     border-radius: var(--radius-sm, 8px);
     cursor: pointer;
     position: relative;
@@ -199,7 +199,7 @@ import { content } from "../data/content";
     font-family: var(--font-sans, 'Source Sans 3', sans-serif);
     font-size: 1rem;
     font-weight: 600;
-    color: var(--brand-espresso, #423430);
+    color: var(--ink);
     background: rgba(250, 247, 242, 0.9);
     padding: 1.25rem 2rem;
     border-radius: var(--radius-sm, 8px);
@@ -219,14 +219,14 @@ import { content } from "../data/content";
     width: 100%;
     height: 100%;
     min-height: 400px;
-    background-color: var(--color-warm-beige);
+    background-color: var(--hair);
     border-radius: var(--radius);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: var(--space-3);
-    color: var(--brand-espresso, #423430);
+    color: var(--ink);
   }
 
   .map-placeholder svg {

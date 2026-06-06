@@ -8,3 +8,5 @@ export { OrderCard } from './OrderCard';
 export { ErrorBoundary } from './ErrorBoundary';
 export { NetworkBanner } from './NetworkBanner';
 export { BrushAccent } from './BrushAccent';
+export { FilterChips, type FilterChip } from './FilterChips';
+export { ScreenHeader } from './ScreenHeader';

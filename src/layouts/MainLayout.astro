@@ -295,12 +295,20 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
 </html>
 
 <style is:global>
-  /* Deutsche Silbentrennung */
+  /* Deutsche Silbentrennung für Fließtext */
   html {
     -webkit-hyphens: auto;
     hyphens: auto;
     word-break: break-word;
     overflow-wrap: break-word;
+  }
+
+  /* Überschriften nie automatisch trennen */
+  h1, h2, h3, h4 {
+    hyphens: none;
+    -webkit-hyphens: none;
+    word-break: normal;
+    overflow-wrap: normal;
   }
 
   /* Kein horizontaler Scroll */

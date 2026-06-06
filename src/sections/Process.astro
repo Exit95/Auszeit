@@ -4,34 +4,47 @@ import Brush from '../components/Brush.astro';
 
 <section class="blk soft">
   <div class="wrap">
-    <div class="head">
-      <span class="eyebrow">So einfach geht es</span>
-      <h2>In drei Schritten zu deiner fertigen Keramik</h2>
-      <Brush />
-    </div>
-    <div class="steps">
-      <div class="step">
-        <h3>Termin aussuchen</h3>
-        <p>Schau dir die freien Termine an und such dir einen Zeitpunkt aus, der für dich passt.</p>
+    <div class="layout">
+      <div class="head">
+        <span class="eyebrow">So einfach geht es</span>
+        <h2>In drei Schritten zu deiner fertigen Keramik</h2>
+        <Brush />
       </div>
-      <div class="step">
-        <h3>Ankommen und loslegen</h3>
-        <p>Setz dich gemütlich hin, wähle deinen Rohling und lass deiner Kreativität freien Lauf. Ich helfe dir gern.</p>
-      </div>
-      <div class="step">
-        <h3>Abholen und freuen</h3>
-        <p>Nach 10 bis 14 Tagen ist dein Werk fertig glasiert. Hol es ab und freu dich jedes Mal, wenn du es benutzt.</p>
+      <div class="steps">
+        <div class="step">
+          <h3>Termin aussuchen</h3>
+          <p>Schau dir die freien Termine an und such dir einen Zeitpunkt aus, der für dich passt.</p>
+        </div>
+        <div class="step">
+          <h3>Ankommen und loslegen</h3>
+          <p>Setz dich gemütlich hin, wähle deinen Rohling und lass deiner Kreativität freien Lauf. Ich helfe dir gern.</p>
+        </div>
+        <div class="step">
+          <h3>Abholen und freuen</h3>
+          <p>Nach 10 bis 14 Tagen ist dein Werk fertig glasiert. Hol es ab und freu dich jedes Mal, wenn du es benutzt.</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <style>
+  .layout {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: 5rem;
+    align-items: start;
+  }
+
+  .head h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
+
   .steps {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
-    margin-top: 3rem;
+    padding-top: 0.5rem;
   }
 
   .step {
@@ -50,11 +63,29 @@ import Brush from '../components/Brush.astro';
   }
 
   .step h3 {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     margin: .2rem 0 .5rem;
   }
 
   .step p {
     color: var(--ink-2);
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 860px) {
+    .layout {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+
+    .steps {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 540px) {
+    .steps {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
