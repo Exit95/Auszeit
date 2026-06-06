@@ -176,12 +176,12 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
         </a>
 
         <ul>
-          <li class="hide-m"><a class="lnk" href="/#keramik-preise">Keramik bemalen</a></li>
+          <li class="hide-m"><a class="lnk" href="/#angebot">Keramik bemalen</a></li>
           <li class="hide-m"><a class="lnk" href="/workshops">Workshops</a></li>
           <li class="hide-m"><a class="lnk" href="/events">Anlässe</a></li>
           <li class="hide-m"><a class="lnk" href="/galerie">Galerie</a></li>
           <li class="hide-m"><a class="lnk" href="/gutscheine">Gutscheine</a></li>
-          <li><a class="btn btn-terra" href="/#termin-buchen">Termin buchen</a></li>
+          <li><a class="btn btn-terra" href="/#buchen">Termin buchen</a></li>
         </ul>
 
         <MobileMenu />
@@ -250,13 +250,13 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
         Anrufen
       </a>
-      <a href="/#termin-buchen" class="mobile-cta-bar__book">Jetzt Termin buchen</a>
+      <a href="/#buchen" class="mobile-cta-bar__book">Jetzt Termin buchen</a>
     </div>
 
     <script is:inline>
     (function() {
       var bar = document.getElementById('mobile-cta-bar');
-      var booking = document.getElementById('termin-buchen');
+      var booking = document.getElementById('buchen');
       if (!bar || !booking) return;
       var io = new IntersectionObserver(function(entries) {
         bar.style.transform = entries[0].isIntersecting ? 'translateY(100%)' : 'translateY(0)';
