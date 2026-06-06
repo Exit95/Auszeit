@@ -67,7 +67,8 @@ import { content } from '../data/content';
     margin: 2rem 0 2.4rem;
   }
 
-  .chip {
+  /* Chips: per JS angehaengt -> :global, sonst greift die gescopte Regel nur bei "Alle" */
+  :global(.chips .chip) {
     border: 1.5px solid var(--hair, #E4D8CB);
     background: #fff;
     border-radius: 999px;
@@ -77,16 +78,14 @@ import { content } from '../data/content';
     color: var(--ink-2, #5D4E43);
     cursor: pointer;
     transition: border-color 0.15s, color 0.15s, background 0.15s;
-    font-family: inherit;
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
     line-height: 1.3;
   }
-
-  .chip:hover {
+  :global(.chips .chip:hover) {
     border-color: var(--terra, #D96C4A);
     color: var(--terra, #D96C4A);
   }
-
-  .chip.is-on {
+  :global(.chips .chip.is-on) {
     background: var(--terra, #D96C4A);
     border-color: var(--terra, #D96C4A);
     color: #fff;
@@ -278,7 +277,10 @@ import { content } from '../data/content';
 
     // ── Chips aufbauen ───────────────────────────────────────
     function buildChips() {
-      const usedCats = [...new Set(allItems.map((i) => i.category).filter(Boolean))];
+      // Feste, sinnvolle Reihenfolge; "Sonstiges" immer ans Ende, unbekannte davor
+      const CAT_ORDER = ['tassen', 'teller', 'spardosen', 'anhaenger', 'figuren', 'kindergeburtstag'];
+      const rank = (c: string) => (c === 'sonstiges' ? 999 : (CAT_ORDER.indexOf(c) === -1 ? 500 : CAT_ORDER.indexOf(c)));
+      const usedCats = [...new Set(allItems.map((i) => i.category).filter(Boolean))].sort((a, b) => rank(a) - rank(b));
       usedCats.forEach((cat) => {
         const btn = document.createElement('button');
         btn.className = 'chip';
