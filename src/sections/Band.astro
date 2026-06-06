@@ -1,0 +1,50 @@
+---
+import Photo from '../components/Photo.astro';
+---
+
+<section class="band">
+  <Photo src="/fotos/sh-atelier.jpg" alt="Blick ins gemuetliche Atelier" />
+  <div class="band__scrim"></div>
+  <p class="band__t">Ein Nachmittag nur fuer dich, mitten im Muensterland.</p>
+</section>
+
+<style>
+  .band {
+    position: relative;
+    margin: 0 clamp(.3rem, 1vw, .9rem);
+    min-height: clamp(300px, 40vw, 440px);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    overflow: hidden;
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .band img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 60%;
+  }
+
+  .band__scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(46, 36, 29, .62), rgba(46, 36, 29, .35));
+  }
+
+  .band__t {
+    position: relative;
+    color: #F7F1EA;
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    max-width: 20ch;
+    padding: 1.5rem;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, .4);
+  }
+</style>
