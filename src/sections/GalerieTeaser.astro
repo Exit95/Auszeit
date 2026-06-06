@@ -13,10 +13,10 @@ import Brush from '../components/Brush.astro';
     </div>
     <div class="gallery-row">
       <Photo src="/fotos/sh-stag.jpg" alt="Teller mit Hirschmotiv" />
-      <Photo src="/fotos/sh-bee.jpg" alt="Krug mit Bienen" />
+      <Photo src="/fotos/g-jug.jpg" alt="Krug mit Bienen und Blumen" />
       <Photo src="/fotos/sh-cookie.jpg" alt="Schale mit Krümelmonster" />
       <Photo src="/fotos/sh-lion.jpg" alt="Kinderteller mit Löwe" />
-      <Photo src="/fotos/sh-amore.jpg" alt="Herztablett Amore" />
+      <Photo src="/fotos/g-bdayplate.jpg" alt="Teller zum Geburtstag" />
     </div>
     <p class="gallery-link">
       <a class="link-ul" href="/galerie">Zur ganzen Galerie</a>
@@ -39,7 +39,7 @@ import Brush from '../components/Brush.astro';
     box-shadow: var(--shadow-card);
   }
 
-  :global(.gallery-row img:first-child) {
+  :global(.gallery-row > picture:first-child img) {
     grid-row: span 2;
     aspect-ratio: auto;
     height: 100%;
@@ -50,7 +50,7 @@ import Brush from '../components/Brush.astro';
       grid-template-columns: repeat(2, 1fr);
     }
 
-    :global(.gallery-row img:first-child) {
+    :global(.gallery-row > picture:first-child img) {
       grid-row: auto;
       aspect-ratio: 1;
     }

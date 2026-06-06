@@ -13,8 +13,8 @@ import Brush from '../components/Brush.astro';
     <div class="price-split">
       <div class="price-photos">
         <Photo src="/fotos/sh-amore.jpg" alt="Handbemaltes Herztablett" />
-        <Photo src="/fotos/sh-cup.jpg" alt="Auszeit-Tasse" />
-        <Photo src="/fotos/sh-bee.jpg" alt="Krug mit Bienenmotiv" />
+        <Photo src="/fotos/sh-dachs.jpg" alt="Schale mit Dackelmotiv" />
+        <Photo src="/fotos/sh-vase.jpg" alt="Handbemalte Vase mit Sprenkeln" />
       </div>
       <div class="price-card">
         <h3>Rohlinge</h3>
@@ -66,7 +66,7 @@ import Brush from '../components/Brush.astro';
     box-shadow: var(--shadow-card);
   }
 
-  :global(.price-photos img:first-child) {
+  :global(.price-photos > picture:first-child img) {
     grid-column: 1 / -1;
     aspect-ratio: 16 / 10;
   }
