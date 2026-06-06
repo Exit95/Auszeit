@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getPool, withTransaction } from '../../../../../../lib/database';
 import { requireAuth, jsonSuccess, jsonError } from '../../../../../../lib/server/brenn/auth';
 import { validatePickup } from '../../../../../../lib/server/brenn/validation';
+import { sendReviewRequestEmail } from '../../../../../../lib/server/brenn/notifications';
 
 export const POST: APIRoute = async ({ params, request }) => {
   const authErr = requireAuth(request);
@@ -16,7 +17,16 @@ export const POST: APIRoute = async ({ params, request }) => {
 
     const pool = getPool();
 
-    const [orderRows] = await pool.execute('SELECT * FROM painted_orders WHERE id = ?', [params.id]);
+    // Kundendaten gleich mitladen — werden nach der Transaktion für die
+    // Bewertungs-E-Mail benötigt (Feature 12).
+    const [orderRows] = await pool.execute(
+      `SELECT po.*, c.first_name, c.last_name, c.email AS customer_email,
+              po.review_email_sent_at
+         FROM painted_orders po
+         JOIN customers c ON c.id = po.customer_id
+        WHERE po.id = ?`,
+      [params.id]
+    );
     const order = (orderRows as any[])[0];
     if (!order) return jsonError('Auftrag nicht gefunden.', 404);
 
@@ -62,6 +72,20 @@ export const POST: APIRoute = async ({ params, request }) => {
         [params.id, data.picked_up_by.trim(), data.pickup_note?.trim() || null]
       );
     });
+
+    // Feature 12: Bewertungs-E-Mail (fire-and-forget).
+    // Nur senden wenn: E-Mail vorhanden, noch nicht gesendet, Auftrag nicht storniert.
+    if (order.customer_email && !order.review_email_sent_at) {
+      const custName = `${order.first_name ?? ''} ${order.last_name ?? ''}`.trim();
+      sendReviewRequestEmail({
+        orderId: order.id,
+        customerName: custName,
+        customerEmail: order.customer_email,
+        referenceCode: order.reference_code,
+      }).catch((err) =>
+        console.error('[Brenn-Pickup] Bewertungsmail Fehler:', err)
+      );
+    }
 
     return jsonSuccess({ picked_up: true });
   } catch (err) {

@@ -5,18 +5,24 @@ import Brush from '../components/Brush.astro';
 
 <section class="blk" id="angebot">
   <div class="wrap">
-    <div class="head">
+    <div class="head" data-animate="fade-up">
       <span class="eyebrow">Angebot und Preise</span>
       <h2>Transparent, ohne&nbsp;Überraschungen</h2>
       <Brush />
     </div>
     <div class="price-split">
-      <div class="price-photos">
-        <Photo src="/fotos/sh-tiles.jpg" alt="Bemalte Keramikkacheln mit verschiedenen Motiven" />
-        <Photo src="/fotos/sh-dachs.jpg" alt="Schale mit Dackelmotiv" />
-        <Photo src="/fotos/sh-vase.jpg" alt="Handbemalte Vase mit Sprenkeln" />
+      <div class="price-photos" data-animate-stagger="110">
+        <div class="photo-wrap photo-hover" data-animate="scale-up">
+          <Photo src="/fotos/sh-tiles.jpg" alt="Bemalte Keramikkacheln mit verschiedenen Motiven" />
+        </div>
+        <div class="photo-wrap photo-hover" data-animate="scale-up">
+          <Photo src="/fotos/sh-dachs.jpg" alt="Schale mit Dackelmotiv" />
+        </div>
+        <div class="photo-wrap photo-hover" data-animate="scale-up">
+          <Photo src="/fotos/sh-vase.jpg" alt="Handbemalte Vase mit Sprenkeln" />
+        </div>
       </div>
-      <div class="price-card">
+      <div class="price-card" data-animate="slide-right" data-animate-delay="180">
         <h3>Rohlinge</h3>
         <ul class="price-list">
           <li><span>Tassen</span><span class="p">ab 14,50 €</span></li>
@@ -63,16 +69,30 @@ import Brush from '../components/Brush.astro';
     gap: 1rem;
   }
 
-  :global(.price-photos img) {
-    aspect-ratio: 1;
-    object-fit: cover;
+  .photo-wrap {
     border-radius: var(--r-md);
+    overflow: hidden;
     box-shadow: var(--shadow-card);
   }
 
-  :global(.price-photos img:first-child) {
+  .photo-wrap:first-child {
     grid-column: 1 / -1;
+  }
+
+  .photo-wrap :global(img) {
+    aspect-ratio: 1;
+    object-fit: cover;
+    width: 100%;
+    display: block;
+    transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .photo-wrap:first-child :global(img) {
     aspect-ratio: 4 / 3;
+  }
+
+  .photo-wrap:hover :global(img) {
+    transform: scale(1.04);
   }
 
   .price-card {

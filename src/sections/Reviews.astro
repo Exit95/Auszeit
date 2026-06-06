@@ -61,21 +61,21 @@ try {
 
 <section class="blk">
   <div class="wrap">
-    <div class="head">
+    <div class="head" data-animate="fade-up">
       <span class="eyebrow">Bewertungen</span>
       <h2>Was Gäste über uns sagen</h2>
       <Brush />
     </div>
-    <div class="rev-grid">
+    <div class="rev-grid" data-animate-stagger="110">
       {reviews.map((r) => (
-        <blockquote class="rev">
+        <blockquote class="rev" data-animate="fade-up">
           <Stars label="Fünf von fünf Sternen" />
           <p>„{r.comment}"</p>
           <cite>{r.name} · Google</cite>
         </blockquote>
       ))}
     </div>
-    <div class="rev-cta">
+    <div class="rev-cta" data-animate="fade-in" data-animate-delay="200">
       <p>Warst du schon bei uns? Über deine Bewertung freuen wir uns riesig.</p>
       <a class="btn btn-terra" href="https://g.page/r/CWK3RuTXNP2qEAE/review" target="_blank" rel="noopener noreferrer">Bei Google bewerten</a>
     </div>

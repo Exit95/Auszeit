@@ -19,6 +19,7 @@ const BOOKINGS_FILENAME = 'bookings.json';
 const WORKSHOPS_FILENAME = 'workshops.json';
 const CATEGORIES_FILENAME = 'gallery-categories.json';
 const IMAGE_METADATA_FILENAME = 'image-metadata.json';
+const BLOCKED_DATES_FILENAME = 'blocked-dates.json';
 
 // Lokale Pfade (Fallback)
 const SLOTS_FILE = path.join(DATA_DIR, SLOTS_FILENAME);
@@ -26,6 +27,7 @@ const BOOKINGS_FILE = path.join(DATA_DIR, BOOKINGS_FILENAME);
 const WORKSHOPS_FILE = path.join(DATA_DIR, WORKSHOPS_FILENAME);
 const CATEGORIES_FILE = path.join(DATA_DIR, CATEGORIES_FILENAME);
 const IMAGE_METADATA_FILE = path.join(DATA_DIR, IMAGE_METADATA_FILENAME);
+const BLOCKED_DATES_FILE = path.join(DATA_DIR, BLOCKED_DATES_FILENAME);
 
 // Event-Typen für Termine
 export type EventType = 'normal' | 'kindergeburtstag' | 'stammtisch';
@@ -98,6 +100,15 @@ export interface ImageMetadata {
   filename: string;
   categories: string[]; // Array von Kategorie-IDs
   uploadedAt: string;
+}
+
+// Gesperrte Zeiträume (Urlaub, Feiertage) — blockieren die Buchung im Frontend
+export interface BlockedDate {
+  id: string;
+  from: string;   // YYYY-MM-DD (inklusiv)
+  to: string;     // YYYY-MM-DD (inklusiv)
+  reason?: string;
+  createdAt: string;
 }
 
 // Sicherstellen, dass das Data-Verzeichnis existiert
@@ -614,4 +625,52 @@ export async function addInquiry(inq: Omit<Inquiry, 'id' | 'createdAt' | 'status
 
 export async function updateInquiry(id: string, updates: { status?: string; adminNotes?: string }): Promise<void> {
   await dbUpdateInquiry(id, updates);
+}
+
+// ─── Blocked Dates (Urlaub / Betriebsunterbrechungen) ──────────────────────
+// Speicherung analog zu Slots: S3-JSON primär, lokales Dateisystem als Fallback.
+// Bewusst KEINE DB-Tabelle, um konsistent mit dem Atelier-JSON-Storage zu bleiben.
+
+export async function getBlockedDates(): Promise<BlockedDate[]> {
+  if (isS3Configured()) {
+    return await readJsonFromS3<BlockedDate[]>(BLOCKED_DATES_FILENAME, []);
+  }
+  await ensureDataDir();
+  await ensureFile(BLOCKED_DATES_FILE, []);
+  const data = await fs.readFile(BLOCKED_DATES_FILE, 'utf-8');
+  return JSON.parse(data);
+}
+
+async function saveBlockedDates(dates: BlockedDate[]): Promise<void> {
+  if (isS3Configured()) {
+    await writeJsonToS3(BLOCKED_DATES_FILENAME, dates);
+    return;
+  }
+  await ensureDataDir();
+  await fs.writeFile(BLOCKED_DATES_FILE, JSON.stringify(dates, null, 2));
+}
+
+export async function addBlockedDate(entry: Omit<BlockedDate, 'id' | 'createdAt'>): Promise<BlockedDate> {
+  const dates = await getBlockedDates();
+  const newEntry: BlockedDate = {
+    ...entry,
+    id: `blocked_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+    createdAt: new Date().toISOString(),
+  };
+  dates.push(newEntry);
+  await saveBlockedDates(dates);
+  return newEntry;
+}
+
+export async function deleteBlockedDate(id: string): Promise<boolean> {
+  const dates = await getBlockedDates();
+  const filtered = dates.filter((d) => d.id !== id);
+  if (filtered.length === dates.length) return false;
+  await saveBlockedDates(filtered);
+  return true;
+}
+
+// Prüft, ob ein konkretes Datum (YYYY-MM-DD) in einem gesperrten Zeitraum liegt.
+export function isDateBlocked(dateStr: string, blocked: BlockedDate[]): boolean {
+  return blocked.some((b) => dateStr >= b.from && dateStr <= b.to);
 }

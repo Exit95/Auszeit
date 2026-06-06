@@ -220,6 +220,15 @@ export interface Voucher {
   note?: string;              // optionale Notiz bei Einlösung
 }
 
+// Gesperrte Zeiträume (Urlaub / Betriebsunterbrechungen)
+export interface BlockedDate {
+  id: string;
+  from: string; // YYYY-MM-DD (inklusiv)
+  to: string;   // YYYY-MM-DD (inklusiv)
+  reason?: string;
+  createdAt: string;
+}
+
 // Navigation
 export type RootStackParamList = {
   Login: undefined;
@@ -233,11 +242,14 @@ export type RootStackParamList = {
   AtelierInquiries: undefined;
   AtelierSlots: undefined;
   SlotForm: { id?: string; defaultDate?: string };
+  BookingCreate: { slotId?: string } | undefined;
   InquiryDetail: { id: string };
   BookingDetail: { id: string };
   AdminReviews: undefined;
   VoucherScanner: undefined;
   Vouchers: undefined;
+  Stats: undefined;
+  BlockedDates: undefined;
 };
 
 export type TabParamList = {

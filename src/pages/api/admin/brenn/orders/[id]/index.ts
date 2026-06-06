@@ -86,6 +86,22 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       values.push(data.storage_location_id);
     }
 
+    // Auftrag bearbeiten (App OrderForm, Edit-Modus): Kunde + Besuchsdatum.
+    if (data.customer_id !== undefined) {
+      const [custRows] = await pool.execute(
+        'SELECT id FROM customers WHERE id = ?',
+        [Number(data.customer_id)]
+      );
+      if ((custRows as any[]).length === 0) return jsonError('Kunde nicht gefunden.', 404);
+      updates.push('customer_id = ?');
+      values.push(Number(data.customer_id));
+    }
+
+    if (data.visit_date !== undefined) {
+      updates.push('visit_date = ?');
+      values.push(data.visit_date);
+    }
+
     if (data.notes !== undefined) {
       updates.push('notes = ?');
       values.push(data.notes?.trim() || null);

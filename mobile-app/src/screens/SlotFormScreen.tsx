@@ -37,6 +37,34 @@ function addDays(dateStr: string, days: number): string {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 }
 
+// JS getDay(): 0=So .. 6=Sa. Wir nutzen Mo..So-Reihenfolge für die UI.
+const WEEKDAYS: { idx: number; short: string }[] = [
+  { idx: 1, short: 'Mo' },
+  { idx: 2, short: 'Di' },
+  { idx: 3, short: 'Mi' },
+  { idx: 4, short: 'Do' },
+  { idx: 5, short: 'Fr' },
+  { idx: 6, short: 'Sa' },
+  { idx: 0, short: 'So' },
+];
+
+function weekdayOf(dateStr: string): number {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).getDay();
+}
+
+// Baut alle Datumswerte ab Startdatum, die in den gewählten Wochentagen liegen,
+// über die angegebene Anzahl Wochen (inkl. der ersten Woche ab Startdatum).
+function buildRecurringDates(startDate: string, weekdays: number[], weeks: number): string[] {
+  const result: string[] = [];
+  const totalDays = weeks * 7;
+  for (let i = 0; i < totalDays; i++) {
+    const d = addDays(startDate, i);
+    if (weekdays.includes(weekdayOf(d))) result.push(d);
+  }
+  return result;
+}
+
 function formatDateHuman(dateStr: string): string {
   if (!DATE_RE.test(dateStr)) return dateStr;
   try {
@@ -63,6 +91,17 @@ export function SlotFormScreen() {
   const [maxCapacity, setMaxCapacity] = useState('8');
   const [initialBooked, setInitialBooked] = useState('0');
   const [eventType, setEventType] = useState<SlotEventType>('normal');
+
+  // Serien-Slots (nur beim Anlegen, nicht beim Bearbeiten)
+  const [repeat, setRepeat] = useState(false);
+  const [repeatWeekdays, setRepeatWeekdays] = useState<number[]>([]);
+  const [repeatWeeks, setRepeatWeeks] = useState('4');
+
+  const toggleWeekday = (idx: number) => {
+    setRepeatWeekdays((prev) =>
+      prev.includes(idx) ? prev.filter((d) => d !== idx) : [...prev, idx],
+    );
+  };
 
   // Beim Bearbeiten: bestehenden Slot laden
   const loadExisting = useCallback(async () => {
@@ -110,16 +149,56 @@ export function SlotFormScreen() {
       Alert.alert('Eingabe prüfen', err);
       return;
     }
+
+    const base = {
+      startTime,
+      endTime: endTime || undefined,
+      maxCapacity: parseInt(maxCapacity, 10),
+      initialBooked: parseInt(initialBooked || '0', 10),
+      eventType,
+    };
+
+    // Serien-Modus: mehrere Slots auf einmal anlegen
+    if (!isEdit && repeat) {
+      const weeks = parseInt(repeatWeeks || '0', 10);
+      if (repeatWeekdays.length === 0) {
+        Alert.alert('Eingabe prüfen', 'Bitte mindestens einen Wochentag auswählen.');
+        return;
+      }
+      if (!Number.isFinite(weeks) || weeks < 1 || weeks > 12) {
+        Alert.alert('Eingabe prüfen', 'Anzahl Wochen muss zwischen 1 und 12 liegen.');
+        return;
+      }
+      const dates = buildRecurringDates(date, repeatWeekdays, weeks);
+      if (dates.length === 0) {
+        Alert.alert('Keine Termine', 'In diesem Zeitraum liegt kein gewählter Wochentag.');
+        return;
+      }
+      setSaving(true);
+      try {
+        const slotsPayload = dates.map((d) => ({ ...base, date: d }));
+        const res = await adminApi.post<{ created: number }>('/api/admin/slots', { slots: slotsPayload });
+        Alert.alert(
+          'Serie angelegt',
+          `${res?.created ?? dates.length} Termin${(res?.created ?? dates.length) !== 1 ? 'e wurden' : ' wurde'} angelegt.`,
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
+        );
+      } catch (e: any) {
+        const status = e?.status ? ` (${e.status})` : '';
+        Alert.alert(
+          'Speichern fehlgeschlagen' + status,
+          e?.message || 'Bitte Eingaben prüfen und erneut versuchen.',
+        );
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // Einzel-Modus (Anlegen oder Bearbeiten)
     setSaving(true);
     try {
-      const payload: any = {
-        date,
-        startTime,
-        endTime: endTime || undefined,
-        maxCapacity: parseInt(maxCapacity, 10),
-        initialBooked: parseInt(initialBooked || '0', 10),
-        eventType,
-      };
+      const payload: any = { ...base, date };
       if (isEdit) {
         payload.id = id;
         await adminApi.put('/api/admin/slots', payload);
@@ -299,6 +378,75 @@ export function SlotFormScreen() {
             </View>
           </View>
 
+          {/* Serien-Slots (nur beim Anlegen) */}
+          {!isEdit && (
+            <View style={styles.section}>
+              <Pressable
+                style={styles.repeatHeader}
+                onPress={() => setRepeat((r) => !r)}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: repeat }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sectionTitle}>Wiederholen</Text>
+                  <Text style={styles.helperText}>Serie für mehrere Wochen anlegen</Text>
+                </View>
+                <View style={[styles.switchTrack, repeat && styles.switchTrackOn]}>
+                  <View style={[styles.switchThumb, repeat && styles.switchThumbOn]} />
+                </View>
+              </Pressable>
+
+              {repeat && (
+                <>
+                  <Text style={styles.fieldLabel}>Wochentage</Text>
+                  <View style={styles.weekdayRow}>
+                    {WEEKDAYS.map((w) => {
+                      const isActive = repeatWeekdays.includes(w.idx);
+                      return (
+                        <Pressable
+                          key={w.idx}
+                          style={[styles.weekdayChip, isActive && styles.weekdayChipActive]}
+                          onPress={() => toggleWeekday(w.idx)}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: isActive }}
+                        >
+                          <Text style={[styles.weekdayChipText, isActive && styles.weekdayChipTextActive]}>
+                            {w.short}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  <Text style={styles.fieldLabel}>Anzahl Wochen</Text>
+                  <View style={styles.quickRow}>
+                    {['2', '4', '6', '8', '12'].map((w) => {
+                      const isActive = repeatWeeks === w;
+                      return (
+                        <Pressable
+                          key={w}
+                          style={[styles.quickChip, isActive && { backgroundColor: colors.primary + '18', borderColor: colors.primary }]}
+                          onPress={() => setRepeatWeeks(w)}
+                        >
+                          <Text style={[styles.quickChipText, isActive && { color: colors.primary }]}>
+                            {w} Wochen
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  {repeatWeekdays.length > 0 && (
+                    <Text style={styles.helperText}>
+                      {buildRecurringDates(date, repeatWeekdays, parseInt(repeatWeeks || '0', 10) || 0).length}{' '}
+                      Termine ab {DATE_RE.test(date) ? formatDateHuman(date) : date}
+                    </Text>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+
           {/* Speichern */}
           <View style={styles.actions}>
             <Pressable
@@ -318,7 +466,7 @@ export function SlotFormScreen() {
                 <>
                   <Ionicons name="save-outline" size={18} color={colors.textOnPrimary} />
                   <Text style={styles.actionBtnText}>
-                    {isEdit ? 'Änderungen speichern' : 'Termin anlegen'}
+                    {isEdit ? 'Änderungen speichern' : repeat ? 'Serie anlegen' : 'Termin anlegen'}
                   </Text>
                 </>
               )}
@@ -422,6 +570,57 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.inkSecondary,
     textAlign: 'center',
+  },
+  repeatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  switchTrack: {
+    width: 46,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.border,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  switchTrackOn: {
+    backgroundColor: colors.primary,
+  },
+  switchThumb: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.surface,
+  },
+  switchThumbOn: {
+    alignSelf: 'flex-end',
+  },
+  weekdayRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  weekdayChip: {
+    width: 42,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  weekdayChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  weekdayChipText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.inkSecondary,
+  },
+  weekdayChipTextActive: {
+    color: colors.textOnPrimary,
   },
   actions: {
     flexDirection: 'row',

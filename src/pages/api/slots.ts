@@ -1,19 +1,24 @@
 import type { APIRoute } from 'astro';
-import { getTimeSlots } from '../../lib/storage';
+import { getTimeSlots, getBlockedDates, isDateBlocked } from '../../lib/storage';
 
 // GET - Öffentlich verfügbare Zeitslots abrufen (nur zukünftige)
 // Inkludiert auch Kindergeburtstag/Stammtisch-Tage (als ausgebucht markiert)
 export const GET: APIRoute = async () => {
   try {
-    const allSlots = await getTimeSlots();
+    const [allSlots, blocked] = await Promise.all([getTimeSlots(), getBlockedDates()]);
     const now = new Date();
 
     // Filtere zukünftige Slots
-    // - Normale Termine: nur wenn verfügbare Plätze > 0
+    // - Normale Termine: nur wenn verfügbare Plätze > 0 UND Datum nicht gesperrt
     // - Kindergeburtstag/Stammtisch: immer anzeigen (als ausgebucht)
     const relevantSlots = allSlots.filter(slot => {
       const slotDateTime = new Date(`${slot.date}T${slot.time}`);
       if (slotDateTime <= now) return false; // Vergangene Termine ausschließen
+
+      // Gesperrte Zeiträume (Urlaub/Feiertag): normale Termine ausblenden
+      if (isDateBlocked(slot.date, blocked)) {
+        return slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch';
+      }
 
       // Kindergeburtstag oder Stammtisch immer anzeigen (auch wenn ausgebucht)
       if (slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch') {

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getTimeSlots, addBooking } from '../../lib/storage';
+import { getTimeSlots, addBooking, getBlockedDates, isDateBlocked } from '../../lib/storage';
 import { BOOKING_EMAIL, FROM_EMAIL, isSmtpConfigured } from '../../lib/env';
 import { createSmtpTransporter } from '../../lib/smtp';
 import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeDate, sanitizeTime } from '../../lib/sanitize';
@@ -75,6 +75,21 @@ export const POST: APIRoute = async ({ request }) => {
         }
       );
     }
+
+	    // Sicherheitsnetz: Buchungen in gesperrten Zeiträumen (Urlaub/Feiertag) ablehnen
+	    const blockedRanges = await getBlockedDates();
+	    if (isDateBlocked(slot.date, blockedRanges)) {
+	      return new Response(
+	        JSON.stringify({
+	          success: false,
+	          message: 'In diesem Zeitraum sind leider keine Buchungen möglich (Betriebsurlaub).',
+	        }),
+	        {
+	          status: 400,
+	          headers: { 'Content-Type': 'application/json' }
+	        }
+	      );
+	    }
 
 	    if (slot.available < participants) {
       return new Response(

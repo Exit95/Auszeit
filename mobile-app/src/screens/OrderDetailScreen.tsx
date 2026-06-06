@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, RefreshControl, Alert, Pressable, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, RefreshControl, Alert, Pressable, ActivityIndicator, Linking,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -27,6 +27,7 @@ interface OrderDetailData {
   customer_id: number;
   email: string | null;
   phone: string | null;
+  pickup_notified_at: string | null;
   created_at: string;
   items: Array<{
     id: number;
@@ -48,6 +49,23 @@ interface OrderDetailData {
 const STATUS_FLOW: OrderStatus[] = [
   'ERFASST', 'WARTET_AUF_BRENNEN', 'IM_BRENNOFEN', 'GEBRANNT', 'ABHOLBEREIT', 'ABGEHOLT',
 ];
+
+// Telefonnummer in internationales wa.me-Format bringen (49…, ohne führende 0, ohne Sonderzeichen).
+// Gibt null zurück, wenn keine brauchbare Nummer vorliegt.
+function toWhatsAppNumber(phone: string | null): string | null {
+  if (!phone) return null;
+  let p = phone.replace(/[^\d+]/g, '');
+  if (!p) return null;
+  if (p.startsWith('+')) {
+    p = p.slice(1);
+  } else if (p.startsWith('00')) {
+    p = p.slice(2);
+  } else if (p.startsWith('0')) {
+    // Nationale Nummer (Deutschland) → 0 durch 49 ersetzen
+    p = '49' + p.slice(1);
+  }
+  return p.length >= 8 ? p : null;
+}
 
 export function OrderDetailScreen() {
   const navigation = useNavigation<Nav>();
@@ -204,6 +222,67 @@ export function OrderDetailScreen() {
     );
   };
 
+  // Feature 3: Abholbenachrichtigung erneut senden (idempotent, überschreibt pickup_notified_at)
+  const [sendingReminder, setSendingReminder] = useState(false);
+  const handleSendReminder = () => {
+    if (!order) return;
+    if (!order.email) {
+      Alert.alert('Keine E-Mail', 'Für diese Kund:in ist keine E-Mail-Adresse hinterlegt.');
+      return;
+    }
+    const alreadyNotified = !!order.pickup_notified_at;
+    Alert.alert(
+      alreadyNotified ? 'Erinnerung senden' : 'Benachrichtigung senden',
+      alreadyNotified
+        ? `Möchtest du ${order.first_name} ${order.last_name} erneut per E-Mail an die Abholung erinnern?`
+        : `Abholbenachrichtigung an ${order.first_name} ${order.last_name} senden?`,
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        {
+          text: 'Senden',
+          onPress: async () => {
+            setSendingReminder(true);
+            try {
+              await api.post(`/orders/${route.params.id}/notify-pickup`, {});
+              Alert.alert('Gesendet', 'Die E-Mail wurde an die Kund:in gesendet.');
+              loadOrder();
+            } catch (e: any) {
+              Alert.alert('Fehlgeschlagen', e?.message || 'E-Mail konnte nicht gesendet werden.');
+            } finally {
+              setSendingReminder(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  // Feature 4: WhatsApp-Nachricht an die Kund:in bei Abholbereit
+  const handleWhatsApp = async () => {
+    if (!order) return;
+    const waNumber = toWhatsAppNumber(order.phone);
+    if (!waNumber) {
+      Alert.alert('Keine Telefonnummer', 'Für diese Kund:in ist keine nutzbare Telefonnummer hinterlegt.');
+      return;
+    }
+    const greetingName = order.first_name || 'du';
+    const message =
+      `Hallo ${greetingName}, deine Keramik im Malatelier Auszeit ist abholbereit! ` +
+      `Du kannst sie zu unseren Öffnungszeiten abholen: Mo–Fr 10–18 Uhr, Sa 10–16 Uhr. ` +
+      `Auftrag: ${order.reference_code}. Bis bald! Liebe Grüße, Irena`;
+    const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        Alert.alert('WhatsApp nicht verfügbar', 'WhatsApp scheint auf diesem Gerät nicht installiert zu sein.');
+        return;
+      }
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert('Fehler', 'WhatsApp konnte nicht geöffnet werden.');
+    }
+  };
+
   const ITEM_TYPES = ['Tasse', 'Becher', 'Teller', 'Schale', 'Vase', 'Figur', 'Dose', 'Untersetzer', 'Spardose', 'Sonstiges'];
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItemType, setNewItemType] = useState('Tasse');
@@ -280,6 +359,71 @@ export function OrderDetailScreen() {
           </View>
         </View>
       </Card>
+
+      {/* Abholbenachrichtigung (Features 3 + 4) — nur bei Abholbereit oder bereits benachrichtigt */}
+      {(order.overall_status === 'ABHOLBEREIT' || order.pickup_notified_at) && (
+        <Card>
+          <Text style={styles.sectionTitle}>Abholbenachrichtigung</Text>
+
+          <View style={styles.notifyStatusRow}>
+            <Ionicons
+              name={order.pickup_notified_at ? 'checkmark-circle' : 'ellipse-outline'}
+              size={18}
+              color={order.pickup_notified_at ? colors.success : colors.meta}
+            />
+            <Text style={styles.notifyStatusText}>
+              {order.pickup_notified_at
+                ? `Benachrichtigt am ${new Date(order.pickup_notified_at).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })} um ${new Date(order.pickup_notified_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`
+                : 'Noch nicht benachrichtigt'}
+            </Text>
+          </View>
+
+          {order.overall_status === 'ABHOLBEREIT' && (
+            <View style={styles.notifyActions}>
+              <Pressable
+                onPress={handleSendReminder}
+                disabled={sendingReminder || !order.email}
+                style={[
+                  styles.notifyBtn,
+                  styles.notifyBtnEmail,
+                  (sendingReminder || !order.email) && styles.btnDisabledLight,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={order.pickup_notified_at ? 'Erinnerung per E-Mail senden' : 'Benachrichtigung per E-Mail senden'}
+              >
+                {sendingReminder ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="mail-outline" size={16} color={colors.primary} />
+                    <Text style={styles.notifyBtnEmailText}>
+                      {order.pickup_notified_at ? 'Erinnerung senden' : 'E-Mail senden'}
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+
+              {toWhatsAppNumber(order.phone) && (
+                <Pressable
+                  onPress={handleWhatsApp}
+                  style={[styles.notifyBtn, styles.notifyBtnWa]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Per WhatsApp informieren"
+                >
+                  <Ionicons name="logo-whatsapp" size={16} color="#fff" />
+                  <Text style={styles.notifyBtnWaText}>Per WhatsApp</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+
+          {order.overall_status === 'ABHOLBEREIT' && !order.email && !toWhatsAppNumber(order.phone) && (
+            <Text style={styles.notifyHint}>
+              Keine Kontaktdaten hinterlegt — bitte Kund:in telefonisch erreichen.
+            </Text>
+          )}
+        </Card>
+      )}
 
       {/* Details */}
       <Card>
@@ -563,6 +707,28 @@ const styles = StyleSheet.create({
   value: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.ink },
   subValue: { fontSize: fontSize.sm, color: colors.inkSecondary, marginTop: 2 },
   sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.ink, marginBottom: spacing.sm },
+  notifyStatusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  notifyStatusText: { flex: 1, fontSize: fontSize.sm, color: colors.inkSecondary },
+  notifyActions: { flexDirection: 'row', gap: spacing.sm },
+  notifyBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 11,
+    borderRadius: borderRadius.md,
+  },
+  notifyBtnEmail: {
+    backgroundColor: colors.primary + '15',
+    borderWidth: 1,
+    borderColor: colors.primary + '40',
+  },
+  notifyBtnEmailText: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.primary },
+  notifyBtnWa: { backgroundColor: '#25D366' },
+  notifyBtnWaText: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: '#fff' },
+  btnDisabledLight: { opacity: 0.45 },
+  notifyHint: { fontSize: fontSize.xs, color: colors.meta, marginTop: spacing.sm },
   detailGrid: { gap: spacing.sm },
   detailItem: {
     flexDirection: 'row',

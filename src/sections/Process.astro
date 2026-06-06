@@ -5,21 +5,21 @@ import Brush from '../components/Brush.astro';
 <section class="blk soft">
   <div class="wrap">
     <div class="layout">
-      <div class="head">
+      <div class="head" data-animate="slide-right">
         <span class="eyebrow">So einfach geht es</span>
         <h2>In drei Schritten zu deiner fertigen Keramik</h2>
         <Brush />
       </div>
-      <div class="steps">
-        <div class="step">
+      <div class="steps" data-animate-stagger="120">
+        <div class="step" data-animate="fade-up">
           <h3>Termin aussuchen</h3>
           <p>Schau dir die freien Termine an und such dir einen Zeitpunkt aus, der für dich passt.</p>
         </div>
-        <div class="step">
+        <div class="step" data-animate="fade-up">
           <h3>Ankommen und loslegen</h3>
           <p>Setz dich gemütlich hin, wähle deinen Rohling und lass deiner Kreativität freien Lauf. Ich helfe dir gern.</p>
         </div>
-        <div class="step">
+        <div class="step" data-animate="fade-up">
           <h3>Abholen und freuen</h3>
           <p>Nach 10 bis 14 Tagen ist dein Werk fertig glasiert. Hol es ab und freu dich jedes Mal, wenn du es benutzt.</p>
         </div>

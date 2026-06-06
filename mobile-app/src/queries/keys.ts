@@ -26,4 +26,7 @@ export const queryKeys = {
   reviews: {
     all: ['reviews'] as const,
   },
+  vouchers: {
+    all: ['vouchers'] as const,
+  },
 } as const;

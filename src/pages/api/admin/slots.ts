@@ -52,52 +52,86 @@ export const POST: APIRoute = async ({ request }) => {
 
 	try {
 		const data = await request.json();
-		const { date, time, startTime, endTime, maxCapacity, initialBooked, eventType } = data as any;
-
-		// Unterstützt sowohl altes Format (time) als auch neues Format (startTime/endTime)
-		const slotTime = startTime || time;
-
-		if (!date || !slotTime || !maxCapacity) {
-			return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			});
-		}
-
-		const totalCapacity = parseInt(String(maxCapacity), 10);
-		const alreadyBooked = initialBooked != null && initialBooked !== ''
-			? parseInt(String(initialBooked), 10)
-			: 0;
-
-		if (Number.isNaN(totalCapacity) || totalCapacity <= 0) {
-			return new Response(JSON.stringify({ error: 'Invalid maxCapacity' }), {
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			});
-		}
-
-		if (Number.isNaN(alreadyBooked) || alreadyBooked < 0 || alreadyBooked > totalCapacity) {
-			return new Response(JSON.stringify({ error: 'Invalid initialBooked value' }), {
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			});
-		}
-
-		const available = totalCapacity - alreadyBooked;
-
-		// Event-Typ validieren (normal, kindergeburtstag, stammtisch)
 		const validEventTypes = ['normal', 'kindergeburtstag', 'stammtisch'];
-		const slotEventType = validEventTypes.includes(eventType) ? eventType : 'normal';
 
-		const newSlot = await addTimeSlot({
-			date,
-			time: slotTime,
-			endTime: endTime || undefined,
-			maxCapacity: totalCapacity,
-			available,
-			eventType: slotEventType,
-		});
+		// Einen einzelnen Slot-Datensatz aus rohem Input bauen + validieren.
+		// Gibt entweder { slot } oder { error } zurück.
+		const buildSlot = (raw: any): { slot?: Omit<TimeSlot, 'id' | 'createdAt'>; error?: string } => {
+			const { date, time, startTime, endTime, maxCapacity, initialBooked, eventType } = raw || {};
+			const slotTime = startTime || time;
 
+			if (!date || !slotTime || maxCapacity == null) {
+				return { error: 'Missing required fields' };
+			}
+
+			const totalCapacity = parseInt(String(maxCapacity), 10);
+			const alreadyBooked = initialBooked != null && initialBooked !== ''
+				? parseInt(String(initialBooked), 10)
+				: 0;
+
+			if (Number.isNaN(totalCapacity) || totalCapacity <= 0) {
+				return { error: 'Invalid maxCapacity' };
+			}
+			if (Number.isNaN(alreadyBooked) || alreadyBooked < 0 || alreadyBooked > totalCapacity) {
+				return { error: 'Invalid initialBooked value' };
+			}
+
+			return {
+				slot: {
+					date,
+					time: slotTime,
+					endTime: endTime || undefined,
+					maxCapacity: totalCapacity,
+					available: totalCapacity - alreadyBooked,
+					eventType: validEventTypes.includes(eventType) ? eventType : 'normal',
+				},
+			};
+		};
+
+		// Batch-Modus: Array von Slots (Serien-Slots aus der App)
+		if (Array.isArray(data.slots)) {
+			const rawSlots = data.slots as any[];
+			if (rawSlots.length === 0) {
+				return new Response(JSON.stringify({ error: 'Keine Termine übergeben' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+			if (rawSlots.length > 200) {
+				return new Response(JSON.stringify({ error: 'Zu viele Termine auf einmal (max. 200)' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+
+			const created: TimeSlot[] = [];
+			for (const raw of rawSlots) {
+				const { slot, error } = buildSlot(raw);
+				if (error || !slot) {
+					return new Response(JSON.stringify({ error: `Ungültiger Termin: ${error}` }), {
+						status: 400,
+						headers: { 'Content-Type': 'application/json' },
+					});
+				}
+				created.push(await addTimeSlot(slot));
+			}
+
+			return new Response(JSON.stringify({ success: true, created: created.length, slots: created }), {
+				status: 201,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
+		// Einzel-Modus (Rückwärtskompatibilität)
+		const { slot, error } = buildSlot(data);
+		if (error || !slot) {
+			return new Response(JSON.stringify({ error: error || 'Invalid slot' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
+		const newSlot = await addTimeSlot(slot);
 		return new Response(JSON.stringify(newSlot), {
 			status: 201,
 			headers: { 'Content-Type': 'application/json' }

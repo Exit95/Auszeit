@@ -25,8 +25,12 @@ import { InquiriesScreen } from '../screens/InquiriesScreen';
 import { InquiryDetailScreen } from '../screens/InquiryDetailScreen';
 import { SlotsScreen } from '../screens/SlotsScreen';
 import { SlotFormScreen } from '../screens/SlotFormScreen';
+import { BookingCreateScreen } from '../screens/BookingCreateScreen';
 import { AdminReviewsScreen } from '../screens/AdminReviewsScreen';
 import { VoucherScannerScreen } from '../screens/VoucherScannerScreen';
+import { VouchersScreen } from '../screens/VouchersScreen';
+import { StatsScreen } from '../screens/StatsScreen';
+import { BlockedDatesScreen } from '../screens/BlockedDatesScreen';
 
 import { useAuth } from '../hooks/useAuth';
 
@@ -179,6 +183,21 @@ export function AppNavigator() {
             })}
           />
           <Stack.Screen
+            name="BookingCreate"
+            component={BookingCreateScreen}
+            options={{ title: 'Neue Buchung', headerShown: false }}
+          />
+          <Stack.Screen
+            name="BlockedDates"
+            component={BlockedDatesScreen}
+            options={{ title: 'Urlaub & Sperren', headerShown: false }}
+          />
+          <Stack.Screen
+            name="Stats"
+            component={StatsScreen}
+            options={{ title: 'Statistiken', headerShown: false }}
+          />
+          <Stack.Screen
             name="AdminReviews"
             component={AdminReviewsScreen}
             options={{ title: 'Bewertungen' }}
@@ -187,6 +206,11 @@ export function AppNavigator() {
             name="VoucherScanner"
             component={VoucherScannerScreen}
             options={{ title: 'Gutschein-Scanner', headerShown: false }}
+          />
+          <Stack.Screen
+            name="Vouchers"
+            component={VouchersScreen}
+            options={{ title: '' }}
           />
         </>
       )}

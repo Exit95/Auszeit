@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getBookings, getTimeSlots, cancelBooking, updateBooking } from '../../../lib/storage';
+import { getBookings, getTimeSlots, cancelBooking, updateBooking, addBooking } from '../../../lib/storage';
 import { FROM_EMAIL, isSmtpConfigured } from '../../../lib/env';
 import { createSmtpTransporter } from '../../../lib/smtp';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../../lib/rate-limit';
@@ -10,6 +10,7 @@ import { getCancelUrl } from '../../../lib/cancel-token';
 import { bookingConfirmedCustomerHtml } from '../../../lib/email-templates';
 import { notifyBookingCancelled } from '../../../lib/push-notifications';
 import { syncBookingToBrenn } from '../../../lib/server/brenn/booking-sync';
+import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber } from '../../../lib/sanitize';
 
 // Authentifizierung - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
@@ -90,7 +91,119 @@ export const POST: APIRoute = async ({ request }) => {
 	}
 
 	try {
-		const { id, action } = await request.json();
+		const body = await request.json();
+		const { id, action } = body;
+
+		// Aktion: Buchung manuell durch Admin anlegen (z.B. telefonische Buchung)
+		if (action === 'create') {
+			const name = sanitizeText(body.name);
+			const email = sanitizeEmail(body.email);
+			const phone = sanitizePhone(body.phone);
+			const participants = sanitizeNumber(body.participants, 1, 50);
+			const notes = sanitizeText(body.notes);
+			const slotId = typeof body.slotId === 'string' ? body.slotId.trim() : '';
+
+			if (!slotId) {
+				return new Response(JSON.stringify({ error: 'Bitte einen Termin auswählen.' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+			if (!name) {
+				return new Response(JSON.stringify({ error: 'Bitte einen Kundennamen angeben.' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+
+			// Buchung anlegen (prüft Slot-Existenz + Kapazität, reduziert available)
+			const created = await addBooking({
+				slotId,
+				name,
+				email: email || '',
+				phone: phone || '',
+				participants,
+				notes: notes || '',
+			});
+
+			if (!created) {
+				return new Response(
+					JSON.stringify({ error: 'Termin nicht gefunden oder nicht genügend freie Plätze.' }),
+					{ status: 400, headers: { 'Content-Type': 'application/json' } },
+				);
+			}
+
+			// Admin-Buchungen gelten direkt als bestätigt (telefonisch abgesprochen)
+			const confirmed = await updateBooking(created.id, { status: 'confirmed' });
+			const finalBooking = confirmed || created;
+
+			await logAuditEvent('ADMIN_ACTION', request, {
+				username: 'admin',
+				resource: '/api/admin/bookings',
+				action: `Booking manually created: ${finalBooking.id}`,
+				success: true,
+				extra: { bookingId: finalBooking.id, customerEmail: finalBooking.email, slotId },
+			});
+
+			// Bestätigungs-E-Mail an Kund:in (nur wenn E-Mail vorhanden)
+			let customerEmailSent = false;
+			let emailError: string | null = null;
+			if (finalBooking.email) {
+				try {
+					const slots = await getTimeSlots();
+					const slot = slots.find((s) => s.id === finalBooking.slotId);
+					const date = slot?.date ?? '';
+					const timeDisplay = slot
+						? (slot.endTime ? `${slot.time} - ${slot.endTime}` : slot.time)
+						: '';
+					const cancelUrl = getCancelUrl(finalBooking.id, 'booking');
+
+					if (isSmtpConfigured()) {
+						const transporter = createSmtpTransporter();
+						let icalEvent: string | null = null;
+						if (slot && slot.date && slot.time) {
+							icalEvent = createICalEvent({
+								summary: `Keramik-Termin: ${finalBooking.name}`,
+								description: `Buchung für ${finalBooking.participants} Person(en)\nE-Mail: ${finalBooking.email}\nTelefon: ${finalBooking.phone || 'Nicht angegeben'}\nNotizen: ${finalBooking.notes || 'Keine'}`,
+								date: slot.date,
+								startTime: slot.time,
+								endTime: slot.endTime || undefined,
+								defaultDurationHours: 2,
+							});
+						}
+
+						await transporter.sendMail({
+							from: `"Atelier Auszeit - Irena Woschkowiak" <${FROM_EMAIL}>`,
+							to: finalBooking.email,
+							subject: date && timeDisplay
+								? `Dein Termin wurde bestätigt - Atelier Auszeit am ${date} um ${timeDisplay} Uhr`
+								: 'Dein Termin im Atelier Auszeit wurde bestätigt',
+							html: bookingConfirmedCustomerHtml({
+								name: finalBooking.name,
+								date: date || '',
+								time: timeDisplay,
+								participants: finalBooking.participants,
+								notes: finalBooking.notes || undefined,
+								cancelUrl,
+							}),
+							text: `Liebe/r ${finalBooking.name},\n\nwir haben deine Buchung im Atelier Auszeit eingetragen und bestätigt.\n\nTERMIN:\n${date || ''}${date && timeDisplay ? ' · ' : ''}${timeDisplay || ''}\n\nTeilnehmer: ${finalBooking.participants}\n${finalBooking.notes ? `Notizen: ${finalBooking.notes}\n` : ''}\nORT:\nAtelier Auszeit\nFeldstiege 6a\n48599 Gronau\n\nFalls du den Termin nicht wahrnehmen kannst: ${cancelUrl}\n\nHerzliche Grüße\nDein Atelier Auszeit`,
+							...(icalEvent ? { icalEvent: { filename: 'termin.ics', method: 'REQUEST', content: icalEvent } } : {}),
+						});
+						customerEmailSent = true;
+					} else {
+						emailError = 'SMTP nicht konfiguriert';
+					}
+				} catch (err: any) {
+					emailError = err?.message || String(err);
+					console.error('❌ Fehler beim Versand der Bestätigungs-E-Mail (Admin-Buchung):', err);
+				}
+			}
+
+			return new Response(
+				JSON.stringify({ success: true, booking: finalBooking, customerEmailSent, emailError }),
+				{ status: 201, headers: { 'Content-Type': 'application/json' } },
+			);
+		}
 
 		if (!id) {
 			return new Response(JSON.stringify({ error: 'Missing booking ID' }), {

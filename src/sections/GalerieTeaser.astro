@@ -5,18 +5,18 @@ import Brush from '../components/Brush.astro';
 
 <section class="blk soft" id="galerie">
   <div class="wrap">
-    <div class="head center">
+    <div class="head center" data-animate="fade-up">
       <span class="eyebrow">Galerie</span>
       <h2>Was bei uns entsteht</h2>
       <Brush />
       <p class="lead">Lass dich inspirieren von dem, was unsere Gäste gestaltet haben.</p>
     </div>
-    <div class="gallery-row">
-      <Photo src="/fotos/sh-stag.jpg" alt="Teller mit Hirschmotiv" />
-      <Photo src="/fotos/g-jug.jpg" alt="Krug mit Bienen und Blumen" />
-      <Photo src="/fotos/sh-cookie.jpg" alt="Schale mit Krümelmonster" />
-      <Photo src="/fotos/sh-lion.jpg" alt="Kinderteller mit Löwe" />
-      <Photo src="/fotos/g-bdayplate.jpg" alt="Teller zum Geburtstag" />
+    <div class="gallery-row" data-animate-stagger="90">
+      <div class="gal-wrap photo-hover" data-animate="scale-up"><Photo src="/fotos/sh-stag.jpg" alt="Teller mit Hirschmotiv" /></div>
+      <div class="gal-wrap photo-hover" data-animate="scale-up"><Photo src="/fotos/g-jug.jpg" alt="Krug mit Bienen und Blumen" /></div>
+      <div class="gal-wrap photo-hover" data-animate="scale-up"><Photo src="/fotos/sh-cookie.jpg" alt="Schale mit Krümelmonster" /></div>
+      <div class="gal-wrap photo-hover" data-animate="scale-up"><Photo src="/fotos/sh-lion.jpg" alt="Kinderteller mit Löwe" /></div>
+      <div class="gal-wrap photo-hover" data-animate="scale-up"><Photo src="/fotos/g-bdayplate.jpg" alt="Teller zum Geburtstag" /></div>
     </div>
     <p class="gallery-link">
       <a class="link-ul" href="/galerie">Zur ganzen Galerie</a>
@@ -32,18 +32,31 @@ import Brush from '../components/Brush.astro';
     margin-top: 2.5rem;
   }
 
-  :global(.gallery-row img) {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
+  .gal-wrap {
     border-radius: var(--r-md);
+    overflow: hidden;
     box-shadow: var(--shadow-card);
   }
 
+  .gal-wrap :global(img) {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .gal-wrap:hover :global(img) {
+    transform: scale(1.04);
+  }
+
   /* erstes Bild gross: Spalte 1, ueber beide Reihen -> 1 gross + 4 klein fuellt 3x2 lueckenlos */
-  :global(.gallery-row img:first-child) {
+  .gal-wrap:first-child {
     grid-column: 1;
     grid-row: 1 / span 2;
+  }
+
+  .gal-wrap:first-child :global(img) {
     aspect-ratio: auto;
     height: 100%;
   }
@@ -53,9 +66,12 @@ import Brush from '../components/Brush.astro';
       grid-template-columns: repeat(2, 1fr);
     }
 
-    :global(.gallery-row img:first-child) {
+    .gal-wrap:first-child {
       grid-column: 1 / -1;
       grid-row: auto;
+    }
+
+    .gal-wrap:first-child :global(img) {
       aspect-ratio: 16 / 10;
       height: auto;
     }

@@ -105,8 +105,16 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       const oldOverall = (orderData as any[])[0]?.overall_status;
 
       if (oldOverall !== newOverall) {
+        // 24h-Auto-Timer mitführen, wenn der Overall-Status durch Item-Änderungen
+        // nach IM_BRENNOFEN wechselt bzw. ihn wieder verlässt.
+        let timerSql = '';
+        if (newOverall === 'IM_BRENNOFEN') {
+          timerSql = ', brenn_started_at = NOW()';
+        } else if (oldOverall === 'IM_BRENNOFEN') {
+          timerSql = ', brenn_started_at = NULL';
+        }
         await conn.execute(
-          'UPDATE painted_orders SET overall_status = ? WHERE id = ?',
+          `UPDATE painted_orders SET overall_status = ?${timerSql} WHERE id = ?`,
           [newOverall, params.id]
         );
         await conn.execute(

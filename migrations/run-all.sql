@@ -137,3 +137,32 @@ CREATE TABLE IF NOT EXISTS kiln_batches (
     created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_batch_kiln FOREIGN KEY (kiln_location_id) REFERENCES storage_locations(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10: Zeitstempel für 24h-Brennofen-Auto-Timer (idempotent: ALTER nur wenn Spalte fehlt)
+SET @col_exists := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'painted_orders'
+      AND COLUMN_NAME = 'brenn_started_at'
+);
+SET @ddl := IF(@col_exists = 0,
+    'ALTER TABLE painted_orders ADD COLUMN brenn_started_at DATETIME DEFAULT NULL COMMENT ''Zeitpunkt des Wechsels nach IM_BRENNOFEN, Basis für 24h-Auto-Timer'' AFTER pickup_notified_at',
+    'SELECT 1'
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists := (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'painted_orders'
+      AND INDEX_NAME = 'idx_brenn_started'
+);
+SET @ddl_idx := IF(@idx_exists = 0,
+    'CREATE INDEX idx_brenn_started ON painted_orders (overall_status, brenn_started_at)',
+    'SELECT 1'
+);
+PREPARE stmt_idx FROM @ddl_idx;
+EXECUTE stmt_idx;
+DEALLOCATE PREPARE stmt_idx;

@@ -5,11 +5,11 @@ import { content } from "../data/content";
 ---
 
 <section class="contact" id="kontakt" style="scroll-margin-top: 60px;" aria-labelledby="contact-title">
-  <div class="container animate-on-scroll">
-    <span class="contact__eyebrow">So findest du uns</span>
-    <h2 id="contact-title" class="contact__title">{content.contact.title}</h2>
+  <div class="container">
+    <span class="contact__eyebrow" data-animate="fade-in">So findest du uns</span>
+    <h2 id="contact-title" class="contact__title" data-animate="fade-up" data-animate-delay="80">{content.contact.title}</h2>
     <div class="contact__grid">
-      <address class="contact__info">
+      <address class="contact__info" data-animate="slide-right" data-animate-delay="160">
         <div class="contact__block">
           <h3>Adresse</h3>
           <p itemprop="streetAddress">{content.contact.address.street}</p>
@@ -50,7 +50,7 @@ import { content } from "../data/content";
           </div>
         </div>
       </address>
-      <div class="contact__map" id="map-container">
+      <div class="contact__map" id="map-container" data-animate="scale-up" data-animate-delay="240">
         <button class="contact__map-placeholder" id="load-map-btn" type="button" aria-label="Google Maps Karte laden">
           <img
             src="/map-placeholder.webp"

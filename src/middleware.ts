@@ -1,6 +1,11 @@
 import { defineMiddleware } from 'astro/middleware';
+import { startTimerScheduler } from './lib/timer-scheduler';
 
 export const onRequest = defineMiddleware(async (context, next) => {
+    // Startet beim ersten Request den 24h-Brennofen-Timer-Scheduler (idempotent,
+    // nur einmal pro Server-Prozess). Triggert process-timers alle 5 Minuten.
+    startTimerScheduler();
+
     const url = new URL(context.request.url);
 
     // CORS für Brenn-API (Mobile App)

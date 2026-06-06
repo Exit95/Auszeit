@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getS3Client, uploadToS3, listS3Objects, deleteFromS3 } from '../../../../../../lib/s3-storage';
+import { uploadToS3, listS3Objects, deleteFromS3 } from '../../../../../../lib/s3-storage';
 
 export const GET: APIRoute = async ({ params }) => {
   const orderId = params.id;

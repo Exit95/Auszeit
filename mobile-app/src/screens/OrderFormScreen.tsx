@@ -76,7 +76,14 @@ export function OrderFormScreen() {
       };
 
       if (isEdit) {
-        await api.put(`/orders/${route.params.id}`, body);
+        // Backend (brenn/orders/[id]/index.ts) erwartet PATCH, nicht PUT — PUT lieferte 405.
+        // PATCH aktualisiert Kunde, Besuchsdatum und Notiz. Werkstücke (items) werden
+        // beim Edit über die dedizierten Item-Endpoints gepflegt, nicht hier.
+        await api.patch(`/orders/${route.params.id}`, {
+          customer_id: customerId,
+          visit_date: visitDate,
+          notes: notes.trim() || null,
+        });
       } else {
         await api.post('/orders', body);
       }

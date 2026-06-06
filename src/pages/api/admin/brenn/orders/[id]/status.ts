@@ -45,6 +45,15 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         updateFields.push('previous_status = NULL');
       }
 
+      // 24h-Auto-Timer: Brennofen-Start festhalten bzw. beim Verlassen zurücksetzen.
+      if (newStatus === 'IM_BRENNOFEN') {
+        updateFields.push('brenn_started_at = NOW()');
+      } else if (currentStatus === 'IM_BRENNOFEN') {
+        // Manueller Wechsel weg von IM_BRENNOFEN (z. B. auf GEBRANNT/PROBLEM):
+        // Timer entwerten, damit der Cron-Job ihn nicht mehr aufgreift.
+        updateFields.push('brenn_started_at = NULL');
+      }
+
       updateValues.push(params.id);
       await conn.execute(
         `UPDATE painted_orders SET ${updateFields.join(', ')} WHERE id = ?`,

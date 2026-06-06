@@ -278,16 +278,110 @@ section.blk {
   color: var(--ink);
 }
 
-/* Scroll-Animationen */
+/* ─────────────────────────────────────────────────────────────
+   Scroll-Animationen — Atelier-Editorial
+   Easing: ease-out, weich und handwerklich
+   Duration: 0.65–0.85s — nie schneller als 0.5s
+   ───────────────────────────────────────────────────────────── */
+
+/* Shared base — wird per JS auf is-visible geprüft */
+
+/* ── fade-up (default) ── */
+[data-animate="fade-up"],
 .animate-on-scroll {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
+  transform: translateY(28px);
+  transition:
+    opacity 0.75s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 0.75s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+[data-animate="fade-up"].is-visible,
 .animate-on-scroll.is-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* ── fade-in (opacity only, kein Verschieben) ── */
+[data-animate="fade-in"] {
+  opacity: 0;
+  transition: opacity 0.85s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+[data-animate="fade-in"].is-visible {
+  opacity: 1;
+}
+
+/* ── slide-right (von links einfahren) ── */
+[data-animate="slide-right"] {
+  opacity: 0;
+  transform: translateX(-32px);
+  transition:
+    opacity 0.75s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 0.75s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+[data-animate="slide-right"].is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── scale-up (leichtes Wachsen — Fotos, Kacheln) ── */
+[data-animate="scale-up"] {
+  opacity: 0;
+  transform: scale(0.97);
+  transition:
+    opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+[data-animate="scale-up"].is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Stagger-Container: Kinder erben ihren Animations-Typ ── */
+/* Kinder eines [data-animate-stagger] Containers müssen selbst
+   data-animate tragen — JS staffelt die is-visible Klasse */
+
+/* ─────────────────────────────────────────────────────────────
+   Micro-Interactions — hover / focus
+   Zurückhaltend, handwerklich, niemals übertrieben
+   ───────────────────────────────────────────────────────────── */
+
+/* Foto-Hover: minimales Wachsen, warm */
+.photo-hover {
+  overflow: hidden;
+}
+
+.photo-hover img {
+  transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.photo-hover:hover img {
+  transform: scale(1.03);
+}
+
+/* Card-Hover: subtiler Schatten-Lift */
+.card-hover {
+  transition:
+    transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+    box-shadow 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 28px 54px -24px rgba(58, 45, 36, 0.38);
+}
+
+/* ── reduced-motion: alles sofort ── */
+@media (prefers-reduced-motion: reduce) {
+  [data-animate],
+  .animate-on-scroll {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* Accessibility */

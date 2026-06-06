@@ -79,3 +79,34 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     return jsonError('Kunde konnte nicht aktualisiert werden.', 500);
   }
 };
+
+export const DELETE: APIRoute = async ({ params, request }) => {
+  const authErr = requireAuth(request);
+  if (authErr) return authErr;
+
+  try {
+    const pool = getPool();
+
+    const [existing] = await pool.execute('SELECT id FROM customers WHERE id = ?', [params.id]);
+    if ((existing as any[]).length === 0) return jsonError('Kunde nicht gefunden.', 404);
+
+    // Schutz: Kunde mit bestehenden Aufträgen nicht löschen (FK ist ohnehin RESTRICT).
+    const [orders] = await pool.execute(
+      'SELECT COUNT(*) AS cnt FROM painted_orders WHERE customer_id = ?',
+      [params.id]
+    );
+    const orderCount = (orders as any[])[0]?.cnt ?? 0;
+    if (orderCount > 0) {
+      return jsonError(
+        `Kunde hat noch ${orderCount} Auftrag/Aufträge und kann nicht gelöscht werden.`,
+        409
+      );
+    }
+
+    await pool.execute('DELETE FROM customers WHERE id = ?', [params.id]);
+    return jsonSuccess({ deleted: true, id: Number(params.id) });
+  } catch (err) {
+    console.error('[Brenn] Fehler beim Löschen des Kunden:', err);
+    return jsonError('Kunde konnte nicht gelöscht werden.', 500);
+  }
+};

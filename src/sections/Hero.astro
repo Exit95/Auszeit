@@ -6,19 +6,19 @@ import Stars from '../components/Stars.astro';
 
 <section class="hero" aria-label="Malatelier Auszeit">
   <div class="hero__text">
-    <span class="eyebrow">Malatelier Auszeit · Gronau</span>
-    <h1>Dein Ort zum Ankommen und <em>Kreativsein</em></h1>
-    <p class="sub">Keramik bemalen, durchatmen, glücklich nach Hause gehen. Wir glasieren und brennen für dich, abholbereit in 10 bis 14 Tagen.</p>
-    <div class="cta">
+    <span class="eyebrow" data-animate="fade-in" data-animate-delay="80">Malatelier Auszeit · Gronau</span>
+    <h1 data-animate="fade-up" data-animate-delay="160">Dein Ort zum Ankommen und <em>Kreativsein</em></h1>
+    <p class="sub" data-animate="fade-up" data-animate-delay="280">Keramik bemalen, durchatmen, glücklich nach Hause gehen. Wir glasieren und brennen für dich, abholbereit in 10 bis 14 Tagen.</p>
+    <div class="cta" data-animate="fade-up" data-animate-delay="400">
       <Button href="#buchen">Termin buchen</Button>
       <a class="link-ul" href="/galerie">Unsere Keramik ansehen</a>
     </div>
-    <div class="trust">
+    <div class="trust" data-animate="fade-in" data-animate-delay="560">
       <Stars label="Fünf von fünf Sternen" />
       bei Google, von echten Gästen aus dem Münsterland
     </div>
   </div>
-  <div class="hero__img">
+  <div class="hero__img photo-hover" data-animate="scale-up" data-animate-delay="200">
     <Photo
       src="/fotos/sh-hero.jpg"
       alt="Beim Bemalen mit Pinsel im Atelier"
@@ -101,6 +101,11 @@ import Stars from '../components/Stars.astro';
     height: 100%;
     object-fit: cover;
     object-position: center 35%;
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .hero__img:hover :global(img) {
+    transform: scale(1.03);
   }
 
   .hero__cap {

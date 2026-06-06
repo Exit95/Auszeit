@@ -5,13 +5,13 @@ import Brush from '../components/Brush.astro';
 
 <section class="blk" id="erwartet">
   <div class="wrap">
-    <div class="head">
+    <div class="head" data-animate="fade-up">
       <span class="eyebrow">Was dich erwartet</span>
       <h2>Vier Wege, kreativ zu werden</h2>
       <Brush />
     </div>
-    <div class="offer-grid">
-      <a class="ocard" href="/galerie">
+    <div class="offer-grid" data-animate-stagger="110">
+      <a class="ocard" href="/galerie" data-animate="fade-up">
         <Photo
           src="/fotos/sh-child.jpg"
           alt="Konzentriert beim Bemalen einer Keramik"
@@ -23,7 +23,7 @@ import Brush from '../components/Brush.astro';
           <div class="more">Ab 14,50 &euro;</div>
         </div>
       </a>
-      <a class="ocard" href="/workshops">
+      <a class="ocard" href="/workshops" data-animate="fade-up">
         <Photo
           src="/fotos/sh-irena-help.jpg"
           alt="Gemeinsam Keramik bemalen im Workshop"
@@ -35,7 +35,7 @@ import Brush from '../components/Brush.astro';
           <div class="more">Zu den Terminen</div>
         </div>
       </a>
-      <a class="ocard" href="/events">
+      <a class="ocard" href="/events" data-animate="fade-up">
         <Photo
           src="/fotos/sh-group.jpg"
           alt="Gruppe bemalt gemeinsam Keramik am großen Tisch"
@@ -47,7 +47,7 @@ import Brush from '../components/Brush.astro';
           <div class="more">Anfragen</div>
         </div>
       </a>
-      <a class="ocard" href="/gutscheine">
+      <a class="ocard" href="/gutscheine" data-animate="fade-up">
         <Photo
           src="/fotos/sh-cup.jpg"
           alt="Handbemalte Auszeit-Tasse"
@@ -80,18 +80,25 @@ import Brush from '../components/Brush.astro';
     border-radius: var(--r-md);
     overflow: hidden;
     box-shadow: var(--shadow-card);
-    transition: transform .22s, box-shadow .22s;
+    transition:
+      transform 0.38s cubic-bezier(0.25, 1, 0.5, 1),
+      box-shadow 0.38s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .ocard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 26px 50px -22px rgba(58, 45, 36, .42);
+    transform: translateY(-4px);
+    box-shadow: 0 28px 54px -22px rgba(58, 45, 36, 0.38);
   }
 
   .ocard :global(img) {
     aspect-ratio: 4 / 3;
     object-fit: cover;
     width: 100%;
+    transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .ocard:hover :global(img) {
+    transform: scale(1.04);
   }
 
   .ocard__b {

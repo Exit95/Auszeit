@@ -59,7 +59,8 @@ export function CustomerFormScreen() {
       };
 
       if (isEdit) {
-        await api.put(`/customers/${route.params.id}`, data);
+        // Backend (brenn/customers/[id].ts) erwartet PATCH, nicht PUT — PUT lieferte 405.
+        await api.patch(`/customers/${route.params.id}`, data);
       } else {
         await api.post('/customers', data);
       }
