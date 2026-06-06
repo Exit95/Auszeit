@@ -311,9 +311,13 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     overflow-wrap: normal;
   }
 
-  /* Kein horizontaler Scroll */
+  /* Kein horizontaler Scroll — html+body nötig damit iOS Safari keinen zweiten Scroll-Container erstellt */
+  html {
+    overflow-x: hidden;
+  }
   body {
     overflow-x: hidden;
+    position: relative; /* verhindert Seiten-Verrutschen auf iOS beim Scrollen */
   }
 
   /* ── Sticky Mobile CTA Bar ────────────────── */
