@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout.astro';
 import Brush from '../components/Brush.astro';
 import Photo from '../components/Photo.astro';
 import Button from '../components/Button.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
 import { content } from '../data/content';
 
 const { events, pageMeta } = content;
@@ -17,6 +18,7 @@ const ANL_PHOTOS: Record<string, string> = {
 
 <MainLayout title={pageMeta.events.title} description={pageMeta.events.description}>
 
+  <Breadcrumb name="Besondere Anlässe" path="/events" />
   <div class="wrap">
 
     <!-- Page Head -->

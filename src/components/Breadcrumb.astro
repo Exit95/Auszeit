@@ -1,0 +1,31 @@
+---
+interface Props {
+  name: string;
+  path: string;
+}
+
+const { name, path } = Astro.props;
+
+const siteUrl = "https://keramik-auszeit.de";
+
+const breadcrumbJson = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Startseite",
+      "item": siteUrl + "/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": name,
+      "item": siteUrl + path
+    }
+  ]
+});
+---
+
+<script type="application/ld+json" is:inline set:html={breadcrumbJson} />

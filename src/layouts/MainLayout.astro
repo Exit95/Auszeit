@@ -8,13 +8,15 @@ interface Props {
   description: string;
   ogImage?: string;
   canonicalUrl?: string;
+  noindex?: boolean;
 }
 
 const {
   title,
   description,
   ogImage = "/og-image.jpg",
-  canonicalUrl
+  canonicalUrl,
+  noindex = false,
 } = Astro.props;
 
 const siteUrl = "https://keramik-auszeit.de";
@@ -47,7 +49,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <meta name="author" content="Irena Woschkowiak" />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="robots" content={noindex ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"} />
     <meta name="language" content="German" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#D96C4A" />
@@ -90,7 +92,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@type": "LocalBusiness",
+            "@type": ["LocalBusiness", "ArtsAndCraftsStore"],
             "@id": "https://keramik-auszeit.de/#business",
             "name": "Malatelier Auszeit",
             "alternateName": ["Malatelier Auszeit", "Auszeit Keramik", "Keramik Gronau"],
@@ -104,7 +106,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
               "https://keramik-auszeit.de/teller.webp"
             ],
             "logo": "https://keramik-auszeit.de/logo-header-3x.png",
-            "priceRange": "EUR",
+            "priceRange": "€€",
             "openingHours": ["Tu-Su 10:00-18:00"],
             "openingHoursSpecification": [
               {
@@ -135,12 +137,25 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             "sameAs": [
               "https://www.instagram.com/keramik_auszeit/"
             ],
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "5.0",
-              "reviewCount": "23",
-              "bestRating": "5",
-              "worstRating": "1"
+            "areaServed": [
+              { "@type": "City", "name": "Gronau (Westfalen)" },
+              { "@type": "City", "name": "Münster" },
+              { "@type": "City", "name": "Steinfurt" },
+              { "@type": "City", "name": "Borken" },
+              { "@type": "City", "name": "Ahaus" },
+              { "@type": "City", "name": "Ochtrup" },
+              { "@type": "City", "name": "Enschede" },
+              { "@type": "AdministrativeArea", "name": "Münsterland" }
+            ],
+            "hasOfferCatalog": {
+              "@type": "OfferCatalog",
+              "name": "Leistungen Malatelier Auszeit",
+              "itemListElement": [
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Keramik selbst bemalen (Walk-in)" }, "priceCurrency": "EUR", "price": "10.00" },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Keramik-Workshops" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Kindergeburtstag, JGA und Firmen-Events" } },
+                { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Gutscheine" }, "priceCurrency": "EUR", "price": "25.00" }
+              ]
             }
           },
           {

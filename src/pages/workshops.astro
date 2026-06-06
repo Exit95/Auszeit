@@ -4,6 +4,7 @@ import Brush from '../components/Brush.astro';
 import Photo from '../components/Photo.astro';
 import Button from '../components/Button.astro';
 import WorkshopModal from '../components/WorkshopModal.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
 import { content } from '../data/content';
 import { getWorkshops } from '../lib/storage';
 import { isS3Configured, readJsonFromS3 } from '../lib/s3-storage';
@@ -67,6 +68,41 @@ const { pageMeta } = content;
 
 <MainLayout title={pageMeta.workshops.title} description={pageMeta.workshops.description}>
 
+  <Breadcrumb name="Workshops" path="/workshops" />
+
+  {activeWorkshops.length > 0 && activeWorkshops.map((workshop) => (
+    <script type="application/ld+json" is:inline set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "name": workshop.title,
+      "startDate": workshop.date + "T" + workshop.time + ":00",
+      "location": {
+        "@type": "Place",
+        "name": "Malatelier Auszeit",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Feldstiege 6a",
+          "addressLocality": "Gronau (Westfalen)",
+          "postalCode": "48599",
+          "addressCountry": "DE"
+        }
+      },
+      "organizer": {
+        "@type": "LocalBusiness",
+        "@id": "https://keramik-auszeit.de/#business"
+      },
+      "offers": {
+        "@type": "Offer",
+        "name": workshop.title,
+        "price": workshop.price,
+        "priceCurrency": "EUR",
+        "availability": workshop.isFull
+          ? "https://schema.org/SoldOut"
+          : "https://schema.org/InStock",
+        "url": "https://keramik-auszeit.de/workshops"
+      }
+    })} />
+  ))}
   <div class="wrap">
 
     <!-- Page Head -->

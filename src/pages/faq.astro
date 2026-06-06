@@ -1,12 +1,14 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import Brush from '../components/Brush.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
 import { content } from '../data/content';
 ---
 <MainLayout
   title={content.pageMeta.faq.title}
   description={content.pageMeta.faq.description}
 >
+  <Breadcrumb name="FAQ" path="/faq" />
   <script type="application/ld+json" is:inline set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "FAQPage",
