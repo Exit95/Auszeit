@@ -1,56 +1,392 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-import Galerie from '../sections/Galerie.astro';
+import Brush from '../components/Brush.astro';
 import { content } from '../data/content';
 ---
-<MainLayout title={content.pageMeta.galerie.title} description={content.pageMeta.galerie.description}>
 
-  <section class="galerie-intro">
-    <div class="galerie-intro__inner">
-      <h1 class="galerie-intro__title">Galerie — Handbemalte Keramik aus Gronau</h1>
-      <p class="galerie-intro__text">
-        Entdecke handbemalte Keramik aus unserem Atelier in Gronau. Jedes Stück erzählt seine eigene Geschichte.
-      </p>
+<MainLayout
+  title={content.pageMeta.galerie.title}
+  description={content.pageMeta.galerie.description}
+>
+  <div class="wrap">
+    <div class="pagehead">
+      <span class="eyebrow">Galerie</span>
+      <h1>Was bei uns entsteht</h1>
+      <Brush />
+      <p class="lead">Hunderte Stücke sind bei uns schon entstanden. Lass dich inspirieren, was aus einem weißen Rohling werden kann.</p>
     </div>
-  </section>
 
-  <Galerie />
+    <div class="chips" id="chips" role="group" aria-label="Galerie-Filter">
+      <button class="chip is-on" data-cat="alle">Alle</button>
+      <!-- JS ergänzt hier weitere Chips sobald Kategorien bekannt sind -->
+    </div>
 
+    <div id="gal-loading" class="gal-state">
+      <p>Galerie wird geladen …</p>
+    </div>
+
+    <div id="gal-empty" class="gal-state" hidden>
+      <p>Bald gibt es hier Werke zu sehen.</p>
+    </div>
+
+    <div class="gal" id="gal" aria-label="Galerie">
+      <!-- JS befüllt dieses Grid -->
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Bild vergrößert" aria-hidden="true">
+    <button class="lb__x" id="lb-x" aria-label="Schließen">×</button>
+    <img src="" alt="" id="lb-img" />
+  </div>
 </MainLayout>
 
 <style>
-  .galerie-intro {
-    background: var(--bg-linen, #EDE4DA);
-    padding: 3rem var(--gutter, 1.5rem) 2.5rem;
+  /* ── Pagehead ─────────────────────────────────────────────── */
+  .pagehead {
+    padding: clamp(2.5rem, 5vw, 4rem) 0 0;
   }
 
-  .galerie-intro__inner {
-    max-width: var(--max-width, 1080px);
-    margin: 0 auto;
-    text-align: center;
+  .pagehead h1 {
+    font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+    margin: 0.6rem 0 0;
   }
 
-  .galerie-intro__title {
-    font-family: var(--font-serif, 'Lora', serif);
-    font-size: clamp(1.5rem, 3vw, 2rem);
+  .pagehead .lead {
+    color: var(--ink-2, #5D4A3C);
+    font-size: 1.1rem;
+    margin-top: 1rem;
+    max-width: 52ch;
+  }
+
+  /* ── Chips ────────────────────────────────────────────────── */
+  .chips {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin: 2rem 0 2.4rem;
+  }
+
+  .chip {
+    border: 1.5px solid var(--hair, #E4D8CB);
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.88rem;
     font-weight: 600;
-    color: var(--brand-espresso, #423430);
-    margin-bottom: 0.75rem;
+    color: var(--ink-2, #5D4E43);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    font-family: inherit;
+    line-height: 1.3;
   }
 
-  .galerie-intro__text {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: clamp(1rem, 2vw, 1.125rem);
-    color: var(--brand-espresso, #423430);
-    line-height: 1.75;
-    max-width: 560px;
-    margin: 0 auto;
-    opacity: 0.85;
+  .chip:hover {
+    border-color: var(--terra, #D96C4A);
+    color: var(--terra, #D96C4A);
   }
 
-  @media (max-width: 767px) {
-    .galerie-intro {
-      padding: 2rem var(--gutter, 1.5rem) 1.75rem;
-    }
+  .chip.is-on {
+    background: var(--terra, #D96C4A);
+    border-color: var(--terra, #D96C4A);
+    color: #fff;
+  }
+
+  /* ── Ladezustand ──────────────────────────────────────────── */
+  .gal-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--ink-2, #5D4A3C);
+    font-size: 0.95rem;
+  }
+
+  /* ── Masonry Grid ─────────────────────────────────────────── */
+  .gal {
+    column-count: 2;
+    column-gap: 1rem;
+    padding-bottom: clamp(2rem, 5vw, 4rem);
+  }
+
+  @media (min-width: 640px) {
+    .gal { column-count: 3; }
+  }
+
+  @media (min-width: 980px) {
+    .gal { column-count: 4; }
+  }
+
+  /* ── Tile ─────────────────────────────────────────────────── */
+  :global(.gtile) {
+    break-inside: avoid;
+    margin: 0 0 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 0 12px 28px -22px rgba(58, 45, 36, 0.3);
+  }
+
+  :global(.gtile img) {
+    width: 100%;
+    display: block;
+    transition: transform 0.4s;
+  }
+
+  :global(.gtile:hover img) {
+    transform: scale(1.04);
+  }
+
+  :global(.gtile figcaption) {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 1.6rem 0.9rem 0.7rem;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: linear-gradient(transparent, rgba(46, 36, 29, 0.72));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  :global(.gtile:hover figcaption) {
+    opacity: 1;
+  }
+
+  :global(.gtile.hide) {
+    display: none;
+  }
+
+  /* Touch: keine Hover-Effekte */
+  @media (hover: none) {
+    :global(.gtile:hover img) { transform: none; }
+    :global(.gtile figcaption) { opacity: 1; }
+  }
+
+  /* ── Lightbox ─────────────────────────────────────────────── */
+  .lb {
+    position: fixed;
+    inset: 0;
+    background: rgba(46, 36, 29, 0.92);
+    display: none;
+    place-items: center;
+    z-index: 100;
+    padding: 2rem;
+  }
+
+  .lb.is-on {
+    display: grid;
+  }
+
+  .lb img {
+    max-width: 92vw;
+    max-height: 86vh;
+    border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  }
+
+  .lb__x {
+    position: absolute;
+    top: 1rem;
+    right: 1.4rem;
+    color: #fff;
+    font-size: 2.2rem;
+    line-height: 1;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    font-family: inherit;
+  }
+
+  .lb__x:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 4px;
+    border-radius: 4px;
   }
 </style>
+
+<script>
+  (function () {
+    // ── Kategorien-Labels ────────────────────────────────────
+    const CAT_LABELS: Record<string, string> = {
+      tassen: 'Tassen & Becher',
+      teller: 'Teller & Schalen',
+      figuren: 'Figuren & Deko',
+      spardosen: 'Spardosen & Krüge',
+      anhaenger: 'Anhänger & Schmuck',
+      kindergeburtstag: 'Kindergeburtstage',
+      sonstiges: 'Sonstiges',
+    };
+
+    type GalleryItem = { url: string; filename: string; category: string; title: string };
+
+    let allItems: GalleryItem[] = [];
+    // Welche Tile wurde zuletzt geklickt (für Focus-Rückgabe)
+    let lastFocusedTile: HTMLElement | null = null;
+    // Sichtbare gefilterte Elemente (für Lightbox-Navigation)
+    let visibleItems: GalleryItem[] = [];
+    let lbIdx = 0;
+
+    const chipsEl = document.getElementById('chips')!;
+    const galEl = document.getElementById('gal')!;
+    const loadingEl = document.getElementById('gal-loading')!;
+    const emptyEl = document.getElementById('gal-empty')!;
+    const lbEl = document.getElementById('lb')!;
+    const lbImgEl = document.getElementById('lb-img') as HTMLImageElement;
+    const lbXEl = document.getElementById('lb-x')!;
+
+    // ── Daten laden ──────────────────────────────────────────
+    async function init() {
+      try {
+        const [galleryRes, metaRes] = await Promise.all([
+          fetch('/api/gallery'),
+          fetch('/api/gallery-metadata'),
+        ]);
+
+        if (!galleryRes.ok) throw new Error('gallery-api-error');
+
+        const images = (await galleryRes.json()) as any[];
+        const metaData = metaRes.ok ? ((await metaRes.json()).metadata as Record<string, { category: string | null }>) || {} : {};
+
+        allItems = images
+          .filter(
+            (d: any) =>
+              d.source === 'gallery' &&
+              d.url &&
+              /\.(jpe?g|png|webp|gif)(\?|$)/i.test(d.url)
+          )
+          .map((d: any) => ({
+            url: d.url as string,
+            filename: d.filename as string,
+            category: metaData[d.filename]?.category || '',
+            title: '',
+          }));
+      } catch {
+        loadingEl.textContent = 'Bilder konnten nicht geladen werden.';
+        return;
+      }
+
+      loadingEl.hidden = true;
+
+      if (allItems.length === 0) {
+        emptyEl.hidden = false;
+        return;
+      }
+
+      buildChips();
+      renderGrid('alle');
+    }
+
+    // ── Chips aufbauen ───────────────────────────────────────
+    function buildChips() {
+      const usedCats = [...new Set(allItems.map((i) => i.category).filter(Boolean))];
+      usedCats.forEach((cat) => {
+        const btn = document.createElement('button');
+        btn.className = 'chip';
+        btn.dataset.cat = cat;
+        btn.textContent = CAT_LABELS[cat] || cat;
+        chipsEl.appendChild(btn);
+      });
+
+      chipsEl.addEventListener('click', (e) => {
+        const target = (e.target as HTMLElement).closest('.chip') as HTMLElement | null;
+        if (!target) return;
+        chipsEl.querySelectorAll('.chip').forEach((c) => c.classList.remove('is-on'));
+        target.classList.add('is-on');
+        renderGrid(target.dataset.cat || 'alle');
+      });
+    }
+
+    // ── Grid rendern ─────────────────────────────────────────
+    function renderGrid(cat: string) {
+      visibleItems = cat === 'alle' ? [...allItems] : allItems.filter((i) => i.category === cat);
+
+      if (visibleItems.length === 0) {
+        galEl.innerHTML = '';
+        emptyEl.hidden = false;
+        return;
+      }
+      emptyEl.hidden = true;
+
+      galEl.innerHTML = visibleItems
+        .map((item, idx) => {
+          const caption = item.title
+            ? `<figcaption>${escHtml(item.title)}</figcaption>`
+            : '';
+          return `<figure class="gtile" data-idx="${idx}" data-cat="${escHtml(item.category)}" tabindex="0" role="button" aria-label="Bild vergrößern">
+  <img class="warm" src="${escHtml(item.url)}" alt="Keramik aus dem Malatelier Auszeit" loading="lazy" decoding="async">${caption}
+</figure>`;
+        })
+        .join('');
+
+      galEl.querySelectorAll<HTMLElement>('.gtile').forEach((tile) => {
+        tile.addEventListener('click', () => openLightbox(tile));
+        tile.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openLightbox(tile);
+          }
+        });
+      });
+    }
+
+    // ── Lightbox ─────────────────────────────────────────────
+    function openLightbox(tile: HTMLElement) {
+      const idx = parseInt(tile.dataset.idx || '0', 10);
+      lbIdx = idx;
+      lastFocusedTile = tile;
+      lbImgEl.src = visibleItems[idx]?.url || '';
+      lbImgEl.alt = tile.querySelector('figcaption')?.textContent || 'Keramik aus dem Malatelier Auszeit';
+      lbEl.classList.add('is-on');
+      lbEl.removeAttribute('aria-hidden');
+      document.body.style.overflow = 'hidden';
+      lbXEl.focus();
+    }
+
+    function closeLightbox() {
+      lbEl.classList.remove('is-on');
+      lbEl.setAttribute('aria-hidden', 'true');
+      lbImgEl.src = '';
+      document.body.style.overflow = '';
+      lastFocusedTile?.focus();
+      lastFocusedTile = null;
+    }
+
+    // Schließen via Schaltfläche
+    lbXEl.addEventListener('click', closeLightbox);
+
+    // Schließen via Klick auf den Hintergrund (nicht auf das Bild)
+    lbEl.addEventListener('click', (e) => {
+      if (e.target === lbEl) closeLightbox();
+    });
+
+    // Escape-Taste
+    document.addEventListener('keydown', (e) => {
+      if (!lbEl.classList.contains('is-on')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') navigateLightbox(-1);
+      if (e.key === 'ArrowRight') navigateLightbox(1);
+    });
+
+    // Touch-Swipe in der Lightbox
+    let touchStartX = 0;
+    lbEl.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    lbEl.addEventListener('touchend', (e) => {
+      const diff = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(diff) > 50) navigateLightbox(diff > 0 ? -1 : 1);
+    }, { passive: true });
+
+    function navigateLightbox(dir: -1 | 1) {
+      lbIdx = (lbIdx + dir + visibleItems.length) % visibleItems.length;
+      lbImgEl.src = visibleItems[lbIdx]?.url || '';
+      // Fokus bleibt auf Schließen-Taste
+      lbXEl.focus();
+    }
+
+    // ── Hilfsfunktion ─────────────────────────────────────────
+    function escHtml(s: string): string {
+      return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    init();
+  })();
+</script>
