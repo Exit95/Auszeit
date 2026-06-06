@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Malatelier Auszeit, Startseite v4 weich</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0}
+  :root{
+    --bg:#F7F1EA; --surface:#EDE3D8; --card:#fff; --ink:#3A2D24; --ink-2:#5D4A3C;
+    --meta:#94816F; --terra:#D96C4A; --terra-h:#C75D3D; --caramel:#CFA874; --hair:#E4D8CB;
+    --serif:'Fraunces',serif; --sans:'Source Sans 3',sans-serif;
+    --section:clamp(3.5rem,8vw,8rem); --gutter:clamp(1.25rem,5vw,4rem); --maxw:1200px;
+    --r-xl:clamp(16px,1.8vw,26px); --r-lg:clamp(12px,1.4vw,18px); --r-md:12px; --r-sm:9px;
+    --shadow-soft:0 22px 50px -40px rgba(58,45,36,.4);
+    --shadow-card:0 12px 28px -22px rgba(58,45,36,.3);
+    --brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 18' preserveAspectRatio='none'%3E%3Cpath fill='%23CFA874' d='M2 10 C 24 3 52 14 82 8 C 112 2 138 13 158 7 L 157 10 C 136 16 110 8 81 12 C 50 16 24 6 3 13 Z'/%3E%3Cpath fill='%23CFA874' opacity='0.5' d='M10 12 C 40 9 70 12 100 10 C 125 8 145 12 152 10'/%3E%3C/svg%3E");
+  }
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;
+    background:var(--bg);
+    background-image:radial-gradient(70% 50% at 85% 0%,rgba(217,108,74,.06),transparent 60%),radial-gradient(60% 55% at 5% 100%,rgba(207,168,116,.10),transparent 60%);
+    background-attachment:fixed}
+  img{display:block;max-width:100%}
+  .warm{filter:saturate(.92) contrast(1.04) brightness(1.02) sepia(.04)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding-inline:var(--gutter)}
+  .eyebrow{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--meta);font-weight:600}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;letter-spacing:-.02em;line-height:1.12}
+  .btn{display:inline-block;text-decoration:none;font-weight:600;font-size:1rem;border-radius:10px;padding:.82rem 1.7rem;transition:transform .18s,box-shadow .18s,background .18s;cursor:pointer;border:0}
+  .btn-terra{background:var(--terra);color:#fff;box-shadow:0 12px 26px -10px rgba(217,108,74,.55)}
+  .btn-terra:hover{background:var(--terra-h);transform:translateY(-2px);box-shadow:0 16px 30px -10px rgba(217,108,74,.6)}
+  .link-ul{font-weight:600;text-decoration:none;background:linear-gradient(var(--terra),var(--terra)) left bottom / 100% 2px no-repeat;padding-bottom:3px}
+  .stars{color:var(--terra);letter-spacing:.14em;font-size:1.05rem;line-height:1;display:inline-block}
+  .brush{display:block;width:74px;height:15px;margin-top:.9rem;background:var(--brush) no-repeat center/contain}
+  .center .brush{margin-inline:auto}
+
+  header{position:sticky;top:0;z-index:40;background:rgba(247,241,234,.8);backdrop-filter:blur(12px);box-shadow:0 1px 0 rgba(212,196,178,.5)}
+  .nav{display:flex;align-items:center;gap:1.5rem;padding:.7rem var(--gutter);max-width:var(--maxw);margin:0 auto}
+  .brand{display:flex;align-items:center;gap:.65rem;text-decoration:none}
+  .brand img{height:46px;width:auto;display:block}
+  .brand__txt{display:flex;flex-direction:column;line-height:1}
+  .brand__txt b{font-family:var(--serif);font-style:italic;font-weight:500;font-size:1.5rem;color:var(--ink)}
+  .brand__txt small{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--meta);margin-top:.25rem}
+  .nav ul{list-style:none;display:flex;gap:1.4rem;margin-left:auto;align-items:center}
+  .nav a.lnk{text-decoration:none;font-size:.9rem;font-weight:500;color:var(--ink-2);padding-bottom:3px;border-bottom:2px solid transparent;transition:.18s}
+  .nav a.lnk:hover{color:var(--ink);border-color:var(--terra)}
+  .nav .btn{padding:.6rem 1.3rem;font-size:.92rem}
+  @media(max-width:880px){.nav ul li.hide-m{display:none}}
+
+  /* Hero, weiches Bild-Panel */
+  .hero{display:grid;grid-template-columns:1fr;align-items:center;padding-top:clamp(1rem,2vw,2rem)}
+  @media(min-width:860px){.hero{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}}
+  .hero__text{padding:clamp(2rem,4vw,4rem) var(--gutter)}
+  .hero h1{font-size:clamp(2.6rem,5.4vw,4.4rem);margin:1rem 0 1.1rem;max-width:13ch}
+  .hero h1 em{font-style:italic;color:var(--terra)}
+  .hero .sub{font-size:1.12rem;line-height:1.6;color:var(--ink-2);max-width:42ch}
+  .hero .cta{display:flex;gap:1.3rem;align-items:center;flex-wrap:wrap;margin-top:2rem}
+  .hero .trust{margin-top:1.7rem;font-size:.9rem;color:var(--meta);display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+  .hero__img{position:relative;min-height:clamp(340px,46vw,560px);margin:clamp(1rem,2vw,1.6rem);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-soft)}
+  .hero__img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%}
+  .hero__cap{position:absolute;left:0;bottom:0;width:100%;color:#fff;font-size:.74rem;letter-spacing:.04em;padding:3rem 1.2rem 1rem;background:linear-gradient(transparent,rgba(58,45,36,.5))}
+
+  section.blk{padding:var(--section) 0}
+  /* weiches, schwebendes Panel statt harter Farbblock */
+  .blk.soft{background:var(--surface);border-radius:var(--r-xl);margin-inline:clamp(.3rem,1vw,.9rem);box-shadow:var(--shadow-card)}
+  .head{max-width:36ch}
+  .head h2{font-size:clamp(2rem,3.6vw,3rem);margin:.7rem 0 0}
+  .head.center{margin:0 auto;text-align:center}
+  .lead{color:var(--ink-2);font-size:1.08rem;margin-top:1rem;max-width:48ch}
+  .head.center .lead{margin-inline:auto}
+
+  .offer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.6rem;margin-top:3rem}
+  .ocard{text-decoration:none;color:inherit;display:flex;flex-direction:column;background:#fff;border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-card);transition:.22s}
+  .ocard:hover{transform:translateY(-5px);box-shadow:0 26px 50px -22px rgba(58,45,36,.42)}
+  .ocard img{aspect-ratio:4/3;object-fit:cover}
+  .ocard__b{padding:1.2rem 1.3rem 1.5rem}
+  .ocard h3{font-size:1.3rem}
+  .ocard p{font-size:.94rem;color:var(--ink-2);margin-top:.4rem}
+  .ocard .more{margin-top:.9rem;font-weight:600;font-size:.9rem;color:var(--terra)}
+
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:2rem;margin-top:3rem}
+  .step{padding-top:1.4rem;position:relative}
+  .step::before{content:"";position:absolute;top:0;left:0;width:64px;height:13px;background:var(--brush) no-repeat left/contain}
+  .step h3{font-size:1.4rem;margin:.2rem 0 .5rem}
+  .step p{color:var(--ink-2)}
+
+  /* Gastgeberin, weiches Panel mit rundem Bild */
+  .about{display:grid;grid-template-columns:1fr;gap:clamp(1.5rem,3vw,2.5rem);align-items:center}
+  @media(min-width:820px){.about{grid-template-columns:5fr 7fr}}
+  .about__img{position:relative;min-height:clamp(320px,40vw,460px);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-soft)}
+  .about__img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .about h2{font-size:clamp(1.9rem,3.2vw,2.6rem);margin:.6rem 0 .9rem;max-width:18ch}
+  .about p{color:var(--ink-2);max-width:48ch}
+  .pullquote{font-family:var(--serif);font-style:italic;font-size:1.3rem;line-height:1.4;color:var(--ink);border-left:3px solid var(--caramel);padding-left:1.1rem;margin:1.6rem 0 0;max-width:36ch}
+  .pullquote span{display:block;font-style:normal;font-family:var(--sans);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--meta);margin-top:.7rem}
+
+  .price-split{display:grid;grid-template-columns:1fr;gap:2.5rem;margin-top:3rem;align-items:start}
+  @media(min-width:820px){.price-split{grid-template-columns:7fr 5fr}}
+  .price-photos{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .price-photos img{aspect-ratio:1;object-fit:cover;border-radius:var(--r-md);box-shadow:var(--shadow-card)}
+  .price-photos img:first-child{grid-column:1/-1;aspect-ratio:16/10}
+  .price-card{background:#fff;border-radius:var(--r-lg);padding:2rem;box-shadow:var(--shadow-card)}
+  .price-card h3{font-size:1.5rem;margin-bottom:1rem}
+  .price-list{list-style:none}
+  .price-list li{display:flex;justify-content:space-between;gap:1rem;padding:.7rem 0;border-bottom:1px solid var(--hair);font-size:.98rem}
+  .price-list li:last-child{border:0}
+  .price-list .p{font-weight:700;color:var(--terra);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .price-note{margin-top:1.1rem;font-size:.85rem;color:var(--meta)}
+  .pauschale{margin-top:1.4rem;background:var(--bg);border-radius:var(--r-sm);padding:1rem 1.2rem}
+  .pauschale b{font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--meta)}
+  .pauschale ul{list-style:none;margin-top:.5rem}
+  .pauschale li{display:flex;justify-content:space-between;font-size:.92rem;padding:.25rem 0}
+
+  .gallery-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:2.5rem}
+  .gallery-row img{aspect-ratio:1;object-fit:cover;border-radius:var(--r-md);box-shadow:var(--shadow-card)}
+  .gallery-row img:nth-child(1){grid-row:span 2;aspect-ratio:auto;height:100%}
+  @media(max-width:680px){.gallery-row{grid-template-columns:repeat(2,1fr)}.gallery-row img:nth-child(1){grid-row:auto;aspect-ratio:1}}
+
+  /* Atmosphäre, weiches Bild-Panel mit Federung */
+  .band{position:relative;margin:0 clamp(.3rem,1vw,.9rem);min-height:clamp(300px,40vw,440px);display:grid;place-items:center;text-align:center;overflow:hidden;border-radius:var(--r-xl);box-shadow:var(--shadow-soft)}
+  .band img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%}
+  .band__scrim{position:absolute;inset:0;background:linear-gradient(120deg,rgba(46,36,29,.62),rgba(46,36,29,.35))}
+  .band__t{position:relative;color:#F7F1EA;font-family:var(--serif);font-style:italic;font-weight:500;font-size:clamp(1.6rem,4vw,2.8rem);max-width:20ch;padding:1.5rem;text-shadow:0 2px 24px rgba(0,0,0,.4)}
+
+  /* Buchung, echter Monatskalender mit Übersicht */
+  .book-card{max-width:940px;margin:2.6rem auto 0;background:#fff;border-radius:var(--r-lg);padding:clamp(1.4rem,3.5vw,2.4rem);box-shadow:var(--shadow-soft)}
+  .cal{display:grid;grid-template-columns:1fr;gap:clamp(1.4rem,3vw,2.2rem)}
+  @media(min-width:780px){.cal{grid-template-columns:1.3fr 1fr}.cal-side{border-left:1px solid var(--hair);padding-left:clamp(1.4rem,3vw,2.2rem)}}
+  .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+  .cal-head b{font-family:var(--serif);font-weight:500;font-size:1.35rem}
+  .cal-nav{display:flex;gap:.5rem}
+  .cal-nav button{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--hair);background:#fff;color:var(--ink-2);font-size:1.15rem;cursor:pointer;line-height:1;transition:.15s}
+  .cal-nav button:hover{border-color:var(--terra);color:var(--terra)}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.25rem}
+  .cal-wd{font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--meta);text-align:center;padding-bottom:.5rem;font-weight:600}
+  .day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:13px;font-size:.95rem;cursor:pointer;border:0;background:transparent;color:var(--ink);transition:.15s;font-family:var(--sans)}
+  .day:hover{background:var(--surface)}
+  .day .dot{width:5px;height:5px;border-radius:50%;background:var(--terra)}
+  .day.is-muted{color:var(--meta);opacity:.4;cursor:default}
+  .day.is-muted:hover{background:transparent}
+  .day.is-sel{background:var(--terra);color:#fff;font-weight:700;box-shadow:0 12px 22px -10px rgba(217,108,74,.6)}
+  .day.is-sel .dot{background:#fff}
+  .day.is-empty{cursor:default;background:transparent}
+  .cal-legend{display:flex;gap:1.4rem;font-size:.76rem;color:var(--meta);margin-top:1.1rem;flex-wrap:wrap}
+  .cal-legend span{display:inline-flex;align-items:center;gap:.4rem}
+  .cal-legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .cal-side h3{font-family:var(--serif);font-weight:500;font-size:1.35rem;margin-bottom:.2rem}
+  .cal-side .hours{font-size:.84rem;color:var(--meta);margin-bottom:1.1rem}
+  .times{display:flex;gap:.6rem;flex-wrap:wrap}
+  .timepill{border:1.5px solid var(--hair);background:#fff;border-radius:999px;padding:.55rem 1.2rem;font-size:.92rem;font-weight:600;color:var(--ink-2);cursor:pointer;transition:.16s;font-family:var(--sans)}
+  .timepill:hover{border-color:var(--terra);color:var(--terra);transform:translateY(-1px)}
+  .timepill.is-active{background:var(--terra);border-color:var(--terra);color:#fff}
+  .timepill.is-off{opacity:.4;text-decoration:line-through;pointer-events:none}
+  .cal-side .btn{margin-top:1.4rem;width:100%;text-align:center}
+  .book-note{display:block;margin-top:.8rem;font-size:.82rem;color:var(--meta);text-align:center}
+
+  .rev-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;margin-top:3rem}
+  .rev{background:#fff;border-radius:var(--r-md);padding:1.7rem;box-shadow:var(--shadow-card)}
+  .rev p{font-family:var(--serif);font-style:italic;font-size:1.08rem;line-height:1.5;color:var(--ink);margin:.7rem 0 1rem}
+  .rev cite{font-style:normal;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--meta)}
+
+  .faq{max-width:760px;margin:2.5rem auto 0}
+  details{border-bottom:1px solid var(--hair)}
+  summary{cursor:pointer;list-style:none;padding:1.1rem 0;font-family:var(--serif);font-size:1.2rem;font-weight:500;display:flex;justify-content:space-between;gap:1rem;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--terra);font-family:var(--sans);font-weight:400;font-size:1.5rem;line-height:1;transition:.2s}
+  details[open] summary::after{transform:rotate(45deg)}
+  details p{padding:0 0 1.2rem;color:var(--ink-2)}
+
+  .final{margin:var(--section) clamp(.3rem,1vw,.9rem) 0;border-radius:var(--r-xl);background:linear-gradient(135deg,#3A2D24,#5D4A3C);color:#F7F1EA;text-align:center;overflow:hidden;box-shadow:var(--shadow-soft)}
+  .final .wrap{padding:var(--section) var(--gutter)}
+  .final h2{color:#fff;font-size:clamp(2rem,4vw,3.2rem);max-width:18ch;margin:0 auto 1rem}
+  .final p{color:#E0D2C3;max-width:42ch;margin:0 auto 2rem}
+  .final .cta{display:flex;gap:1.2rem;justify-content:center;flex-wrap:wrap;align-items:center}
+  .final .link-ul{color:#F7F1EA;background:linear-gradient(var(--caramel),var(--caramel)) left bottom / 100% 2px no-repeat}
+
+  footer{background:#2E241D;color:#CDBAa9;font-size:.9rem;margin-top:var(--section)}
+  footer .wrap{padding:3.5rem var(--gutter) 2rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem}
+  footer h4{font-family:var(--serif);color:#F7F1EA;font-weight:500;font-size:1.05rem;margin-bottom:.8rem}
+  footer a{color:#CDBAa9;text-decoration:none}footer a:hover{color:#fff}
+  .brand-f{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
+  .brand-f img{height:50px;width:auto}
+  .brand-f b{font-family:var(--serif);font-style:italic;color:#F7F1EA;font-size:1.6rem}
+  footer ul{list-style:none;display:flex;flex-direction:column;gap:.45rem}
+  .footer-bar{border-top:1px solid rgba(255,255,255,.1);text-align:center;padding:1.2rem;font-size:.8rem;color:#9c8a7c}
+
+  .pickbar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:60;background:#2E241D;color:#F7F1EA;border-radius:999px;padding:.7rem 1.3rem;font-size:.86rem;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a class="brand" href="#">
+      <img src="/files/logo-header-3x.png" alt="Malatelier Auszeit, Pinsel im Glas">
+      <span class="brand__txt"><b>Auszeit</b><small>Malatelier · Gronau</small></span>
+    </a>
+    <ul>
+      <li class="hide-m"><a class="lnk" href="#erwartet">Keramik bemalen</a></li>
+      <li class="hide-m"><a class="lnk" href="#">Workshops</a></li>
+      <li class="hide-m"><a class="lnk" href="#">Anlässe</a></li>
+      <li class="hide-m"><a class="lnk" href="#galerie">Galerie</a></li>
+      <li class="hide-m"><a class="lnk" href="#">Gutscheine</a></li>
+      <li><a class="btn btn-terra" href="#buchen">Termin buchen</a></li>
+    </ul>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero__text">
+    <span class="eyebrow">Malatelier Auszeit · Gronau</span>
+    <h1>Dein Ort zum Ankommen und <em>Kreativsein</em></h1>
+    <p class="sub">Keramik bemalen, durchatmen, glücklich nach Hause gehen. Wir glasieren und brennen für dich, abholbereit in 10 bis 14 Tagen.</p>
+    <div class="cta">
+      <a class="btn btn-terra" href="#buchen">Termin buchen</a>
+      <a class="link-ul" href="#galerie">Unsere Keramik ansehen</a>
+    </div>
+    <div class="trust"><span class="stars" role="img" aria-label="Fünf von fünf Sternen">★★★★★</span> bei Google, von echten Gästen aus dem Münsterland</div>
+  </div>
+  <div class="hero__img">
+    <img class="warm" src="/files/sh-hero.jpg" alt="Beim Bemalen mit Pinsel im Atelier">
+    <div class="hero__cap">Mitten im Atelier, Gronau</div>
+  </div>
+</section>
+
+<section class="blk" id="erwartet">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Was dich erwartet</span>
+      <h2>Vier Wege, kreativ zu werden</h2>
+      <span class="brush"></span>
+    </div>
+    <div class="offer-grid">
+      <a class="ocard" href="#galerie">
+        <img class="warm" src="/files/sh-child.jpg" alt="Konzentriert beim Bemalen eines Keramikstücks">
+        <div class="ocard__b"><h3>Keramik bemalen</h3><p>Such dir in Ruhe einen Rohling, lass dich von den Farben inspirieren und gestalte etwas, das nur dir gehört.</p><div class="more">Ab 14,50 €</div></div>
+      </a>
+      <a class="ocard" href="#">
+        <img class="warm" src="/files/sh-irena-help.jpg" alt="Gemeinsam Keramik bemalen im Workshop">
+        <div class="ocard__b"><h3>Workshops</h3><p>Gemeinsam Neues ausprobieren, voneinander lernen und dabei eine richtig gute Zeit haben.</p><div class="more">Zu den Terminen</div></div>
+      </a>
+      <a class="ocard" href="#">
+        <img class="warm" src="/files/sh-group.jpg" alt="Gruppe bemalt gemeinsam Keramik am großen Tisch">
+        <div class="ocard__b"><h3>Besondere Anlässe</h3><p>Kindergeburtstag, JGA oder Firmen-Event: zusammen kreativ sein verbindet. Wir kümmern uns um alles.</p><div class="more">Anfragen</div></div>
+      </a>
+      <a class="ocard" href="#">
+        <img class="warm" src="/files/sh-cup.jpg" alt="Handbemalte Auszeit-Tasse">
+        <div class="ocard__b"><h3>Gutscheine</h3><p>Verschenke eine Auszeit, die wirklich von Herzen kommt.</p><div class="more">Ab 25 €</div></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="blk soft">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow">So einfach geht es</span><h2>In drei Schritten zu deinem Stück</h2><span class="brush"></span></div>
+    <div class="steps">
+      <div class="step"><h3>Termin aussuchen</h3><p>Schau dir die freien Termine an und such dir einen Zeitpunkt aus, der für dich passt.</p></div>
+      <div class="step"><h3>Ankommen und loslegen</h3><p>Setz dich gemütlich hin, wähle dein Stück und lass deiner Kreativität freien Lauf. Ich helfe dir gern.</p></div>
+      <div class="step"><h3>Abholen und freuen</h3><p>Nach 10 bis 14 Tagen ist dein Werk fertig glasiert. Hol es ab und freu dich jedes Mal, wenn du es benutzt.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="blk">
+  <div class="wrap about">
+    <div class="about__img"><img class="warm" src="/files/sh-irena-malt.jpg" alt="Irena beim Bemalen eines Keramikstücks in ihrem Atelier" style="object-position:center 20%"></div>
+    <div class="about__text">
+      <span class="eyebrow">Die Gastgeberin</span>
+      <h2>Bei Irena ist jeder willkommen</h2>
+      <p>Kein Kurszwang, kein Können nötig. Du suchst dir ein Stück, ich zeige dir die Farben, den Rest macht deine Hand. Ich bin da, wenn du mich brauchst, und lasse dir Raum, wenn du in deinem Tempo werkeln willst.</p>
+      <blockquote class="pullquote">„Sie ist super herzlich und man fühlt sich direkt wohl. Sie gibt einem Zeit, kreativ zu sein."<span>Carina · Google</span></blockquote>
+    </div>
+  </div>
+</section>
+
+<section class="blk" id="angebot">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow">Angebot und Preise</span><h2>Transparent, ohne Überraschungen</h2><span class="brush"></span></div>
+    <div class="price-split">
+      <div class="price-photos">
+        <img class="warm" src="/files/sh-amore.jpg" alt="Handbemaltes Herztablett">
+        <img class="warm" src="/files/sh-cup.jpg" alt="Auszeit-Tasse">
+        <img class="warm" src="/files/sh-bee.jpg" alt="Krug mit Bienenmotiv">
+      </div>
+      <div class="price-card">
+        <h3>Rohlinge</h3>
+        <ul class="price-list">
+          <li><span>Tassen</span><span class="p">ab 14,50 €</span></li>
+          <li><span>Teller</span><span class="p">ab 12,50 €</span></li>
+          <li><span>Spardosen, Krüge und Boxen</span><span class="p">ab 8,00 €</span></li>
+          <li><span>Anhänger</span><span class="p">ab 6,00 €</span></li>
+        </ul>
+        <div class="pauschale">
+          <b>Farb- und Brennpauschale pro Person</b>
+          <ul>
+            <li><span>bis 3 Teile</span><span>10,00 €</span></li>
+            <li><span>4 bis 6 Teile</span><span>15,00 €</span></li>
+            <li><span>7 bis 9 Teile</span><span>20,00 €</span></li>
+          </ul>
+        </div>
+        <p class="price-note">Farben, Pinsel und Brennen immer inklusive. Abholbereit nach 10 bis 14 Tagen.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="blk soft" id="galerie">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow">Galerie</span><h2>Was bei uns entsteht</h2><span class="brush"></span><p class="lead">Lass dich inspirieren von Stücken, die unsere Gäste gestaltet haben.</p></div>
+    <div class="gallery-row">
+      <img class="warm" src="/files/sh-stag.jpg" alt="Teller mit Hirschmotiv">
+      <img class="warm" src="/files/sh-bee.jpg" alt="Krug mit Bienen">
+      <img class="warm" src="/files/sh-cookie.jpg" alt="Schale mit Krümelmonster">
+      <img class="warm" src="/files/sh-lion.jpg" alt="Kinderteller mit Löwe">
+      <img class="warm" src="/files/sh-amore.jpg" alt="Herztablett Amore">
+    </div>
+    <p style="margin-top:1.8rem"><a class="link-ul" href="#">Zur ganzen Galerie</a></p>
+  </div>
+</section>
+
+<section class="band">
+  <img class="warm" src="/files/sh-atelier.jpg" alt="Blick ins gemütliche Atelier">
+  <div class="band__scrim"></div>
+  <p class="band__t">Ein Nachmittag nur für dich, mitten im Münsterland.</p>
+</section>
+
+<section class="blk soft" id="buchen">
+  <div class="wrap">
+    <div class="head center"><span class="eyebrow">Termin buchen</span><h2>Sichere dir deinen Platz</h2><span class="brush"></span><p class="lead">Wähle einen Tag und eine Uhrzeit, den Rest übernehmen wir.</p></div>
+    <div class="book-card">
+      <div class="cal">
+        <div class="cal-main">
+          <div class="cal-head">
+            <b>Juni 2026</b>
+            <div class="cal-nav"><button type="button" aria-label="Voriger Monat">‹</button><button type="button" aria-label="Nächster Monat">›</button></div>
+          </div>
+          <div class="cal-grid">
+            <div class="cal-wd">Mo</div><div class="cal-wd">Di</div><div class="cal-wd">Mi</div><div class="cal-wd">Do</div><div class="cal-wd">Fr</div><div class="cal-wd">Sa</div><div class="cal-wd">So</div>
+            <button class="day is-muted">1</button><button class="day is-muted">2</button><button class="day is-muted">3</button><button class="day is-muted">4</button><button class="day is-muted">5</button><button class="day is-muted">6</button><button class="day is-muted">7</button>
+            <button class="day is-muted">8</button><button class="day">9<span class="dot"></span></button><button class="day">10<span class="dot"></span></button><button class="day">11<span class="dot"></span></button><button class="day">12<span class="dot"></span></button><button class="day is-muted">13</button><button class="day">14<span class="dot"></span></button>
+            <button class="day is-muted">15</button><button class="day">16<span class="dot"></span></button><button class="day is-sel">17<span class="dot"></span></button><button class="day">18<span class="dot"></span></button><button class="day">19<span class="dot"></span></button><button class="day">20<span class="dot"></span></button><button class="day">21<span class="dot"></span></button>
+            <button class="day is-muted">22</button><button class="day">23<span class="dot"></span></button><button class="day">24<span class="dot"></span></button><button class="day">25<span class="dot"></span></button><button class="day is-muted">26</button><button class="day">27<span class="dot"></span></button><button class="day">28<span class="dot"></span></button>
+            <button class="day is-muted">29</button><button class="day">30<span class="dot"></span></button><div class="day is-empty"></div><div class="day is-empty"></div><div class="day is-empty"></div><div class="day is-empty"></div><div class="day is-empty"></div>
+          </div>
+          <div class="cal-legend"><span><i style="background:var(--terra)"></i>freie Tage</span><span><i style="background:var(--meta);opacity:.4"></i>belegt oder Ruhetag</span></div>
+        </div>
+        <div class="cal-side">
+          <h3>Dienstag, 17. Juni</h3>
+          <div class="hours">Wähle eine Uhrzeit, je Termin ca. 2 Stunden</div>
+          <div class="times">
+            <button class="timepill is-active">10:00</button>
+            <button class="timepill">12:30</button>
+            <button class="timepill">15:00</button>
+            <button class="timepill is-off">16:30</button>
+          </div>
+          <a class="btn btn-terra" href="#">Weiter zur Buchung</a>
+          <span class="book-note">Kostenlos stornierbar bis 24 Stunden vorher</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="blk">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow">Bewertungen</span><h2>Was Gäste über uns sagen</h2><span class="brush"></span></div>
+    <div class="rev-grid">
+      <blockquote class="rev"><div class="stars" role="img" aria-label="Fünf von fünf Sternen">★★★★★</div><p>„Irena hat einen ganz tollen Ort geschaffen, an dem man einfach mal abschalten kann. Werde definitiv noch oft wiederkommen!"</p><cite>Carina · Google</cite></blockquote>
+      <blockquote class="rev"><div class="stars" role="img" aria-label="Fünf von fünf Sternen">★★★★★</div><p>„Irena erklärt alles mit viel Geduld, Witz und Herz. Ein wunderbarer Ort, um eine kleine Auszeit vom Alltag zu nehmen."</p><cite>Helene · Google</cite></blockquote>
+      <blockquote class="rev"><div class="stars" role="img" aria-label="Fünf von fünf Sternen">★★★★★</div><p>„Kreativ sein hat uns sehr gut getan. Schön, dass es Anlaufstellen gibt zum Entspannen. Preis-Leistung ist super."</p><cite>Linda · Google</cite></blockquote>
+    </div>
+  </div>
+</section>
+
+<section class="blk soft">
+  <div class="wrap">
+    <div class="head center"><span class="eyebrow">Oft gefragt</span><h2>Gern beantwortet</h2><span class="brush"></span></div>
+    <div class="faq">
+      <details open><summary>Wie läuft ein Besuch bei euch ab?</summary><p>Du kommst zu deinem Termin, suchst dir in Ruhe ein Keramikstück aus und bemalst es. Farben, Pinsel und Werkzeuge stehen bereit. Danach glasieren und brennen wir. Nach 10 bis 14 Tagen holst du dein Stück ab.</p></details>
+      <details><summary>Was kostet ein Besuch?</summary><p>Der Preis setzt sich aus dem Rohling (ab 6 €) und einer Farb- und Brennpauschale zusammen: bis 3 Teile 10 €, 4 bis 6 Teile 15 €, 7 bis 9 Teile 20 €. Farben, Pinsel und Brennen sind immer inklusive.</p></details>
+      <details><summary>Muss ich vorher einen Termin buchen?</summary><p>Ja, damit wir genug Platz und alles Nötige für dich vorbereiten können. Das geht ganz einfach hier auf der Website.</p></details>
+      <details><summary>Ist das Atelier auch für Kinder geeignet?</summary><p>Auf jeden Fall. Kinder ab 6 Jahren sind herzlich willkommen. Für Kindergeburtstage haben wir besondere Pakete.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>Bereit für deine Auszeit?</h2>
+    <p>Such dir einen Termin aus, komm vorbei und nimm etwas mit, das bleibt.</p>
+    <div class="cta">
+      <a class="btn btn-terra" href="#buchen">Termin buchen</a>
+      <a class="link-ul" href="#">Lieber einen Gutschein verschenken</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="brand-f"><img src="/files/logo-header-3x.png" alt=""><b>Auszeit</b></div>
+      <p style="max-width:26ch">Dein Malatelier in Gronau. Keramik bemalen, durchatmen, glücklich nach Hause gehen.</p>
+    </div>
+    <div>
+      <h4>Komm vorbei</h4>
+      <ul>
+        <li>Feldstiege 6a</li><li>48599 Gronau (Westf.)</li>
+        <li style="margin-top:.4rem"><a href="#">+49 176 34255005</a></li>
+        <li><a href="#">atelier@keramik-auszeit.de</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Öffnungszeiten</h4>
+      <ul><li>Dienstag bis Sonntag</li><li>10:00 bis 18:00 Uhr</li><li style="color:#9c8a7c;margin-top:.4rem">Montag Ruhetag</li></ul>
+    </div>
+    <div>
+      <h4>Mehr</h4>
+      <ul><li><a href="#">Galerie</a></li><li><a href="#">Workshops</a></li><li><a href="#">Gutscheine</a></li><li><a href="#">Instagram</a></li></ul>
+    </div>
+  </div>
+  <div class="footer-bar">© 2026 Malatelier Auszeit · Irena Woschkowiak · <a href="#" style="color:#9c8a7c">Impressum</a> · <a href="#" style="color:#9c8a7c">Datenschutz</a></div>
+</footer>
+
+<div class="pickbar">v4 · weicher, runde Panels, neuer Buchungs-Block</div>
+</body>
+</html>
