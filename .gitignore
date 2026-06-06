@@ -45,6 +45,7 @@ upload-server-images.ts
 # ========================
 .claude/
 .vscode/
+.superpowers/
 deployment.md
 DEPLOYMENT.md
 
@@ -74,3 +75,7 @@ id_ed25519*
 *.sqlite
 *.db-shm
 *.db-wal
+
+# Rohe Shooting-Originale (web-Versionen liegen in public/fotos/)
+/public/Auszeit Keramik/
+/public/Auszeit_Galerie/
