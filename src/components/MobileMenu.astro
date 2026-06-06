@@ -42,7 +42,7 @@
     <nav aria-label="Mobile Navigation" class="mobile-panel__nav">
       <a href="/#keramik-preise" class="mobile-panel__link">Keramik bemalen</a>
       <a href="/workshops" class="mobile-panel__link">Workshops</a>
-      <a href="/events" class="mobile-panel__link">Besondere Anlasse</a>
+      <a href="/events" class="mobile-panel__link">Besondere Anlässe</a>
       <a href="/galerie" class="mobile-panel__link">Galerie</a>
       <a href="/gutscheine" class="mobile-panel__link">Gutscheine</a>
       <a href="/#termin-buchen" class="mobile-panel__link mobile-panel__link--cta btn btn-terra">Termin buchen</a>
@@ -67,9 +67,15 @@
 
   if (!btn || !panel) return;
 
+  // Panel + Backdrop liegen im <header>, der backdrop-filter:blur hat. Das erzeugt
+  // einen Containing-Block fuer position:fixed -> das Off-Canvas wuerde am Header kleben
+  // statt am Viewport. Deshalb ans Ende von <body> verschieben.
+  document.body.appendChild(panel);
+  if (backdrop) document.body.appendChild(backdrop);
+
   function openMenu() {
     panel.classList.add('is-open');
-    backdrop.classList.add('is-open');
+    if (backdrop) backdrop.classList.add('is-open');
     panel.setAttribute('aria-hidden', 'false');
     btn.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
@@ -82,7 +88,7 @@
 
   function closeMenu() {
     panel.classList.remove('is-open');
-    backdrop.classList.remove('is-open');
+    if (backdrop) backdrop.classList.remove('is-open');
     panel.setAttribute('aria-hidden', 'true');
     btn.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
@@ -91,7 +97,7 @@
 
   btn.addEventListener('click', openMenu);
   closeBtn && closeBtn.addEventListener('click', closeMenu);
-  backdrop.addEventListener('click', closeMenu);
+  if (backdrop) backdrop.addEventListener('click', closeMenu);
 
   // Close on any nav link click
   panel.querySelectorAll('.mobile-panel__link').forEach(function (link) {
