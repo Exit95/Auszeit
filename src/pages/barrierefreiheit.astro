@@ -1,11 +1,19 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
+import Brush from '../components/Brush.astro';
 ---
-<MainLayout title="Barrierefreiheitserklärung — Malatelier Auszeit" description="Erklärung zur Barrierefreiheit von keramik-auszeit.de gemäß BFSG.">
-  <section class="legal-page">
-    <div class="legal-page__inner">
+<MainLayout
+  title="Barrierefreiheitserklärung — Malatelier Auszeit"
+  description="Erklärung zur Barrierefreiheit von keramik-auszeit.de gemäß BFSG."
+>
+  <div class="wrap">
+    <div class="pagehead">
+      <span class="eyebrow">Rechtliches</span>
       <h1>Erklärung zur Barrierefreiheit</h1>
+      <Brush />
+    </div>
 
+    <div class="prose">
       <p>
         Malatelier Auszeit (Irena Woschkowiak) ist bemüht, die Website
         <strong>keramik-auszeit.de</strong> im Einklang mit dem Barrierefreiheitsstärkungsgesetz
@@ -57,42 +65,5 @@ import MainLayout from '../layouts/MainLayout.astro';
         <a href="https://www.bfit-bund.de" target="_blank" rel="noopener noreferrer">www.bfit-bund.de</a>
       </p>
     </div>
-  </section>
+  </div>
 </MainLayout>
-
-<style>
-  .legal-page {
-    padding: 3rem var(--gutter, 1.5rem);
-    background: var(--bg-paper, #FAF7F2);
-  }
-  .legal-page__inner {
-    max-width: 720px;
-    margin: 0 auto;
-  }
-  .legal-page h1 {
-    font-family: var(--font-serif, 'Lora', serif);
-    font-size: clamp(1.75rem, 3vw, 2.25rem);
-    color: var(--brand-espresso, #423430);
-    margin-bottom: 2rem;
-  }
-  .legal-page h2 {
-    font-family: var(--font-serif, 'Lora', serif);
-    font-size: 1.15rem;
-    color: var(--brand-espresso, #423430);
-    margin-top: 2rem;
-    margin-bottom: 0.5rem;
-  }
-  .legal-page p, .legal-page li {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    color: var(--text-body, #6B5D56);
-    line-height: 1.7;
-    margin-bottom: 0.75rem;
-  }
-  .legal-page ul {
-    padding-left: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  .legal-page a {
-    color: var(--accent-terra, #D96C4A);
-  }
-</style>

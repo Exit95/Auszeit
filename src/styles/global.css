@@ -230,6 +230,54 @@ section.blk {
   max-width: 52ch;
 }
 
+/* Prose body (legal / text-heavy pages) */
+.prose {
+  max-width: 70ch;
+  margin-top: clamp(2rem, 4vw, 3rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.prose p,
+.prose li {
+  color: var(--ink-2);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.prose h2 {
+  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  margin-top: 2.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.prose h3 {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 1.75rem;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+.prose a {
+  color: var(--terra);
+  text-decoration: none;
+  background: linear-gradient(var(--terra), var(--terra)) left bottom / 100% 1px no-repeat;
+  padding-bottom: 2px;
+}
+
+.prose strong {
+  color: var(--ink);
+}
+
 /* Scroll-Animationen */
 .animate-on-scroll {
   opacity: 0;

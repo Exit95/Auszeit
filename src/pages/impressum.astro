@@ -1,12 +1,19 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-import { content } from '../data/content';
+import Brush from '../components/Brush.astro';
 ---
-<MainLayout title="Impressum — Malatelier Auszeit" description="Impressum und Angaben gemäß § 5 DDG für Malatelier Auszeit, Keramik bemalen in Gronau.">
-  <section class="legal-page">
-    <div class="legal-page__inner">
+<MainLayout
+  title="Impressum — Malatelier Auszeit"
+  description="Impressum und Angaben gemäß § 5 DDG für Malatelier Auszeit, Keramik bemalen in Gronau."
+>
+  <div class="wrap">
+    <div class="pagehead">
+      <span class="eyebrow">Rechtliches</span>
       <h1>Impressum</h1>
+      <Brush />
+    </div>
 
+    <div class="prose">
       <h2>Angaben gemäß § 5 DDG</h2>
       <p>
         Malatelier Auszeit<br />
@@ -94,39 +101,5 @@ import { content } from '../data/content';
         Rechtsverletzungen werden wir derartige Inhalte umgehend entfernen.
       </p>
     </div>
-  </section>
+  </div>
 </MainLayout>
-
-<style>
-  .legal-page {
-    padding: 3rem var(--gutter, 1.5rem);
-    background: var(--bg-paper, #FAF7F2);
-  }
-  .legal-page__inner {
-    max-width: var(--max-width, 1080px);
-    margin: 0 auto;
-    max-width: 720px;
-  }
-  .legal-page h1 {
-    font-family: var(--font-serif, 'Lora', serif);
-    font-size: clamp(1.75rem, 3vw, 2.25rem);
-    color: var(--brand-espresso, #423430);
-    margin-bottom: 2rem;
-  }
-  .legal-page h2 {
-    font-family: var(--font-serif, 'Lora', serif);
-    font-size: 1.15rem;
-    color: var(--brand-espresso, #423430);
-    margin-top: 2rem;
-    margin-bottom: 0.5rem;
-  }
-  .legal-page p {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    color: var(--text-body, #6B5D56);
-    line-height: 1.7;
-    margin-bottom: 1rem;
-  }
-  .legal-page a {
-    color: var(--accent-terra, #D96C4A);
-  }
-</style>

@@ -1,12 +1,19 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-import { content } from '../data/content';
+import Brush from '../components/Brush.astro';
 ---
-<MainLayout title="Datenschutzerklärung — Malatelier Auszeit" description="Datenschutzerklärung für keramik-auszeit.de. Informationen zur Datenverarbeitung bei Terminbuchungen, Gutscheinkäufen und Bewertungen.">
-  <section class="legal-page">
-    <div class="legal-page__inner">
+<MainLayout
+  title="Datenschutzerklärung — Malatelier Auszeit"
+  description="Datenschutzerklärung für keramik-auszeit.de. Informationen zur Datenverarbeitung bei Terminbuchungen, Gutscheinkäufen und Bewertungen."
+>
+  <div class="wrap">
+    <div class="pagehead">
+      <span class="eyebrow">Rechtliches</span>
       <h1>Datenschutzerklärung</h1>
+      <Brush />
+    </div>
 
+    <div class="prose">
       <h2>1. Datenschutz auf einen Blick</h2>
       <h3>Allgemeine Hinweise</h3>
       <p>
@@ -304,46 +311,5 @@ import { content } from '../data/content';
         Website abgerufen werden.
       </p>
     </div>
-  </section>
+  </div>
 </MainLayout>
-
-<style>
-  .legal-page {
-    padding: 3rem var(--gutter, 1.5rem);
-    background: var(--bg-paper, #FAF7F2);
-  }
-  .legal-page__inner {
-    max-width: 720px;
-    margin: 0 auto;
-  }
-  .legal-page h1 {
-    font-family: var(--font-serif, 'Lora', serif);
-    font-size: clamp(1.75rem, 3vw, 2.25rem);
-    color: var(--brand-espresso, #423430);
-    margin-bottom: 2rem;
-  }
-  .legal-page h2 {
-    font-family: var(--font-serif, 'Lora', serif);
-    font-size: 1.25rem;
-    color: var(--brand-espresso, #423430);
-    margin-top: 2.5rem;
-    margin-bottom: 0.75rem;
-  }
-  .legal-page h3 {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--brand-espresso, #423430);
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-  .legal-page p {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    color: var(--text-body, #6B5D56);
-    line-height: 1.7;
-    margin-bottom: 1rem;
-  }
-  .legal-page a {
-    color: var(--accent-terra, #D96C4A);
-  }
-</style>

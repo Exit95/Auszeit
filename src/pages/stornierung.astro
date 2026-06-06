@@ -1,57 +1,61 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
+import Brush from '../components/Brush.astro';
 ---
 
 <MainLayout
-  title="Buchung stornieren - Atelier Auszeit"
-  description="Storniere deine Buchung im Atelier Auszeit"
+  title="Buchung stornieren — Malatelier Auszeit"
+  description="Storniere deine Buchung im Malatelier Auszeit sicher und unkompliziert."
 >
-  <section style="min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
-    <div id="cancel-container" style="max-width: 500px; width: 100%; font-family: Arial, sans-serif;">
-      <h1 style="color: #8B6F47; font-family: serif; font-size: 1.9rem; margin: 0 0 1.25rem; text-align: center;">Buchung stornieren</h1>
+  <div class="wrap">
+    <div class="pagehead">
+      <span class="eyebrow">Buchungsverwaltung</span>
+      <h1>Buchung stornieren</h1>
+      <Brush />
+    </div>
 
-      <div id="loading" style="text-align: center; padding: 3rem;">
-        <p style="color: #8B6F47; font-size: 1.2rem;">Buchung wird geladen...</p>
-      </div>
-
-      <div id="error" style="display: none; text-align: center; padding: 3rem;">
-        <h2 style="color: #dc2626;">Fehler</h2>
-        <p id="error-message"></p>
-        <a href="/" style="color: #8B6F47; text-decoration: underline;">Zurück zur Startseite</a>
-      </div>
-
-      <div id="booking-info" style="display: none;">
-        <h2 style="color: #8B6F47; font-family: serif; font-size: 1.5rem; margin-bottom: 1rem;">Deine Buchung</h2>
-        <div style="background-color: #F5F0E8; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
-          <p><strong>Name:</strong> <span id="info-name"></span></p>
-          <p><strong>Teilnehmer:</strong> <span id="info-participants"></span></p>
-          <p id="info-date-row"><strong>Datum:</strong> <span id="info-date"></span></p>
-          <p id="info-time-row"><strong>Uhrzeit:</strong> <span id="info-time"></span></p>
-          <p><strong>Status:</strong> <span id="info-status"></span></p>
+    <div class="cancel-wrap">
+      <div id="cancel-container">
+        <div id="loading" class="state">
+          <p>Buchung wird geladen ...</p>
         </div>
 
-        <div id="already-cancelled" style="display: none; background: #fef2f2; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; text-align: center;">
-          <p style="color: #dc2626; font-weight: bold;">Diese Buchung wurde bereits storniert.</p>
-          <a href="/" style="color: #8B6F47; text-decoration: underline; margin-top: 0.5rem; display: inline-block;">Zurück zur Startseite</a>
+        <div id="error" class="state" style="display:none;">
+          <h2>Fehler</h2>
+          <p id="error-message"></p>
+          <a href="/" class="link-ul">Zurück zur Startseite</a>
         </div>
 
-        <div id="cancel-form" style="display: none;">
-          <p style="margin-bottom: 1rem; color: #666;">Möchtest du diese Buchung wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.</p>
-          <button id="cancel-btn" style="width: 100%; padding: 0.875rem; background-color: #dc2626; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
-            Buchung stornieren
-          </button>
-          <a href="/" style="display: block; text-align: center; margin-top: 1rem; color: #8B6F47; text-decoration: underline;">Abbrechen und zurück zur Startseite</a>
-        </div>
-      </div>
+        <div id="booking-info" style="display:none;">
+          <h2>Deine Buchung</h2>
+          <div class="booking-card">
+            <p><strong>Name:</strong> <span id="info-name"></span></p>
+            <p><strong>Teilnehmer:</strong> <span id="info-participants"></span></p>
+            <p id="info-date-row"><strong>Datum:</strong> <span id="info-date"></span></p>
+            <p id="info-time-row"><strong>Uhrzeit:</strong> <span id="info-time"></span></p>
+            <p><strong>Status:</strong> <span id="info-status"></span></p>
+          </div>
 
-      <div id="success" style="display: none; text-align: center; padding: 2rem;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
-        <h2 style="color: #16a34a;">Buchung storniert</h2>
-        <p>Deine Buchung wurde erfolgreich storniert. Danke für die rechtzeitige Absage.</p>
-        <a href="/" style="display: inline-block; margin-top: 1.5rem; padding: 0.75rem 2rem; background-color: #8B6F47; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">Zurück zur Startseite</a>
+          <div id="already-cancelled" class="notice notice--warn" style="display:none;">
+            <p>Diese Buchung wurde bereits storniert.</p>
+            <a href="/" class="link-ul">Zurück zur Startseite</a>
+          </div>
+
+          <div id="cancel-form" style="display:none;">
+            <p class="cancel-hint">Möchtest du diese Buchung wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+            <button id="cancel-btn" class="btn btn-danger">Buchung stornieren</button>
+            <a href="/" class="link-ul back-link">Abbrechen und zurück zur Startseite</a>
+          </div>
+        </div>
+
+        <div id="success" class="state" style="display:none;">
+          <h2>Buchung storniert</h2>
+          <p>Deine Buchung wurde erfolgreich storniert. Danke für die rechtzeitige Absage.</p>
+          <a href="/" class="btn btn-terra" style="margin-top:1.5rem;">Zurück zur Startseite</a>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
@@ -111,7 +115,7 @@ import MainLayout from '../layouts/MainLayout.astro';
           document.getElementById('info-date-row')!.style.display = 'none';
         }
         if (data.time) {
-          const timeDisplay = data.endTime ? `${data.time} - ${data.endTime} Uhr` : `${data.time} Uhr`;
+          const timeDisplay = data.endTime ? `${data.time} bis ${data.endTime} Uhr` : `${data.time} Uhr`;
           document.getElementById('info-time')!.textContent = timeDisplay;
         } else {
           document.getElementById('info-time-row')!.style.display = 'none';
@@ -128,7 +132,7 @@ import MainLayout from '../layouts/MainLayout.astro';
     }
 
     const cancelErrorEl = document.createElement('p');
-    cancelErrorEl.style.cssText = 'color:#dc2626;margin-top:0.75rem;font-size:0.9rem;text-align:center;display:none;';
+    cancelErrorEl.style.cssText = 'color:var(--danger,#dc2626);margin-top:0.75rem;font-size:0.9rem;text-align:center;display:none;';
     cancelBtn.insertAdjacentElement('afterend', cancelErrorEl);
 
     const showCancelError = (msg: string) => {
@@ -138,7 +142,7 @@ import MainLayout from '../layouts/MainLayout.astro';
 
     cancelBtn.addEventListener('click', async () => {
       cancelBtn.setAttribute('disabled', 'true');
-      cancelBtn.textContent = 'Wird storniert...';
+      cancelBtn.textContent = 'Wird storniert ...';
       cancelErrorEl.style.display = 'none';
 
       try {
@@ -168,3 +172,93 @@ import MainLayout from '../layouts/MainLayout.astro';
   </script>
 </MainLayout>
 
+<style>
+  .cancel-wrap {
+    max-width: 540px;
+    margin: 2.5rem 0 clamp(3rem, 6vw, 5rem);
+  }
+
+  .state {
+    padding: 2rem 0;
+    color: var(--ink-2);
+  }
+
+  .state h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .booking-card {
+    background: var(--surface);
+    border-radius: var(--r-lg, 12px);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    border: 1px solid var(--hair);
+  }
+
+  .booking-card p {
+    color: var(--ink-2);
+    line-height: 1.7;
+    margin-bottom: 0.5rem;
+  }
+
+  .booking-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .booking-card strong {
+    color: var(--ink);
+  }
+
+  .notice {
+    border-radius: var(--r-lg, 12px);
+    padding: 1.25rem 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .notice--warn {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+  }
+
+  .notice--warn p {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .cancel-hint {
+    color: var(--ink-2);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
+
+  .btn-danger {
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 10px;
+    padding: .82rem 1.7rem;
+    cursor: pointer;
+    border: 0;
+    transition: background .18s;
+    width: 100%;
+    background: #dc2626;
+    color: #fff;
+  }
+
+  .btn-danger:hover {
+    background: #b91c1c;
+  }
+
+  .btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+  }
+</style>
