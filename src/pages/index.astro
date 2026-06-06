@@ -10,11 +10,12 @@ import GalerieTeaser from '../sections/GalerieTeaser.astro';
 import Band from '../sections/Band.astro';
 import BookingCalendar from '../components/BookingCalendar.astro';
 import Reviews from '../sections/Reviews.astro';
-import Contact from '../sections/Contact.astro';
+import FAQ from '../sections/FAQ.astro';
+import FinalCTA from '../sections/FinalCTA.astro';
 
-// SEO-optimierter Title und Description für lokale Suche
-const seoTitle = "Keramik bemalen Gronau & Münsterland | Atelier Auszeit | Workshops & Kindergeburtstage";
-const seoDescription = "Keramik selbst bemalen in Gronau (Westfalen) im Münsterland ✓ Kreative Workshops ✓ Kindergeburtstage ✓ JGA ✓ Erreichbar aus Münster, Steinfurt, Borken, Ahaus, Enschede. Jetzt Termin buchen!";
+// SEO-optimierter Title und Description fuer lokale Suche
+const seoTitle = "Keramik bemalen in Gronau & Münsterland | Malatelier Auszeit";
+const seoDescription = "Keramik selbst bemalen in Gronau (Westfalen) im Münsterland. Kreative Workshops, Kindergeburtstage und JGA, gut erreichbar aus Münster, Steinfurt, Borken, Ahaus und Enschede. Jetzt Termin buchen.";
 ---
 
 <MainLayout title={seoTitle} description={seoDescription}>
@@ -25,7 +26,8 @@ const seoDescription = "Keramik selbst bemalen in Gronau (Westfalen) im Münster
   <AngebotPreise />
   <GalerieTeaser />
   <Band />
-  <BookingCalendar title="Termin buchen" />
+  <BookingCalendar />
   <Reviews />
-  <Contact />
+  <FAQ />
+  <FinalCTA />
 </MainLayout>
