@@ -59,14 +59,14 @@ import Brush from '../components/Brush.astro';
     gap: 1rem;
   }
 
-  .price-photos img {
+  :global(.price-photos img) {
     aspect-ratio: 1;
     object-fit: cover;
     border-radius: var(--r-md);
     box-shadow: var(--shadow-card);
   }
 
-  .price-photos img:first-child {
+  :global(.price-photos img:first-child) {
     grid-column: 1 / -1;
     aspect-ratio: 16 / 10;
   }

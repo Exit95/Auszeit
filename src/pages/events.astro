@@ -197,7 +197,7 @@ const ANL_PHOTOS: Record<string, string> = {
     align-items: flex-end;
     box-shadow: var(--shadow-soft);
   }
-  .anl-banner img {
+  :global(.anl-banner img) {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -236,7 +236,7 @@ const ANL_PHOTOS: Record<string, string> = {
     display: flex;
     flex-direction: column;
   }
-  .anl img {
+  :global(.anl img) {
     aspect-ratio: 16/10;
     object-fit: cover;
     width: 100%;

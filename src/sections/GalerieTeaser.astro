@@ -32,14 +32,14 @@ import Brush from '../components/Brush.astro';
     margin-top: 2.5rem;
   }
 
-  .gallery-row img {
+  :global(.gallery-row img) {
     aspect-ratio: 1;
     object-fit: cover;
     border-radius: var(--r-md);
     box-shadow: var(--shadow-card);
   }
 
-  .gallery-row img:first-child {
+  :global(.gallery-row img:first-child) {
     grid-row: span 2;
     aspect-ratio: auto;
     height: 100%;
@@ -50,7 +50,7 @@ import Brush from '../components/Brush.astro';
       grid-template-columns: repeat(2, 1fr);
     }
 
-    .gallery-row img:first-child {
+    :global(.gallery-row img:first-child) {
       grid-row: auto;
       aspect-ratio: 1;
     }
