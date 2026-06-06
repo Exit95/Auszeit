@@ -23,9 +23,3 @@ const imgClass = `warm ${cls}`.trim();
 ) : (
   <img src={src} alt={alt} width={width} height={height} loading={loading} fetchpriority={fetchpriority} sizes={sizes} decoding="async" class={imgClass} />
 )}
-
-<style>
-  /* picture aus dem Layout nehmen, damit das <img> direktes Grid-/Flex-Item bleibt
-     und alle bestehenden `.container img`-Regeln (object-fit/aspect/absolute) greifen */
-  picture { display: contents; }
-</style>
