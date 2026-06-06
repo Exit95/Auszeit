@@ -47,7 +47,7 @@ export const content = {
       {
         icon: 'brush',
         title: 'Ankommen & loslegen',
-        text: 'Setz dich gemütlich hin, wähle dein Stück und lass deiner Kreativität freien Lauf. Ich helfe dir gern, wenn du magst.',
+        text: 'Setz dich gemütlich hin, wähle deinen Rohling und lass deiner Kreativität freien Lauf. Ich helfe dir gern, wenn du magst.',
       },
       {
         icon: 'gift',
@@ -76,11 +76,11 @@ export const content = {
     items: [
       {
         question: 'Wie läuft ein Besuch bei euch ab?',
-        answer: 'Du kommst zu deinem Termin, suchst dir in Ruhe ein Keramikstück aus und bemalst es, wie es dir gefällt. Alle Farben, Pinsel und Werkzeuge stehen bereit. Danach übernehmen wir das Glasieren und Brennen. Nach 10 bis 14 Tagen kannst du dein fertiges Stück abholen.',
+        answer: 'Du kommst zu deinem Termin, suchst dir in Ruhe einen weißen Rohling aus und bemalst ihn, wie es dir gefällt. Alle Farben, Pinsel und Werkzeuge stehen bereit. Danach übernehmen wir das Glasieren und Brennen. Nach 10 bis 14 Tagen kannst du deine fertige Keramik abholen.',
       },
       {
         question: 'Was kostet ein Besuch?',
-        answer: 'Der Preis setzt sich zusammen aus dem Keramikstück (ab 6 €) und einer Farb- und Brennpauschale: bis 3 Teile 10 €, 4 bis 6 Teile 15 €, 7 bis 9 Teile 20 €. Farben, Pinsel und Brennen sind dabei immer inklusive.',
+        answer: 'Der Preis setzt sich zusammen aus dem Rohling (ab 6 €) und einer Farb- und Brennpauschale: bis 3 Teile 10 €, 4 bis 6 Teile 15 €, 7 bis 9 Teile 20 €. Farben, Pinsel und Brennen sind dabei immer inklusive.',
       },
       {
         question: 'Muss ich vorher einen Termin buchen?',
@@ -119,7 +119,7 @@ export const content = {
       {
         id: 'kindergeburtstag',
         title: 'Kindergeburtstag',
-        text: 'Die Kinder bemalen ihre eigenen Keramikstücke und nehmen am Ende stolz etwas Selbstgemachtes mit nach Hause.',
+        text: 'Jedes Kind bemalt seine eigene Keramik und nimmt am Ende stolz etwas Selbstgemachtes mit nach Hause.',
         features: ['Ab 6 Jahren', 'Bis zu 10 Kinder', 'Ca. 2 Stunden', 'Alle Materialien inklusive'],
       },
       {
@@ -144,7 +144,7 @@ export const content = {
   },
   pageMeta: {
     galerie: { title: 'Galerie | Malatelier Auszeit Gronau im Münsterland', description: 'Lass dich inspirieren: Entdecke Keramik-Unikate aus unserem Malatelier in Gronau im Münsterland. Kreative Ideen aus der Region Münster.' },
-    workshops: { title: 'Keramik Workshops Münsterland | Malatelier Auszeit Gronau', description: 'Kreative Keramik-Workshops in Gronau im Münsterland: Lerne neue Techniken und gestalte besondere Stücke. Auch für Gruppen aus Münster, Steinfurt und Borken.' },
+    workshops: { title: 'Keramik Workshops Münsterland | Malatelier Auszeit Gronau', description: 'Kreative Keramik-Workshops in Gronau im Münsterland: Lerne neue Techniken und gestalte besondere Keramik. Auch für Gruppen aus Münster, Steinfurt und Borken.' },
     gutscheine: { title: 'Gutscheine Keramik bemalen | Malatelier Auszeit Münsterland', description: 'Verschenke kreative Auszeit: Gutscheine für Keramik bemalen in Gronau im Münsterland. Perfektes Geschenk aus der Region Münster.' },
     events: { title: 'Kindergeburtstag & JGA Keramik Münsterland | Malatelier Auszeit', description: 'Kindergeburtstag, JGA, Firmen-Event: Feiert kreativ in unserem Keramik-Malatelier in Gronau. Beliebt bei Gruppen aus Münster, Steinfurt und dem Münsterland.' },
     faq: { title: 'Häufige Fragen | Malatelier Auszeit Gronau Münsterland', description: 'Alles was du wissen musst: Preise, Ablauf, Buchung und mehr zu Malatelier Auszeit in Gronau im Münsterland. Gut erreichbar aus Münster und Umgebung.' },
