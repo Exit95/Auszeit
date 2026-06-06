@@ -1,220 +1,423 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-import Gutschein from '../sections/Gutschein.astro';
+import Brush from '../components/Brush.astro';
 import { content } from '../data/content';
 ---
 <MainLayout title={content.pageMeta.gutscheine.title} description={content.pageMeta.gutscheine.description}>
 
-  <!-- Page Hero -->
-  <section class="gutschein-hero">
-    <div class="gutschein-hero__inner">
-      <h1 class="gutschein-hero__title">Gutscheine</h1>
-      <p class="gutschein-hero__subtitle">Verschenke kreative Auszeit. das perfekte Geschenk für alle, die gerne gestalten.</p>
+  <div class="wrap">
+    <div class="pagehead">
+      <span class="eyebrow">Gutscheine</span>
+      <h1>Verschenke eine Auszeit</h1>
+      <Brush />
+      <p class="lead">Ein Geschenk, das von Herzen kommt und in Erinnerung bleibt. Nach dem Kauf kommt der Gutschein per E-Mail, perfekt zum Ausdrucken oder Weiterschicken.</p>
     </div>
-  </section>
 
-  <!-- Voucher Options (Stripe Checkout) -->
-  <Gutschein />
-
-  <!-- How It Works -->
-  <section class="how-it-works">
-    <div class="how-it-works__container">
-      <h2 class="how-it-works__heading">So einfach geht's</h2>
-      <div class="how-it-works__steps">
-
-        <div class="step-card">
-          <span class="step-card__number">1</span>
-          <h3 class="step-card__title">Gutschein wählen</h3>
-          <p class="step-card__text">Wähle einen Betrag: 25 €, 50 € oder deinen Wunschbetrag.</p>
+    <div class="gut-grid">
+      <!-- LEFT: Betrag wählen + Kauf-Button + Schritte -->
+      <div>
+        <span class="eyebrow">Betrag wählen</span>
+        <div class="amounts" style="margin-top:1rem">
+          <button class="amount" data-voucher="voucher-25" data-amt="25 €" type="button">
+            <small>Gutschein</small>
+            <b>25 €</b>
+          </button>
+          <button class="amount is-on" data-voucher="voucher-50" data-amt="50 €" type="button">
+            <small>Gutschein</small>
+            <b>50 €</b>
+          </button>
+          <button class="amount" data-voucher="voucher-custom" data-amt="Wunsch" type="button">
+            <small>Wunschbetrag</small>
+            <b>frei</b>
+          </button>
         </div>
 
-        <div class="step-card">
-          <span class="step-card__number">2</span>
-          <h3 class="step-card__title">Sicher bezahlen</h3>
-          <p class="step-card__text">Sichere Zahlung über Stripe. Du erhältst den Gutschein-Code sofort per E-Mail.</p>
+        <!-- Wunschbetrag Input (versteckt bis ausgewählt) -->
+        <div id="custom-amount-container" style="display:none; margin-top:1rem;">
+          <label for="custom-amount" class="custom-label">Betrag eingeben (5 bis 500 Euro):</label>
+          <div class="custom-input-row">
+            <input type="number" id="custom-amount" min="5" max="500" placeholder="z.B. 75" />
+            <span class="custom-currency">€</span>
+          </div>
         </div>
 
-        <div class="step-card">
-          <span class="step-card__number">3</span>
-          <h3 class="step-card__title">Verschenken &amp; einlösen</h3>
-          <p class="step-card__text">Drucke den Code aus oder verschicke ihn digital. Einfach bei der Buchung angeben.</p>
+        <div id="gutschein-error" class="gutschein-error" style="display:none;"></div>
+        <div id="loading-indicator" class="gutschein-loading" style="display:none;">
+          <span class="spinner"></span> Weiterleitung zu Stripe…
         </div>
 
+        <button class="btn btn-terra gut-buy" id="buy-btn" type="button">Gutschein kaufen</button>
+
+        <p class="gut-note">Sichere Zahlung. Du bekommst den Gutschein-Code direkt per E-Mail.</p>
+
+        <span class="eyebrow" style="display:block;margin-top:2rem">So einfach geht es</span>
+        <ul class="gut-steps">
+          <li>Betrag wählen und sicher bezahlen</li>
+          <li>Gutschein-Code kommt sofort per E-Mail</li>
+          <li>Ausdrucken oder digital verschenken</li>
+          <li>Beim Atelier-Besuch einfach vorzeigen</li>
+        </ul>
+      </div>
+
+      <!-- RIGHT: Gutschein-Vorschau -->
+      <div class="voucher">
+        <div class="voucher__top">
+          <img src="/logo-header-3x.png" alt="Malatelier Auszeit Logo" />
+          <b>Auszeit</b>
+        </div>
+        <span class="eyebrow">Gutschein</span>
+        <h3>Eine Auszeit zum Bemalen</h3>
+        <div class="amt" id="vamt">50 €</div>
+        <div class="meta">
+          <span>Malatelier Auszeit · Gronau</span>
+          <span>einlösbar vor Ort</span>
+        </div>
       </div>
     </div>
-  </section>
-
-  <!-- FAQ -->
-  <section class="gutschein-faq">
-    <div class="gutschein-faq__container">
-      <h2 class="gutschein-faq__heading">Häufige Fragen</h2>
-      <div class="gutschein-faq__list">
-
-        <div class="faq-item">
-          <h3 class="faq-item__question">Wie lange ist der Gutschein gültig?</h3>
-          <p class="faq-item__answer">Gutscheine sind unbegrenzt gültig.</p>
-        </div>
-
-        <div class="faq-item">
-          <h3 class="faq-item__question">Kann ich den Betrag aufteilen?</h3>
-          <p class="faq-item__answer">Nein, der Gutscheinbetrag ist nicht aufteilbar und wird bei einem Besuch vollständig eingelöst.</p>
-        </div>
-
-        <div class="faq-item">
-          <h3 class="faq-item__question">Wie löse ich einen Gutschein ein?</h3>
-          <p class="faq-item__answer">Gib den Code einfach bei der Terminbuchung an oder bringe ihn zum Besuch mit.</p>
-        </div>
-
-      </div>
-    </div>
-  </section>
+  </div>
 
 </MainLayout>
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const amounts = document.querySelectorAll<HTMLButtonElement>('.amount');
+    const customContainer = document.getElementById('custom-amount-container');
+    const customInput = document.getElementById('custom-amount') as HTMLInputElement | null;
+    const vamt = document.getElementById('vamt');
+    const buyBtn = document.getElementById('buy-btn');
+    const loadingEl = document.getElementById('loading-indicator');
+    const errorDiv = document.getElementById('gutschein-error');
+
+    let selectedVoucherId = 'voucher-50';
+
+    const showError = (msg: string) => {
+      if (!errorDiv) return;
+      errorDiv.textContent = msg;
+      errorDiv.style.display = 'block';
+      setTimeout(() => { errorDiv.style.display = 'none'; }, 6000);
+    };
+
+    const updatePreview = (amt: string) => {
+      if (vamt) vamt.textContent = amt === 'Wunsch' ? 'Wunschbetrag' : amt;
+    };
+
+    amounts.forEach(btn => {
+      btn.addEventListener('click', () => {
+        amounts.forEach(b => b.classList.remove('is-on'));
+        btn.classList.add('is-on');
+        selectedVoucherId = btn.dataset.voucher || '';
+        const amt = btn.dataset.amt || '';
+
+        if (selectedVoucherId === 'voucher-custom') {
+          if (customContainer) customContainer.style.display = 'block';
+          // Preview updates as user types
+          updatePreview(customInput?.value ? `${customInput.value} €` : 'Wunschbetrag');
+        } else {
+          if (customContainer) customContainer.style.display = 'none';
+          updatePreview(amt);
+        }
+      });
+    });
+
+    // Live-Update der Vorschau beim Tippen im Wunschbetrag-Feld
+    customInput?.addEventListener('input', () => {
+      const val = customInput.value;
+      updatePreview(val ? `${val} €` : 'Wunschbetrag');
+    });
+
+    const handlePurchase = async (voucherId: string, customAmount?: string) => {
+      if (loadingEl) loadingEl.style.display = 'flex';
+      if (errorDiv) errorDiv.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ voucherId, customAmount }),
+        });
+        const data = await response.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          showError(data.error || 'Fehler beim Erstellen der Checkout-Session');
+          if (loadingEl) loadingEl.style.display = 'none';
+        }
+      } catch (err) {
+        console.error('Checkout error:', err);
+        showError('Fehler beim Verbinden mit dem Zahlungsdienst. Bitte versuche es später erneut.');
+        if (loadingEl) loadingEl.style.display = 'none';
+      }
+    };
+
+    buyBtn?.addEventListener('click', () => {
+      if (selectedVoucherId === 'voucher-custom') {
+        const amount = customInput?.value;
+        if (!amount || parseFloat(amount) < 5 || parseFloat(amount) > 500) {
+          showError('Bitte gib einen Betrag zwischen 5 € und 500 € ein.');
+          return;
+        }
+        handlePurchase('voucher-custom', amount);
+      } else {
+        handlePurchase(selectedVoucherId);
+      }
+    });
+  });
+</script>
+
 <style>
-  /* ── Hero ────────────────────────────────────────────────── */
-  .gutschein-hero {
-    background: var(--bg-linen, #EDE4DA);
-    padding: var(--space-10, 5rem) var(--gutter, 1.25rem) var(--space-8, 4rem);
-    text-align: center;
+  /* ── Pagehead ────────────────────────────────────────────── */
+  .pagehead {
+    padding: clamp(2.5rem, 5vw, 4rem) 0 0;
   }
 
-  .gutschein-hero__inner {
-    max-width: 700px;
-    margin: 0 auto;
+  .pagehead h1 {
+    font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+    margin: 0.6rem 0 0;
   }
 
-  .gutschein-hero__title {
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: var(--text-hero, clamp(2.5rem, 4vw + 1rem, 4rem));
-    color: var(--brand-espresso, #423430);
-    margin: 0 0 var(--space-3, 0.75rem);
-    line-height: 1.15;
+  .pagehead .lead {
+    color: var(--ink-2, #5D4A3C);
+    font-size: 1.1rem;
+    margin-top: 1rem;
+    max-width: 52ch;
   }
 
-  .gutschein-hero__subtitle {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
-    color: var(--color-sienna, #A0522D);
-    line-height: 1.6;
-    margin: 0;
-  }
-
-  /* ── How It Works ────────────────────────────────────────── */
-  .how-it-works {
-    background: var(--bg-paper, #FAF7F2);
-    padding: var(--space-10, 5rem) var(--gutter, 1.25rem);
-  }
-
-  .how-it-works__container {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .how-it-works__heading {
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2rem);
-    color: var(--brand-espresso, #423430);
-    text-align: center;
-    margin: 0 0 var(--space-8, 4rem);
-  }
-
-  .how-it-works__steps {
+  /* ── Gut-Grid ────────────────────────────────────────────── */
+  .gut-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-5, 1.5rem);
-  }
-
-  .step-card {
-    background: #fff;
-    border: 1px solid rgba(66, 52, 48, 0.08);
-    border-radius: 16px;
-    padding: var(--space-6, 2.5rem) var(--space-4, 1.25rem) var(--space-5, 1.5rem);
-    text-align: center;
-    box-shadow: 0 4px 16px rgba(66, 52, 48, 0.07);
-  }
-
-  .step-card__number {
-    display: inline-flex;
+    grid-template-columns: 1fr;
+    gap: clamp(1.6rem, 3vw, 2.6rem);
     align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background: var(--accent-terra, #D96C4A);
-    color: #fff;
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin-bottom: var(--space-3, 0.75rem);
+    margin-top: 2.4rem;
+    padding-bottom: clamp(3rem, 7vw, 6rem);
   }
 
-  .step-card__title {
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: 1.125rem;
-    color: var(--brand-espresso, #423430);
-    margin: 0 0 var(--space-2, 0.5rem);
-  }
-
-  .step-card__text {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: 0.9375rem;
-    color: var(--color-text-secondary, #6b5a54);
-    line-height: 1.6;
-    margin: 0;
-  }
-
-  @media (max-width: 639px) {
-    .how-it-works__steps {
-      grid-template-columns: 1fr;
+  @media (min-width: 820px) {
+    .gut-grid {
+      grid-template-columns: 1fr 1fr;
     }
   }
 
-  /* ── FAQ ─────────────────────────────────────────────────── */
-  .gutschein-faq {
-    background: var(--bg-cream, #F2EBE5);
-    padding: var(--space-10, 5rem) var(--gutter, 1.25rem);
-  }
-
-  .gutschein-faq__container {
-    max-width: 700px;
-    margin: 0 auto;
-  }
-
-  .gutschein-faq__heading {
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: clamp(1.5rem, 2.5vw + 0.5rem, 2rem);
-    color: var(--brand-espresso, #423430);
-    text-align: center;
-    margin: 0 0 var(--space-8, 4rem);
-  }
-
-  .gutschein-faq__list {
+  /* ── Amounts ─────────────────────────────────────────────── */
+  .amounts {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-4, 1.25rem);
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 
-  .faq-item {
+  .amount {
+    flex: 1;
+    min-width: 120px;
+    border: 2px solid var(--hair, #E4D8CB);
+    border-radius: var(--r-md, 12px);
+    padding: 1.2rem 1rem;
+    text-align: center;
+    cursor: pointer;
     background: #fff;
-    border: 1px solid rgba(66, 52, 48, 0.08);
-    border-radius: 14px;
-    padding: var(--space-4, 1.25rem) var(--space-5, 1.5rem);
-    box-shadow: 0 2px 10px rgba(66, 52, 48, 0.06);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
   }
 
-  .faq-item__question {
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: 1.0625rem;
-    color: var(--brand-espresso, #423430);
-    margin: 0 0 var(--space-2, 0.5rem);
+  .amount:hover {
+    border-color: var(--caramel, #CFA874);
   }
 
-  .faq-item__answer {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: 0.9375rem;
-    color: var(--color-text-secondary, #6b5a54);
-    line-height: 1.6;
-    margin: 0;
+  .amount.is-on {
+    border-color: var(--terra, #D96C4A);
+    box-shadow: 0 14px 28px -16px rgba(217, 108, 74, 0.5);
+  }
+
+  .amount small {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--meta, #94816F);
+    display: block;
+  }
+
+  .amount b {
+    font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+    font-size: 1.9rem;
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--ink, #3A2D24);
+  }
+
+  /* Wunschbetrag Input */
+  .custom-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-2, #5D4A3C);
+    margin-bottom: 0.5rem;
+  }
+
+  .custom-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .custom-input-row input {
+    width: 120px;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid var(--hair, #E4D8CB);
+    border-radius: 10px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    font-family: inherit;
+    text-align: center;
+    color: var(--ink, #3A2D24);
+    background: #fff;
+  }
+
+  .custom-input-row input:focus {
+    outline: none;
+    border-color: var(--terra, #D96C4A);
+  }
+
+  .custom-currency {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--ink, #3A2D24);
+  }
+
+  /* Error + Loading */
+  .gutschein-error {
+    background: rgba(185, 74, 72, 0.1);
+    color: #B94A48;
+    border: 1px solid rgba(185, 74, 72, 0.2);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+  }
+
+  .gutschein-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--ink-2, #5D4A3C);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(66, 52, 48, 0.2);
+    border-top-color: var(--terra, #D96C4A);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ── Gut-Buy Button ──────────────────────────────────────── */
+  .gut-buy {
+    margin-top: 1.6rem;
+  }
+
+  /* ── Gut-Note ────────────────────────────────────────────── */
+  .gut-note {
+    font-size: 0.86rem;
+    color: var(--meta, #94816F);
+    margin-top: 0.9rem;
+  }
+
+  /* ── Gut-Steps ───────────────────────────────────────────── */
+  .gut-steps {
+    margin-top: 1.4rem;
+    list-style: none;
+    padding: 0;
+  }
+
+  .gut-steps li {
+    padding-left: 1.15rem;
+    position: relative;
+    font-size: 0.94rem;
+    color: var(--ink-2, #5D4A3C);
+    margin: 0.4rem 0;
+  }
+
+  .gut-steps li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--terra, #D96C4A);
+  }
+
+  /* ── Voucher Preview ─────────────────────────────────────── */
+  .voucher {
+    position: relative;
+    border-radius: var(--r-lg, 18px);
+    padding: clamp(1.6rem, 3vw, 2.2rem);
+    box-shadow: 0 22px 50px -40px rgba(58, 45, 36, 0.4);
+    overflow: hidden;
+    background: linear-gradient(135deg, #FBF3E8, #EADFCD);
+    border: 1px solid var(--caramel, #CFA874);
+  }
+
+  .voucher__top {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.6rem;
+  }
+
+  .voucher__top img {
+    height: 46px;
+    width: auto;
+  }
+
+  .voucher__top b {
+    font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+    font-style: italic;
+    font-size: 1.4rem;
+    color: var(--ink, #3A2D24);
+  }
+
+  .voucher .eyebrow {
+    color: var(--terra, #D96C4A);
+  }
+
+  .voucher h3 {
+    font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    font-weight: 500;
+    margin: 0.3rem 0;
+    color: var(--ink, #3A2D24);
+  }
+
+  .voucher .amt {
+    font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+    font-size: clamp(2.4rem, 7vw, 3.6rem);
+    color: var(--terra, #D96C4A);
+    font-weight: 600;
+    line-height: 1.1;
+  }
+
+  .voucher .meta {
+    margin-top: 1.4rem;
+    font-size: 0.82rem;
+    color: var(--ink-2, #5D4A3C);
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px dashed var(--caramel, #CFA874);
+    padding-top: 1rem;
+  }
+
+  @media (max-width: 819px) {
+    .voucher .meta {
+      flex-direction: column;
+      gap: 0.25rem;
+    }
   }
 </style>
