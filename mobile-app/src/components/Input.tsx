@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
+import type { TextInputProps, NativeSyntheticEvent, TextInputFocusEventData } from 'react-native';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 interface InputProps extends TextInputProps {
@@ -7,13 +8,31 @@ interface InputProps extends TextInputProps {
   error?: string;
 }
 
-export function Input({ label, error, style, ...props }: InputProps) {
+export function Input({ label, error, style, onFocus, onBlur, ...props }: InputProps) {
+  const [focused, setFocused] = useState(false);
+
+  const handleFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    setFocused(true);
+    onFocus?.(e);
+  };
+  const handleBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+    setFocused(false);
+    onBlur?.(e);
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      {label !== '' && <Text style={styles.label}>{label}</Text>}
       <TextInput
-        style={[styles.input, error && styles.inputError, style]}
-        placeholderTextColor={colors.textLight}
+        style={[
+          styles.input,
+          focused && styles.inputFocused,
+          error && styles.inputError,
+          style,
+        ]}
+        placeholderTextColor={colors.meta}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         {...props}
       />
       {error && <Text style={styles.error}>{error}</Text>}
@@ -28,7 +47,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     marginBottom: spacing.xs,
   },
   input: {
@@ -39,8 +58,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
     fontSize: fontSize.md,
-    color: colors.text,
+    color: colors.ink,
     minHeight: 50,
+  },
+  inputFocused: {
+    borderColor: colors.primary,
+    borderWidth: 1.5,
   },
   inputError: {
     borderColor: colors.error,

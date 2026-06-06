@@ -1,5 +1,6 @@
 import React, { Component, type ReactNode } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { captureError } from '../lib/sentry';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 
 interface Props {
@@ -18,9 +19,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }): void {
-    // Konsolenausgabe bleibt im Dev-Bundle hilfreich; im Prod-Build
-    // sollte hier Sentry.captureException(error, { extra: info }) stehen.
-    console.error('[ErrorBoundary]', error, info.componentStack);
+    captureError(error, { componentStack: info.componentStack });
+    if (__DEV__) console.error('[ErrorBoundary]', error, info.componentStack);
   }
 
   handleReset = (): void => {
@@ -65,13 +65,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.brandEspresso,
+    color: colors.ink,
     marginBottom: spacing.md,
     textAlign: 'center',
   },
   message: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
   },

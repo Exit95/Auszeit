@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { adminApi } from '../api/adminClient';
-import { Card, EmptyState, LoadingScreen } from '../components';
+import { Card, EmptyState, LoadingScreen, BrushAccent } from '../components';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 import type { Booking, RootStackParamList } from '../types';
 
@@ -121,12 +121,13 @@ export function TodayScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={() => { setRefreshing(true); loadBookings(); }}
-          colors={[colors.accent]}
+          colors={[colors.primary]}
         />
       }
       ListHeaderComponent={
         <View style={styles.header}>
           <Text style={styles.dateText}>{formatDateLong(today)}</Text>
+          <BrushAccent width={60} />
           {error ? (
             <View style={styles.errorBox}>
               <Ionicons name="alert-circle-outline" size={18} color={colors.error} />
@@ -156,7 +157,7 @@ export function TodayScreen() {
               </Text>
             </View>
             <View style={styles.participantsBadge}>
-              <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
+              <Ionicons name="people-outline" size={14} color={colors.inkSecondary} />
               <Text style={styles.participantsText}>{item.participants}</Text>
             </View>
           </View>
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.brandEspresso,
+    color: colors.ink,
     marginBottom: spacing.sm,
   },
   summaryBox: {
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
   summaryText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.text,
+    color: colors.ink,
   },
   errorBox: {
     flexDirection: 'row',
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.ink,
   },
   bookingCard: {
     marginBottom: spacing.sm,
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
@@ -300,23 +301,23 @@ const styles = StyleSheet.create({
   participantsText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   customerName: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.ink,
     marginBottom: 2,
   },
   participantNames: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     marginTop: 2,
     marginBottom: spacing.xs,
   },
   notes: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     fontStyle: 'italic',
     marginTop: spacing.xs,
     marginBottom: spacing.xs,

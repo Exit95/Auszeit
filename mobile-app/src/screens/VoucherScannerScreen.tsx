@@ -155,7 +155,7 @@ export function VoucherScannerScreen() {
   if (!permission) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </SafeAreaView>
     );
   }
@@ -165,7 +165,7 @@ export function VoucherScannerScreen() {
       <SafeAreaView style={styles.centered}>
         <View style={styles.permissionCard}>
           <View style={styles.permissionIcon}>
-            <Ionicons name="camera" size={48} color={colors.accent} />
+            <Ionicons name="camera" size={48} color={colors.primary} />
           </View>
           <Text style={styles.permissionTitle}>Kamera-Zugriff nötig</Text>
           <Text style={styles.permissionText}>
@@ -219,7 +219,7 @@ export function VoucherScannerScreen() {
       {/* Loading */}
       {scanState === 'loading' && (
         <View style={styles.centeredContent}>
-          <ActivityIndicator size="large" color={colors.accent} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Gutschein wird geprüft...</Text>
         </View>
       )}
@@ -237,7 +237,7 @@ export function VoucherScannerScreen() {
               <Text style={styles.resultError}>{error}</Text>
               <View style={styles.resultActions}>
                 <Pressable style={styles.scanAgainBtn} onPress={scanAgain}>
-                  <Ionicons name="scan" size={20} color={colors.text} />
+                  <Ionicons name="scan" size={20} color={colors.ink} />
                   <Text style={styles.scanAgainText}>Erneut scannen</Text>
                 </Pressable>
               </View>
@@ -312,7 +312,7 @@ export function VoucherScannerScreen() {
                   </Pressable>
                 )}
                 <Pressable style={styles.scanAgainBtn} onPress={scanAgain}>
-                  <Ionicons name="scan" size={20} color={colors.text} />
+                  <Ionicons name="scan" size={20} color={colors.ink} />
                   <Text style={styles.scanAgainText}>Nächsten scannen</Text>
                 </Pressable>
               </View>
@@ -336,7 +336,7 @@ export function VoucherScannerScreen() {
             <TextInput
               style={styles.manualInput}
               placeholder="AUSZ-XXXX-XXXX"
-              placeholderTextColor={colors.textLight}
+              placeholderTextColor={colors.meta}
               value={manualCode}
               onChangeText={setManualCode}
               autoCapitalize="characters"
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
 
   // Camera
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 28,
     height: 28,
-    borderColor: colors.accent,
+    borderColor: colors.primary,
   },
   cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderTopLeftRadius: 8 },
   cornerTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderTopRightRadius: 8 },
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.accent + '18',
+    backgroundColor: colors.primary + '18',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -483,19 +483,19 @@ const styles = StyleSheet.create({
   permissionTitle: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.brandEspresso,
+    color: colors.ink,
     marginBottom: spacing.sm,
   },
   permissionText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: spacing.lg,
   },
   permissionBtn: {
     width: '100%',
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     alignItems: 'center',
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   },
   permissionBtnSecondaryText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
 
   // Manual input
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   },
   manualLabel: {
     fontSize: fontSize.xs,
-    color: colors.textLight,
+    color: colors.meta,
   },
   manualRow: {
     flexDirection: 'row',
@@ -551,12 +551,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 1,
-    color: colors.text,
+    color: colors.ink,
     borderWidth: 1,
     borderColor: colors.border,
   },
   manualBtn: {
-    backgroundColor: colors.brandEspresso,
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.md,
     width: 52,
     alignItems: 'center',
@@ -603,12 +603,12 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.brandEspresso,
+    color: colors.ink,
     marginBottom: spacing.sm,
   },
   resultError: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontSize: fontSize.md,
     letterSpacing: 2,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   amountText: {
     fontSize: 40,
@@ -632,12 +632,12 @@ const styles = StyleSheet.create({
   },
   customerText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     marginBottom: 4,
   },
   redeemedText: {
     fontSize: fontSize.xs,
-    color: colors.textLight,
+    color: colors.meta,
     marginBottom: spacing.sm,
   },
   resultActions: {
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     minHeight: 48,
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   scanAgainText: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.text,
+    color: colors.ink,
   },
 
   // Success flash

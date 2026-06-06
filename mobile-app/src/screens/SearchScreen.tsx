@@ -65,11 +65,11 @@ export function SearchScreen() {
     <View style={styles.container}>
       {/* Suchleiste */}
       <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color={colors.textLight} />
+        <Ionicons name="search" size={20} color={colors.meta} />
         <TextInput
           style={styles.searchInput}
           placeholder="Kunde, Auftrag, Werkstück..."
-          placeholderTextColor={colors.textLight}
+          placeholderTextColor={colors.meta}
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={handleSearch}
@@ -77,7 +77,7 @@ export function SearchScreen() {
         />
         {query.length > 0 && (
           <Pressable onPress={() => { setQuery(''); setResults([]); setSearched(false); }}>
-            <Ionicons name="close-circle" size={20} color={colors.textLight} />
+            <Ionicons name="close-circle" size={20} color={colors.meta} />
           </Pressable>
         )}
       </View>
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, gap: spacing.sm,
   },
   searchInput: {
-    flex: 1, paddingVertical: 14, fontSize: fontSize.md, color: colors.text,
+    flex: 1, paddingVertical: 14, fontSize: fontSize.md, color: colors.ink,
   },
   filters: { paddingHorizontal: spacing.md },
   filterList: { gap: spacing.sm, marginBottom: spacing.sm },
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border, backgroundColor: colors.surface,
   },
   filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  filterText: { fontSize: fontSize.xs, color: colors.textSecondary },
+  filterText: { fontSize: fontSize.xs, color: colors.inkSecondary },
   filterTextActive: { color: colors.textOnPrimary, fontWeight: '600' },
   searchButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -182,6 +182,6 @@ const styles = StyleSheet.create({
   results: { padding: spacing.md, paddingBottom: 100 },
   customerResult: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   customerInfo: { flex: 1 },
-  customerName: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text },
-  customerDetail: { fontSize: fontSize.sm, color: colors.textSecondary },
+  customerName: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.ink },
+  customerDetail: { fontSize: fontSize.sm, color: colors.inkSecondary },
 });

@@ -35,8 +35,8 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 const screenOptions = {
   headerStyle: { backgroundColor: colors.surface },
-  headerTintColor: colors.brandEspresso,
-  headerTitleStyle: { fontWeight: '600' as const },
+  headerTintColor: colors.ink,
+  headerTitleStyle: { fontWeight: '600' as const, color: colors.ink },
   headerShadowVisible: false,
   contentStyle: { backgroundColor: colors.background },
 };
@@ -56,12 +56,12 @@ function TabNavigator() {
           };
           return <Ionicons name={icons[route.name]} size={24} color={color} />;
         },
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textLight,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.meta,
         tabBarStyle: {
           backgroundColor: colors.surface,
-          borderTopWidth: 2,
-          borderTopColor: colors.accent,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
           height: 56,
           justifyContent: 'center',
         },

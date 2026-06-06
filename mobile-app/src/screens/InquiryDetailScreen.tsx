@@ -282,7 +282,7 @@ export function InquiryDetailScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => { setRefreshing(true); load(); }}
-              colors={[colors.accent]}
+              colors={[colors.primary]}
             />
           }
         >
@@ -399,7 +399,7 @@ export function InquiryDetailScreen() {
                 value={replySubject}
                 onChangeText={setReplySubject}
                 placeholder="Betreff"
-                placeholderTextColor={colors.textLight}
+                placeholderTextColor={colors.meta}
               />
               <Text style={styles.fieldLabel}>Nachricht</Text>
               <TextInput
@@ -407,7 +407,7 @@ export function InquiryDetailScreen() {
                 value={replyMessage}
                 onChangeText={setReplyMessage}
                 placeholder="Deine persönliche Antwort …"
-                placeholderTextColor={colors.textLight}
+                placeholderTextColor={colors.meta}
                 multiline
                 textAlignVertical="top"
               />
@@ -416,7 +416,7 @@ export function InquiryDetailScreen() {
                   style={[styles.actionBtn, styles.cancelBtn]}
                   onPress={() => setReplyOpen(false)}
                 >
-                  <Text style={[styles.actionBtnText, { color: colors.text }]}>Abbrechen</Text>
+                  <Text style={[styles.actionBtnText, { color: colors.ink }]}>Abbrechen</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionBtn, styles.sendBtn, sendingReply && styles.btnDisabled]}
@@ -447,7 +447,7 @@ export function InquiryDetailScreen() {
               value={notes}
               onChangeText={(t) => { setNotes(t); setNotesDirty(true); }}
               placeholder="Notizen, Absprachen, offene Punkte …"
-              placeholderTextColor={colors.textLight}
+              placeholderTextColor={colors.meta}
               multiline
               textAlignVertical="top"
             />
@@ -460,7 +460,7 @@ export function InquiryDetailScreen() {
                     setNotesDirty(false);
                   }}
                 >
-                  <Text style={[styles.actionBtnText, { color: colors.text }]}>Verwerfen</Text>
+                  <Text style={[styles.actionBtnText, { color: colors.ink }]}>Verwerfen</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionBtn, styles.saveBtn, savingNotes && styles.btnDisabled]}
@@ -511,7 +511,7 @@ function Detail({
   const Wrap: any = onPress ? Pressable : View;
   return (
     <Wrap style={styles.detailRow} onPress={onPress}>
-      <Ionicons name={icon} size={16} color={colors.textLight} />
+      <Ionicons name={icon} size={16} color={colors.meta} />
       <Text style={styles.detailLabel}>{label}:</Text>
       <Text style={[styles.detailValue, onPress && styles.detailValueLink]} numberOfLines={1}>
         {value}
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   errorText: {
     marginTop: spacing.md,
     fontSize: fontSize.md,
-    color: colors.text,
+    color: colors.ink,
     textAlign: 'center',
   },
   retryBtn: {
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.bold,
-    color: colors.textLight,
+    color: colors.meta,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   eventChip: {
-    backgroundColor: colors.accent + '18',
+    backgroundColor: colors.primary + '18',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: borderRadius.full,
@@ -585,7 +585,7 @@ const styles = StyleSheet.create({
   eventChipText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.accent,
+    color: colors.primary,
   },
   statusPill: {
     flexDirection: 'row',
@@ -607,11 +607,11 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.ink,
   },
   createdAt: {
     fontSize: fontSize.xs,
-    color: colors.textLight,
+    color: colors.meta,
   },
   detailRow: {
     flexDirection: 'row',
@@ -621,13 +621,13 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     fontWeight: fontWeight.semibold,
     minWidth: 95,
   },
   detailValue: {
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.ink,
     flex: 1,
   },
   detailValueLink: {
@@ -635,15 +635,15 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   messageBox: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     padding: spacing.md,
     borderRadius: borderRadius.md,
     borderLeftWidth: 3,
-    borderLeftColor: colors.accent,
+    borderLeftColor: colors.primary,
   },
   messageText: {
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.ink,
     lineHeight: 21,
     fontStyle: 'italic',
   },
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   },
   statusTabText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     fontWeight: fontWeight.semibold,
   },
   actionGrid: {
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     marginTop: spacing.xs,
   },
   input: {
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     fontSize: fontSize.md,
-    color: colors.text,
+    color: colors.ink,
   },
   textarea: {
     minHeight: 120,
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
   },
   replyHint: {
     fontSize: fontSize.xs,
-    color: colors.textLight,
+    color: colors.meta,
     lineHeight: 16,
     marginTop: spacing.xs,
   },

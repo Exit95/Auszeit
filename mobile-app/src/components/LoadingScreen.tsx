@@ -84,20 +84,20 @@ const styles = StyleSheet.create({
   brandBold: {
     fontSize: fontSize.title,
     fontWeight: fontWeight.bold,
-    color: colors.brandEspresso,
+    color: colors.ink,
     letterSpacing: 1,
     marginTop: -2,
   },
   accentLine: {
     width: 36,
     height: 2,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     borderRadius: 1,
     marginVertical: spacing.sm,
   },
   brandSub: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     letterSpacing: 1,
   },
   shimmerList: {
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   shimmerLineShort: {
     height: 14,
     width: '40%',
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.sm,
   },

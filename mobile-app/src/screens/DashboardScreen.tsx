@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { OrderCard, LoadingScreen, EmptyState, Button } from '../components';
+import { OrderCard, LoadingScreen, EmptyState, Button, BrushAccent } from '../components';
 import { useAuth } from '../hooks/useAuth';
 import { useDashboard } from '../queries/dashboard';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
@@ -32,7 +32,7 @@ export function DashboardScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            colors={[colors.accent]}
+            colors={[colors.primary]}
           />
         }
       >
@@ -48,7 +48,7 @@ export function DashboardScreen() {
               </Text>
             </View>
             <Pressable onPress={logout} style={styles.logoutBtn}>
-              <Ionicons name="log-out-outline" size={22} color="rgba(255,255,255,0.7)" />
+              <Ionicons name="log-out-outline" size={22} color={colors.meta} />
             </Pressable>
           </View>
         </View>
@@ -105,6 +105,7 @@ export function DashboardScreen() {
           {(data?.next_steps?.length ?? 0) > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Nächste Schritte</Text>
+              <BrushAccent width={60} />
               {data!.next_steps.map(order => (
                 <OrderCard
                   key={order.id}
@@ -119,6 +120,7 @@ export function DashboardScreen() {
           {(data?.abholbereit_list?.length ?? 0) > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Abholbereit</Text>
+              <BrushAccent width={60} />
               {data!.abholbereit_list.map(order => (
                 <OrderCard
                   key={order.id}
@@ -145,7 +147,7 @@ export function DashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.brandEspresso,
+    backgroundColor: colors.card,
   },
   container: {
     flex: 1,
@@ -155,11 +157,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   header: {
-    backgroundColor: colors.brandEspresso,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: colors.card,
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
     paddingBottom: spacing.lg,
     marginBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerInner: {
     flexDirection: 'row',
@@ -171,11 +175,11 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.textOnPrimary,
+    color: colors.ink,
   },
   date: {
     fontSize: fontSize.sm,
-    color: 'rgba(255,255,255,0.6)',
+    color: colors.meta,
     marginTop: 2,
   },
   logoutBtn: {
@@ -209,7 +213,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     marginTop: 2,
   },
   warningBox: {
@@ -226,7 +230,7 @@ const styles = StyleSheet.create({
   warningText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.text,
+    color: colors.ink,
   },
   newOrderBtn: {
     marginBottom: spacing.lg,
@@ -237,7 +241,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.brandEspresso,
+    color: colors.ink,
     marginBottom: spacing.sm,
   },
 });

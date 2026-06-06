@@ -17,19 +17,14 @@
       "enabled": true
     },
     "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#A0522D"
     },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "de.keramik-auszeit.brennsystem",
-      "buildNumber": "1",
-      "infoPlist": {
-        "NSCameraUsageDescription": "Zum Fotografieren von Keramik-Aufträgen und Scannen von Gutschein-QR-Codes.",
-        "NSPhotoLibraryUsageDescription": "Zum Hochladen von Auftragsfotos aus der Galerie.",
-        "NSPhotoLibraryAddUsageDescription": "Zum Speichern von Auftragsfotos in der Galerie.",
-        "ITSAppUsesNonExemptEncryption": false
-      }
-    },
+    "platforms": [
+      "android",
+      "web"
+    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",

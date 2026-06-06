@@ -1,8 +1,15 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { adminApi } from '../api/adminClient';
 import { api } from '../api/client';
+
+const store = {
+  get: (key: string) => Platform.OS === 'web' ? AsyncStorage.getItem(key) : SecureStore.getItemAsync(key),
+  set: (key: string, val: string) => Platform.OS === 'web' ? AsyncStorage.setItem(key, val) : SecureStore.setItemAsync(key, val),
+  del: (key: string) => Platform.OS === 'web' ? AsyncStorage.removeItem(key) : SecureStore.deleteItemAsync(key),
+};
 
 // Auth-Modell:
 // Login läuft ausschließlich über LiveValidation gegen /api/admin/bookings
@@ -37,21 +44,26 @@ export function useAuthProvider() {
   const [loading, setLoading] = useState(true);
 
   const init = useCallback(async () => {
+    // Web: Design-Preview ohne Login
+    if (Platform.OS === 'web') {
+      setUser({ name: 'Irena' });
+      setLoading(false);
+      return;
+    }
     try {
-      // Reihenfolge wichtig: SecureStore-Creds erst laden, dann Auth-Flag prüfen
       await Promise.all([
         adminApi.init().catch(() => {}),
         api.init().catch(() => {}),
       ]);
 
-      let stored = await SecureStore.getItemAsync(AUTH_KEY);
+      let stored = await store.get(AUTH_KEY);
 
       // One-time Migration aus AsyncStorage (falls alter Auth-State existiert)
       if (!stored) {
         try {
           const legacy = await AsyncStorage.getItem(LEGACY_AUTH_KEY);
           if (legacy === 'true') {
-            await SecureStore.setItemAsync(AUTH_KEY, 'true');
+            await store.set(AUTH_KEY, 'true');
             await AsyncStorage.removeItem(LEGACY_AUTH_KEY);
             stored = 'true';
           }
@@ -64,7 +76,7 @@ export function useAuthProvider() {
         setUser({ name: 'Irena' });
       } else if (stored === 'true' && !adminApi.getCredentials()) {
         // Legacy-Session ohne Admin-Credentials: Nutzer muss neu einloggen
-        await SecureStore.deleteItemAsync(AUTH_KEY);
+        await store.del(AUTH_KEY);
       }
     } catch {
       // Ignore — User sieht Login-Screen
@@ -75,12 +87,12 @@ export function useAuthProvider() {
 
   const login = useCallback(async () => {
     // LoginScreen validiert vorher gegen Server; wir markieren hier nur die Session
-    await SecureStore.setItemAsync(AUTH_KEY, 'true');
+    await store.set(AUTH_KEY, 'true');
     setUser({ name: 'Irena' });
   }, []);
 
   const logout = useCallback(async () => {
-    await SecureStore.deleteItemAsync(AUTH_KEY);
+    await store.del(AUTH_KEY);
     await adminApi.clearCredentials().catch(() => {});
     await api.clearToken().catch(() => {});
     setUser(null);

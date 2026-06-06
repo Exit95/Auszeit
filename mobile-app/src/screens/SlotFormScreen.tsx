@@ -17,8 +17,8 @@ type Rt = RouteProp<RootStackParamList, 'SlotForm'>;
 
 const EVENT_OPTIONS: { key: SlotEventType; label: string; icon: string; color: string }[] = [
   { key: 'normal', label: 'Termin', icon: 'calendar-outline', color: colors.primary },
-  { key: 'kindergeburtstag', label: 'Kindergeburtstag', icon: 'balloon-outline', color: '#E8A030' },
-  { key: 'stammtisch', label: 'Stammtisch', icon: 'people-outline', color: colors.accent },
+  { key: 'kindergeburtstag', label: 'Kindergeburtstag', icon: 'balloon-outline', color: colors.secondary },
+  { key: 'stammtisch', label: 'Stammtisch', icon: 'people-outline', color: colors.primary },
 ];
 
 // Validierung
@@ -166,7 +166,7 @@ export function SlotFormScreen() {
               value={date}
               onChangeText={setDate}
               placeholder="JJJJ-MM-TT"
-              placeholderTextColor={colors.textLight}
+              placeholderTextColor={colors.meta}
               keyboardType="numbers-and-punctuation"
               autoCapitalize="none"
               autoCorrect={false}
@@ -201,7 +201,7 @@ export function SlotFormScreen() {
                   value={startTime}
                   onChangeText={setStartTime}
                   placeholder="14:00"
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor={colors.meta}
                   keyboardType="numbers-and-punctuation"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -215,7 +215,7 @@ export function SlotFormScreen() {
                   value={endTime}
                   onChangeText={setEndTime}
                   placeholder="16:00"
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor={colors.meta}
                   keyboardType="numbers-and-punctuation"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -247,7 +247,7 @@ export function SlotFormScreen() {
                   value={maxCapacity}
                   onChangeText={(t) => setMaxCapacity(t.replace(/[^0-9]/g, ''))}
                   placeholder="8"
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor={colors.meta}
                   keyboardType="number-pad"
                 />
               </View>
@@ -258,7 +258,7 @@ export function SlotFormScreen() {
                   value={initialBooked}
                   onChangeText={(t) => setInitialBooked(t.replace(/[^0-9]/g, ''))}
                   placeholder="0"
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor={colors.meta}
                   keyboardType="number-pad"
                 />
               </View>
@@ -305,7 +305,7 @@ export function SlotFormScreen() {
               style={[styles.actionBtn, styles.cancelBtn]}
               onPress={() => navigation.goBack()}
             >
-              <Text style={[styles.actionBtnText, { color: colors.text }]}>Abbrechen</Text>
+              <Text style={[styles.actionBtnText, { color: colors.ink }]}>Abbrechen</Text>
             </Pressable>
             <Pressable
               style={[styles.actionBtn, styles.saveBtn, saving && styles.btnDisabled]}
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: colors.error,
   },
-  errorText: { flex: 1, fontSize: fontSize.sm, color: colors.text },
+  errorText: { flex: 1, fontSize: fontSize.sm, color: colors.ink },
   section: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -356,14 +356,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.bold,
-    color: colors.textLight,
+    color: colors.meta,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   fieldLabel: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     marginBottom: 4,
   },
   input: {
@@ -374,11 +374,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
     fontSize: fontSize.md,
-    color: colors.text,
+    color: colors.ink,
   },
   helperText: {
     fontSize: fontSize.xs,
-    color: colors.textLight,
+    color: colors.meta,
   },
   quickRow: {
     flexDirection: 'row',
@@ -389,14 +389,14 @@ const styles = StyleSheet.create({
   quickChip: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.full,
     borderWidth: 1,
     borderColor: colors.border,
   },
   quickChipText: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     fontWeight: fontWeight.semibold,
   },
   timeRow: {
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   },
   eventTileText: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     textAlign: 'center',
   },
   actions: {

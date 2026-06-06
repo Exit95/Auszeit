@@ -1,57 +1,67 @@
 // Malatelier Auszeit Farbpalette
-// Abgestimmt auf das Website-Redesign: Sienna, Espresso, Terra, Leinen
+// Exakt abgestimmt auf das Website-Redesign "Warmes Atelier-Editorial".
+// OKLCH-Palette der Website, hier als hex-Äquivalente.
+//   bg #F7F1EA · surface #FFFFFF · card #F0E9E0 · ink #3A2D24 · ink-2 #6B5143
+//   meta #9B847A · terra #D96C4A · terra-h #C85A38 · caramel #CFA874 · hair #E2D8CF
 
 export const colors = {
-  // Primärfarben (Sienna/Terracotta)
-  primary: '#A0522D',
-  primaryLight: '#B1735C',
-  primaryDark: '#8B4726',
+  // Primär (Terrakotta — der CTA-/Akzentton der Website)
+  primary: '#D96C4A',       // terra
+  primaryLight: '#E8956E',
+  primaryDark: '#C85A38',   // terra-h (Hover/Dark)
 
-  // Akzentfarben (Terra)
-  accent: '#D96C4A',
+  // Akzent (identisch mit primary — Terra ist der eine Brand-Akzent)
+  accent: '#D96C4A',        // terra
   accentLight: '#E8956E',
 
-  // Marke
-  brandEspresso: '#423430',
+  // Sekundärer Akzent (Goldton)
+  secondary: '#CFA874',     // caramel
 
-  // Hintergrund (Leinen/Paper)
-  background: '#FAF7F2',
+  // Marke — Espresso-Dunkel (Alias auf ink, damit Bestandscode weiterläuft)
+  brandEspresso: '#3A2D24', // = ink
+  ink: '#3A2D24',
+  inkSecondary: '#6B5143',  // ink-2
+  meta: '#9B847A',
+
+  // Hintergrund (Cream-Leinen / Paper)
+  background: '#F7F1EA',     // bg
   surface: '#FFFFFF',
-  surfaceElevated: '#EDE4DA',
+  card: '#F0E9E0',          // leicht wärmer als surface
+  surfaceElevated: '#F0E9E0', // Alias auf card (Bestandscode)
 
   // Text
-  text: '#423430',
-  textSecondary: '#6B5D56',
-  textLight: '#9B8E88',
+  text: '#3A2D24',          // ink
+  textSecondary: '#6B5143', // ink-2
+  textLight: '#9B847A',     // meta
   textOnPrimary: '#FFFFFF',
 
-  // Status-Farben (Brennprozess)
-  statusErfasst: '#A0522D',
-  statusWartet: '#D4956A',
-  statusImOfen: '#D96C4A',
-  statusGebrannt: '#B1735C',
-  statusAbholbereit: '#5CB85C',
-  statusAbgeholt: '#8B8B8B',
-  statusStorniert: '#D9534F',
+  // Status-Farben (Brennprozess) — warmer Unterton
+  statusErfasst: '#A0855C',    // warmgelb-braun
+  statusWartet: '#CFA874',     // caramel
+  statusImOfen: '#D96C4A',     // terra
+  statusGebrannt: '#B87333',   // Kupfer-warm
+  statusAbholbereit: '#5A9E6A',// sanftes Grün
+  statusAbgeholt: '#9B847A',   // meta
+  statusStorniert: '#C4524F',  // warm-rot
 
-  // Funktionale Farben
-  success: '#5CB85C',
-  warning: '#E8833A',
-  error: '#D9534F',
-  info: '#4A90D9',
+  // Funktionale Farben (warm abgestimmt)
+  success: '#5A9E6A',
+  warning: '#CFA874',
+  error: '#C4524F',
+  info: '#A0855C',
 
   // Bezahlt-Status
-  paid: '#5CB85C',
-  unpaid: '#D9534F',
+  paid: '#5A9E6A',
+  unpaid: '#C4524F',
 
   // Ränder und Trennlinien
-  border: '#E0D6CC',
-  borderLight: '#EDE4DA',
-  divider: '#E0D6CC',
+  border: '#E2D8CF',        // hair
+  borderLight: '#EDE6DC',
+  divider: '#E2D8CF',
 
-  // Schatten
-  shadow: 'rgba(66, 52, 48, 0.08)',
-  shadowDark: 'rgba(66, 52, 48, 0.16)',
+  // Schatten (weich, warm)
+  shadow: 'rgba(58, 45, 36, 0.08)',
+  shadowDark: 'rgba(58, 45, 36, 0.16)',
 } as const;
 
 export const statusColors: Record<string, string> = {

@@ -33,7 +33,7 @@ export function CustomersScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={20} color={colors.textLight} />
+        <Ionicons name="search-outline" size={20} color={colors.meta} />
         <Input
           label=""
           placeholder="Kunde suchen..."
@@ -74,7 +74,7 @@ export function CustomersScreen() {
                   <Text style={styles.customerDetail}>{item.phone}</Text>
                 )}
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
+              <Ionicons name="chevron-forward" size={20} color={colors.meta} />
             </View>
           </Card>
         )}
@@ -116,15 +116,15 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.primary },
   customerInfo: { flex: 1, marginLeft: spacing.sm },
-  customerName: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text },
-  customerDetail: { fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 1 },
+  customerName: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.ink },
+  customerDetail: { fontSize: fontSize.sm, color: colors.inkSecondary, marginTop: 1 },
   fab: {
     position: 'absolute', right: spacing.lg, bottom: spacing.lg,
     width: 60, height: 60, borderRadius: 30,
     backgroundColor: colors.primary,
     justifyContent: 'center', alignItems: 'center',
     elevation: 6,
-    shadowColor: colors.shadowDark,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1, shadowRadius: 8,
   },

@@ -28,8 +28,8 @@ const EVENT_LABELS: Record<SlotEventType, string> = {
 
 const EVENT_COLORS: Record<SlotEventType, string> = {
   normal: colors.primary,
-  kindergeburtstag: '#E8A030',
-  stammtisch: colors.accent,
+  kindergeburtstag: colors.secondary,
+  stammtisch: colors.primary,
 };
 
 function todayString(): string {
@@ -206,7 +206,7 @@ export function SlotsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); load(); }}
-            colors={[colors.accent]}
+            colors={[colors.primary]}
           />
         }
         stickySectionHeadersEnabled={false}
@@ -237,7 +237,7 @@ export function SlotsScreen() {
               </View>
 
               <View style={styles.capacityRow}>
-                <Ionicons name="people-outline" size={15} color={colors.textSecondary} />
+                <Ionicons name="people-outline" size={15} color={colors.inkSecondary} />
                 <Text style={styles.capacityText}>
                   {booked} / {item.maxCapacity} gebucht
                 </Text>
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.background,
   },
-  filterLabel: { fontSize: fontSize.sm, color: colors.textSecondary },
+  filterLabel: { fontSize: fontSize.sm, color: colors.inkSecondary },
   filterBadge: {
     minWidth: 18,
     height: 18,
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   filterBadgeText: {
     fontSize: 10,
     fontWeight: fontWeight.bold,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   errorBox: {
     flexDirection: 'row',
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: colors.error,
   },
-  errorText: { flex: 1, fontSize: fontSize.sm, color: colors.text },
+  errorText: { flex: 1, fontSize: fontSize.sm, color: colors.ink },
   listContent: {
     padding: spacing.md,
     paddingBottom: spacing.xxl + 60,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
-    color: colors.brandEspresso,
+    color: colors.ink,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   },
   capacityText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   fullPill: {
     marginLeft: 'auto',
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

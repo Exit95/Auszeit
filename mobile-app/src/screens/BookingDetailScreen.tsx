@@ -250,7 +250,7 @@ export function BookingDetailScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => { setRefreshing(true); load(); }}
-              colors={[colors.accent]}
+              colors={[colors.primary]}
             />
           }
         >
@@ -320,7 +320,7 @@ export function BookingDetailScreen() {
               value={phone}
               onChangeText={(t) => { setPhone(t); setDirty(true); }}
               placeholder="Telefonnummer"
-              placeholderTextColor={colors.textLight}
+              placeholderTextColor={colors.meta}
               keyboardType="phone-pad"
             />
 
@@ -330,7 +330,7 @@ export function BookingDetailScreen() {
               value={participants}
               onChangeText={(t) => { setParticipants(t.replace(/[^0-9]/g, '')); setDirty(true); }}
               placeholder="Anzahl"
-              placeholderTextColor={colors.textLight}
+              placeholderTextColor={colors.meta}
               keyboardType="number-pad"
             />
 
@@ -342,7 +342,7 @@ export function BookingDetailScreen() {
                   value={n}
                   onChangeText={(t) => updateParticipantName(i, t)}
                   placeholder={`Name ${i + 1}`}
-                  placeholderTextColor={colors.textLight}
+                  placeholderTextColor={colors.meta}
                 />
                 <Pressable
                   style={styles.nameRemoveBtn}
@@ -363,7 +363,7 @@ export function BookingDetailScreen() {
               value={notes}
               onChangeText={(t) => { setNotes(t); setDirty(true); }}
               placeholder="Interne Notizen …"
-              placeholderTextColor={colors.textLight}
+              placeholderTextColor={colors.meta}
               multiline
               textAlignVertical="top"
             />
@@ -377,7 +377,7 @@ export function BookingDetailScreen() {
                     if (booking) applyBooking(booking);
                   }}
                 >
-                  <Text style={[styles.actionBtnText, { color: colors.text }]}>Verwerfen</Text>
+                  <Text style={[styles.actionBtnText, { color: colors.ink }]}>Verwerfen</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.actionBtn, styles.saveBtn, saving && styles.btnDisabled]}
@@ -424,7 +424,7 @@ export function BookingDetailScreen() {
             )}
             {booking.status === 'cancelled' && (
               <View style={styles.cancelledBox}>
-                <Ionicons name="information-circle-outline" size={18} color={colors.textLight} />
+                <Ionicons name="information-circle-outline" size={18} color={colors.meta} />
                 <Text style={styles.cancelledText}>Diese Buchung wurde bereits storniert.</Text>
               </View>
             )}
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     marginTop: spacing.md, fontSize: fontSize.md,
-    color: colors.text, textAlign: 'center',
+    color: colors.ink, textAlign: 'center',
   },
   retryBtn: {
     marginTop: spacing.lg, paddingHorizontal: spacing.lg,
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: fontSize.xs, fontWeight: fontWeight.bold,
-    color: colors.textLight, textTransform: 'uppercase', letterSpacing: 1,
+    color: colors.meta, textTransform: 'uppercase', letterSpacing: 1,
   },
   headerRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -485,11 +485,11 @@ const styles = StyleSheet.create({
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   statusPillText: { fontSize: fontSize.xs, fontWeight: fontWeight.bold },
   customerName: {
-    fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.text,
+    fontSize: fontSize.lg, fontWeight: fontWeight.bold, color: colors.ink,
   },
-  createdAt: { fontSize: fontSize.xs, color: colors.textLight },
+  createdAt: { fontSize: fontSize.xs, color: colors.meta },
   capacityLine: {
-    fontSize: fontSize.xs, color: colors.textSecondary, marginTop: 2,
+    fontSize: fontSize.xs, color: colors.inkSecondary, marginTop: 2,
   },
   contactRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4,
@@ -519,13 +519,13 @@ const styles = StyleSheet.create({
   btnDisabled: { opacity: 0.5 },
   fieldLabel: {
     fontSize: fontSize.xs, fontWeight: fontWeight.semibold,
-    color: colors.textSecondary, marginTop: spacing.xs,
+    color: colors.inkSecondary, marginTop: spacing.xs,
   },
   input: {
     backgroundColor: colors.background,
     borderWidth: 1, borderColor: colors.border,
     borderRadius: borderRadius.md, paddingHorizontal: spacing.md,
-    paddingVertical: 10, fontSize: fontSize.md, color: colors.text,
+    paddingVertical: 10, fontSize: fontSize.md, color: colors.ink,
   },
   textarea: { minHeight: 100, paddingTop: 10 },
   nameRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
@@ -544,8 +544,8 @@ const styles = StyleSheet.create({
   saveRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   cancelledBox: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: colors.surfaceElevated, padding: spacing.md,
+    backgroundColor: colors.card, padding: spacing.md,
     borderRadius: borderRadius.md,
   },
-  cancelledText: { fontSize: fontSize.sm, color: colors.textSecondary, flex: 1 },
+  cancelledText: { fontSize: fontSize.sm, color: colors.inkSecondary, flex: 1 },
 });

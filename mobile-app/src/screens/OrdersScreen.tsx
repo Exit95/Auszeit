@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl, Pressable,
+  View, Text, StyleSheet, FlatList, ScrollView, RefreshControl, Pressable,
 } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { OrderCard, EmptyState, LoadingScreen } from '../components';
 import { useOrders } from '../queries/orders';
-import { colors, spacing, fontSize, borderRadius, statusColors, statusLabels } from '../theme';
+import { colors, spacing, fontSize, fontWeight, borderRadius, statusColors, statusLabels } from '../theme';
 import type { RootStackParamList, OrderStatus } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -20,47 +18,40 @@ const STATUS_FILTERS: (OrderStatus | 'alle')[] = [
 export function OrdersScreen() {
   const navigation = useNavigation<Nav>();
   const [activeFilter, setActiveFilter] = useState<OrderStatus | 'alle'>('alle');
-
   const { data: orders = [], isLoading, isRefetching, refetch } = useOrders(activeFilter);
 
   if (isLoading && orders.length === 0) return <LoadingScreen />;
 
   return (
     <View style={styles.container}>
-      {/* Status Filter (horizontal, wenig Items → FlatList ok) */}
-      <FlatList
+      {/* Filter-Pills */}
+      <ScrollView
         horizontal
-        data={STATUS_FILTERS}
-        keyExtractor={item => item}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterContainer}
-        renderItem={({ item }) => {
+        contentContainerStyle={styles.filterRow}
+        style={styles.filterScroll}
+      >
+        {STATUS_FILTERS.map(item => {
           const isActive = item === activeFilter;
-          const color = item === 'alle' ? colors.primary : statusColors[item];
+          const color = item === 'alle' ? colors.primary : (statusColors[item] || colors.primary);
           return (
             <Pressable
+              key={item}
               onPress={() => setActiveFilter(item)}
-              style={[
-                styles.filterChip,
-                isActive && { backgroundColor: color + '20', borderColor: color },
-              ]}
+              style={[styles.chip, isActive && { backgroundColor: color, borderColor: color }]}
             >
-              <Text style={[
-                styles.filterText,
-                isActive && { color, fontWeight: '600' },
-              ]}>
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
                 {item === 'alle' ? 'Alle' : statusLabels[item]}
               </Text>
             </Pressable>
           );
-        }}
-      />
+        })}
+      </ScrollView>
 
       {/* Auftragsliste */}
-      <FlashList
+      <FlatList
         data={orders}
         keyExtractor={item => item.id.toString()}
-        estimatedItemSize={140}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
@@ -88,10 +79,11 @@ export function OrdersScreen() {
 
       {/* FAB */}
       <Pressable
-        style={styles.fab}
+        style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85 }]}
         onPress={() => navigation.navigate('OrderForm', {})}
+        accessibilityLabel="Neuer Auftrag"
       >
-        <Ionicons name="add" size={28} color={colors.textOnPrimary} />
+        <Text style={styles.fabIcon}>＋</Text>
       </Pressable>
     </View>
   );
@@ -102,22 +94,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  filterContainer: {
+  filterScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  filterRow: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    gap: spacing.sm,
+    gap: spacing.xs,
+    alignItems: 'center',
   },
-  filterChip: {
+  chip: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderRadius: borderRadius.full,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surface,
+    alignSelf: 'center',
   },
-  filterText: {
+  chipText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    fontWeight: fontWeight.medium,
+    color: colors.inkSecondary,
+  },
+  chipTextActive: {
+    color: '#fff',
+    fontWeight: fontWeight.semibold,
   },
   listContent: {
     padding: spacing.md,
@@ -127,16 +132,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 6,
-    shadowColor: colors.shadowDark,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 8,
+    shadowRadius: 10,
+  },
+  fabIcon: {
+    fontSize: 26,
+    color: '#fff',
+    lineHeight: 30,
   },
 });

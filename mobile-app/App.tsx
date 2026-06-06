@@ -1,19 +1,65 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, type LinkingOptions } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Updates from 'expo-updates';
+import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { AuthContext, useAuthProvider } from './src/hooks/useAuth';
-import { LoadingScreen } from './src/components/LoadingScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { NetworkBanner } from './src/components/NetworkBanner';
 import { QueryProvider } from './src/providers/QueryProvider';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
+import { initSentry, Sentry } from './src/lib/sentry';
+import { colors } from './src/theme';
+import type { RootStackParamList } from './src/types';
 
-// OTA-Updates beim App-Start explizit prüfen und sofort anwenden.
-// Ohne diesen Aufruf würde die App zwar im Hintergrund nach Updates suchen,
-// aber erst beim NÄCHSTEN Start neu laden → User erlebt "nichts hat sich geändert".
+// Sentry sofort initialisieren — vor Render, damit auch Init-Fehler erfasst werden
+initSentry();
+
+// Splash bleibt sichtbar bis auth.init() durch ist (kein Flash zur LoadingScreen)
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Splash-API kann beim Hot-Reload schon "verbraucht" sein — ignorieren
+});
+
+// React Navigation Linking-Config für Push-Notification-Deep-Links.
+// Server schickt Notification-Payload mit `data.url`, z. B. "auszeit://booking/abc-123"
+// → öffnet BookingDetail-Screen mit id=abc-123.
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['auszeit://', 'https://keramik-auszeit.de'],
+  config: {
+    screens: {
+      Login: 'login',
+      Main: 'app',
+      OrderDetail: 'order/:id',
+      OrderForm: 'order/new',
+      CustomerDetail: 'customer/:id',
+      CustomerForm: 'customer/new',
+      AtelierToday: 'atelier/today',
+      AtelierBookings: 'atelier/bookings',
+      AtelierInquiries: 'atelier/inquiries',
+      InquiryDetail: 'inquiry/:id',
+      BookingDetail: 'booking/:id',
+      AdminReviews: 'reviews',
+      VoucherScanner: 'voucher-scanner',
+    },
+  },
+  // Push-URL aus Notification-Payload als Initial-URL nutzen, wenn App via Push gestartet
+  async getInitialURL() {
+    const response = await Notifications.getLastNotificationResponseAsync();
+    return response?.notification.request.content.data?.url as string | undefined;
+  },
+  subscribe(listener) {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const url = response.notification.request.content.data?.url as string | undefined;
+      if (url) listener(url);
+    });
+    return () => sub.remove();
+  },
+};
+
 async function applyUpdatesIfAny() {
   if (__DEV__ || Platform.OS === 'web') return;
   try {
@@ -23,14 +69,15 @@ async function applyUpdatesIfAny() {
       await Updates.reloadAsync();
     }
   } catch (err) {
-    // Non-fatal — App startet trotzdem mit dem eingebetteten Bundle
     if (__DEV__) console.warn('[OTA] Update-Check fehlgeschlagen:', err);
   }
 }
 
-export default function App() {
+function App() {
   const auth = useAuthProvider();
-  usePushNotifications();
+  const [splashHidden, setSplashHidden] = useState(false);
+
+  usePushNotifications({ enabled: auth.isAuthenticated });
 
   useEffect(() => {
     applyUpdatesIfAny();
@@ -38,30 +85,47 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Splash erst verbergen, wenn Auth-Init durch ist
+  useEffect(() => {
+    if (!auth.loading && !splashHidden) {
+      SplashScreen.hideAsync()
+        .catch(() => undefined)
+        .finally(() => setSplashHidden(true));
+    }
+  }, [auth.loading, splashHidden]);
+
+  const authValue = useMemo(
+    () => ({
+      user: auth.user,
+      loading: auth.loading,
+      login: auth.login,
+      logout: auth.logout,
+      isAuthenticated: auth.isAuthenticated,
+    }),
+    [auth.user, auth.loading, auth.login, auth.logout, auth.isAuthenticated],
+  );
+
   if (auth.loading) {
-    return <LoadingScreen />;
+    // Splash bleibt sichtbar — leeres Render, kein Flash
+    return null;
   }
 
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
         <QueryProvider>
-          <AuthContext.Provider
-            value={{
-              user: auth.user,
-              loading: auth.loading,
-              login: auth.login,
-              logout: auth.logout,
-              isAuthenticated: auth.isAuthenticated,
-            }}
-          >
-            <NavigationContainer>
+          <AuthContext.Provider value={authValue}>
+            <NavigationContainer linking={linking}>
               <AppNavigator />
-              <StatusBar style="light" backgroundColor="#A0522D" />
+              <StatusBar style="dark" backgroundColor={colors.background} />
             </NavigationContainer>
+            <NetworkBanner />
           </AuthContext.Provider>
         </QueryProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );
 }
+
+// Sentry.wrap aktiviert automatisches Profiling + Touch-Event-Tracking
+export default Sentry.wrap(App);

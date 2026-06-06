@@ -1,12 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking,
+  View, Text, StyleSheet, FlatList, ScrollView, RefreshControl, Pressable, Linking,
 } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Card, EmptyState, LoadingScreen } from '../components';
+import { EmptyState, LoadingScreen } from '../components';
 import { useInquiries, useUpdateInquiry } from '../queries/inquiries';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 import type { Inquiry, InquiryStatus, InquiryEventType, RootStackParamList } from '../types';
@@ -20,15 +18,6 @@ const EVENT_LABELS: Record<InquiryEventType, string> = {
   firmen_event: 'Firmen-Event',
   privater_anlass: 'Privater Anlass',
   sonstiges: 'Sonstiges',
-};
-
-const EVENT_ICONS: Record<InquiryEventType, string> = {
-  kindergeburtstag: 'balloon-outline',
-  jga: 'heart-outline',
-  stammtisch: 'people-outline',
-  firmen_event: 'briefcase-outline',
-  privater_anlass: 'star-outline',
-  sonstiges: 'help-circle-outline',
 };
 
 const STATUS_FILTERS: { key: InquiryStatus | 'all'; label: string }[] = [
@@ -57,9 +46,7 @@ function formatDate(dateStr?: string): string {
   try {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day).toLocaleDateString('de-DE', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+      day: 'numeric', month: 'long', year: 'numeric',
     });
   } catch {
     return dateStr;
@@ -69,9 +56,7 @@ function formatDate(dateStr?: string): string {
 function formatCreatedAt(isoStr: string): string {
   try {
     return new Date(isoStr).toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+      day: '2-digit', month: '2-digit', year: 'numeric',
     });
   } catch {
     return isoStr;
@@ -81,7 +66,6 @@ function formatCreatedAt(isoStr: string): string {
 export function InquiriesScreen() {
   const navigation = useNavigation<Nav>();
   const [activeFilter, setActiveFilter] = useState<InquiryStatus | 'all'>('new');
-
   const { data: inquiries = [], isLoading, isRefetching, refetch, error } = useInquiries();
   const updateInquiry = useUpdateInquiry();
 
@@ -92,21 +76,12 @@ export function InquiriesScreen() {
     [inquiries, activeFilter],
   );
 
-  // Wenn die Anfrage noch "neu" ist, bei Kontakt automatisch auf "kontaktiert" setzen.
   const markContacted = (inquiry: Inquiry, via: 'whatsapp' | 'call') => {
     if (inquiry.status !== 'new') return;
     const timestamp = new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
-    const viaLabel = via === 'whatsapp' ? 'WhatsApp' : 'Anruf';
-    const note = `[${timestamp}] Kontakt aufgenommen via ${viaLabel}`;
+    const note = `[${timestamp}] Kontakt via ${via === 'whatsapp' ? 'WhatsApp' : 'Anruf'}`;
     const combinedNotes = inquiry.adminNotes ? `${inquiry.adminNotes}\n${note}` : note;
-    updateInquiry.mutate(
-      { id: inquiry.id, status: 'contacted', adminNotes: combinedNotes },
-      {
-        onError: (err) => {
-          if (__DEV__) console.warn('Status auto-update fehlgeschlagen:', err);
-        },
-      },
-    );
+    updateInquiry.mutate({ id: inquiry.id, status: 'contacted', adminNotes: combinedNotes });
   };
 
   const handleCall = (inquiry: Inquiry) => {
@@ -119,166 +94,125 @@ export function InquiriesScreen() {
     if (!inquiry.phone) return;
     const cleaned = inquiry.phone.replace(/[^0-9+]/g, '');
     const normalized = cleaned.startsWith('0') ? '+49' + cleaned.slice(1) : cleaned;
-    const text = encodeURIComponent(`Hallo ${inquiry.name || ''},\n\nvielen Dank für Ihre Anfrage beim Atelier Auszeit! Ich melde mich gerne wegen Ihrer Veranstaltung.`);
+    const text = encodeURIComponent(`Hallo ${inquiry.name || ''},\n\nvielen Dank für Ihre Anfrage beim Atelier Auszeit!`);
     Linking.openURL(`https://wa.me/${normalized}?text=${text}`);
     markContacted(inquiry, 'whatsapp');
   };
 
   if (isLoading && inquiries.length === 0) return <LoadingScreen />;
 
-  const errorMessage = error ? (error as Error).message : null;
-
   return (
     <View style={styles.container}>
-      {/* Filter */}
-      <FlatList
+      {/* Filter-Pills */}
+      <ScrollView
         horizontal
-        data={STATUS_FILTERS}
-        keyExtractor={item => item.key}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterContainer}
-        renderItem={({ item: f }) => {
+        contentContainerStyle={styles.filterRow}
+        style={styles.filterScroll}
+      >
+        {STATUS_FILTERS.map(f => {
           const count = f.key === 'all'
             ? inquiries.length
             : inquiries.filter(i => i.status === f.key).length;
           const isActive = activeFilter === f.key;
-          const color = f.key === 'all' ? colors.primary : STATUS_COLORS[f.key as InquiryStatus];
+          const color = STATUS_COLORS[f.key as InquiryStatus] || colors.primary;
           return (
             <Pressable
-              style={[
-                styles.filterChip,
-                isActive && { backgroundColor: color + '20', borderColor: color },
-              ]}
+              key={f.key}
               onPress={() => setActiveFilter(f.key)}
+              style={[styles.chip, isActive && { backgroundColor: color, borderColor: color }]}
             >
-              <Text style={[
-                styles.filterChipText,
-                isActive && { color, fontWeight: fontWeight.semibold },
-              ]}>
-                {f.label}
-                {count > 0 ? ` (${count})` : ''}
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                {f.label}{count > 0 ? ` (${count})` : ''}
               </Text>
             </Pressable>
           );
-        }}
-      />
+        })}
+      </ScrollView>
 
-      {errorMessage && (
+      {error && (
         <View style={styles.errorBox}>
-          <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
-          <Text style={styles.errorText}>{errorMessage}</Text>
+          <Text style={styles.errorText}>{(error as Error).message}</Text>
         </View>
       )}
 
-      <FlashList
+      <FlatList
         data={filtered}
         keyExtractor={item => item.id}
-        estimatedItemSize={260}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            colors={[colors.accent]}
-          />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[colors.primary]} />
         }
         renderItem={({ item }) => (
-          <Card style={styles.card}>
-            {/* Event-Typ + Status */}
-            <View style={styles.cardHeader}>
-              <View style={styles.eventBadge}>
-                <Ionicons
-                  name={(EVENT_ICONS[item.eventType] || 'help-circle-outline') as any}
-                  size={14}
-                  color={colors.accent}
-                />
-                <Text style={styles.eventLabel}>
-                  {EVENT_LABELS[item.eventType] || item.eventType}
-                </Text>
+          <View style={styles.card}>
+            <View style={[styles.cardAccent, { backgroundColor: STATUS_COLORS[item.status] }]} />
+            <View style={styles.cardInner}>
+              {/* Kopfzeile */}
+              <View style={styles.cardTop}>
+                <View style={styles.eventChip}>
+                  <Text style={styles.eventChipText}>
+                    {EVENT_LABELS[item.eventType] || item.eventType}
+                  </Text>
+                </View>
+                <View style={[styles.statusChip, { backgroundColor: STATUS_COLORS[item.status] + '20' }]}>
+                  <Text style={[styles.statusChipText, { color: STATUS_COLORS[item.status] }]}>
+                    {STATUS_LABELS[item.status]}
+                  </Text>
+                </View>
               </View>
-              <View style={[
-                styles.statusBadge,
-                { backgroundColor: STATUS_COLORS[item.status] + '20' },
-              ]}>
-                <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>
-                  {STATUS_LABELS[item.status]}
-                </Text>
-              </View>
-            </View>
 
-            {/* Name */}
-            <Text style={styles.customerName}>{item.name}</Text>
+              {/* Name */}
+              <Text style={styles.name}>{item.name}</Text>
 
-            {/* Details */}
-            <View style={styles.detailsGrid}>
-              <View style={styles.detailRow}>
-                <Ionicons name="calendar-outline" size={13} color={colors.textLight} />
-                <Text style={styles.detailText}>Wunschdatum: {formatDate(item.preferredDate)}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Ionicons name="people-outline" size={13} color={colors.textLight} />
-                <Text style={styles.detailText}>{item.participants} Personen</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Ionicons name="mail-outline" size={13} color={colors.textLight} />
-                <Text style={styles.detailText} numberOfLines={1}>{item.email}</Text>
-              </View>
-              {item.phone && (
-                <View style={styles.detailRow}>
-                  <Ionicons name="call-outline" size={13} color={colors.textLight} />
-                  <Text style={styles.detailText}>{item.phone}</Text>
+              {/* Details */}
+              <Text style={styles.detail}>
+                {formatDate(item.preferredDate)} · {item.participants} Personen
+              </Text>
+              <Text style={styles.detail} numberOfLines={1}>{item.email}</Text>
+              {item.phone && <Text style={styles.detail}>{item.phone}</Text>}
+
+              {/* Nachricht */}
+              {item.message && (
+                <View style={styles.messageBox}>
+                  <Text style={styles.messageText} numberOfLines={3}>{item.message}</Text>
                 </View>
               )}
-            </View>
 
-            {/* Nachricht */}
-            {item.message && (
-              <View style={styles.messageBox}>
-                <Text style={styles.messageText} numberOfLines={3}>{item.message}</Text>
+              <Text style={styles.createdAt}>Eingegangen: {formatCreatedAt(item.createdAt)}</Text>
+
+              {/* Aktionen */}
+              <View style={styles.actions}>
+                <Pressable
+                  style={[styles.btn, { backgroundColor: colors.primary }]}
+                  onPress={() => navigation.navigate('InquiryDetail', { id: item.id })}
+                >
+                  <Text style={styles.btnText}>Verwalten</Text>
+                </Pressable>
+                {item.phone && (
+                  <>
+                    <Pressable
+                      style={[styles.btn, { backgroundColor: colors.info }]}
+                      onPress={() => handleCall(item)}
+                    >
+                      <Text style={styles.btnText}>Anrufen</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.btn, { backgroundColor: '#25D366' }]}
+                      onPress={() => handleWhatsApp(item)}
+                    >
+                      <Text style={styles.btnText}>WhatsApp</Text>
+                    </Pressable>
+                  </>
+                )}
               </View>
-            )}
-
-            <Text style={styles.createdAt}>Eingegangen: {formatCreatedAt(item.createdAt)}</Text>
-
-            {/* Aktions-Buttons */}
-            <View style={styles.actionRow}>
-              <Pressable
-                style={[styles.actionBtn, styles.manageBtn]}
-                onPress={() => navigation.navigate('InquiryDetail', { id: item.id })}
-              >
-                <Ionicons name="create-outline" size={16} color={colors.textOnPrimary} />
-                <Text style={styles.actionBtnText}>Verwalten</Text>
-              </Pressable>
-              {item.phone && (
-                <>
-                  <Pressable
-                    style={[styles.actionBtn, styles.callBtn]}
-                    onPress={() => handleCall(item)}
-                  >
-                    <Ionicons name="call-outline" size={16} color={colors.textOnPrimary} />
-                    <Text style={styles.actionBtnText}>Anrufen</Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.actionBtn, styles.waBtn]}
-                    onPress={() => handleWhatsApp(item)}
-                  >
-                    <Ionicons name="logo-whatsapp" size={16} color={colors.textOnPrimary} />
-                    <Text style={styles.actionBtnText}>WhatsApp</Text>
-                  </Pressable>
-                </>
-              )}
             </View>
-          </Card>
+          </View>
         )}
         ListEmptyComponent={
           <EmptyState
             icon="mail-open-outline"
             title="Keine Anfragen"
-            message={
-              activeFilter === 'new'
-                ? 'Keine offenen Anfragen vorhanden.'
-                : 'Keine Anfragen in dieser Kategorie.'
-            }
+            message={activeFilter === 'new' ? 'Keine offenen Anfragen.' : 'Keine Anfragen in dieser Kategorie.'}
           />
         }
       />
@@ -291,30 +225,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  filterContainer: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
+  filterScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  filterChip: {
+  filterRow: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.xs,
+    alignItems: 'center',
+  },
+  chip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: borderRadius.full,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
+    alignSelf: 'center',
   },
-  filterChipText: {
+  chipText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    fontWeight: fontWeight.medium,
+    color: colors.inkSecondary,
+  },
+  chipTextActive: {
+    color: '#fff',
+    fontWeight: fontWeight.semibold,
   },
   errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
     margin: spacing.md,
     padding: spacing.md,
     backgroundColor: colors.error + '15',
@@ -323,109 +264,101 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.error,
   },
   errorText: {
-    flex: 1,
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.ink,
   },
   listContent: {
     padding: spacing.md,
     paddingBottom: spacing.xxl,
-    flexGrow: 1,
   },
   card: {
-    marginBottom: spacing.sm,
-  },
-  cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cardAccent: {
+    width: 5,
+  },
+  cardInner: {
+    flex: 1,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  cardTop: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  eventBadge: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: colors.accent + '18',
+    marginBottom: spacing.xs,
+  },
+  eventChip: {
+    backgroundColor: colors.primary + '15',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: borderRadius.full,
   },
-  eventLabel: {
-    fontSize: fontSize.sm,
+  eventChipText: {
+    fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    color: colors.accent,
+    color: colors.primary,
   },
-  statusBadge: {
+  statusChip: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
     borderRadius: borderRadius.full,
   },
-  statusText: {
+  statusChipText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
   },
-  customerName: {
+  name: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
-    color: colors.text,
-    marginBottom: spacing.sm,
+    color: colors.ink,
   },
-  detailsGrid: {
-    gap: 4,
-    marginBottom: spacing.sm,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  detailText: {
+  detail: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    flex: 1,
+    color: colors.inkSecondary,
   },
   messageBox: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
-    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
   },
   messageText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     fontStyle: 'italic',
     lineHeight: 20,
   },
   createdAt: {
     fontSize: fontSize.xs,
-    color: colors.textLight,
-    marginBottom: spacing.sm,
+    color: colors.meta,
+    marginTop: spacing.xs,
   },
-  actionRow: {
+  actions: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginTop: spacing.sm,
   },
-  actionBtn: {
+  btn: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
     paddingVertical: 9,
     borderRadius: borderRadius.md,
+    alignItems: 'center',
   },
-  callBtn: {
-    backgroundColor: colors.info,
-  },
-  waBtn: {
-    backgroundColor: '#25D366',
-  },
-  manageBtn: {
-    backgroundColor: colors.primary,
-  },
-  actionBtnText: {
+  btnText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.textOnPrimary,
+    color: '#fff',
   },
 });

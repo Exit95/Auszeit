@@ -133,7 +133,7 @@ export function CustomerDetailScreen() {
           title="Bearbeiten"
           variant="secondary"
           onPress={() => navigation.navigate('CustomerForm', { id: customer.id })}
-          icon={<Ionicons name="create-outline" size={18} color={colors.text} />}
+          icon={<Ionicons name="create-outline" size={18} color={colors.ink} />}
         />
         <Button
           title="Löschen"
@@ -160,7 +160,7 @@ function ContactRow({ icon, value, onPress }: {
       <View style={styles.contactContent}>
         <Ionicons name={icon} size={20} color={colors.primary} />
         <Text style={styles.contactValue}>{value}</Text>
-        <Ionicons name="open-outline" size={16} color={colors.textLight} />
+        <Ionicons name="open-outline" size={16} color={colors.meta} />
       </View>
     </Card>
   );
@@ -176,15 +176,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm,
   },
   avatarText: { fontSize: fontSize.xxl, fontWeight: fontWeight.bold, color: colors.primary },
-  name: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text },
-  sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.text, marginBottom: spacing.sm },
+  name: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.ink },
+  sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.ink, marginBottom: spacing.sm },
   contactRow: { marginBottom: spacing.xs, padding: spacing.sm },
   contactContent: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  contactValue: { flex: 1, fontSize: fontSize.md, color: colors.text },
-  noData: { fontSize: fontSize.sm, color: colors.textLight, fontStyle: 'italic' },
-  notes: { fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22 },
+  contactValue: { flex: 1, fontSize: fontSize.md, color: colors.ink },
+  noData: { fontSize: fontSize.sm, color: colors.meta, fontStyle: 'italic' },
+  notes: { fontSize: fontSize.md, color: colors.inkSecondary, lineHeight: 22 },
   ordersSection: { marginTop: spacing.md },
   ordersHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
-  meta: { fontSize: fontSize.xs, color: colors.textLight, marginTop: spacing.md, textAlign: 'center' },
+  meta: { fontSize: fontSize.xs, color: colors.meta, marginTop: spacing.md, textAlign: 'center' },
 });

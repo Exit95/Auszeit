@@ -5,9 +5,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { adminApi } from '../api/adminClient';
 
-// Notification-Verhalten wenn App im Vordergrund.
-// shouldShowBanner + shouldShowList ersetzen seit SDK 53 das deprecated
-// shouldShowAlert. SDK 52 akzeptiert beide, wir setzen zukunftssicher.
+if (Platform.OS !== 'web') {
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
@@ -17,6 +15,7 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true, // Backwards-Compat für SDK 52
   }),
 });
+}
 
 async function registerForPushNotifications(): Promise<string | null> {
   if (!Device.isDevice) {
@@ -61,11 +60,17 @@ async function registerForPushNotifications(): Promise<string | null> {
   return token;
 }
 
-export function usePushNotifications() {
+interface UsePushOptions {
+  enabled: boolean;
+}
+
+export function usePushNotifications({ enabled }: UsePushOptions) {
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
+    if (!enabled || Platform.OS === 'web') return; // Nur registrieren wenn User auth'd ist
+
     let cancelled = false;
 
     registerForPushNotifications().then(async (token) => {
@@ -86,7 +91,8 @@ export function usePushNotifications() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         if (__DEV__) console.warn('[Push] getippt:', response.notification.request.content.title);
-        // TODO: Deep-Link zu /booking/:id oder /order/:id basierend auf data.type
+        // Deep-Link wird durch React Navigation linking-config (App.tsx) verarbeitet,
+        // sobald die Notification-Payload eine `url` enthält.
       }
     );
 
@@ -95,5 +101,5 @@ export function usePushNotifications() {
       notificationListener.current?.remove();
       responseListener.current?.remove();
     };
-  }, []);
+  }, [enabled]);
 }

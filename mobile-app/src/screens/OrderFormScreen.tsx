@@ -100,7 +100,7 @@ export function OrderFormScreen() {
           <Text style={styles.selectedName}>
             {selectedCustomer.first_name} {selectedCustomer.last_name}
           </Text>
-          <Ionicons name="close-circle" size={20} color={colors.textLight} />
+          <Ionicons name="close-circle" size={20} color={colors.meta} />
         </Pressable>
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.customerList}>
@@ -131,11 +131,11 @@ export function OrderFormScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, paddingBottom: spacing.xxl },
-  label: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.md },
+  label: { fontSize: fontSize.sm, fontWeight: fontWeight.semibold, color: colors.inkSecondary, marginBottom: spacing.xs, marginTop: spacing.md },
   selectedCustomer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.primary + '15', padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm },
-  selectedName: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.brandEspresso },
+  selectedName: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.ink },
   customerList: { marginBottom: spacing.sm },
   customerChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: borderRadius.full, marginRight: spacing.sm },
-  customerChipText: { fontSize: fontSize.sm, color: colors.text },
+  customerChipText: { fontSize: fontSize.sm, color: colors.ink },
   saveBtn: { marginTop: spacing.lg },
 });

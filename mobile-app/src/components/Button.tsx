@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import { Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../theme';
 
 interface ButtonProps {
@@ -9,7 +10,7 @@ interface ButtonProps {
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   icon?: React.ReactNode;
 }
 
@@ -55,19 +56,27 @@ export function Button({
 
 const variants = {
   primary: {
-    container: { backgroundColor: colors.primary } as ViewStyle,
+    container: {
+      backgroundColor: colors.primary,
+      // Weiche, warme Terra-Schatten: rgba(217,108,74,.45) — 0 8px 20px -8px
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.45,
+      shadowRadius: 12,
+      elevation: 4,
+    } as ViewStyle,
     textColor: colors.textOnPrimary,
   },
   secondary: {
-    container: { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border } as ViewStyle,
-    textColor: colors.text,
+    container: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border } as ViewStyle,
+    textColor: colors.ink,
   },
   danger: {
     container: { backgroundColor: colors.error } as ViewStyle,
     textColor: '#FFFFFF',
   },
   ghost: {
-    container: { backgroundColor: 'transparent' } as ViewStyle,
+    container: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.primary } as ViewStyle,
     textColor: colors.primary,
   },
 };
@@ -92,14 +101,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     gap: spacing.sm,
   },
   text: {
     fontWeight: fontWeight.semibold,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.88,
   },
   disabled: {
     opacity: 0.5,

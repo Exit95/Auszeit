@@ -1,8 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, RefreshControl, Alert, Pressable, Image, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, RefreshControl, Alert, Pressable, ActivityIndicator,
 } from 'react-native';
-import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { StatusBadge, Card, Button, LoadingScreen, Input } from '../components';
@@ -321,7 +323,7 @@ export function OrderDetailScreen() {
         <View style={styles.itemsHeader}>
           <Text style={styles.sectionTitle}>Werkstücke ({order.items?.length || 0})</Text>
           <Pressable onPress={() => setShowAddItem(!showAddItem)} style={styles.addItemBtn}>
-            <Ionicons name={showAddItem ? 'close' : 'add'} size={20} color={colors.accent} />
+            <Ionicons name={showAddItem ? 'close' : 'add'} size={20} color={colors.primary} />
           </Pressable>
         </View>
 
@@ -379,14 +381,16 @@ export function OrderDetailScreen() {
             {photos.map((photo, i) => (
               <Image
                 key={photo.key || i}
-                source={{ uri: `https://keramik-auszeit.de${photo.url}` }}
+                source={`https://keramik-auszeit.de${photo.url}`}
                 style={{ width: 120, height: 120, borderRadius: 12, marginRight: spacing.sm }}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
               />
             ))}
           </ScrollView>
         ) : (
-          <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm, marginBottom: spacing.sm }}>
+          <Text style={{ color: colors.inkSecondary, fontSize: fontSize.sm, marginBottom: spacing.sm }}>
             Noch keine Fotos
           </Text>
         )}
@@ -469,7 +473,7 @@ export function OrderDetailScreen() {
               ))}
             </View>
             <Pressable onPress={() => setShowOvenPicker(false)} style={{ marginTop: spacing.sm, alignItems: 'center' }}>
-              <Text style={{ color: colors.textLight, fontSize: fontSize.sm }}>Abbrechen</Text>
+              <Text style={{ color: colors.meta, fontSize: fontSize.sm }}>Abbrechen</Text>
             </Pressable>
           </View>
         )}
@@ -492,7 +496,7 @@ export function OrderDetailScreen() {
               </View>
             </ScrollView>
             <Pressable onPress={() => setShowFachPicker(false)} style={{ marginTop: spacing.sm, alignItems: 'center' }}>
-              <Text style={{ color: colors.textLight, fontSize: fontSize.sm }}>Abbrechen</Text>
+              <Text style={{ color: colors.meta, fontSize: fontSize.sm }}>Abbrechen</Text>
             </Pressable>
           </View>
         )}
@@ -521,7 +525,7 @@ export function OrderDetailScreen() {
           variant="secondary"
           onPress={handlePickup}
           size="lg"
-          icon={<Ionicons name="checkmark-circle-outline" size={18} color={colors.text} />}
+          icon={<Ionicons name="checkmark-circle-outline" size={18} color={colors.ink} />}
           style={{ marginTop: spacing.sm }}
         />
       )}
@@ -552,13 +556,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  refCode: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.brandEspresso, flex: 1, marginRight: spacing.sm },
+  refCode: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.ink, flex: 1, marginRight: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center' },
   rowContent: { flex: 1, marginLeft: spacing.sm },
-  label: { fontSize: fontSize.xs, color: colors.textLight, textTransform: 'uppercase', letterSpacing: 0.5 },
-  value: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.text },
-  subValue: { fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 2 },
-  sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.brandEspresso, marginBottom: spacing.sm },
+  label: { fontSize: fontSize.xs, color: colors.meta, textTransform: 'uppercase', letterSpacing: 0.5 },
+  value: { fontSize: fontSize.md, fontWeight: fontWeight.medium, color: colors.ink },
+  subValue: { fontSize: fontSize.sm, color: colors.inkSecondary, marginTop: 2 },
+  sectionTitle: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.ink, marginBottom: spacing.sm },
   detailGrid: { gap: spacing.sm },
   detailItem: {
     flexDirection: 'row',
@@ -567,8 +571,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },
-  detailLabel: { fontSize: fontSize.sm, color: colors.textSecondary },
-  detailValue: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text },
+  detailLabel: { fontSize: fontSize.sm, color: colors.inkSecondary },
+  detailValue: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.ink },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -578,38 +582,38 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.borderLight,
   },
   itemInfo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  itemName: { fontSize: fontSize.md, color: colors.text },
-  itemQty: { fontSize: fontSize.sm, color: colors.textSecondary },
-  notes: { fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22 },
+  itemName: { fontSize: fontSize.md, color: colors.ink },
+  itemQty: { fontSize: fontSize.sm, color: colors.inkSecondary },
+  notes: { fontSize: fontSize.md, color: colors.inkSecondary, lineHeight: 22 },
   historyEntry: { flexDirection: 'row', paddingVertical: spacing.sm },
   historyBorder: { borderTopWidth: 1, borderTopColor: colors.borderLight },
   historyDot: {
     width: 10, height: 10, borderRadius: 5,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     marginTop: 4, marginRight: spacing.sm,
   },
   historyContent: { flex: 1 },
-  historyStatus: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text },
-  historyNote: { fontSize: fontSize.sm, color: colors.textSecondary, marginTop: 2 },
-  historyMeta: { fontSize: fontSize.xs, color: colors.textLight, marginTop: 4 },
+  historyStatus: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.ink },
+  historyNote: { fontSize: fontSize.sm, color: colors.inkSecondary, marginTop: 2 },
+  historyMeta: { fontSize: fontSize.xs, color: colors.meta, marginTop: 4 },
   ovenPicker: { marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderLight },
-  ovenLabel: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.brandEspresso, marginBottom: spacing.sm, textAlign: 'center' },
+  ovenLabel: { fontSize: fontSize.md, fontWeight: fontWeight.semibold, color: colors.ink, marginBottom: spacing.sm, textAlign: 'center' },
   ovenButtons: { flexDirection: 'row', gap: spacing.md },
   storageRow: { flexDirection: 'row', gap: spacing.sm },
   storageChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  storageChipActive: { backgroundColor: colors.accent + '20', borderColor: colors.accent },
-  storageChipText: { fontSize: fontSize.sm, color: colors.text },
-  storageChipTextActive: { color: colors.accent, fontWeight: fontWeight.bold },
-  storageInfo: { fontSize: fontSize.xs, color: colors.textLight, marginTop: spacing.sm },
+  storageChipActive: { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+  storageChipText: { fontSize: fontSize.sm, color: colors.ink },
+  storageChipTextActive: { color: colors.primary, fontWeight: fontWeight.bold },
+  storageInfo: { fontSize: fontSize.xs, color: colors.meta, marginTop: spacing.sm },
   itemsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   addItemBtn: { padding: spacing.xs },
   addItemForm: { marginBottom: spacing.md, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.borderLight },
   addItemRow: { marginBottom: spacing.sm },
   addItemActions: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
   typeChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: borderRadius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginRight: spacing.xs },
-  typeChipActive: { backgroundColor: colors.accent + '20', borderColor: colors.accent },
-  typeChipText: { fontSize: fontSize.xs, color: colors.text },
-  typeChipTextActive: { color: colors.accent, fontWeight: fontWeight.bold },
+  typeChipActive: { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+  typeChipText: { fontSize: fontSize.xs, color: colors.ink },
+  typeChipTextActive: { color: colors.primary, fontWeight: fontWeight.bold },
   statusGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   statusBtn: {
     paddingHorizontal: spacing.md,
@@ -620,19 +624,19 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   statusBtnActive: {
-    backgroundColor: colors.accent + '20',
-    borderColor: colors.accent,
+    backgroundColor: colors.primary + '20',
+    borderColor: colors.primary,
   },
   statusBtnText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.medium,
-    color: colors.text,
+    color: colors.ink,
   },
   statusBtnTextActive: {
-    color: colors.accent,
+    color: colors.primary,
     fontWeight: fontWeight.bold,
   },
-  meta: { fontSize: fontSize.xs, color: colors.textLight, marginTop: spacing.md, textAlign: 'center', lineHeight: 18 },
+  meta: { fontSize: fontSize.xs, color: colors.meta, marginTop: spacing.md, textAlign: 'center', lineHeight: 18 },
   statusProgress: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -652,23 +656,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   statusDotDone: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
   },
   statusDotCurrent: {
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     borderWidth: 2,
     borderColor: colors.accentLight,
   },
   statusStepText: {
     fontSize: 10,
-    color: colors.textLight,
+    color: colors.meta,
     textAlign: 'center',
   },
   statusStepTextCurrent: {
-    color: colors.accent,
+    color: colors.primary,
     fontWeight: fontWeight.semibold,
   },
 });

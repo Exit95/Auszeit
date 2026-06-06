@@ -1,9 +1,11 @@
 import React, { type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 import { QueryClient, focusManager, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { AppState, type AppStateStatus, Platform } from 'react-native';
+import { attachOfflineQueue } from '../lib/offlineQueue';
 
 // Query-Cache wird in AsyncStorage persistiert (für Buchungs-/Kundendaten ok,
 // keine sensiblen Tokens — die liegen im SecureStore via adminClient).
@@ -24,9 +26,15 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       retry: 1,
+      // Wichtig: Mutations bekommen einen mutationKey, damit sie persistiert
+      // und nach Reload erneut ausgeführt werden können.
+      networkMode: 'offlineFirst',
     },
   },
 });
+
+// Auto-Resume von Mutations bei Wiederverbindung
+attachOfflineQueue(queryClient);
 
 const asyncStoragePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
@@ -41,9 +49,13 @@ function onAppStateChange(status: AppStateStatus) {
   }
 }
 
-// Initial: bestätige dass wir online sind (Standard ist undefined).
-// Für volle Offline-Detection wäre @react-native-community/netinfo nötig.
-onlineManager.setOnline(true);
+// onlineManager hört auf NetInfo — TanStack Query pausiert Refetches automatisch
+// wenn offline und resumed sie sobald wieder Verbindung da ist.
+onlineManager.setEventListener((setOnline) => {
+  return NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  });
+});
 
 interface Props {
   children: ReactNode;

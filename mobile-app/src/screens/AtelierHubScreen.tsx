@@ -8,6 +8,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { adminApi } from '../api/adminClient';
+import { BrushAccent } from '../components';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 import type { Booking, Inquiry, Review, RootStackParamList } from '../types';
 
@@ -41,7 +42,7 @@ export function AtelierHubScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [authError, setAuthError] = useState(false);
-  const [needsLogin, setNeedsLogin] = useState(!adminApi.getCredentials());
+  const [needsLogin, setNeedsLogin] = useState(Platform.OS !== 'web' && !adminApi.getCredentials());
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -76,7 +77,7 @@ export function AtelierHubScreen() {
   };
 
   const loadCounts = useCallback(async () => {
-    if (!adminApi.getCredentials()) {
+    if (Platform.OS !== 'web' && !adminApi.getCredentials()) {
       setNeedsLogin(true);
       setLoading(false);
       return;
@@ -147,7 +148,7 @@ export function AtelierHubScreen() {
       title: 'Gutschein-Scanner',
       subtitle: 'QR-Code scannen & einlösen',
       badge: 0,
-      color: '#8B5CF6',
+      color: colors.secondary,
       onPress: () => navigation.navigate('VoucherScanner'),
     },
     {
@@ -189,7 +190,7 @@ export function AtelierHubScreen() {
         ? `${counts.openInquiries} offene Anfrage${counts.openInquiries !== 1 ? 'n' : ''}`
         : 'Keine offenen Anfragen',
       badge: counts.openInquiries,
-      color: colors.accent,
+      color: colors.primary,
       onPress: () => navigation.navigate('AtelierInquiries'),
     },
     {
@@ -200,7 +201,7 @@ export function AtelierHubScreen() {
         ? `${counts.pendingReviews} warte${counts.pendingReviews !== 1 ? 'n' : 't'} auf Freigabe`
         : 'Alle freigegeben',
       badge: counts.pendingReviews,
-      color: '#E8A030',
+      color: colors.secondary,
       onPress: () => navigation.navigate('AdminReviews'),
     },
   ];
@@ -219,7 +220,7 @@ export function AtelierHubScreen() {
                 <Text style={styles.subtitle}>Keramik Auszeit</Text>
               </View>
               <View style={styles.headerIcon}>
-                <Ionicons name="storefront" size={28} color="rgba(255,255,255,0.85)" />
+                <Ionicons name="storefront" size={28} color={colors.primary} />
               </View>
             </View>
           </View>
@@ -237,7 +238,7 @@ export function AtelierHubScreen() {
               <TextInput
                 style={styles.loginInput}
                 placeholder="Admin-Passwort"
-                placeholderTextColor={colors.textLight}
+                placeholderTextColor={colors.meta}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
@@ -278,7 +279,7 @@ export function AtelierHubScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); loadCounts(); }}
-            colors={[colors.accent]}
+            colors={[colors.primary]}
           />
         }
       >
@@ -287,10 +288,11 @@ export function AtelierHubScreen() {
           <View style={styles.headerInner}>
             <View>
               <Text style={styles.title}>Atelier</Text>
+              <BrushAccent width={60} />
               <Text style={styles.subtitle}>Keramik Auszeit</Text>
             </View>
             <View style={styles.headerIcon}>
-              <Ionicons name="storefront" size={28} color="rgba(255,255,255,0.85)" />
+              <Ionicons name="storefront" size={28} color={colors.primary} />
             </View>
           </View>
         </View>
@@ -317,7 +319,7 @@ export function AtelierHubScreen() {
                     <Text style={styles.badgeText}>{item.badge > 99 ? '99+' : item.badge}</Text>
                   </View>
                 )}
-                <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+                <Ionicons name="chevron-forward" size={18} color={colors.meta} />
               </View>
             </Pressable>
           ))}
@@ -330,7 +332,7 @@ export function AtelierHubScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.card,
   },
   container: {
     flex: 1,
@@ -340,11 +342,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   header: {
-    backgroundColor: colors.primary,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    backgroundColor: colors.card,
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
     paddingBottom: spacing.lg,
     marginBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerInner: {
     flexDirection: 'row',
@@ -356,18 +360,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.textOnPrimary,
+    color: colors.ink,
   },
   subtitle: {
     fontSize: fontSize.sm,
-    color: 'rgba(255,255,255,0.65)',
+    color: colors.meta,
     marginTop: 2,
   },
   headerIcon: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: colors.primary + '18',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -389,7 +393,7 @@ const styles = StyleSheet.create({
   authWarningText: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.ink,
   },
   menuCard: {
     flexDirection: 'row',
@@ -421,11 +425,11 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
-    color: colors.text,
+    color: colors.ink,
   },
   menuSubtitle: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     marginTop: 2,
   },
   menuRight: {
@@ -476,12 +480,12 @@ const styles = StyleSheet.create({
   loginTitle: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.brandEspresso,
+    color: colors.ink,
     marginBottom: spacing.sm,
   },
   loginHint: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: spacing.lg,
@@ -492,7 +496,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.md,
     fontSize: fontSize.md,
-    color: colors.text,
+    color: colors.ink,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: spacing.md,

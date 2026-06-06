@@ -30,7 +30,7 @@ function StarRating({ rating }: { rating: number }) {
           key={i}
           name={i <= rating ? 'star' : 'star-outline'}
           size={16}
-          color={i <= rating ? '#E8A030' : colors.border}
+          color={i <= rating ? colors.secondary : colors.border}
         />
       ))}
       <Text style={starStyles.ratingText}>{rating}/5</Text>
@@ -46,7 +46,7 @@ const starStyles = StyleSheet.create({
   },
   ratingText: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     marginLeft: 4,
   },
 });
@@ -223,7 +223,7 @@ export function AdminReviewsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); loadReviews(); }}
-            colors={[colors.accent]}
+            colors={[colors.primary]}
           />
         }
         renderItem={({ item }) => {
@@ -271,8 +271,8 @@ export function AdminReviewsScreen() {
                       style={[styles.actionBtn, styles.rejectBtn, isProcessing && styles.btnDisabled]}
                       onPress={() => !isProcessing && handleReject(item)}
                     >
-                      <Ionicons name="eye-off-outline" size={16} color={colors.textSecondary} />
-                      <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>Verstecken</Text>
+                      <Ionicons name="eye-off-outline" size={16} color={colors.inkSecondary} />
+                      <Text style={[styles.actionBtnText, { color: colors.inkSecondary }]}>Verstecken</Text>
                     </Pressable>
                     <Pressable
                       style={[styles.actionBtn, styles.deleteBtn, isProcessing && styles.btnDisabled]}
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   filterBadge: {
     minWidth: 18,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   filterBadgeText: {
     fontSize: 10,
     fontWeight: fontWeight.bold,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   errorBox: {
     flexDirection: 'row',
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.ink,
   },
   listContent: {
     padding: spacing.md,
@@ -382,24 +382,24 @@ const styles = StyleSheet.create({
   reviewerName: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.ink,
   },
   reviewDate: {
     fontSize: fontSize.xs,
-    color: colors.textLight,
+    color: colors.meta,
   },
   ratingRow: {
     marginBottom: spacing.sm,
   },
   commentBox: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     marginBottom: spacing.md,
   },
   commentText: {
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.ink,
     lineHeight: 20,
     fontStyle: 'italic',
   },
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
   },
   rejectBtn: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
   },

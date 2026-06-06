@@ -217,7 +217,7 @@ export function BookingsScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            colors={[colors.accent]}
+            colors={[colors.primary]}
           />
         }
         renderItem={({ item }) => {
@@ -237,7 +237,7 @@ export function BookingsScreen() {
                   )}
                 </View>
                 <View style={styles.participantsBadge}>
-                  <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
+                  <Ionicons name="people-outline" size={14} color={colors.inkSecondary} />
                   <Text style={styles.participantsText}>{item.participants}</Text>
                 </View>
               </View>
@@ -247,12 +247,12 @@ export function BookingsScreen() {
 
               {/* Kontakt */}
               <View style={styles.contactRow}>
-                <Ionicons name="mail-outline" size={13} color={colors.textLight} />
+                <Ionicons name="mail-outline" size={13} color={colors.meta} />
                 <Text style={styles.contactText} numberOfLines={1}>{item.email}</Text>
               </View>
               {item.phone && (
                 <View style={styles.contactRow}>
-                  <Ionicons name="call-outline" size={13} color={colors.textLight} />
+                  <Ionicons name="call-outline" size={13} color={colors.meta} />
                   <Text style={styles.contactText}>{item.phone}</Text>
                 </View>
               )}
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   filterBadge: {
     minWidth: 18,
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
   filterBadgeText: {
     fontSize: 10,
     fontWeight: fontWeight.bold,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   errorBox: {
     flexDirection: 'row',
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   errorText: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.text,
+    color: colors.ink,
   },
   listContent: {
     padding: spacing.md,
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
@@ -425,12 +425,12 @@ const styles = StyleSheet.create({
   participantsText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
   },
   customerName: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.bold,
-    color: colors.text,
+    color: colors.ink,
     marginBottom: spacing.xs,
   },
   contactRow: {
@@ -441,21 +441,21 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     flex: 1,
   },
   notes: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.inkSecondary,
     fontStyle: 'italic',
     marginTop: spacing.sm,
     padding: spacing.sm,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.sm,
   },
   createdAt: {
     fontSize: fontSize.xs,
-    color: colors.textLight,
+    color: colors.meta,
     marginTop: spacing.sm,
   },
   actionRow: {
