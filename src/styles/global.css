@@ -175,6 +175,44 @@ h6 {
   background-color: var(--bg);
 }
 
+/* Section block layout */
+section.blk {
+  padding: var(--section) 0;
+}
+
+.blk.soft {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  margin-inline: clamp(.3rem, 1vw, .9rem);
+  box-shadow: var(--shadow-card);
+}
+
+/* Section head group */
+.head {
+  max-width: 36ch;
+}
+
+.head h2 {
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  margin: .7rem 0 0;
+}
+
+.head.center {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.lead {
+  color: var(--ink-2);
+  font-size: 1.08rem;
+  margin-top: 1rem;
+  max-width: 48ch;
+}
+
+.head.center .lead {
+  margin-inline: auto;
+}
+
 /* Scroll-Animationen */
 .animate-on-scroll {
   opacity: 0;
