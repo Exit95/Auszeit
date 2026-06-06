@@ -1,5 +1,7 @@
 ---
 import WhatsAppFloat from "../components/WhatsAppFloat.astro";
+import MobileMenu from "../components/MobileMenu.astro";
+import '../styles/global.css';
 
 interface Props {
   title: string;
@@ -27,12 +29,11 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Performance: DNS Prefetch -->
-    <link rel="dns-prefetch" href="https://www.google.com" />
-
-    <!-- Performance: Preload kritische Ressourcen -->
-    <link rel="preload" href="/fonts/Lora-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Font Preloads (self-hosted, no CDN) -->
+    <link rel="preload" href="/fonts/Fraunces-Variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/SourceSans3-Regular.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- Performance: hero image -->
     <link rel="preload" href="/hero-banner.webp" as="image" type="image/webp" />
 
     <!-- Favicon -->
@@ -49,7 +50,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="language" content="German" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#B1735C" />
+    <meta name="theme-color" content="#D96C4A" />
 
     <!-- Lokale SEO Meta Tags -->
     <meta name="geo.region" content="DE-NW" />
@@ -68,7 +69,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta property="og:image" content={fullOgImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Malatelier Auszeit - Keramik Malatelier in Gronau im Münsterland" />
+    <meta property="og:image:alt" content="Malatelier Auszeit - Keramik Malatelier in Gronau im Munsterland" />
     <meta property="og:locale" content="de_DE" />
     <meta property="og:site_name" content="Malatelier Auszeit | Malatelier in Gronau" />
 
@@ -78,22 +79,22 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={fullOgImage} />
-    <meta name="twitter:image:alt" content="Malatelier Auszeit - Keramik Malatelier in Gronau im Münsterland" />
+    <meta name="twitter:image:alt" content="Malatelier Auszeit - Keramik Malatelier in Gronau im Munsterland" />
 
     <!-- Canonical URL -->
     <link rel="canonical" href={fullUrl} />
 
-    <!-- Structured Data / Schema.org - Lokales SEO optimiert -->
+    <!-- LocalBusiness JSON-LD -->
     <script type="application/ld+json" is:inline>
       {
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@type": ["LocalBusiness", "Store"],
+            "@type": "LocalBusiness",
             "@id": "https://keramik-auszeit.de/#business",
             "name": "Malatelier Auszeit",
             "alternateName": ["Malatelier Auszeit", "Auszeit Keramik", "Keramik Gronau"],
-            "description": "Keramik selbst bemalen in Gronau (Westfalen) im Münsterland. Kreative Workshops, Kindergeburtstage, JGA und individuelle Termine. Große Auswahl: Tassen, Teller, Spardosen. Perfekt erreichbar aus Münster, Steinfurt, Borken, Ahaus, Ochtrup und Enschede.",
+            "description": "Keramik selbst bemalen in Gronau (Westfalen) im Munsterland. Kreative Workshops, Kindergeburtstage, JGA und individuelle Termine. Grosse Auswahl: Tassen, Teller, Spardosen. Perfekt erreichbar aus Munster, Steinfurt, Borken, Ahaus, Ochtrup und Enschede.",
             "url": "https://keramik-auszeit.de",
             "telephone": "+49 176 34255005",
             "email": "atelier@keramik-auszeit.de",
@@ -102,22 +103,15 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
               "https://keramik-auszeit.de/tasse.webp",
               "https://keramik-auszeit.de/teller.webp"
             ],
-            "logo": "https://keramik-auszeit.de/logoauszeit.svg",
-            "priceRange": "€€",
-            "paymentAccepted": ["Cash", "EC-Card", "Überweisung"],
-            "currenciesAccepted": "EUR",
+            "logo": "https://keramik-auszeit.de/logo-header-3x.png",
+            "priceRange": "EUR",
+            "openingHours": ["Tu-Su 10:00-18:00"],
             "openingHoursSpecification": [
               {
                 "@type": "OpeningHoursSpecification",
-                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
                 "opens": "10:00",
                 "closes": "18:00"
-              },
-              {
-                "@type": "OpeningHoursSpecification",
-                "dayOfWeek": "Saturday",
-                "opens": "10:00",
-                "closes": "16:00"
               }
             ],
             "address": {
@@ -136,88 +130,11 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             "founder": {
               "@type": "Person",
               "name": "Irena Woschkowiak",
-              "jobTitle": "Inhaberin & Keramik-Künstlerin"
+              "jobTitle": "Inhaberin"
             },
-            "areaServed": [
-              {
-                "@type": "City",
-                "name": "Gronau",
-                "sameAs": "https://de.wikipedia.org/wiki/Gronau_(Westf.)"
-              },
-              {"@type": "City", "name": "Epe"},
-              {"@type": "City", "name": "Ochtrup"},
-              {"@type": "City", "name": "Ahaus"},
-              {
-                "@type": "City",
-                "name": "Münster",
-                "sameAs": "https://de.wikipedia.org/wiki/M%C3%BCnster"
-              },
-              {
-                "@type": "AdministrativeArea",
-                "name": "Münsterland",
-                "sameAs": "https://de.wikipedia.org/wiki/M%C3%BCnsterland"
-              },
-              {"@type": "City", "name": "Steinfurt"},
-              {"@type": "City", "name": "Borken"},
-              {"@type": "City", "name": "Coesfeld"},
-              {"@type": "City", "name": "Emsdetten"},
-              {"@type": "City", "name": "Rheine"},
-              {"@type": "City", "name": "Greven"},
-              {"@type": "City", "name": "Warendorf"},
-              {"@type": "City", "name": "Telgte"},
-              {"@type": "City", "name": "Enschede"},
-              {"@type": "City", "name": "Losser"},
-              {"@type": "City", "name": "Nordhorn"},
-              {"@type": "City", "name": "Bad Bentheim"},
-              {"@type": "City", "name": "Metelen"},
-              {"@type": "City", "name": "Heek"},
-              {"@type": "City", "name": "Horstmar"},
-              {"@type": "City", "name": "Billerbeck"},
-              {"@type": "City", "name": "Oldenzaal"},
-              {"@type": "City", "name": "Hengelo"}
-            ],
-            "knowsLanguage": ["de", "nl"],
             "sameAs": [
               "https://www.instagram.com/keramik_auszeit/"
             ],
-            "hasOfferCatalog": {
-              "@type": "OfferCatalog",
-              "name": "Keramik Angebote in Gronau im Münsterland",
-              "itemListElement": [
-                {
-                  "@type": "Offer",
-                  "itemOffered": {
-                    "@type": "Service",
-                    "name": "Keramik bemalen",
-                    "description": "Individuelles Keramik bemalen in entspannter Atmosphäre im Münsterland - perfekt erreichbar aus Münster, Gronau, Steinfurt, Ochtrup und Ahaus"
-                  }
-                },
-                {
-                  "@type": "Offer",
-                  "itemOffered": {
-                    "@type": "Service",
-                    "name": "Kreativ-Workshops",
-                    "description": "Keramik-Workshops für Gruppen im Münsterland - Gronau, Münster und Umgebung"
-                  }
-                },
-                {
-                  "@type": "Offer",
-                  "itemOffered": {
-                    "@type": "Service",
-                    "name": "Kindergeburtstage",
-                    "description": "Unvergessliche Kindergeburtstage mit Keramik bemalen in Gronau - auch für Familien aus Münster und dem Münsterland"
-                  }
-                },
-                {
-                  "@type": "Offer",
-                  "itemOffered": {
-                    "@type": "Service",
-                    "name": "JGA - Junggesellinnenabschied",
-                    "description": "Kreative JGA-Feier mit Keramik bemalen"
-                  }
-                }
-              ]
-            },
             "aggregateRating": {
               "@type": "AggregateRating",
               "ratingValue": "5.0",
@@ -230,38 +147,9 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             "@type": "WebSite",
             "@id": "https://keramik-auszeit.de/#website",
             "url": "https://keramik-auszeit.de",
-            "name": "Malatelier Auszeit | Keramik Malatelier im Münsterland",
-            "description": "Keramik bemalen in Gronau im Münsterland - erreichbar aus Münster, Steinfurt, Borken, Ahaus und Enschede",
+            "name": "Malatelier Auszeit | Keramik Malatelier im Munsterland",
             "publisher": {"@id": "https://keramik-auszeit.de/#business"},
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": "https://keramik-auszeit.de/?q={search_term_string}",
-              "query-input": "required name=search_term_string"
-            },
             "inLanguage": "de-DE"
-          },
-          {
-            "@type": "WebPage",
-            "@id": "https://keramik-auszeit.de/#webpage",
-            "url": "https://keramik-auszeit.de",
-            "name": "Keramik bemalen Gronau & Münsterland | Malatelier Auszeit | Irena Woschkowiak",
-            "isPartOf": {"@id": "https://keramik-auszeit.de/#website"},
-            "about": {"@id": "https://keramik-auszeit.de/#business"},
-            "description": "Keramik selbst bemalen in Gronau (Westfalen) im Münsterland. Workshops, Kindergeburtstage, JGA. Perfekt erreichbar aus Münster, Steinfurt, Borken, Ahaus, Enschede. Jetzt Termin buchen!",
-            "breadcrumb": {"@id": "https://keramik-auszeit.de/#breadcrumb"},
-            "inLanguage": "de-DE"
-          },
-          {
-            "@type": "BreadcrumbList",
-            "@id": "https://keramik-auszeit.de/#breadcrumb",
-            "itemListElement": [
-              {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Startseite",
-                "item": "https://keramik-auszeit.de"
-              }
-            ]
           }
         ]
       }
@@ -270,727 +158,364 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
   <body>
     <a href="#main-content" class="skip-link">Zum Hauptinhalt springen</a>
 
-    <!-- Desktop Nav -->
-    <nav class="site-nav" id="site-nav" aria-label="Hauptnavigation">
-      <div class="site-nav__inner">
-        <a href="/" class="site-nav__brand">
-          <img src="/logo-header.png" srcset="/logo-header.png 1x, /logo-header-3x.png 2x" alt="Malatelier Auszeit Logo" class="site-nav__logo" width="36" height="72" />
-          Malatelier Auszeit
+    <!-- ── Header / Nav ───────────────────────── -->
+    <header>
+      <div class="nav">
+        <a class="brand" href="/">
+          <img
+            src="/logo-header.png"
+            srcset="/logo-header.png 1x, /logo-header-3x.png 2x"
+            alt="Malatelier Auszeit Logo"
+            width="46"
+            height="46"
+          />
+          <span class="brand__txt">
+            <b>Auszeit</b>
+            <small>Malatelier · Gronau</small>
+          </span>
         </a>
 
-        <!-- Desktop Links -->
-        <ul class="site-nav__links" id="nav-links-desktop">
-          <li><a class="site-nav__link" href="/#keramik-preise">Keramik bemalen</a></li>
-          <li><a class="site-nav__link" href="/workshops">Workshops</a></li>
-          <li><a class="site-nav__link" href="/events">Besondere Anlässe</a></li>
-          <li><a class="site-nav__link" href="/galerie">Galerie</a></li>
-          <li><a class="site-nav__link" href="/gutscheine">Gutscheine</a></li>
-          <li><a class="site-nav__link site-nav__link--cta" href="/#termin-buchen">Termin buchen</a></li>
+        <ul>
+          <li class="hide-m"><a class="lnk" href="/#keramik-preise">Keramik bemalen</a></li>
+          <li class="hide-m"><a class="lnk" href="/workshops">Workshops</a></li>
+          <li class="hide-m"><a class="lnk" href="/events">Anlasse</a></li>
+          <li class="hide-m"><a class="lnk" href="/galerie">Galerie</a></li>
+          <li class="hide-m"><a class="lnk" href="/gutscheine">Gutscheine</a></li>
+          <li><a class="btn btn-terra" href="/#termin-buchen">Termin buchen</a></li>
         </ul>
 
-        <!-- Pinselstrich-Hamburger Button -->
-        <button class="brush-toggle" id="nav-toggle" aria-label="Menü öffnen" aria-expanded="false">
-          <svg class="brush-toggle__icon" viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path class="brush-line brush-line--1" d="M5 8.5C8 7.8 14 8.2 27 8.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-            <path class="brush-line brush-line--2" d="M7 16C12 15.6 20 16.3 25 16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-            <path class="brush-line brush-line--3" d="M5 23.5C10 24.1 18 23.2 27 23.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-          </svg>
-        </button>
+        <MobileMenu />
       </div>
-    </nav>
+    </header>
 
-    <!-- Fullscreen Canvas Overlay Menü (Mobile) -->
-    <div class="canvas-menu" id="canvas-menu" aria-hidden="true">
-      <div class="canvas-menu__bg"></div>
-      <div class="canvas-menu__content">
-        <!-- Schließen-Button -->
-        <button class="canvas-menu__close" id="canvas-close" aria-label="Menü schließen">
-          <svg viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7 7C12 12 20 20 25 25" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-            <path d="M25 7C20 12 12 20 7 25" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-          </svg>
-        </button>
-
-        <!-- Dekorative Keramik-Elemente -->
-        <div class="canvas-menu__deco canvas-menu__deco--1" aria-hidden="true"></div>
-        <div class="canvas-menu__deco canvas-menu__deco--2" aria-hidden="true"></div>
-        <div class="canvas-menu__deco canvas-menu__deco--3" aria-hidden="true"></div>
-
-        <!-- Atelier Brand -->
-        <div class="canvas-menu__brand">
-          <span class="canvas-menu__brand-script">Keramik</span>
-          <span class="canvas-menu__brand-serif">Auszeit</span>
-        </div>
-
-        <!-- Navigation Links -->
-        <nav class="canvas-menu__nav" aria-label="Mobile Navigation">
-          <a href="/#keramik-preise" class="canvas-menu__link" style="--i:0">
-            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
-            <span class="canvas-menu__link-text">Keramik bemalen</span>
-          </a>
-          <a href="/workshops" class="canvas-menu__link" style="--i:1">
-            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
-            <span class="canvas-menu__link-text">Workshops</span>
-          </a>
-          <a href="/events" class="canvas-menu__link" style="--i:2">
-            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
-            <span class="canvas-menu__link-text">Besondere Anlässe</span>
-          </a>
-          <a href="/galerie" class="canvas-menu__link" style="--i:3">
-            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
-            <span class="canvas-menu__link-text">Galerie</span>
-          </a>
-          <a href="/gutscheine" class="canvas-menu__link" style="--i:4">
-            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
-            <span class="canvas-menu__link-text">Gutscheine</span>
-          </a>
-          <a href="/#termin-buchen" class="canvas-menu__link canvas-menu__link--cta" style="--i:5">
-            <span class="canvas-menu__link-accent" aria-hidden="true"></span>
-            <span class="canvas-menu__link-text">Termin buchen</span>
-          </a>
-        </nav>
-
-        <!-- Footer im Menü -->
-        <div class="canvas-menu__footer">
-          <p>Feldstiege 6a · 48599 Gronau</p>
-          <p>+49 176 34255005</p>
-        </div>
-      </div>
-    </div>
-
-	    <main id="main-content">
+    <main id="main-content">
       <slot />
     </main>
+
     <script src="../scripts/scroll-animations.js"></script>
     <script src="../scripts/modal.js"></script>
-    <script>
-      // Canvas Menu - Fullscreen Overlay
-      const navToggle = document.getElementById('nav-toggle');
-      const canvasMenu = document.getElementById('canvas-menu');
-      const canvasClose = document.getElementById('canvas-close');
 
-      function openMenu() {
-        canvasMenu?.classList.add('is-open');
-        canvasMenu?.setAttribute('aria-hidden', 'false');
-        navToggle?.setAttribute('aria-expanded', 'true');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeMenu() {
-        canvasMenu?.classList.remove('is-open');
-        canvasMenu?.setAttribute('aria-hidden', 'true');
-        navToggle?.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-      }
-
-      navToggle?.addEventListener('click', openMenu);
-      canvasClose?.addEventListener('click', closeMenu);
-
-      // Links schließen das Menü
-      canvasMenu?.querySelectorAll('.canvas-menu__link').forEach(link => {
-        link.addEventListener('click', closeMenu);
-      });
-
-      // Escape schließt das Menü
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && canvasMenu?.classList.contains('is-open')) {
-          closeMenu();
-        }
-      });
-    </script>
     <WhatsAppFloat />
-    <footer class="footer">
-      <div class="footer__container">
-        <div class="footer__grid">
-          <!-- Spalte 1: Kontakt -->
-          <div class="footer__col">
-            <h4 class="footer__heading">Kontakt</h4>
-            <p>Feldstiege 6a<br/>48599 Gronau (Westfalen)</p>
-            <p><a href="tel:+4917634255005">+49 176 34255005</a></p>
-            <p><a href="mailto:atelier@keramik-auszeit.de">atelier@keramik-auszeit.de</a></p>
+
+    <!-- ── Footer ─────────────────────────────── -->
+    <footer>
+      <div class="wrap">
+        <div>
+          <div class="brand-f">
+            <img src="/logo-header-3x.png" alt="Malatelier Auszeit Logo" width="50" height="50" />
+            <b>Auszeit</b>
           </div>
-          <!-- Spalte 2: Navigation -->
-          <div class="footer__col">
-            <h4 class="footer__heading">Navigation</h4>
-            <ul class="footer__nav">
-              <li><a href="/#keramik-preise">Keramik bemalen</a></li>
-              <li><a href="/workshops">Workshops</a></li>
-              <li><a href="/events">Besondere Anlässe</a></li>
-              <li><a href="/galerie">Galerie</a></li>
-              <li><a href="/gutscheine">Gutscheine</a></li>
-            </ul>
-          </div>
-          <!-- Spalte 3: Rechtliches & Social -->
-          <div class="footer__col">
-            <h4 class="footer__heading">Rechtliches</h4>
-            <ul class="footer__nav">
-              <li><a href="/impressum">Impressum</a></li>
-              <li><a href="/datenschutz">Datenschutz</a></li>
-              <li><a href="/barrierefreiheit">Barrierefreiheit</a></li>
-            </ul>
-            <h4 class="footer__heading footer__heading--social">Social</h4>
-            <div class="footer__social">
-              <a href="https://www.instagram.com/keramik_auszeit/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">Instagram</a>
-              <a href="https://wa.me/4917634255005" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">WhatsApp</a>
-            </div>
-          </div>
+          <p style="max-width:26ch">Dein Malatelier in Gronau. Keramik bemalen, durchatmen, gluecklich nach Hause gehen.</p>
         </div>
-        <p class="footer__copyright">&copy; {new Date().getFullYear()} Malatelier Auszeit · Irena Woschkowiak</p>
+
+        <div>
+          <h4>Komm vorbei</h4>
+          <ul>
+            <li>Feldstiege 6a</li>
+            <li>48599 Gronau (Westf.)</li>
+            <li style="margin-top:.4rem"><a href="tel:+4917634255005">+49 176 34255005</a></li>
+            <li><a href="mailto:atelier@keramik-auszeit.de">atelier@keramik-auszeit.de</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Offnungszeiten</h4>
+          <ul>
+            <li>Dienstag bis Sonntag</li>
+            <li>10:00 bis 18:00 Uhr</li>
+            <li style="color:#9c8a7c;margin-top:.4rem">Montag Ruhetag</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4>Mehr</h4>
+          <ul>
+            <li><a href="/galerie">Galerie</a></li>
+            <li><a href="/workshops">Workshops</a></li>
+            <li><a href="/gutscheine">Gutscheine</a></li>
+            <li><a href="https://www.instagram.com/keramik_auszeit/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bar">
+        &copy; {new Date().getFullYear()} Malatelier Auszeit &middot; Irena Woschkowiak
+        &middot; <a href="/impressum">Impressum</a>
+        &middot; <a href="/datenschutz">Datenschutz</a>
       </div>
     </footer>
 
+    <!-- ── Sticky Mobile CTA Bar ───────────────── -->
+    <div class="mobile-cta-bar" id="mobile-cta-bar">
+      <a href="tel:+4917634255005" class="mobile-cta-bar__phone" aria-label="Anrufen">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        Anrufen
+      </a>
+      <a href="/#termin-buchen" class="mobile-cta-bar__book">Jetzt Termin buchen</a>
+    </div>
 
-  <div class="mobile-cta-bar" id="mobile-cta-bar">
-    <a href="tel:+4917634255005" class="mobile-cta-bar__phone" aria-label="Anrufen">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-      Anrufen
-    </a>
-    <a href="#termin-buchen" class="mobile-cta-bar__book">Jetzt Termin buchen</a>
-  </div>
-
-  <script is:inline>
-  (function() {
-    var bar = document.getElementById('mobile-cta-bar');
-    var booking = document.getElementById('termin-buchen');
-    if (!bar || !booking) return;
-    var io = new IntersectionObserver(function(entries) {
-      bar.style.transform = entries[0].isIntersecting ? 'translateY(100%)' : 'translateY(0)';
-      bar.style.transition = 'transform 0.3s ease';
-    }, { threshold: 0.1 });
-    io.observe(booking);
-  })();
-  </script>
+    <script is:inline>
+    (function() {
+      var bar = document.getElementById('mobile-cta-bar');
+      var booking = document.getElementById('termin-buchen');
+      if (!bar || !booking) return;
+      var io = new IntersectionObserver(function(entries) {
+        bar.style.transform = entries[0].isIntersecting ? 'translateY(100%)' : 'translateY(0)';
+        bar.style.transition = 'transform 0.3s ease';
+      }, { threshold: 0.1 });
+      io.observe(booking);
+    })();
+    </script>
   </body>
 </html>
 
-	  <style is:global>
-	    @import "../styles/global.css";
+<style is:global>
+  /* Deutsche Silbentrennung */
+  html {
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
 
-	    /* Deutsche Silbentrennung */
-	    html {
-	      -webkit-hyphens: auto;
-	      hyphens: auto;
-	      word-break: break-word;
-	      overflow-wrap: break-word;
-	    }
+  /* Kein horizontaler Scroll */
+  body {
+    overflow-x: hidden;
+  }
 
-	    /* Kein horizontaler Scroll */
-	    body {
-	      overflow-x: hidden;
-	    }
-
-	    /* ── Sticky Mobile CTA Bar ── */
-	    .mobile-cta-bar {
-	      display: none;
-	      position: fixed;
-	      bottom: 0;
-	      left: 0;
-	      right: 0;
-	      z-index: 999;
-	      padding: 8px 12px;
-	      padding-bottom: max(8px, env(safe-area-inset-bottom));
-	      background: #fff;
-	      border-top: 1px solid #E0D6CC;
-	      box-shadow: 0 -2px 12px rgba(66, 52, 48, 0.1);
-	      gap: 8px;
-	    }
-	    @media (max-width: 768px) {
-	      .mobile-cta-bar { display: flex; }
-	      body { padding-bottom: 70px; }
-	    }
-	    .mobile-cta-bar__phone {
-	      display: flex;
-	      align-items: center;
-	      justify-content: center;
-	      gap: 6px;
-	      padding: 12px 16px;
-	      background: #FAF7F2;
-	      color: #423430;
-	      border-radius: 8px;
-	      text-decoration: none;
-	      font-weight: 600;
-	      font-size: 0.9rem;
-	      white-space: nowrap;
-	    }
-	    .mobile-cta-bar__book {
-	      flex: 1;
-	      display: flex;
-	      align-items: center;
-	      justify-content: center;
-	      padding: 12px 20px;
-	      background: #D96C4A;
-	      color: #fff;
-	      border-radius: 8px;
-	      text-decoration: none;
-	      font-weight: 700;
-	      font-size: 0.95rem;
-	      white-space: nowrap;
-	    }
-	  </style>
-
-	  <style>
-	    .skip-link {
-    position: absolute;
-    top: -100px;
+  /* ── Sticky Mobile CTA Bar ────────────────── */
+  .mobile-cta-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
     left: 0;
-    background-color: var(--color-clay-brown);
-    color: var(--color-off-white);
-    padding: var(--space-2) var(--space-4);
+    right: 0;
+    z-index: 48;
+    padding: 8px 12px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--hair);
+    box-shadow: 0 -2px 12px rgba(58, 45, 36, 0.1);
+    gap: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .mobile-cta-bar { display: flex; }
+    body { padding-bottom: 70px; }
+  }
+
+  .mobile-cta-bar__phone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 16px;
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 8px;
     text-decoration: none;
-    z-index: 200;
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    min-height: 44px;
   }
 
-  .skip-link:focus {
-    top: 0;
+  .mobile-cta-bar__book {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    background: var(--terra);
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    min-height: 44px;
   }
 
-  /* Sticky Navigation */
-  .site-nav {
+  .mobile-cta-bar__book:hover {
+    background: var(--terra-h);
+  }
+</style>
+
+<style>
+  /* ── Header ───────────────────────────────── */
+  header {
     position: sticky;
     top: 0;
-    z-index: 100;
-    background: rgba(66, 52, 48, 0.97);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
-    transition: background 0.2s ease;
+    z-index: 40;
+    background: rgba(247, 241, 234, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 1px 0 rgba(212, 196, 178, 0.5);
   }
 
-  .site-nav__inner {
-    max-width: var(--max-width, 1400px);
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.7rem var(--gutter);
+    max-width: var(--maxw);
     margin: 0 auto;
-    padding: 0 var(--gutter, 1.5rem);
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
   }
 
-  .site-nav__brand {
-    font-family: var(--font-serif);
-    color: rgba(255, 255, 255, 0.92);
+  /* ── Brand ────────────────────────────────── */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
     text-decoration: none;
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
     flex-shrink: 0;
-    transition: opacity 0.15s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
   }
 
-  .site-nav__logo {
-    height: 36px;
+  .brand img {
+    height: 46px;
     width: auto;
-    flex-shrink: 0;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
+    display: block;
   }
 
-  .site-nav__brand:hover {
-    opacity: 0.8;
-  }
-
-  .site-nav__links {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .site-nav__link {
-    color: rgba(255, 255, 255, 0.78);
-    text-decoration: none;
-    font-size: 0.825rem;
-    font-weight: 500;
-    padding: 0.35rem 0.6rem;
-    border-radius: 6px;
-    transition: color 0.15s ease, background 0.15s ease;
-    white-space: nowrap;
-  }
-
-  .site-nav__link:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  .site-nav__link--cta {
-    background: var(--accent-terra);
-    color: white !important;
-    padding: 8px 20px;
-    border-radius: var(--radius-sm);
-    font-weight: 600;
-  }
-  .site-nav__link--cta:hover {
-    background: var(--color-sienna);
-  }
-
-  /* ── Pinselstrich Hamburger Button ──────────────────────── */
-  .brush-toggle {
-    display: none;
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.9);
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 8px;
-    transition: color 0.2s ease;
-    position: relative;
-    z-index: 102;
-  }
-
-  .brush-toggle:hover { color: #fff; }
-
-  .brush-toggle__icon { display: block; }
-
-  .brush-line {
-    transition: all 0.4s cubic-bezier(0.68, -0.6, 0.32, 1.6);
-    transform-origin: center;
-  }
-
-  @media (max-width: 767px) {
-    .brush-toggle { display: flex; align-items: center; justify-content: center; }
-
-    .site-nav__links { display: none; }
-  }
-
-  /* ── Canvas Menu Overlay ──────────────────────────────────── */
-  .canvas-menu {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    pointer-events: none;
-    visibility: hidden;
-  }
-
-  .canvas-menu.is-open {
-    pointer-events: auto;
-    visibility: visible;
-  }
-
-  /* Hintergrund */
-  .canvas-menu__bg {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse at 20% 20%, rgba(207, 168, 116, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(217, 108, 74, 0.1) 0%, transparent 50%),
-      linear-gradient(145deg, #3a2c28 0%, #423430 35%, #4a3835 65%, #3d302c 100%);
-    opacity: 0;
-    transition: opacity 0.45s ease;
-  }
-
-  .canvas-menu.is-open .canvas-menu__bg { opacity: 1; }
-
-  /* Content Container */
-  .canvas-menu__content {
-    position: relative;
-    height: 100%;
+  .brand__txt {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 5rem 2rem 3rem;
-    overflow-y: auto;
-  }
-
-  /* Schließen Button */
-  .canvas-menu__close {
-    position: absolute;
-    top: 14px;
-    right: 16px;
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    transition: all 0.25s ease;
-    z-index: 5;
-    opacity: 0;
-    transform: rotate(-90deg) scale(0.5);
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .canvas-menu.is-open .canvas-menu__close {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-    transition-delay: 0.3s;
-  }
-
-  .canvas-menu__close:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  /* Dekorative Keramik-Kreise (wie Tonscheiben / Farbkleckse) */
-  .canvas-menu__deco {
-    position: absolute;
-    border-radius: 50%;
-    opacity: 0;
-    transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .canvas-menu__deco--1 {
-    width: 280px;
-    height: 280px;
-    top: -60px;
-    right: -80px;
-    background: radial-gradient(circle, rgba(207, 168, 116, 0.12) 0%, transparent 70%);
-    transform: scale(0.3);
-  }
-
-  .canvas-menu__deco--2 {
-    width: 200px;
-    height: 200px;
-    bottom: 10%;
-    left: -50px;
-    background: radial-gradient(circle, rgba(217, 108, 74, 0.1) 0%, transparent 70%);
-    transform: scale(0.3);
-  }
-
-  .canvas-menu__deco--3 {
-    width: 120px;
-    height: 120px;
-    top: 40%;
-    right: 8%;
-    background: radial-gradient(circle, rgba(242, 235, 229, 0.06) 0%, transparent 70%);
-    transform: scale(0.3);
-  }
-
-  .canvas-menu.is-open .canvas-menu__deco {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  .canvas-menu.is-open .canvas-menu__deco--1 { transition-delay: 0.15s; }
-  .canvas-menu.is-open .canvas-menu__deco--2 { transition-delay: 0.25s; }
-  .canvas-menu.is-open .canvas-menu__deco--3 { transition-delay: 0.35s; }
-
-  /* Brand im Menü */
-  .canvas-menu__brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 2.5rem;
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .canvas-menu.is-open .canvas-menu__brand {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.1s;
-  }
-
-  .canvas-menu__brand-script {
-    font-family: var(--font-script, 'Dancing Script', cursive);
-    font-size: 1.1rem;
-    color: var(--accent-caramel, #CFA874);
-    letter-spacing: 0.05em;
     line-height: 1;
   }
 
-  .canvas-menu__brand-serif {
-    font-family: var(--font-serif, 'Cinzel', serif);
-    font-size: 1.6rem;
-    color: rgba(255, 255, 255, 0.92);
-    font-weight: 400;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    line-height: 1.2;
-  }
-
-  /* Navigation Links */
-  .canvas-menu__nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    width: 100%;
-    max-width: 320px;
-  }
-
-  .canvas-menu__link {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 4px;
-    text-decoration: none;
-    color: rgba(255, 255, 255, 0.85);
-    position: relative;
-    opacity: 0;
-    transform: translateX(-30px);
-    transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-    transition-delay: calc(0.15s + var(--i, 0) * 0.06s);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  .canvas-menu__link:last-child { border-bottom: none; }
-
-  .canvas-menu.is-open .canvas-menu__link {
-    opacity: 1;
-    transform: translateX(0);
-  }
-
-  .canvas-menu__link-accent {
-    width: 24px;
-    height: 3px;
-    border-radius: 2px;
-    background: var(--accent-terra, #D96C4A);
-    flex-shrink: 0;
-    transition: width 0.2s ease;
-  }
-
-  .canvas-menu__link-text {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: 1.15rem;
-    font-weight: 400;
-    letter-spacing: 0.02em;
-    transition: all 0.2s ease;
-  }
-
-  .canvas-menu__link:hover .canvas-menu__link-text {
-    color: #fff;
-    transform: translateX(4px);
-  }
-
-  .canvas-menu__link:hover .canvas-menu__link-accent {
-    width: 36px;
-  }
-
-  .canvas-menu__link:active .canvas-menu__link-text {
-    transform: translateX(2px);
-  }
-
-  /* Footer im Menü */
-  .canvas-menu__footer {
-    margin-top: 2.5rem;
-    text-align: center;
-    opacity: 0;
-    transform: translateY(15px);
-    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .canvas-menu.is-open .canvas-menu__footer {
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0.55s;
-  }
-
-  .canvas-menu__footer p {
-    font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.35);
-    line-height: 1.7;
-    margin: 0;
-    letter-spacing: 0.02em;
-  }
-
-  /* ── Desktop: Canvas Menu versteckt ──────────────────────── */
-  @media (min-width: 768px) {
-    .canvas-menu { display: none; }
-  }
-
-  .footer {
-    background-color: var(--brand-espresso, #423430);
-    color: var(--color-off-white);
-    padding: var(--space-8, 3rem) var(--gutter);
-  }
-
-  .footer__container {
-    max-width: var(--max-width);
-    margin: 0 auto;
-  }
-
-  .footer__grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-6, 2rem);
-    margin-bottom: var(--space-6, 2rem);
-  }
-
-  .footer__col p {
-    font-size: 0.875rem;
-    line-height: 1.6;
-    margin: 0 0 0.35rem;
-    opacity: 0.8;
-  }
-
-  .footer__col a {
-    color: var(--color-off-white);
-    text-decoration: none;
-    transition: opacity 0.15s ease;
-  }
-
-  .footer__col a:hover {
-    opacity: 0.7;
-    text-decoration: underline;
-  }
-
-  .footer__heading {
+  .brand__txt b {
     font-family: var(--font-serif);
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin: 0 0 0.75rem;
-    color: var(--accent-caramel, #CFA874);
-    letter-spacing: 0.03em;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.5rem;
+    color: var(--ink);
   }
 
-  .footer__heading--social {
-    margin-top: 1.25rem;
+  .brand__txt small {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--meta);
+    margin-top: 0.25rem;
   }
 
-  .footer__nav {
+  /* ── Nav links ────────────────────────────── */
+  .nav ul {
     list-style: none;
-    margin: 0;
+    display: flex;
+    gap: 1.4rem;
+    margin-left: auto;
+    align-items: center;
     padding: 0;
   }
 
-  .footer__nav li {
-    margin-bottom: 0.35rem;
+  .nav a.lnk {
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink-2);
+    padding-bottom: 3px;
+    border-bottom: 2px solid transparent;
+    transition: color 180ms, border-color 180ms;
+    white-space: nowrap;
   }
 
-  .footer__nav a {
-    font-size: 0.875rem;
-    opacity: 0.8;
+  .nav a.lnk:hover {
+    color: var(--ink);
+    border-color: var(--terra);
   }
 
-  .footer__social {
+  .nav .btn {
+    padding: 0.6rem 1.3rem;
+    font-size: 0.92rem;
+    white-space: nowrap;
+  }
+
+  /* Hide nav text links at narrow widths; burger takes over */
+  @media (max-width: 880px) {
+    .nav ul li.hide-m {
+      display: none;
+    }
+  }
+
+  /* ── Footer ───────────────────────────────── */
+  footer {
+    background: #2E241D;
+    color: #CDBaa9;
+    font-size: 0.9rem;
+    margin-top: var(--section);
+  }
+
+  footer .wrap {
+    padding: 3.5rem var(--gutter) 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+  }
+
+  footer h4 {
+    font-family: var(--font-serif);
+    color: #F7F1EA;
+    font-weight: 500;
+    font-size: 1.05rem;
+    margin-bottom: 0.8rem;
+  }
+
+  footer a {
+    color: #CDBaa9;
+    text-decoration: none;
+  }
+
+  footer a:hover {
+    color: #fff;
+  }
+
+  .brand-f {
     display: flex;
-    gap: 1rem;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
   }
 
-  .footer__social a {
-    font-size: 0.875rem;
-    opacity: 0.8;
+  .brand-f img {
+    height: 50px;
+    width: auto;
   }
 
-  .footer__copyright {
-    font-size: 0.8rem;
-    opacity: 0.5;
+  .brand-f b {
+    font-family: var(--font-serif);
+    font-style: italic;
+    color: #F7F1EA;
+    font-size: 1.6rem;
+  }
+
+  footer ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0;
     margin: 0;
+  }
+
+  footer p {
+    line-height: 1.6;
+    color: #CDBaa9;
+    margin: 0;
+  }
+
+  .footer-bar {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
-    padding-top: var(--space-4, 1.5rem);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.2rem;
+    font-size: 0.8rem;
+    color: #9c8a7c;
   }
 
-  /* Footer mobile: stack columns */
-  @media (max-width: 639px) {
-    .footer__grid {
-      grid-template-columns: 1fr;
-      gap: var(--space-4, 1.5rem);
-    }
+  .footer-bar a {
+    color: #9c8a7c;
   }
 
-  @media (min-width: 640px) and (max-width: 767px) {
-    .footer__grid {
-      grid-template-columns: 1fr 1fr;
-    }
+  .footer-bar a:hover {
+    color: #fff;
   }
 </style>
