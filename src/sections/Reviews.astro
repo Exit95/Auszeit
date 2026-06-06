@@ -10,11 +10,11 @@ const fallbackReviews = [
   },
   {
     name: "Helene",
-    comment: "Irena erklaert alles mit viel Geduld, Witz und Herz. Ein wunderbarer Ort, um eine kleine Auszeit vom Alltag zu nehmen.",
+    comment: "Irena erklärt alles mit viel Geduld, Witz und Herz. Ein wunderbarer Ort, um eine kleine Auszeit vom Alltag zu nehmen.",
   },
   {
     name: "Linda",
-    comment: "Kreativ sein hat uns sehr gut getan. Schoen, dass es Anlaufstellen gibt zum Entspannen. Preis-Leistung ist super.",
+    comment: "Kreativ sein hat uns sehr gut getan. Schön, dass es Anlaufstellen gibt zum Entspannen. Preis-Leistung ist super.",
   },
 ];
 
@@ -63,13 +63,13 @@ try {
   <div class="wrap">
     <div class="head">
       <span class="eyebrow">Bewertungen</span>
-      <h2>Was Gaeste ueber uns sagen</h2>
+      <h2>Was Gäste über uns sagen</h2>
       <Brush />
     </div>
     <div class="rev-grid">
       {reviews.map((r) => (
         <blockquote class="rev">
-          <Stars label="Fuenf von fuenf Sternen" />
+          <Stars label="Fünf von fünf Sternen" />
           <p>„{r.comment}"</p>
           <cite>{r.name} · Google</cite>
         </blockquote>
