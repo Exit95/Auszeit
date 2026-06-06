@@ -1,0 +1,62 @@
+---
+import Photo from '../components/Photo.astro';
+import Brush from '../components/Brush.astro';
+---
+
+<section class="blk soft" id="galerie">
+  <div class="wrap">
+    <div class="head center">
+      <span class="eyebrow">Galerie</span>
+      <h2>Was bei uns entsteht</h2>
+      <Brush />
+      <p class="lead">Lass dich inspirieren von Stuecken, die unsere Gaeste gestaltet haben.</p>
+    </div>
+    <div class="gallery-row">
+      <Photo src="/fotos/sh-stag.jpg" alt="Teller mit Hirschmotiv" />
+      <Photo src="/fotos/sh-bee.jpg" alt="Krug mit Bienen" />
+      <Photo src="/fotos/sh-cookie.jpg" alt="Schale mit Kruemelmonster" />
+      <Photo src="/fotos/sh-lion.jpg" alt="Kinderteller mit Loewe" />
+      <Photo src="/fotos/sh-amore.jpg" alt="Herztablett Amore" />
+    </div>
+    <p class="gallery-link">
+      <a class="link-ul" href="/galerie">Zur ganzen Galerie</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .gallery-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 2.5rem;
+  }
+
+  .gallery-row img {
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-card);
+  }
+
+  .gallery-row img:first-child {
+    grid-row: span 2;
+    aspect-ratio: auto;
+    height: 100%;
+  }
+
+  @media (max-width: 680px) {
+    .gallery-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gallery-row img:first-child {
+      grid-row: auto;
+      aspect-ratio: 1;
+    }
+  }
+
+  .gallery-link {
+    margin-top: 1.8rem;
+  }
+</style>
