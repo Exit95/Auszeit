@@ -27,12 +27,17 @@ body {
 }
 
 img,
-picture,
 video,
 canvas,
 svg {
   display: block;
   max-width: 100%;
+}
+
+/* <picture> transparent halten, damit das innere <img> direktes Grid-/Flex-Item
+   bleibt und alle `.container img`-Layoutregeln greifen (AVIF/WebP via Photo.astro). */
+picture {
+  display: contents;
 }
 
 input,
