@@ -5,18 +5,16 @@ import Brush from '../components/Brush.astro';
 
 <section class="blk" id="angebot">
   <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Angebot und Preise</span>
+      <h2>Transparent, ohne&nbsp;Überraschungen</h2>
+      <Brush />
+    </div>
     <div class="price-split">
-      <div class="price-left">
-        <div class="head">
-          <span class="eyebrow">Angebot und Preise</span>
-          <h2>Transparent, ohne&nbsp;Überraschungen</h2>
-          <Brush />
-        </div>
-        <div class="price-photos">
+      <div class="price-photos">
         <Photo src="/fotos/sh-tiles.jpg" alt="Bemalte Keramikkacheln mit verschiedenen Motiven" />
         <Photo src="/fotos/sh-dachs.jpg" alt="Schale mit Dackelmotiv" />
         <Photo src="/fotos/sh-vase.jpg" alt="Handbemalte Vase mit Sprenkeln" />
-        </div>
       </div>
       <div class="price-card">
         <h3>Rohlinge</h3>
@@ -46,7 +44,7 @@ import Brush from '../components/Brush.astro';
     display: grid;
     grid-template-columns: 1fr;
     gap: 2.5rem;
-    align-items: start;
+    align-items: center;
   }
 
   @media (min-width: 820px) {
@@ -55,14 +53,9 @@ import Brush from '../components/Brush.astro';
     }
   }
 
-  .price-left {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  .head h2 {
-    hyphens: none;
+  .head {
+    margin-bottom: 2.5rem;
+    text-align: center;
   }
 
   .price-photos {
