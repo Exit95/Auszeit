@@ -1,33 +1,36 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
+import Button from '../components/Button.astro';
+import Brush from '../components/Brush.astro';
 ---
-<MainLayout title="Seite nicht gefunden. Malatelier Auszeit" description="Diese Seite wurde nicht gefunden. Finde hier den Weg zurück zur Startseite.">
-  <section class="not-found">
+<MainLayout
+  title="Seite nicht gefunden — Malatelier Auszeit"
+  description="Diese Seite wurde nicht gefunden. Hier findest du den Weg zurück zur Startseite."
+>
+  <div class="not-found">
     <div class="not-found__inner">
-      <p class="not-found__eyebrow">404</p>
-      <h1 class="not-found__headline">Diese Seite ist uns<br>leider zerbrochen</h1>
-      <p class="not-found__sub">Manchmal passiert das auch beim Töpfern. aber wir helfen dir gerne weiter.</p>
-
-      <a href="/" class="not-found__cta">Zur Startseite</a>
-
-      <p class="not-found__nav-label">Oder schau direkt hier vorbei:</p>
-      <nav class="not-found__links" aria-label="Weitere Seiten">
-        <a href="/galerie">Galerie</a>
-        <a href="/#termin-buchen">Termin buchen</a>
-        <a href="/#kontakt">Kontakt</a>
-      </nav>
+      <span class="eyebrow">404</span>
+      <h1>Hier ist leider nichts</h1>
+      <Brush />
+      <p class="lead">
+        Die Seite, die du suchst, existiert nicht oder wurde verschoben.
+        Aber dein nächstes Keramik-Erlebnis ist nur einen Klick entfernt.
+      </p>
+      <div class="not-found__actions">
+        <Button href="/">Zur Startseite</Button>
+        <a href="/#buchen" class="link-ul">Termin buchen</a>
+      </div>
     </div>
-  </section>
+  </div>
 </MainLayout>
 
 <style>
   .not-found {
-    min-height: 100vh;
+    min-height: 70vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-linen, #EDE4DA);
-    padding: 5rem 1.5rem;
+    padding: clamp(4rem, 10vw, 7rem) var(--gutter);
   }
 
   .not-found__inner {
@@ -35,96 +38,44 @@ import MainLayout from '../layouts/MainLayout.astro';
     flex-direction: column;
     align-items: center;
     text-align: center;
-    max-width: 560px;
+    max-width: 520px;
   }
 
-  .not-found__eyebrow {
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: clamp(5rem, 18vw, 9rem);
+  .not-found__inner .eyebrow {
+    font-size: clamp(4rem, 16vw, 8rem);
+    font-family: var(--font-serif);
     font-weight: 700;
     line-height: 1;
-    color: var(--accent-terra, #D96C4A);
+    color: var(--terra);
     opacity: 0.18;
-    margin: 0 0 -0.5rem;
     letter-spacing: -0.04em;
     user-select: none;
     pointer-events: none;
+    margin-bottom: -0.3em;
   }
 
-  .not-found__headline {
-    font-family: var(--font-serif, 'Lora', Georgia, serif);
-    font-size: clamp(1.6rem, 4.5vw, 2.6rem);
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--brand-espresso, #423430);
-    margin: 0 0 1rem;
+  .not-found__inner h1 {
+    font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+    margin: 0.6rem 0 0;
   }
 
-  .not-found__sub {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: 1.1rem;
-    line-height: 1.6;
-    color: var(--color-sienna, #A0522D);
-    margin: 0 0 2.25rem;
-    max-width: 420px;
+  .not-found__inner .brush {
+    margin-inline: auto;
+    margin-bottom: 0;
   }
 
-  .not-found__cta {
-    display: inline-block;
-    padding: 0.85rem 2.5rem;
-    border-radius: 999px;
-    background: var(--accent-terra, #D96C4A);
-    color: #fff;
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: 1.05rem;
-    font-weight: 700;
-    text-decoration: none;
-    letter-spacing: 0.01em;
-    transition: background 0.2s, transform 0.15s;
-    margin-bottom: 2.5rem;
-    box-shadow: 0 4px 18px rgba(217, 108, 74, 0.25);
+  .not-found__inner .lead {
+    margin-top: 1.25rem;
+    max-width: 42ch;
+    text-align: center;
   }
 
-  .not-found__cta:hover {
-    background: var(--brand-espresso, #423430);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 22px rgba(66, 52, 48, 0.22);
-  }
-
-  .not-found__nav-label {
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: 0.9rem;
-    color: var(--color-sienna, #A0522D);
-    opacity: 0.75;
-    margin: 0 0 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .not-found__links {
+  .not-found__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem;
+    gap: 1.25rem;
+    align-items: center;
     justify-content: center;
-  }
-
-  .not-found__links a {
-    display: inline-block;
-    padding: 0.55rem 1.4rem;
-    border-radius: 999px;
-    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
-    font-size: 0.92rem;
-    font-weight: 600;
-    text-decoration: none;
-    background: var(--bg-paper, #FAF7F2);
-    color: var(--brand-espresso, #423430);
-    border: 1.5px solid rgba(160, 82, 45, 0.25);
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
-  }
-
-  .not-found__links a:hover {
-    background: var(--accent-terra, #D96C4A);
-    border-color: var(--accent-terra, #D96C4A);
-    color: #fff;
+    margin-top: 2rem;
   }
 </style>
