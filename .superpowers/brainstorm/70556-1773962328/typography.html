@@ -1,0 +1,124 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Dancing+Script:wght@400;500;600&display=swap');
+
+  .type-demo {
+    padding: 28px;
+    background: #FAF7F2;
+    border-radius: 16px;
+    border: 1px solid rgba(66,52,48,0.08);
+    margin-top: 12px;
+  }
+  .type-demo h1 {
+    margin: 0 0 4px 0;
+    color: #423430;
+    line-height: 1.15;
+  }
+  .type-demo .subtitle-demo {
+    margin: 0 0 16px 0;
+    color: #A0522D;
+    font-size: 14px;
+  }
+  .type-demo .body-demo {
+    margin: 0;
+    color: #5D4E43;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .type-demo .sig {
+    margin: 16px 0 0 0;
+    color: #A0522D;
+  }
+  .type-demo .cta-demo {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 24px;
+    background: #D96C4A;
+    color: white;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .font-stack {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .font-stack span {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: rgba(66,52,48,0.06);
+    border-radius: 6px;
+    color: #5D4E43;
+  }
+</style>
+
+<h2>Typografie: 2 Fonts statt 3</h2>
+<p class="subtitle">Aktuell: Dancing Script + Cinzel + Inter = unruhig. Reduzieren auf eine starke Serif + eine klare Sans.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Lora + Source Sans 3</h3>
+      <p>Warm-humanistisch. Lora hat weiche Kurven wie Ton auf der Scheibe. Source Sans ist klar und freundlich.</p>
+      <div class="font-stack">
+        <span>Headlines: Lora 600/700</span>
+        <span>Body: Source Sans 3, 400/500</span>
+        <span>Signatur: Dancing Script (nur Irena)</span>
+      </div>
+      <div class="type-demo">
+        <h1 style="font-family:'Lora',serif;font-size:32px;font-weight:700;">Deine kreative Auszeit in Gronau</h1>
+        <p class="subtitle-demo" style="font-family:'Lora',serif;font-style:italic;font-weight:400;">Keramik bemalen, abschalten, Freude mitnehmen</p>
+        <p class="body-demo" style="font-family:'Source Sans 3',sans-serif;">Bei uns bemalst du hochwertige Keramik-Rohlinge mit deinem ganz eigenen Design. Ob Tasse, Teller oder Spardose — du entscheidest, wie dein Stück aussieht. Wir glasieren und brennen es für dich.</p>
+        <p class="sig" style="font-family:'Dancing Script',cursive;font-size:22px;">Irena</p>
+        <div class="cta-demo" style="font-family:'Source Sans 3',sans-serif;">Termin buchen</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Playfair Display + Source Sans 3</h3>
+      <p>Eleganter, kontrastreicher. Playfair hat mehr Dramatik in den Strichstärken. Etwas edler als Lora.</p>
+      <div class="font-stack">
+        <span>Headlines: Playfair Display 600/700</span>
+        <span>Body: Source Sans 3, 400/500</span>
+        <span>Signatur: Dancing Script (nur Irena)</span>
+      </div>
+      <div class="type-demo">
+        <h1 style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;">Deine kreative Auszeit in Gronau</h1>
+        <p class="subtitle-demo" style="font-family:'Playfair Display',serif;font-style:italic;font-weight:400;">Keramik bemalen, abschalten, Freude mitnehmen</p>
+        <p class="body-demo" style="font-family:'Source Sans 3',sans-serif;">Bei uns bemalst du hochwertige Keramik-Rohlinge mit deinem ganz eigenen Design. Ob Tasse, Teller oder Spardose — du entscheidest, wie dein Stück aussieht. Wir glasieren und brennen es für dich.</p>
+        <p class="sig" style="font-family:'Dancing Script',cursive;font-size:22px;">Irena</p>
+        <div class="cta-demo" style="font-family:'Source Sans 3',sans-serif;">Termin buchen</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Cormorant Garamond + Source Sans 3</h3>
+      <p>Feiner, leichter, literarisch. Cormorant hat eine fast handschriftliche Qualität in Italic. Weniger wuchtig als Playfair.</p>
+      <div class="font-stack">
+        <span>Headlines: Cormorant Garamond 500/600</span>
+        <span>Body: Source Sans 3, 400/500</span>
+        <span>Signatur: Dancing Script (nur Irena)</span>
+      </div>
+      <div class="type-demo">
+        <h1 style="font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;">Deine kreative Auszeit in Gronau</h1>
+        <p class="subtitle-demo" style="font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:16px;">Keramik bemalen, abschalten, Freude mitnehmen</p>
+        <p class="body-demo" style="font-family:'Source Sans 3',sans-serif;">Bei uns bemalst du hochwertige Keramik-Rohlinge mit deinem ganz eigenen Design. Ob Tasse, Teller oder Spardose — du entscheidest, wie dein Stück aussieht. Wir glasieren und brennen es für dich.</p>
+        <p class="sig" style="font-family:'Dancing Script',cursive;font-size:22px;">Irena</p>
+        <div class="cta-demo" style="font-family:'Source Sans 3',sans-serif;">Termin buchen</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:32px;padding:20px;background:linear-gradient(135deg,rgba(160,82,45,0.06),rgba(207,168,116,0.06));border-radius:16px;border:1px solid rgba(0,0,0,0.06);">
+  <h3 style="margin-top:0;">Meine Empfehlung: A (Lora)</h3>
+  <p style="margin:8px 0 0 0;"><strong>Lora</strong> trifft den Ton am besten — warm, einladend, weiche Kurven die an Keramik erinnern, ohne zu edel oder zu literarisch zu wirken. Playfair (B) ist wunderschön, könnte aber "zu elegant" für eine Werkstatt sein. Cormorant (C) ist zu fein und zerbrechlich für eine Marke, die Haptik transportieren will. Dancing Script bleibt als Signatur-Element nur für Irenas persönliche Note.</p>
+</div>

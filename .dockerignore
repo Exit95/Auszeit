@@ -5,4 +5,8 @@ dist
 *.md
 .env
 .env.*
+.claude/
+.vscode/
+deployment.md
+DEPLOYMENT.md
 

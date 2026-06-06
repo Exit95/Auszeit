@@ -3,10 +3,118 @@
  * Combines session management, rate limiting, and audit logging
  */
 
+import { randomBytes, createHash, timingSafeEqual } from 'crypto';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from './rate-limit';
 import { createSession, getSession, destroySession, sessionCookieHeader, getSessionIdFromCookie, validateSessionBinding, logoutCookieHeader } from './session';
 import { generateCsrfToken, csrfCookieHeader } from './csrf';
 import { logAuditEvent } from './audit-log';
+
+// ========== DEVICE TRUST (Remember 2FA) ==========
+
+interface TrustedDevice {
+  token: string;
+  username: string;
+  fingerprint: string; // hash of IP + UserAgent
+  createdAt: number;
+}
+
+const trustedDevices = new Map<string, TrustedDevice>();
+const DEVICE_TRUST_VALIDITY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const DEVICE_TRUST_COOKIE_NAME = 'device_trust';
+
+// Clean up expired trust tokens every hour
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, device] of trustedDevices.entries()) {
+    if (now - device.createdAt > DEVICE_TRUST_VALIDITY_MS) {
+      trustedDevices.delete(token);
+    }
+  }
+}, 60 * 60 * 1000);
+
+function deviceFingerprint(ipAddress: string, userAgent: string): string {
+  return createHash('sha256').update(`${ipAddress}|${userAgent}`).digest('hex');
+}
+
+/**
+ * Create a device trust token after successful 2FA
+ */
+export function createDeviceTrust(username: string, ipAddress: string, userAgent: string): string {
+  const token = randomBytes(32).toString('hex');
+  const fingerprint = deviceFingerprint(ipAddress, userAgent);
+
+  trustedDevices.set(token, {
+    token,
+    username,
+    fingerprint,
+    createdAt: Date.now(),
+  });
+
+  return token;
+}
+
+/**
+ * Check if a device is trusted (skip 2FA)
+ */
+export function isDeviceTrusted(request: Request): boolean {
+  const cookieHeader = request.headers.get('Cookie');
+  if (!cookieHeader) return false;
+
+  const match = cookieHeader.match(new RegExp(`${DEVICE_TRUST_COOKIE_NAME}=([^;]+)`));
+  if (!match) return false;
+
+  const token = match[1];
+  const device = trustedDevices.get(token);
+  if (!device) return false;
+
+  // Check expiry
+  if (Date.now() - device.createdAt > DEVICE_TRUST_VALIDITY_MS) {
+    trustedDevices.delete(token);
+    return false;
+  }
+
+  // Validate fingerprint
+  const ipAddress = getClientIdentifier(request);
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  const fp = deviceFingerprint(ipAddress, userAgent);
+
+  if (device.fingerprint !== fp) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Get trusted device username from cookie
+ */
+export function getTrustedDeviceUsername(request: Request): string | null {
+  const cookieHeader = request.headers.get('Cookie');
+  if (!cookieHeader) return null;
+
+  const match = cookieHeader.match(new RegExp(`${DEVICE_TRUST_COOKIE_NAME}=([^;]+)`));
+  if (!match) return null;
+
+  const device = trustedDevices.get(match[1]);
+  return device ? device.username : null;
+}
+
+/**
+ * Create device trust cookie header
+ */
+export function deviceTrustCookieHeader(token: string, isSecure: boolean = true): string {
+  const maxAge = Math.floor(DEVICE_TRUST_VALIDITY_MS / 1000);
+  const secureFlag = isSecure ? '; Secure' : '';
+  const sameSite = isSecure ? 'Strict' : 'Lax';
+  return `${DEVICE_TRUST_COOKIE_NAME}=${token}; Path=/; HttpOnly${secureFlag}; SameSite=${sameSite}; Max-Age=${maxAge}`;
+}
+
+/**
+ * Remove device trust cookie header
+ */
+export function clearDeviceTrustCookieHeader(): string {
+  return `${DEVICE_TRUST_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`;
+}
 
 /**
  * Get admin password from environment
@@ -22,7 +130,7 @@ export function validateBasicAuth(request: Request): { valid: boolean; username?
   const authHeader = request.headers.get('Authorization');
   const adminPassword = getAdminPassword();
 
-  if (!authHeader) return { valid: false };
+  if (!authHeader || !adminPassword) return { valid: false };
 
   const [type, credentials] = authHeader.split(' ');
   if (type !== 'Basic' || !credentials) return { valid: false };
@@ -31,8 +139,13 @@ export function validateBasicAuth(request: Request): { valid: boolean; username?
     const decoded = Buffer.from(credentials, 'base64').toString();
     const [username, password] = decoded.split(':');
 
-    if (username === 'admin' && password === adminPassword) {
-      return { valid: true, username };
+    if (username === 'admin' && password !== undefined) {
+      // Timing-safe equal: gleiche Laenge via SHA-256-Digest erzwingen
+      const a = createHash('sha256').update(password).digest();
+      const b = createHash('sha256').update(adminPassword).digest();
+      if (timingSafeEqual(a, b)) {
+        return { valid: true, username };
+      }
     }
   } catch {
     // Invalid base64

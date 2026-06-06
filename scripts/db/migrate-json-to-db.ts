@@ -15,24 +15,26 @@
  *   - Protokollierung: Jeder Lauf wird in migration_runs gespeichert
  */
 
-import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+
+// ESM-kompatible __dirname Alternative
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // .env laden bevor DB-Module importiert werden
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
-import { getPool, execute, query, withTransaction, closePool } from '../../src/lib/database';
+import { getPool, execute, query, withTransaction, closePool } from '../../src/lib/database.js';
 import {
   dbSaveTimeSlot, dbSaveBooking, dbSaveWorkshop,
   dbSaveReview, dbSaveVoucher, dbSaveCategory, dbSaveImageMetadata,
-} from '../../src/lib/db-storage';
-import type { TimeSlot, Booking, Workshop, GalleryCategory, ImageMetadata } from '../../src/lib/storage';
-import type { Voucher } from '../../src/lib/voucher-storage';
-
-const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
-const SERVER_DATA = path.join(PROJECT_ROOT, 'server-data');
-const DATA_DIR = path.join(PROJECT_ROOT, 'data');
+  toDbDatetime,
+} from '../../src/lib/db-storage.js';
+import { readJsonFromS3, isS3Configured } from '../../src/lib/s3-storage.js';
+import type { TimeSlot, Booking, Workshop, GalleryCategory, ImageMetadata } from '../../src/lib/storage.js';
+import type { Voucher } from '../../src/lib/voucher-storage.js';
 
 // ─── CLI-Argumente ──────────────────────────────────────────────────────────
 
@@ -42,19 +44,18 @@ const ONLY = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 
 // ─── Hilfsfunktionen ────────────────────────────────────────────────────────
 
-function loadJson<T>(filename: string): T {
-  // Erst server-data, dann data
-  const serverPath = path.join(SERVER_DATA, filename);
-  const dataPath = path.join(DATA_DIR, filename);
-
-  if (fs.existsSync(serverPath)) {
-    return JSON.parse(fs.readFileSync(serverPath, 'utf-8'));
+async function loadJson<T>(filename: string): Promise<T> {
+  if (!isS3Configured()) {
+    console.log(`  ⚠ S3 nicht konfiguriert – kann ${filename} nicht laden.`);
+    return [] as unknown as T;
   }
-  if (fs.existsSync(dataPath)) {
-    return JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+  try {
+    const data = await readJsonFromS3<T>(filename, [] as unknown as T);
+    return data;
+  } catch (err: any) {
+    console.log(`  ⚠ Fehler beim Laden von ${filename} aus S3: ${err.message}`);
+    return [] as unknown as T;
   }
-  console.log(`  ⚠ Datei nicht gefunden: ${filename} – überspringe.`);
-  return [] as unknown as T;
 }
 
 interface MigrationStats {
@@ -122,19 +123,19 @@ async function main() {
   try {
     // 1. Time Slots
     if (shouldMigrate('slots')) {
-      const slots = loadJson<TimeSlot[]>('time-slots.json');
+      const slots = await loadJson<TimeSlot[]>('time-slots.json');
       allStats.push(await migrateEntity('TimeSlots', slots, dbSaveTimeSlot));
     }
 
     // 2. Bookings
     if (shouldMigrate('bookings')) {
-      const bookings = loadJson<Booking[]>('bookings.json');
+      const bookings = await loadJson<Booking[]>('bookings.json');
       allStats.push(await migrateEntity('Bookings', bookings, dbSaveBooking));
     }
 
     // 4. Workshop-Bookings (gleiche Struktur wie Bookings, separate Datei)
     if (shouldMigrate('workshop-bookings')) {
-      const wbookings = loadJson<any[]>('workshop-bookings.json');
+      const wbookings = await loadJson<any[]>('workshop-bookings.json');
       if (wbookings.length > 0) {
         allStats.push(await migrateEntity('WorkshopBookings', wbookings, async (wb: any) => {
           await execute(
@@ -145,7 +146,7 @@ async function main() {
                booking_status = VALUES(booking_status), updated_at = NOW()`,
             [wb.id, wb.workshopId, wb.name, wb.email, wb.phone || null,
              wb.participants || 1, wb.notes || null, wb.status || 'pending',
-             JSON.stringify(wb), wb.createdAt]
+             JSON.stringify(wb), toDbDatetime(wb.createdAt) || new Date().toISOString().slice(0, 19).replace('T', ' ')]
           );
         }));
       } else {
@@ -155,7 +156,7 @@ async function main() {
 
     // 5. Reviews
     if (shouldMigrate('reviews')) {
-      const reviews = loadJson<any[]>('reviews.json');
+      const reviews = await loadJson<any[]>('reviews.json');
       allStats.push(await migrateEntity('Reviews', reviews, (r) => dbSaveReview({
         id: r.id, name: r.name, rating: r.rating,
         comment: r.comment, date: r.date, approved: r.approved,
@@ -164,19 +165,19 @@ async function main() {
 
     // 6. Vouchers
     if (shouldMigrate('vouchers')) {
-      const vouchers = loadJson<Voucher[]>('vouchers.json');
+      const vouchers = await loadJson<Voucher[]>('vouchers.json');
       allStats.push(await migrateEntity('Vouchers', vouchers, dbSaveVoucher));
     }
 
     // 7. Gallery Categories
     if (shouldMigrate('categories')) {
-      const cats = loadJson<GalleryCategory[]>('gallery-categories.json');
+      const cats = await loadJson<GalleryCategory[]>('gallery-categories.json');
       allStats.push(await migrateEntity('GalleryCategories', cats, dbSaveCategory));
     }
 
     // 8. Image Metadata
     if (shouldMigrate('images')) {
-      const imgs = loadJson<ImageMetadata[]>('image-metadata.json');
+      const imgs = await loadJson<ImageMetadata[]>('image-metadata.json');
       allStats.push(await migrateEntity('ImageMetadata', imgs, dbSaveImageMetadata));
     }
 

@@ -1,0 +1,228 @@
+<style>
+  .structure-box {
+    background: #FAF7F2;
+    border-radius: 16px;
+    border: 1px solid rgba(66,52,48,0.08);
+    padding: 24px;
+    margin-top: 12px;
+  }
+  .page-card {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(66,52,48,0.06);
+    align-items: flex-start;
+  }
+  .page-card:last-child { margin-bottom: 0; }
+  .page-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(160,82,45,0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .page-info h4 { margin: 0 0 4px 0; color: #423430; font-size: 15px; }
+  .page-info p { margin: 0; color: #5D4E43; font-size: 13px; line-height: 1.5; }
+  .section-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(217,108,74,0.1);
+    color: #D96C4A;
+    border-radius: 4px;
+    margin: 4px 4px 0 0;
+  }
+  .vs-label {
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+    margin: 16px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 16px;
+  }
+  @media (max-width: 700px) {
+    .comparison { grid-template-columns: 1fr; }
+  }
+  .comp-side h3 { margin: 0 0 12px 0; font-size: 16px; }
+  .current-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(0,0,0,0.06);
+    color: #888;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+  .new-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    background: rgba(217,108,74,0.12);
+    color: #D96C4A;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+</style>
+
+<h2>Seitenstruktur: Mein Vorschlag</h2>
+<p class="subtitle">Von 13 Sektionen auf einer Seite → fokussierte Startseite + eigene Unterseiten</p>
+
+<div class="comparison">
+  <div class="comp-side">
+    <h3>Aktuell <span class="current-tag">IST</span></h3>
+    <div style="background:rgba(0,0,0,0.03);border-radius:12px;padding:16px;">
+      <p style="margin:0 0 8px 0;font-size:13px;color:#888;">Eine Seite, 13 Sektionen:</p>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        <span class="section-tag">Hero</span>
+        <span class="section-tag">Angebote</span>
+        <span class="section-tag">Vertrauen</span>
+        <span class="section-tag">Prozess</span>
+        <span class="section-tag">Buchung</span>
+        <span class="section-tag">Anfragen</span>
+        <span class="section-tag">Workshops</span>
+        <span class="section-tag">Galerie</span>
+        <span class="section-tag">Gutscheine</span>
+        <span class="section-tag">Bewertungen</span>
+        <span class="section-tag">FAQ</span>
+        <span class="section-tag">Kontakt</span>
+        <span class="section-tag">Profil</span>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:rgba(185,74,72,0.08);border-radius:8px;">
+        <p style="margin:0;font-size:12px;color:#B94A48;">Problem: Hohe kognitive Last. Nutzer scrollen ewig. Kein klarer Conversion-Pfad. Sektionen konkurrieren um Aufmerksamkeit.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-side">
+    <h3>Vorschlag <span class="new-tag">NEU</span></h3>
+    <div style="background:rgba(160,82,45,0.04);border-radius:12px;padding:16px;">
+      <p style="margin:0 0 8px 0;font-size:13px;color:#A0522D;font-weight:500;">Hybrid: Emotionale Startseite + fokussierte Unterseiten</p>
+      <p style="margin:0;font-size:12px;color:#888;">Startseite als Appetitmacher, Details auf eigenen Seiten.</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:32px;">
+  <h3>Startseite <span style="font-weight:400;color:#888;font-size:14px;">— emotionaler Einstieg, schnell zur Aktion</span></h3>
+  <div class="structure-box">
+    <div class="page-card">
+      <div class="page-icon">🎨</div>
+      <div class="page-info">
+        <h4>1. Hero</h4>
+        <p>Großes Werkstatt-Foto, Headline, Subline, ein primärer CTA ("Termin buchen") + sekundärer ("Entdecke unsere Keramik"). Emotionaler Einstieg in 3 Sekunden.</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">✨</div>
+      <div class="page-info">
+        <h4>2. Was dich erwartet</h4>
+        <p>Kurzvorstellung der Angebote: Keramik bemalen, Workshops, Events, Gutscheine. Jedes mit Bild + kurzer Text + Link zur Unterseite. Kein Preislisten-Gefühl.</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">📝</div>
+      <div class="page-info">
+        <h4>3. So funktioniert's</h4>
+        <p>3 Schritte: Termin wählen → Keramik bemalen → Abholen. Simpel, vertrauensbildend.</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">📅</div>
+      <div class="page-info">
+        <h4>4. Termin buchen</h4>
+        <p>Buchungskalender direkt auf der Startseite. Primäres Conversion-Ziel.</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">⭐</div>
+      <div class="page-info">
+        <h4>5. Stimmen unserer Gäste</h4>
+        <p>2-3 Zitate, kompakt. Link zu mehr Bewertungen. Vertrauensaufbau vor Kontakt.</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">👩‍🎨</div>
+      <div class="page-info">
+        <h4>6. Über Irena</h4>
+        <p>Kurzes Profil mit Foto. Persönlich, nahbar. "Ich freue mich auf dich."</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">📍</div>
+      <div class="page-info">
+        <h4>7. Kontakt & Anfahrt</h4>
+        <p>Adresse, Öffnungszeiten, Karte, WhatsApp, Telefon. Footer-nah.</p>
+      </div>
+    </div>
+  </div>
+
+  <p style="margin:8px 0 0 12px;font-size:13px;color:#888;">→ 7 Sektionen statt 13. Jede hat einen klaren Zweck. Scroll-Dramaturgie: Emotion → Angebot → Vertrauen → Aktion → Mensch → Kontakt.</p>
+</div>
+
+<div style="margin-top:28px;">
+  <h3>Unterseiten <span style="font-weight:400;color:#888;font-size:14px;">— Tiefe für die, die mehr wollen</span></h3>
+  <div class="structure-box">
+    <div class="page-card">
+      <div class="page-icon">🖼️</div>
+      <div class="page-info">
+        <h4>/galerie</h4>
+        <p>Vollwertige Galerie mit Story-Modus, Kategorien, Vollbild-Lightbox. Hier werden die neuen Fotos zum Star. SEO-Vorteil: eigene URL für Bilder-Suche.</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">🎓</div>
+      <div class="page-info">
+        <h4>/workshops</h4>
+        <p>Alle Workshops mit Details, Preisen, Verfügbarkeit, Buchung. Eigene Seite = eigene SEO-Power ("Töpferkurs Gronau").</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">🎁</div>
+      <div class="page-info">
+        <h4>/gutscheine</h4>
+        <p>Gutschein-Kauf mit Stripe, schön inszeniert. Eigene Seite = verlinkbar für Geschenk-Anlässe.</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">🎉</div>
+      <div class="page-info">
+        <h4>/events</h4>
+        <p>JGA, Kindergeburtstage, Firmen-Events, besondere Anlässe. Anfrage-Formular. Zielgruppen-spezifische Ansprache.</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-icon">❓</div>
+      <div class="page-info">
+        <h4>/faq</h4>
+        <p>Häufige Fragen, ausführlich beantwortet. SEO für Long-Tail-Suchen ("Was kostet Keramik bemalen Gronau").</p>
+      </div>
+    </div>
+  </div>
+
+  <p style="margin:8px 0 0 12px;font-size:13px;color:#888;">→ Bestehende Seiten bleiben: /admin, /gutschein/einloesen/[code], /stornierung, /gutschein-erfolg</p>
+</div>
+
+<div style="margin-top:32px;padding:20px;background:linear-gradient(135deg,rgba(160,82,45,0.06),rgba(207,168,116,0.06));border-radius:16px;border:1px solid rgba(0,0,0,0.06);">
+  <h3 style="margin-top:0;">Warum diese Struktur?</h3>
+  <ul style="margin:8px 0 0 0;padding-left:20px;color:#5D4E43;font-size:14px;line-height:1.8;">
+    <li><strong>Conversion:</strong> Buchungskalender bleibt auf der Startseite — kürzester Weg zur Aktion</li>
+    <li><strong>Kognitive Last:</strong> 7 statt 13 Sektionen = schneller verstanden, weniger Scroll-Müdigkeit</li>
+    <li><strong>SEO:</strong> Eigene URLs für Galerie, Workshops, Events = mehr indexierbare Seiten, bessere Rankings</li>
+    <li><strong>Zielgruppen:</strong> /events spricht Gruppen direkt an, ohne die Startseite zu überladen</li>
+    <li><strong>Mobile:</strong> Kürzere Startseite = deutlich bessere mobile Experience</li>
+    <li><strong>Navigation:</strong> Klare Menüstruktur statt endlosem Scroll mit Anker-Links</li>
+  </ul>
+</div>

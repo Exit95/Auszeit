@@ -21,7 +21,7 @@ import type { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql
 // ─── Konfiguration ───────────────────────────────────────────────────────────
 
 function env(key: string, fallback: string = ''): string {
-  return process.env[key] || (import.meta as any)?.env?.[key] || fallback;
+  return process.env[key] || fallback;
 }
 
 export function isDbEnabled(): boolean {

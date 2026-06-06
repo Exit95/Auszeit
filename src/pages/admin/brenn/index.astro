@@ -1,0 +1,216 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Brenn-Dashboard" activeNav="dashboard">
+  <!-- KPI Kacheln -->
+  <div class="brenn-kpi-grid" id="kpi-grid">
+    <a href="/admin/brenn/auftraege/?status=WARTET_AUF_BRENNEN" class="brenn-kpi brenn-kpi--wartet">
+      <div class="brenn-kpi__value" id="kpi-wartet">–</div>
+      <div class="brenn-kpi__label">Wartet auf Brennen</div>
+    </a>
+    <a href="/admin/brenn/brennliste/?status=IM_BRENNOFEN" class="brenn-kpi brenn-kpi--ofen">
+      <div class="brenn-kpi__value" id="kpi-ofen">–</div>
+      <div class="brenn-kpi__label">Im Brennofen</div>
+    </a>
+    <a href="/admin/brenn/abholbereit/" class="brenn-kpi brenn-kpi--abholbereit">
+      <div class="brenn-kpi__value" id="kpi-abholbereit">–</div>
+      <div class="brenn-kpi__label">Abholbereit</div>
+    </a>
+    <div class="brenn-kpi brenn-kpi--ueberfaellig hidden" id="kpi-ueberfaellig-wrapper">
+      <div class="brenn-kpi__value" id="kpi-ueberfaellig">0</div>
+      <div class="brenn-kpi__label">Überfällig</div>
+    </div>
+    <a href="/admin/brenn/abgeholt/" class="brenn-kpi brenn-kpi--abgeholt">
+      <div class="brenn-kpi__value" id="kpi-abgeholt">–</div>
+      <div class="brenn-kpi__label">Heute abgeholt</div>
+    </a>
+    <div class="brenn-kpi brenn-kpi--problem hidden" id="kpi-probleme-wrapper">
+      <div class="brenn-kpi__value" id="kpi-probleme">0</div>
+      <div class="brenn-kpi__label">Probleme</div>
+    </div>
+  </div>
+
+  <!-- Operative Listen -->
+  <div class="brenn-dashboard-lists">
+    <!-- Nächste Schritte -->
+    <div class="brenn-card">
+      <h3>Nächste Schritte</h3>
+      <div id="next-steps-list" class="brenn-loading">Wird geladen…</div>
+    </div>
+
+    <!-- Abholbereit -->
+    <div class="brenn-card">
+      <h3>Abholbereit</h3>
+      <div id="abholbereit-list" class="brenn-loading">Wird geladen…</div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:1.5rem">
+    <a href="/admin/brenn/auftraege/neu/" class="brenn-btn brenn-btn--primary brenn-btn--large">Neuer Auftrag</a>
+  </div>
+
+  <!-- Statistiken -->
+  <div class="brenn-card" style="margin-top:1.5rem">
+    <h3>Statistiken</h3>
+    <div id="stats-section" class="brenn-loading">Wird geladen…</div>
+  </div>
+</BrennLayout>
+
+<script is:inline>
+  async function loadDashboard() {
+    try {
+      const data = await brennFetch('/api/admin/brenn/dashboard');
+      const d = data.data;
+      const c = d.counters;
+
+      document.getElementById('kpi-wartet').textContent = c.wartet_auf_brennen;
+      document.getElementById('kpi-ofen').textContent = c.im_brennofen;
+      document.getElementById('kpi-abholbereit').textContent = c.abholbereit;
+      document.getElementById('kpi-abgeholt').textContent = c.heute_abgeholt;
+
+      if (c.ueberfaellig > 0) {
+        document.getElementById('kpi-ueberfaellig').textContent = c.ueberfaellig;
+        document.getElementById('kpi-ueberfaellig-wrapper').classList.remove('hidden');
+      }
+      if (c.probleme > 0) {
+        document.getElementById('kpi-probleme').textContent = c.probleme;
+        document.getElementById('kpi-probleme-wrapper').classList.remove('hidden');
+      }
+
+      // Nächste Schritte
+      const nsEl = document.getElementById('next-steps-list');
+      if (d.next_steps.length === 0) {
+        nsEl.innerHTML = '<div class="brenn-empty-state"><p>Alles erledigt!</p></div>';
+      } else {
+        let html = '';
+        d.next_steps.forEach(o => {
+          const action = o.overall_status === 'ERFASST' ? 'Lagerort setzen' : 'Abholbereit machen';
+          html += '<div class="brenn-item-card">' +
+            '<div class="brenn-item-card__info">' +
+            '<div class="brenn-item-card__type"><a href="/admin/brenn/auftraege/' + o.id + '/">' + escapeHtml(o.reference_code) + '</a></div>' +
+            '<div class="brenn-item-card__desc">' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) + '</div>' +
+            '<div class="brenn-item-card__meta">' + statusBadgeHtml(o.overall_status) + '</div>' +
+            '</div>' +
+            '<div class="brenn-item-card__actions">' +
+            '<a href="/admin/brenn/auftraege/' + o.id + '/" class="brenn-btn brenn-btn--primary brenn-btn--small">' + action + '</a>' +
+            '</div></div>';
+        });
+        nsEl.innerHTML = html;
+      }
+
+      // Abholbereit-Liste
+      const abEl = document.getElementById('abholbereit-list');
+      if (d.abholbereit_list.length === 0) {
+        abEl.innerHTML = '<div class="brenn-empty-state"><p>Keine abholbereiten Aufträge</p></div>';
+      } else {
+        let html = '';
+        d.abholbereit_list.forEach(o => {
+          html += '<div class="brenn-item-card">' +
+            '<div class="brenn-item-card__info">' +
+            '<div class="brenn-item-card__type">' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) + '</div>' +
+            '<div class="brenn-item-card__desc"><a href="/admin/brenn/auftraege/' + o.id + '/">' + escapeHtml(o.reference_code) + '</a>' +
+            (o.items_summary ? ' · ' + escapeHtml(o.items_summary) : '') + '</div>' +
+            '<div class="brenn-item-card__meta">';
+          if (o.storage_code) html += '<span>' + escapeHtml(o.storage_code) + '</span>';
+          html += '</div></div>' +
+            '<div class="brenn-item-card__actions">' +
+            '<button class="brenn-btn brenn-btn--success brenn-btn--small" onclick="dashPickup(' + o.id + ',\'' + escapeHtml(o.reference_code) + '\',\'' + escapeHtml(o.first_name + ' ' + o.last_name) + '\')">Abgeholt</button>' +
+            '</div></div>';
+        });
+        abEl.innerHTML = html;
+      }
+    } catch(e) {
+      document.getElementById('next-steps-list').innerHTML = '<p style="color:#dc2626">Fehler beim Laden</p>';
+      document.getElementById('abholbereit-list').innerHTML = '';
+    }
+  }
+
+  async function dashPickup(orderId, refCode, customerName) {
+    const confirmed = await brennConfirm(
+      'Abholung: ' + refCode,
+      'Auftrag als abgeholt markieren?',
+      '<div class="brenn-form-group"><label>Abgeholt von</label>' +
+      '<input type="text" class="brenn-input" id="pickup-name" value="' + escapeHtml(customerName) + '" /></div>' +
+      '<div class="brenn-form-group"><label>Notiz (optional)</label>' +
+      '<input type="text" class="brenn-input" id="pickup-note" /></div>'
+    );
+    if (!confirmed) return;
+
+    const pickedUpBy = document.getElementById('pickup-name').value.trim();
+    if (!pickedUpBy) { brennToast('Name erforderlich', 'error'); return; }
+
+    try {
+      await brennFetch('/api/admin/brenn/orders/' + orderId + '/pickup', {
+        method: 'POST',
+        body: JSON.stringify({
+          picked_up_by: pickedUpBy,
+          pickup_note: document.getElementById('pickup-note').value.trim() || null
+        })
+      });
+      brennToast('Abholung erfolgreich');
+      loadDashboard();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  async function loadStats() {
+    const MONAT_NAMEN = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+    try {
+      const data = await brennFetch('/api/admin/brenn/stats');
+      const s = data.data;
+      let html = '';
+
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:0.75rem;margin-bottom:1.25rem">';
+      html += miniStat(s.gesamt.kunden, 'Kunden', '#A0522D');
+      html += miniStat(s.gesamt.auftraege, 'Aufträge', '#D96C4A');
+      html += miniStat(s.gesamt.werkstuecke, 'Werkstücke', '#B1735C');
+      html += miniStat(s.abholquote.quote_prozent + '%', 'Abholquote', s.abholquote.quote_prozent > 70 ? '#5CB85C' : '#E8833A');
+      html += '</div>';
+
+      if (s.auftraege_pro_monat.length > 0) {
+        html += '<h4 style="margin:0 0 0.5rem;color:#423430">Aufträge pro Monat</h4>';
+        const maxVal = Math.max(...s.auftraege_pro_monat.map(m => m.anzahl));
+        html += '<div style="display:flex;align-items:flex-end;gap:3px;height:100px;margin-bottom:1rem">';
+        s.auftraege_pro_monat.forEach(m => {
+          const pct = maxVal > 0 ? (m.anzahl / maxVal) * 100 : 0;
+          const parts = m.monat.split('-');
+          const label = MONAT_NAMEN[parseInt(parts[1]) - 1];
+          html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">';
+          html += '<div style="font-size:0.6875rem;font-weight:700;color:#423430">' + m.anzahl + '</div>';
+          html += '<div style="width:100%;max-width:32px;background:#D96C4A;border-radius:3px 3px 0 0;min-height:3px;height:' + pct + '%"></div>';
+          html += '<div style="font-size:0.5625rem;color:#9B8E88;margin-top:2px">' + label + '</div>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      if (s.beliebte_typen.length > 0) {
+        html += '<h4 style="margin:0 0 0.5rem;color:#423430">Beliebteste Keramik</h4>';
+        const maxT = s.beliebte_typen[0].anzahl;
+        s.beliebte_typen.slice(0, 5).forEach(t => {
+          const pct = maxT > 0 ? (t.anzahl / maxT) * 100 : 0;
+          html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
+          html += '<div style="width:80px;font-size:0.8125rem;color:#423430">' + escapeHtml(t.typ) + '</div>';
+          html += '<div style="flex:1;background:#EDE4DA;border-radius:4px;height:18px;overflow:hidden">';
+          html += '<div style="background:#B1735C;height:100%;width:' + pct + '%;border-radius:4px"></div></div>';
+          html += '<div style="width:30px;text-align:right;font-size:0.8125rem;font-weight:700;color:#423430">' + t.anzahl + '</div>';
+          html += '</div>';
+        });
+      }
+
+      document.getElementById('stats-section').innerHTML = html;
+    } catch(e) {
+      document.getElementById('stats-section').innerHTML = '<p style="color:#999">Statistiken nicht verfügbar</p>';
+    }
+  }
+
+  function miniStat(value, label, color) {
+    return '<div style="background:#fff;border-radius:8px;padding:1rem 0.75rem;text-align:center;border-top:3px solid ' + color + ';box-shadow:0 1px 4px rgba(66,52,48,0.06)">' +
+      '<div style="font-size:1.5rem;font-weight:700;color:' + color + '">' + value + '</div>' +
+      '<div style="font-size:0.75rem;color:#6B5D56">' + label + '</div></div>';
+  }
+
+  loadDashboard();
+  loadStats();
+</script>

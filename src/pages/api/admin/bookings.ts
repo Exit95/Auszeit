@@ -7,6 +7,9 @@ import { logAuditEvent } from '../../../lib/audit-log';
 import { validateCredentials } from '../../../lib/totp';
 import { createICalEvent } from '../../../lib/ical-helper';
 import { getCancelUrl } from '../../../lib/cancel-token';
+import { bookingConfirmedCustomerHtml } from '../../../lib/email-templates';
+import { notifyBookingCancelled } from '../../../lib/push-notifications';
+import { syncBookingToBrenn } from '../../../lib/server/brenn/booking-sync';
 
 // Authentifizierung - akzeptiert Superuser und Admin
 function checkAuth(request: Request): boolean {
@@ -137,33 +140,14 @@ export const POST: APIRoute = async ({ request }) => {
 
 					const cancelUrl = getCancelUrl(updated.id, 'booking');
 
-					const customerHtml = `
-							  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-							    <h2 style="color: #8B6F47;">Dein Termin ist jetzt bestätigt</h2>
-							    <p>Liebe/r ${updated.name},</p>
-							    <p>wir haben deine Buchung im Atelier Auszeit gerade im System bestätigt.</p>
-							    <p><strong>Termin:</strong><br/>
-							    ${date || ''}${date && timeDisplay ? ' · ' : ''}${timeDisplay || ''}</p>
-							    <p><strong>Teilnehmer:</strong> ${updated.participants}</p>
-							    ${updated.notes ? `<p><strong>Notizen:</strong> ${updated.notes}</p>` : ''}
-							    <p style="margin-top: 20px;">
-							      <strong>Ort:</strong><br/>
-							      Atelier Auszeit<br/>
-							      Feldstiege 6a<br/>
-							      48599 Gronau
-							    </p>
-							    <p style="margin-top: 20px;">
-							      Wenn du Fragen hast oder etwas ändern möchtest, melde dich gerne bei uns:<br/>
-							      E-Mail: keramik-auszeit@web.de<br/>
-							      Telefon: +49 176 34255005
-							    </p>
-							    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
-							      <p style="font-size: 0.85rem; color: #999;">Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:<br/>
-							      <a href="${cancelUrl}" style="color: #dc2626;">Termin stornieren</a></p>
-							    </div>
-							    <p style="margin-top: 20px;">Herzliche Grüße<br/>Dein Atelier Auszeit</p>
-							  </div>
-							`;
+					const customerHtml = bookingConfirmedCustomerHtml({
+					name: updated.name,
+					date: date || '',
+					time: timeDisplay,
+					participants: updated.participants,
+					notes: updated.notes || undefined,
+					cancelUrl,
+				});
 
 					const customerText = `
 Liebe/r ${updated.name},
@@ -182,7 +166,7 @@ Feldstiege 6a
 48599 Gronau
 
 Bei Fragen oder Änderungswünschen erreichst du uns unter:
-E-Mail: keramik-auszeit@web.de
+E-Mail: atelier@keramik-auszeit.de
 Telefon: +49 176 34255005
 
 Falls du deinen Termin nicht wahrnehmen kannst, kannst du ihn hier stornieren:
@@ -238,7 +222,25 @@ Dein Atelier Auszeit
 					console.error('❌ Fehler beim Versand der Bestätigungs-E-Mail nach Admin-Bestätigung:', err);
 				}
 
-				return new Response(JSON.stringify({ success: true, customerEmailSent, emailError }), {
+				// Brenn-Verwaltung: Kunden + Aufträge automatisch erstellen
+				let brennSync = { synced: false, customersCreated: 0, ordersCreated: 0, reason: '' };
+				try {
+					const allSlots = await getTimeSlots();
+					const bookingSlot = allSlots.find((s) => s.id === updated.slotId);
+					brennSync = await syncBookingToBrenn({
+						id: updated.id,
+						name: updated.name,
+						email: updated.email,
+						phone: updated.phone,
+						participants: updated.participants,
+						participantNames: updated.participantNames,
+						date: bookingSlot?.date,
+					});
+				} catch (err: any) {
+					console.error('[Brenn-Sync] Fehler bei Buchung', id, ':', err.message);
+				}
+
+				return new Response(JSON.stringify({ success: true, customerEmailSent, emailError, brennSync }), {
 					status: 200,
 					headers: { 'Content-Type': 'application/json' },
 				});
@@ -251,12 +253,22 @@ Dein Atelier Auszeit
 		}
 
 		// Standard: Buchung stornieren (Rückwärtskompatibilität ohne action-Flag)
+		// Buchungsinfos für Push-Notification holen bevor storniert wird
+		const [bookings, slots] = await Promise.all([getBookings(), getTimeSlots()]);
+		const bookingToCancel = bookings.find(b => b.id === id);
+
 		const success = await cancelBooking(id);
 		if (!success) {
 			return new Response(JSON.stringify({ error: 'Booking not found' }), {
 				status: 404,
 				headers: { 'Content-Type': 'application/json' },
 			});
+		}
+
+		// Push-Notification über Stornierung
+		if (bookingToCancel) {
+			const slot = slots.find(s => s.id === bookingToCancel.slotId);
+			notifyBookingCancelled(bookingToCancel.name, slot?.date).catch(err => console.error('Push error:', err));
 		}
 
 		return new Response(JSON.stringify({ success: true }), {
@@ -282,7 +294,7 @@ export const PUT: APIRoute = async ({ request }) => {
 
 	try {
 		const body = await request.json();
-		const { id, name, email, phone, participants, notes, status } = body;
+		const { id, name, email, phone, participants, participantNames, notes, status } = body;
 
 		if (!id) {
 			return new Response(JSON.stringify({ error: 'Missing booking ID' }), {
@@ -296,6 +308,11 @@ export const PUT: APIRoute = async ({ request }) => {
 		if (typeof email === 'string') updates.email = email;
 		if (typeof phone === 'string') updates.phone = phone;
 		if (typeof participants === 'number') updates.participants = participants;
+		if (Array.isArray(participantNames)) {
+			updates.participantNames = participantNames
+				.map((n: any) => (typeof n === 'string' ? n.trim() : ''))
+				.filter((n: string) => n.length > 0);
+		}
 		if (typeof notes === 'string') updates.notes = notes;
 		if (typeof status === 'string') {
 			if (status === 'pending' || status === 'confirmed') {

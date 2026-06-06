@@ -1,10 +1,43 @@
 import { defineMiddleware } from 'astro/middleware';
 
 export const onRequest = defineMiddleware(async (context, next) => {
+    const url = new URL(context.request.url);
+
+    // CORS für Brenn-API (Mobile App)
+    if (url.pathname.startsWith('/api/admin/brenn')) {
+        const origin = context.request.headers.get('Origin') || '';
+        if (context.request.method === 'OPTIONS') {
+            return new Response(null, {
+                status: 204,
+                headers: {
+                    'Access-Control-Allow-Origin': origin,
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                    'Access-Control-Max-Age': '86400',
+                },
+            });
+        }
+    }
+
     const response = await next();
 
+    // Cache-Control fuer statische Assets
+    const staticExts = /\.(woff2|woff|webp|png|jpg|jpeg|svg|ico|css|js|avif)$/;
+    if (staticExts.test(url.pathname)) {
+        response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+
+    // CORS-Headers für Brenn-API
+    if (url.pathname.startsWith('/api/admin/brenn')) {
+        const origin = context.request.headers.get('Origin') || '';
+        response.headers.set('Access-Control-Allow-Origin', origin);
+        response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
+
     // Basic Security Headers
-    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    // X-Frame-Options wird von CSP frame-ancestors ersetzt (ALLOW-FROM ist deprecated)
+    // Nicht setzen, da es sonst iframe-Embedding auf danapfel-digital.de blockiert
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
@@ -14,12 +47,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const csp = [
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline' https://unpkg.com https://js.stripe.com",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "font-src 'self' https://fonts.gstatic.com data:",
-        "img-src 'self' data: blob: https://*.your-objectstorage.com https://nbg1.your-objectstorage.com",
-        "connect-src 'self' https://*.your-objectstorage.com https://api.stripe.com",
-        "frame-src https://js.stripe.com",
-        "frame-ancestors 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "font-src 'self' data:",
+        "img-src 'self' data: blob:",
+        "connect-src 'self' https://api.stripe.com",
+        "frame-src https://js.stripe.com https://www.google.com https://maps.google.com",
+        "frame-ancestors 'self' https://danapfel-digital.de https://www.danapfel-digital.de https://*.danapfel-digital.de",
         "form-action 'self'",
         "base-uri 'self'",
         "object-src 'none'",
@@ -29,8 +62,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     // Cross-Origin Policies
     response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
-    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-    response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+    response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
+    response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
     // Note: Cross-Origin-Embedder-Policy set to 'unsafe-none' to allow external images
     response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
 

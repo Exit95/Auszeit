@@ -1,0 +1,170 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Einstellungen" activeNav="einstellungen">
+  <div class="brenn-settings-grid">
+    <!-- Lagerorte -->
+    <div class="brenn-card">
+      <h2>Lagerorte</h2>
+      <div id="storage-locations-list" class="brenn-loading">Wird geladen…</div>
+      <div style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
+        <h3 style="font-size: 0.9375rem; margin-bottom: 0.75rem; color: #8B6F47;">Neuer Lagerort</h3>
+        <form id="add-location-form">
+          <div class="brenn-form-group">
+            <label>Code <span class="required">*</span></label>
+            <input type="text" class="brenn-input" name="code" required maxlength="20" placeholder="z.B. PRE-C-01" />
+          </div>
+          <div class="brenn-form-group">
+            <label>Bezeichnung <span class="required">*</span></label>
+            <input type="text" class="brenn-input" name="label" required maxlength="100" />
+          </div>
+          <div class="brenn-form-row">
+            <div class="brenn-form-group">
+              <label>Bereich <span class="required">*</span></label>
+              <select class="brenn-select" name="area_type" required>
+                <option value="PRE">Vor Brennen (PRE)</option>
+                <option value="KILN">Brennofen (KILN)</option>
+                <option value="POST">Nach Brennen (POST)</option>
+                <option value="PICKUP">Abholregal (PICKUP)</option>
+                <option value="HOLD">Sonderablage (HOLD)</option>
+              </select>
+            </div>
+            <div class="brenn-form-group">
+              <label>Sortierung</label>
+              <input type="number" class="brenn-input" name="sort_order" value="0" min="0" />
+            </div>
+          </div>
+          <button type="submit" class="brenn-btn brenn-btn--primary brenn-btn--small">Lagerort anlegen</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Werkstücktypen -->
+    <div class="brenn-card">
+      <h2>Werkstücktypen</h2>
+      <div id="item-types-list" class="brenn-loading">Wird geladen…</div>
+      <div style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
+        <h3 style="font-size: 0.9375rem; margin-bottom: 0.75rem; color: #8B6F47;">Neuer Werkstücktyp</h3>
+        <form id="add-item-type-form">
+          <div class="brenn-form-row">
+            <div class="brenn-form-group">
+              <label>Name <span class="required">*</span></label>
+              <input type="text" class="brenn-input" name="name" required maxlength="80" />
+            </div>
+            <div class="brenn-form-group">
+              <label>Sortierung</label>
+              <input type="number" class="brenn-input" name="sort_order" value="0" min="0" />
+            </div>
+          </div>
+          <button type="submit" class="brenn-btn brenn-btn--primary brenn-btn--small">Typ anlegen</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</BrennLayout>
+
+<script is:inline>
+  const AREA_LABELS = { PRE: 'Vor Brennen', KILN: 'Brennofen', POST: 'Nach Brennen', PICKUP: 'Abholregal', HOLD: 'Sonderablage' };
+
+  async function loadLocations() {
+    try {
+      const data = await brennFetch('/api/admin/brenn/storage-locations');
+      const list = document.getElementById('storage-locations-list');
+      const items = data.data;
+      if (!items.length) {
+        list.innerHTML = '<div class="brenn-empty-state"><p>Keine Lagerorte vorhanden</p></div>';
+        return;
+      }
+      list.innerHTML = '<table class="brenn-table" style="font-size:0.8125rem"><thead><tr><th>Code</th><th>Bezeichnung</th><th>Bereich</th><th>Aktiv</th><th></th></tr></thead><tbody>' +
+        items.map(l =>
+          '<tr><td><strong>' + escapeHtml(l.code) + '</strong></td>' +
+          '<td>' + escapeHtml(l.label) + '</td>' +
+          '<td>' + escapeHtml(AREA_LABELS[l.area_type] || l.area_type) + '</td>' +
+          '<td>' + (l.is_active ? 'Ja' : 'Nein') + '</td>' +
+          '<td><button class="brenn-btn brenn-btn--secondary brenn-btn--small" onclick="toggleLocation(' + l.id + ',' + (l.is_active ? 'false' : 'true') + ')">' + (l.is_active ? 'Deaktivieren' : 'Aktivieren') + '</button></td></tr>'
+        ).join('') + '</tbody></table>';
+    } catch(e) {
+      document.getElementById('storage-locations-list').innerHTML = '<p style="color:#dc2626">Fehler beim Laden</p>';
+    }
+  }
+
+  async function toggleLocation(id, active) {
+    try {
+      await brennFetch('/api/admin/brenn/storage-locations/' + id, {
+        method: 'PATCH', body: JSON.stringify({ is_active: active })
+      });
+      brennToast(active ? 'Lagerort aktiviert' : 'Lagerort deaktiviert');
+      loadLocations();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  async function loadItemTypes() {
+    try {
+      const data = await brennFetch('/api/admin/brenn/item-types');
+      const list = document.getElementById('item-types-list');
+      const items = data.data;
+      if (!items.length) {
+        list.innerHTML = '<div class="brenn-empty-state"><p>Keine Werkstücktypen vorhanden</p></div>';
+        return;
+      }
+      list.innerHTML = '<table class="brenn-table" style="font-size:0.8125rem"><thead><tr><th>Name</th><th>Aktiv</th><th></th></tr></thead><tbody>' +
+        items.map(t =>
+          '<tr><td><strong>' + escapeHtml(t.name) + '</strong></td>' +
+          '<td>' + (t.is_active ? 'Ja' : 'Nein') + '</td>' +
+          '<td><button class="brenn-btn brenn-btn--secondary brenn-btn--small" onclick="toggleItemType(' + t.id + ',' + (t.is_active ? 'false' : 'true') + ')">' + (t.is_active ? 'Deaktivieren' : 'Aktivieren') + '</button></td></tr>'
+        ).join('') + '</tbody></table>';
+    } catch(e) {
+      document.getElementById('item-types-list').innerHTML = '<p style="color:#dc2626">Fehler beim Laden</p>';
+    }
+  }
+
+  async function toggleItemType(id, active) {
+    try {
+      await brennFetch('/api/admin/brenn/item-types/' + id, {
+        method: 'PATCH', body: JSON.stringify({ is_active: active })
+      });
+      brennToast(active ? 'Typ aktiviert' : 'Typ deaktiviert');
+      loadItemTypes();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  // Form handlers
+  document.getElementById('add-location-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await brennFetch('/api/admin/brenn/storage-locations', {
+        method: 'POST',
+        body: JSON.stringify({
+          code: fd.get('code'), label: fd.get('label'),
+          area_type: fd.get('area_type'), sort_order: Number(fd.get('sort_order'))
+        })
+      });
+      brennToast('Lagerort angelegt');
+      e.target.reset();
+      loadLocations();
+    } catch(e) { brennToast(e.message, 'error'); }
+  });
+
+  document.getElementById('add-item-type-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    try {
+      await brennFetch('/api/admin/brenn/item-types', {
+        method: 'POST',
+        body: JSON.stringify({ name: fd.get('name'), sort_order: Number(fd.get('sort_order')) })
+      });
+      brennToast('Werkstücktyp angelegt');
+      e.target.reset();
+      loadItemTypes();
+    } catch(e) { brennToast(e.message, 'error'); }
+  });
+
+  // Initial load
+  {
+    loadLocations();
+    loadItemTypes();
+  }
+</script>

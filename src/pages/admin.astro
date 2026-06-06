@@ -7,13 +7,14 @@ export const prerender = false;
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow" />
   <title>Admin - Terminverwaltung | Atelier Auszeit</title>
   <link rel="stylesheet" href="/admin-styles.css">
 </head>
 <body>
   <div id="login-screen" class="login-container">
     <div class="login-box">
-      <h1>🎨 Admin Login</h1>
+      <h1>Admin Login</h1>
       <p>Atelier Auszeit</p>
       <form id="login-form">
         <div class="form-group">
@@ -33,7 +34,7 @@ export const prerender = false;
   <!-- 2FA Verification Screen -->
   <div id="twofa-screen" class="login-container hidden">
     <div class="login-box">
-      <h1>🔐 2-Faktor-Authentifizierung</h1>
+      <h1>2-Faktor-Authentifizierung</h1>
       <p>Bitte geben Sie den Code aus Ihrer Authenticator-App ein</p>
       <form id="twofa-form">
         <div class="form-group">
@@ -44,6 +45,10 @@ export const prerender = false;
                  placeholder="000000" required
                  style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
         </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
+          <input type="checkbox" id="twofa-trust" name="trustDevice" style="width: auto; margin: 0;">
+          <label for="twofa-trust" style="margin: 0; font-size: 0.85rem; cursor: pointer;">Dieses Gerät 30 Tage merken</label>
+        </div>
         <button type="submit" class="btn btn-primary">Bestätigen</button>
         <button type="button" id="twofa-cancel" class="btn btn-secondary" style="margin-top: 0.5rem;">Abbrechen</button>
         <div id="twofa-error" class="error-message hidden"></div>
@@ -52,84 +57,143 @@ export const prerender = false;
   </div>
 
 	  <div id="admin-panel" class="admin-container hidden">
-	    <header class="admin-header">
-	      <h1>🎨 Admin Panel</h1>
-	      <div class="admin-header-buttons">
-	        <button id="setup-2fa-btn" class="btn btn-secondary hidden" title="2FA für Admin einrichten">🔐 2FA Setup</button>
-	        <button id="logout-btn" class="btn btn-secondary">Abmelden</button>
-	      </div>
-	    </header>
+      <!-- Sidebar -->
+      <aside class="admin-sidebar" id="admin-sidebar">
+        <div class="sidebar-brand">
+          <span class="sidebar-brand__icon">A</span>
+          <span class="sidebar-brand__text">Atelier Auszeit</span>
+        </div>
+        <nav class="admin-nav">
+          <button class="admin-nav__btn active" data-tab="uebersicht">
+            <span class="nav-label">Übersicht</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="termine">
+            <span class="nav-label">Termine</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="kunden">
+            <span class="nav-label">Kunden</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="anfragen">
+            <span class="nav-label">Anfragen</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="workshops">
+            <span class="nav-label">Workshops</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="galerie">
+            <span class="nav-label">Galerie</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="bewertungen">
+            <span class="nav-label">Bewertungen</span>
+          </button>
+          <button class="admin-nav__btn" data-tab="gutscheine">
+            <span class="nav-label">Gutscheine</span>
+          </button>
+          <div style="margin-top:0.5rem; border-top:1px solid var(--c-sidebar-hover, #2E2820); padding-top:0.75rem;">
+            <button class="admin-nav__btn" data-tab="statistiken">
+              <span class="nav-label">Statistiken</span>
+            </button>
+            <a href="/admin/brenn/" class="admin-nav__btn" style="text-decoration:none; display:flex; align-items:center;">
+              <span class="nav-label">Brenn-Verwaltung</span>
+            </a>
+          </div>
+        </nav>
+        <div class="sidebar-footer">
+          <button id="setup-2fa-btn" class="btn btn-secondary btn-sidebar hidden" title="2FA einrichten">2FA</button>
+          <button id="logout-btn" class="btn btn-secondary btn-sidebar">Abmelden</button>
+        </div>
+      </aside>
 
-    <nav class="admin-nav">
-      <button class="admin-nav__btn active" data-tab="uebersicht">📋 Übersicht</button>
-      <button class="admin-nav__btn" data-tab="termine">Termine</button>
-      <button class="admin-nav__btn" data-tab="workshops">Workshops</button>
-      <button class="admin-nav__btn" data-tab="galerie">Galerie</button>
-      <button class="admin-nav__btn" data-tab="bewertungen">Bewertungen</button>
-      <button class="admin-nav__btn" data-tab="gutscheine">🎟️ Gutscheine</button>
-    </nav>
+      <!-- Sidebar Overlay (mobile) -->
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-	    		<main class="admin-main">
+      <!-- Content Wrapper -->
+      <div class="admin-content-wrapper">
+        <!-- Top Bar -->
+        <header class="admin-topbar">
+          <button class="hamburger-btn" id="hamburger-btn" aria-label="Menü öffnen">
+            <span></span><span></span><span></span>
+          </button>
+          <h1 class="topbar-title">Admin Panel</h1>
+          <div class="admin-header-buttons">
+            <span class="topbar-user" id="topbar-user">Admin</span>
+          </div>
+        </header>
+
+        <main class="admin-main">
       <!-- Tab: Übersicht (Arbeitszentrale) -->
       <div id="tab-uebersicht" class="admin-tab active">
-        <section class="overview-section">
-          <div class="overview-header">
-            <h2>📋 Tagesübersicht</h2>
-            <span id="refresh-indicator" class="refresh-indicator"></span>
-          </div>
+        <!-- Header mit Refresh-Indikator -->
+        <div class="overview-top-bar">
+          <h2>Tagesübersicht</h2>
+          <span id="refresh-indicator" class="refresh-indicator"></span>
+        </div>
 
-          <!-- KPI-Karten -->
-          <div class="dashboard-grid overview-kpis">
-            <div class="dashboard-card kpi-highlight">
-              <div class="dashboard-label">🗓️ Termine heute</div>
-              <div class="dashboard-value" id="dashboard-today-count">-</div>
-            </div>
-            <div class="dashboard-card kpi-warning">
-              <div class="dashboard-label">🔔 Neue Anfragen</div>
-              <div class="dashboard-value" id="dashboard-new-count">-</div>
-            </div>
-            <div class="dashboard-card">
-              <div class="dashboard-label">✅ Bestätigt</div>
-              <div class="dashboard-value" id="dashboard-confirmed-count">-</div>
-            </div>
-            <div class="dashboard-card">
-              <div class="dashboard-label">❌ Stornierungen</div>
-              <div class="dashboard-value" id="dashboard-cancelled-count">-</div>
-            </div>
-            <div class="dashboard-card">
-              <div class="dashboard-label">📅 Nächste 7 Tage</div>
-              <div class="dashboard-value" id="dashboard-next7-count">-</div>
-            </div>
-            <div class="dashboard-card kpi-voucher">
-              <div class="dashboard-label">🎟️ Offene Gutscheine</div>
-              <div class="dashboard-value" id="dashboard-voucher-count">-</div>
-            </div>
+        <!-- KPI-Karten -->
+        <div class="overview-kpis">
+          <div class="kpi-card kpi-highlight">
+            <div class="kpi-value" id="dashboard-today-count">-</div>
+            <div class="kpi-label">Termine heute</div>
           </div>
-        </section>
+          <div class="kpi-card kpi-warning">
+            <div class="kpi-value" id="dashboard-new-count">-</div>
+            <div class="kpi-label">Neue Anfragen</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="dashboard-confirmed-count">-</div>
+            <div class="kpi-label">Bestätigt</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="dashboard-cancelled-count">-</div>
+            <div class="kpi-label">Stornierungen</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-value" id="dashboard-next7-count">-</div>
+            <div class="kpi-label">Nächste 7 Tage</div>
+          </div>
+          <div class="kpi-card kpi-voucher">
+            <div class="kpi-value" id="dashboard-voucher-count">-</div>
+            <div class="kpi-label">Offene Gutscheine</div>
+          </div>
+        </div>
 
         <!-- Warnhinweise -->
-        <section class="overview-warnings hidden" id="overview-warnings">
-          <h3>⚠️ Handlungsbedarf</h3>
+        <section class="overview-card overview-warnings hidden" id="overview-warnings">
+          <h3>Handlungsbedarf</h3>
           <div id="warnings-list" class="warnings-list"></div>
         </section>
 
-        <!-- Heutige Termine -->
-        <section class="overview-today">
-          <h3>🕐 Heutige Termine</h3>
-          <div id="today-bookings-loading" class="loading">Lade...</div>
-          <div id="today-bookings-list" class="today-bookings-list hidden"></div>
-          <div id="no-today-bookings" class="no-data hidden">Keine Termine für heute</div>
-        </section>
+        <!-- Zwei-Spalten: Heutige Termine + Wochenkalender -->
+        <div class="overview-content-grid">
+          <!-- Heutige Termine -->
+          <section class="overview-card">
+            <h3>Heutige Termine</h3>
+            <div id="today-bookings-loading" class="loading">Lade...</div>
+            <div id="today-bookings-list" class="today-bookings-list hidden"></div>
+            <div id="no-today-bookings" class="no-data hidden">Keine Termine für heute</div>
+          </section>
 
-        <!-- Wochenkalender -->
-        <section class="overview-calendar">
-          <div class="calendar-header">
-            <button id="cal-prev-week" class="btn btn-secondary btn-sm">← Vorherige</button>
-            <h3 id="cal-week-label">Kalenderwoche</h3>
-            <button id="cal-next-week" class="btn btn-secondary btn-sm">Nächste →</button>
+          <!-- Wochenkalender -->
+          <section class="overview-card overview-calendar-card">
+            <div class="cal-header">
+              <h3>Wochenkalender</h3>
+              <div class="cal-nav">
+                <button id="cal-prev-week">← Vor</button>
+                <span id="cal-week-label">Kalenderwoche</span>
+                <button id="cal-next-week">Nächste →</button>
+              </div>
+            </div>
+            <div id="week-calendar" class="week-calendar"></div>
+          </section>
+        </div>
+
+        <!-- Tages-Detail-Panel (wird per Klick auf Kalendertag geöffnet) -->
+        <div id="day-detail-panel" class="day-detail-panel hidden">
+          <div class="day-detail-header">
+            <h3 id="day-detail-title">Termine am ...</h3>
+            <button id="day-detail-close" class="day-detail-close">&times;</button>
           </div>
-          <div id="week-calendar" class="week-calendar"></div>
-        </section>
+          <div id="day-detail-content" class="day-detail-content"></div>
+        </div>
       </div>
 
       <!-- Tab: Termine -->
@@ -142,8 +206,8 @@ export const prerender = false;
 		              <label for="slot-event-type">Event-Typ</label>
 		              <select id="slot-event-type" name="eventType">
 		                <option value="normal">Normaler Termin</option>
-		                <option value="kindergeburtstag">🎂 Kindergeburtstag</option>
-		                <option value="stammtisch">🍷 Stammtisch</option>
+		                <option value="kindergeburtstag">Kindergeburtstag</option>
+		                <option value="stammtisch">Stammtisch</option>
 		              </select>
 		            </div>
 		            <div class="form-group">
@@ -168,7 +232,7 @@ export const prerender = false;
 		            </div>
 		          </div>
 		          <p id="event-type-hint" class="event-type-hint hidden">
-		            ℹ️ Dieses Zeitfenster wird im Kalender als belegt angezeigt. Andere Zeitfenster am selben Tag bleiben buchbar.
+		            Dieses Zeitfenster wird im Kalender als belegt angezeigt. Andere Zeitfenster am selben Tag bleiben buchbar.
 		          </p>
 		          <div class="form-actions">
 		            <button type="submit" class="btn btn-primary" id="slot-submit-btn">Termin hinzufügen</button>
@@ -184,25 +248,47 @@ export const prerender = false;
 	        <div id="no-slots" class="no-data hidden">Keine Termine vorhanden</div>
 	      </section>
 
-	      <section class="bookings-section">
-	        <h2>Buchungen</h2>
-	        <!-- Filter und Suche -->
-	        <div class="bookings-filter-bar">
-	          <input type="text" id="booking-search" class="booking-search-input" placeholder="🔍 Name, E-Mail oder Telefon suchen...">
-	          <div class="bookings-status-filter">
-	            <button class="filter-btn active" data-booking-filter="active">Aktiv</button>
-	            <button class="filter-btn" data-booking-filter="pending">⏳ Offen</button>
-	            <button class="filter-btn" data-booking-filter="confirmed">✅ Bestätigt</button>
-	            <button class="filter-btn" data-booking-filter="cancelled">❌ Storniert</button>
-	            <button class="filter-btn" data-booking-filter="all">Alle</button>
-	          </div>
-	        </div>
-	        <div id="bookings-loading" class="loading">Lade Buchungen...</div>
-	        <div id="bookings-list" class="slots-list hidden"></div>
-	        <div id="no-bookings" class="no-data hidden">Keine Buchungen vorhanden</div>
-	      </section>
       </div>
       <!-- Ende Tab: Termine -->
+
+      <!-- Tab: Kunden -->
+      <div id="tab-kunden" class="admin-tab hidden">
+        <section class="bookings-section">
+          <h2>Kunden & Buchungen</h2>
+          <!-- Filter und Suche -->
+          <div class="bookings-filter-bar">
+            <input type="text" id="booking-search" class="booking-search-input" placeholder="Name, E-Mail oder Telefon suchen...">
+            <div class="bookings-status-filter">
+              <button class="filter-btn active" data-booking-filter="active">Aktuelle</button>
+              <button class="filter-btn" data-booking-filter="pending">Neue Anfragen</button>
+              <button class="filter-btn" data-booking-filter="confirmed">Zugesagt</button>
+              <button class="filter-btn" data-booking-filter="cancelled">Abgesagt</button>
+              <button class="filter-btn" data-booking-filter="all">Alle</button>
+            </div>
+          </div>
+          <div id="bookings-loading" class="loading">Lade Buchungen...</div>
+          <div id="bookings-list" class="bookings-list hidden"></div>
+          <div id="no-bookings" class="no-data hidden">Keine Buchungen vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Kunden -->
+
+      <!-- Tab: Anfragen (Besondere Anlässe) -->
+      <div id="tab-anfragen" class="admin-tab hidden">
+        <section class="inquiries-section">
+          <h2>Anfragen: Besondere Anlässe</h2>
+          <div class="inquiries-filter-bar">
+            <button class="filter-btn active" data-inquiry-filter="new">Neue</button>
+            <button class="filter-btn" data-inquiry-filter="contacted">Kontaktiert</button>
+            <button class="filter-btn" data-inquiry-filter="confirmed">Bestätigt</button>
+            <button class="filter-btn" data-inquiry-filter="cancelled">Abgesagt</button>
+            <button class="filter-btn" data-inquiry-filter="all">Alle</button>
+          </div>
+          <div id="inquiries-list" class="inquiries-list"></div>
+          <div id="no-inquiries" class="no-data hidden">Keine Anfragen vorhanden</div>
+        </section>
+      </div>
+      <!-- Ende Tab: Anfragen -->
 
       <!-- Tab: Workshops -->
       <div id="tab-workshops" class="admin-tab hidden">
@@ -285,8 +371,21 @@ export const prerender = false;
         <!-- Bild hochladen -->
         <section class="gallery-upload-section">
           <h2>Bild hochladen</h2>
+          <div class="upload-cat-row">
+            <label for="gallery-cat-select" class="upload-cat-label">Galerie-Kategorie</label>
+            <select id="gallery-cat-select" class="upload-cat-select">
+              <option value="">-- Kategorie wählen --</option>
+              <option value="tassen">Tassen & Becher</option>
+              <option value="teller">Teller & Schalen</option>
+              <option value="figuren">Figuren & Deko</option>
+              <option value="spardosen">Spardosen & Krüge</option>
+              <option value="anhaenger">Anhänger & Schmuck</option>
+              <option value="kindergeburtstag">Kindergeburtstage</option>
+              <option value="sonstiges">Sonstiges</option>
+            </select>
+          </div>
           <div class="upload-area" id="upload-drop-area">
-            <div class="upload-icon">📤</div>
+            <div class="upload-icon">Hochladen</div>
             <p class="upload-text">Klicken oder Datei hierher ziehen</p>
             <p class="upload-hint">Max. 50MB | JPG, PNG, GIF, WebP</p>
             <input type="file" id="gallery-file-input" accept="image/*" hidden>
@@ -298,7 +397,7 @@ export const prerender = false;
         <section class="gallery-list-section">
           <div class="gallery-header">
             <h2>Bilder für Hauptseite (mit Kategorie)</h2>
-            <button type="button" class="btn btn-secondary" id="reload-gallery-btn">🔄 Neu laden</button>
+            <button type="button" class="btn btn-secondary" id="reload-gallery-btn">Neu laden</button>
           </div>
           <div id="gallery-categorized" class="gallery-categories"></div>
         </section>
@@ -352,7 +451,7 @@ export const prerender = false;
 
           <!-- QR-Scanner -->
           <div class="voucher-scanner-box">
-            <h3>📷 QR-Code scannen</h3>
+            <h3>QR-Code scannen</h3>
             <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">Kamera auf den QR-Code des Kunden halten</p>
             <div id="scanner-status" style="display: none; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.85rem; text-align: center;"></div>
             <div id="camera-select-box" style="display: none; margin-bottom: 0.5rem; text-align: center;">
@@ -361,14 +460,14 @@ export const prerender = false;
             </div>
             <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden;"></div>
             <div style="text-align: center;">
-              <button id="start-scanner-btn" class="btn btn-primary" style="margin-top: 1rem;">📷 Scanner starten</button>
+              <button id="start-scanner-btn" class="btn btn-primary" style="margin-top: 1rem;">Scanner starten</button>
               <button id="stop-scanner-btn" class="btn btn-secondary" style="margin-top: 1rem; display: none;">Scanner stoppen</button>
             </div>
           </div>
 
           <!-- Manuelle Code-Eingabe -->
           <div class="voucher-manual-box" style="margin-top: 1.5rem;">
-            <h3>✏️ Code manuell eingeben</h3>
+            <h3>Code manuell eingeben</h3>
             <div style="display: flex; gap: 0.5rem; max-width: 400px; margin: 0.5rem auto;">
               <input type="text" id="manual-voucher-code" placeholder="AUSZ-XXXX-XXXX" style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px; text-transform: uppercase; font-family: monospace; font-size: 1rem; text-align: center;">
               <button id="lookup-voucher-btn" class="btn btn-primary">Suchen</button>
@@ -402,7 +501,60 @@ export const prerender = false;
       </div>
       <!-- Ende Tab: Gutscheine -->
 
+      <!-- Tab: Statistiken -->
+      <div id="tab-statistiken" class="admin-tab hidden">
+        <section>
+          <h2>Statistiken</h2>
+          <div id="admin-stats-content" style="min-height:200px">
+            <p style="color:#999">Wird geladen…</p>
+          </div>
+        </section>
+      </div>
+
 	    </main>
+      </div><!-- /.admin-content-wrapper -->
+
+      <!-- Buchung-Bearbeiten-Modal -->
+      <div id="edit-booking-modal" class="edit-modal-overlay hidden">
+        <div class="edit-modal">
+          <div class="edit-modal-header">
+            <h3>Buchung bearbeiten</h3>
+            <button class="edit-modal-close" id="edit-modal-close">&times;</button>
+          </div>
+          <div class="edit-modal-body">
+            <input type="hidden" id="edit-booking-id" />
+            <div class="edit-form-group">
+              <label for="edit-booking-name">Name</label>
+              <input type="text" id="edit-booking-name" />
+            </div>
+            <div class="edit-form-group">
+              <label for="edit-booking-email">E-Mail</label>
+              <input type="email" id="edit-booking-email" />
+            </div>
+            <div class="edit-form-group">
+              <label for="edit-booking-phone">Telefon</label>
+              <input type="text" id="edit-booking-phone" />
+            </div>
+            <div class="edit-form-group">
+              <label for="edit-booking-participants">Anzahl Personen</label>
+              <input type="number" id="edit-booking-participants" min="1" max="20" />
+            </div>
+            <div class="edit-form-group" id="edit-participant-names-group">
+              <label>Teilnehmernamen</label>
+              <div id="edit-participant-names-list"></div>
+            </div>
+            <div class="edit-form-group">
+              <label for="edit-booking-notes">Notizen (Admin)</label>
+              <textarea id="edit-booking-notes" rows="4" placeholder="Interne Notizen zur Buchung..."></textarea>
+            </div>
+          </div>
+          <div class="edit-modal-footer">
+            <button class="btn btn-secondary" id="edit-modal-cancel">Abbrechen</button>
+            <button class="btn btn-primary" id="edit-modal-save">Speichern</button>
+          </div>
+        </div>
+      </div>
+
   </div>
 
 	  <script>
@@ -414,12 +566,166 @@ export const prerender = false;
     let cachedSlots: any[] = [];
     let calendarWeekOffset = 0; // 0 = aktuelle Woche
 
+    function showAdminPanel(userType?: string | null) {
+      document.getElementById('login-screen')?.classList.add('hidden');
+      document.getElementById('twofa-screen')?.classList.add('hidden');
+      document.getElementById('admin-panel')?.classList.remove('hidden');
+      if (userType === 'superuser') {
+        document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+      }
+      Promise.all([loadSlots(), loadBookings()]).then(() => {
+        renderOverview();
+        renderWeekCalendar();
+      });
+    }
+
+    // Auto-Login bei Seitenload:
+    // 1. localStorage (Gerät merken, persistent) → device-check auf Server
+    // 2. sessionStorage (aktuelle Sitzung)
+    (async function tryAutoLogin() {
+      const storedCreds = localStorage.getItem('adminAuth');
+      if (storedCreds) {
+        try {
+          const res = await fetch('/api/admin/verify-2fa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'device-check' }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            authCredentials = storedCreds;
+            showAdminPanel(data.userType);
+            return;
+          } else {
+            // Gerätevertrauen abgelaufen oder Server neugestartet
+            localStorage.removeItem('adminAuth');
+          }
+        } catch { /* Netzwerkfehler - weiter mit sessionStorage */ }
+      }
+
+      const sessionCreds = sessionStorage.getItem('adminAuth');
+      if (sessionCreds) {
+        try {
+          const res = await fetch('/api/admin/slots', {
+            headers: { 'Authorization': `Basic ${sessionCreds}` },
+          });
+          if (res.ok) {
+            authCredentials = sessionCreds;
+            showAdminPanel(null);
+            return;
+          } else {
+            sessionStorage.removeItem('adminAuth');
+          }
+        } catch {
+          sessionStorage.removeItem('adminAuth');
+        }
+      }
+    })();
+
     // Hilfsfunktion: HTML escapen
     function escapeHtml(text: string): string {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
+
+    // Lokales Datum als YYYY-MM-DD (kein UTC-Problem!)
+    function toLocalDateStr(d: Date): string {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    // ========== EDIT BOOKING MODAL ==========
+    function openEditBookingModal(booking: any) {
+      const modal = document.getElementById('edit-booking-modal')!;
+      (document.getElementById('edit-booking-id') as HTMLInputElement).value = booking.id;
+      (document.getElementById('edit-booking-name') as HTMLInputElement).value = booking.name || '';
+      (document.getElementById('edit-booking-email') as HTMLInputElement).value = booking.email || '';
+      (document.getElementById('edit-booking-phone') as HTMLInputElement).value = booking.phone || '';
+      (document.getElementById('edit-booking-participants') as HTMLInputElement).value = String(booking.participants || 1);
+      (document.getElementById('edit-booking-notes') as HTMLTextAreaElement).value = booking.notes || '';
+      renderEditParticipantNames(booking.participants || 1, booking.participantNames || []);
+      modal.classList.remove('hidden');
+    }
+
+    function closeEditBookingModal() {
+      document.getElementById('edit-booking-modal')!.classList.add('hidden');
+    }
+
+    function renderEditParticipantNames(count: number, names: string[]) {
+      const container = document.getElementById('edit-participant-names-list')!;
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        html += `<div class="edit-participant-name-row">
+          <span>${i + 1}.</span>
+          <input type="text" class="edit-pname-input" placeholder="Name Teilnehmer ${i + 1}" value="${escapeHtml(names[i] || '')}" />
+        </div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    // Teilnehmeranzahl-Änderung → Felder anpassen
+    document.getElementById('edit-booking-participants')?.addEventListener('input', (e) => {
+      const count = parseInt((e.target as HTMLInputElement).value, 10) || 1;
+      const existing = Array.from(document.querySelectorAll('.edit-pname-input')).map((el) => (el as HTMLInputElement).value);
+      renderEditParticipantNames(count, existing);
+    });
+
+    // Modal schließen
+    document.getElementById('edit-modal-close')?.addEventListener('click', closeEditBookingModal);
+    document.getElementById('edit-modal-cancel')?.addEventListener('click', closeEditBookingModal);
+    document.getElementById('edit-booking-modal')?.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).id === 'edit-booking-modal') closeEditBookingModal();
+    });
+
+    // Speichern
+    document.getElementById('edit-modal-save')?.addEventListener('click', async () => {
+      const id = (document.getElementById('edit-booking-id') as HTMLInputElement).value;
+      const name = (document.getElementById('edit-booking-name') as HTMLInputElement).value.trim();
+      const email = (document.getElementById('edit-booking-email') as HTMLInputElement).value.trim();
+      const phone = (document.getElementById('edit-booking-phone') as HTMLInputElement).value.trim();
+      const participants = parseInt((document.getElementById('edit-booking-participants') as HTMLInputElement).value, 10);
+      const notes = (document.getElementById('edit-booking-notes') as HTMLTextAreaElement).value.trim();
+      const participantNames = Array.from(document.querySelectorAll('.edit-pname-input')).map((el) => (el as HTMLInputElement).value.trim()).filter(Boolean);
+
+      if (!participants || participants <= 0) {
+        alert('Bitte eine gültige Personenzahl eingeben.');
+        return;
+      }
+
+      const saveBtn = document.getElementById('edit-modal-save') as HTMLButtonElement;
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Speichern...';
+
+      try {
+        const response = await fetch('/api/admin/bookings', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Basic ${authCredentials}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id, name, email, phone, participants, participantNames, notes }),
+        });
+
+        if (response.ok) {
+          closeEditBookingModal();
+          await loadBookings();
+          await loadSlots();
+        } else {
+          const result = await response.json().catch(() => null);
+          alert(result?.error || 'Fehler beim Aktualisieren der Buchung');
+        }
+      } catch (error) {
+        console.error('Error updating booking:', error);
+        alert('Fehler beim Aktualisieren der Buchung');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Speichern';
+      }
+    });
+    // ========== END EDIT BOOKING MODAL ==========
 
     // Speichert die URL für das ausgewählte Bild (für Vorschau)
     let workshopImageUrlMap: Record<string, string> = {};
@@ -485,19 +791,13 @@ export const prerender = false;
         // Superuser oder Admin ohne 2FA - direkter Login
         if (!result.requires2FA) {
           authCredentials = result.credentials;
-          document.getElementById('login-screen')?.classList.add('hidden');
-          document.getElementById('admin-panel')?.classList.remove('hidden');
-
-          // Zeige 2FA-Setup-Button nur für Superuser
-          if (result.userType === 'superuser') {
-            document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+          if (result.trustedDevice) {
+            // Gerät ist vertraut → persistent in localStorage speichern
+            localStorage.setItem('adminAuth', authCredentials);
+          } else {
+            sessionStorage.setItem('adminAuth', authCredentials);
           }
-
-          // Paralleles Laden für schnellere Ladezeiten + Übersicht
-          Promise.all([loadSlots(), loadBookings()]).then(() => {
-            renderOverview();
-            renderWeekCalendar();
-          });
+          showAdminPanel(result.userType);
           return;
         }
 
@@ -522,6 +822,7 @@ export const prerender = false;
     document.getElementById('twofa-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const code = (document.getElementById('twofa-code') as HTMLInputElement)?.value;
+      const trustDevice = (document.getElementById('twofa-trust') as HTMLInputElement)?.checked || false;
 
       try {
         const response = await fetch('/api/admin/verify-2fa', {
@@ -530,7 +831,8 @@ export const prerender = false;
           body: JSON.stringify({
             action: 'verify',
             sessionId: pending2FASessionId,
-            code
+            code,
+            trustDevice
           })
         });
 
@@ -538,19 +840,13 @@ export const prerender = false;
 
         if (result.success) {
           authCredentials = result.credentials;
-          document.getElementById('twofa-screen')?.classList.add('hidden');
-          document.getElementById('admin-panel')?.classList.remove('hidden');
-
-          // Zeige 2FA-Setup-Button für Superuser
-          if (result.userType === 'superuser') {
-            document.getElementById('setup-2fa-btn')?.classList.remove('hidden');
+          if (trustDevice) {
+            // "Gerät merken" → persistent in localStorage speichern
+            localStorage.setItem('adminAuth', authCredentials);
+          } else {
+            sessionStorage.setItem('adminAuth', authCredentials);
           }
-
-          // Paralleles Laden für schnellere Ladezeiten + Übersicht
-          Promise.all([loadSlots(), loadBookings()]).then(() => {
-            renderOverview();
-            renderWeekCalendar();
-          });
+          showAdminPanel(result.userType);
         } else {
           const errorEl = document.getElementById('twofa-error');
           if (errorEl) {
@@ -569,6 +865,7 @@ export const prerender = false;
     document.getElementById('twofa-cancel')?.addEventListener('click', () => {
       pending2FASessionId = '';
       authCredentials = '';
+      sessionStorage.removeItem('adminAuth');
       document.getElementById('twofa-screen')?.classList.add('hidden');
       document.getElementById('login-screen')?.classList.remove('hidden');
       (document.getElementById('twofa-code') as HTMLInputElement).value = '';
@@ -578,7 +875,15 @@ export const prerender = false;
     // Logout
     document.getElementById('logout-btn')?.addEventListener('click', () => {
       authCredentials = '';
+      sessionStorage.removeItem('adminAuth');
+      localStorage.removeItem('adminAuth');
       pending2FASessionId = '';
+      // Gerätevertrauen auf dem Server löschen (fire & forget)
+      fetch('/api/admin/verify-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logout-device' }),
+      }).catch(() => {});
       document.getElementById('admin-panel')?.classList.add('hidden');
       document.getElementById('twofa-screen')?.classList.add('hidden');
       document.getElementById('setup-2fa-btn')?.classList.add('hidden');
@@ -745,25 +1050,44 @@ export const prerender = false;
 	            // Event-Typ Badge
 	            let eventBadge = '';
 	            if (slot.eventType === 'kindergeburtstag') {
-	              eventBadge = '<span class="event-badge event-kindergeburtstag">🎂 Kindergeburtstag</span>';
+	              eventBadge = '<span class="sc__badge sc__badge--kinder">Kindergeburtstag</span>';
 	            } else if (slot.eventType === 'stammtisch') {
-	              eventBadge = '<span class="event-badge event-stammtisch">🍷 Stammtisch</span>';
+	              eventBadge = '<span class="sc__badge sc__badge--stammtisch">Stammtisch</span>';
 	            }
 
+	            const d = new Date(slot.date + 'T00:00:00');
+	            const weekday = d.toLocaleDateString('de-DE', { weekday: 'short' });
+	            const dayNum = d.toLocaleDateString('de-DE', { day: '2-digit' });
+	            const monthYear = d.toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+	            const isSpecial = slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch';
+	            const filled = slot.maxCapacity - slot.available;
+	            const pct = slot.maxCapacity > 0 ? Math.round((filled / slot.maxCapacity) * 100) : 0;
+	            const capColor = slot.available === 0 ? '#ef4444' : slot.available <= 3 ? '#f97316' : '#22c55e';
+
 	            return `
-	              <div class="slot-card ${slot.eventType !== 'normal' && slot.eventType ? 'slot-special-event' : ''}" data-id="${slot.id}">
-	                <div class="slot-info">
-	                  <div class="slot-date">${formatDate(slot.date)} ${eventBadge}</div>
-	                  <div class="slot-time">${slot.time}${slot.endTime ? ' - ' + slot.endTime : ''} Uhr</div>
-	                  <div class="slot-capacity">
-	                    ${slot.eventType === 'kindergeburtstag' || slot.eventType === 'stammtisch'
-	                      ? '<strong>Zeitfenster belegt</strong>'
-	                      : `${slot.available} / ${slot.maxCapacity} Plätze frei`}
+	              <div class="sc ${isSpecial ? 'sc--special' : ''}" data-id="${slot.id}">
+	                <div class="sc__body">
+	                  <div class="sc__date-block">
+	                    <span class="sc__weekday">${weekday}</span>
+	                    <span class="sc__day">${dayNum}</span>
+	                    <span class="sc__monthyear">${monthYear}</span>
+	                  </div>
+	                  <div class="sc__info">
+	                    <div class="sc__time-row">
+	                      <span class="sc__time">${slot.time}${slot.endTime ? ' bis ' + slot.endTime : ''} Uhr</span>
+	                      ${eventBadge}
+	                    </div>
+	                    ${isSpecial
+	                      ? '<div class="sc__cap-special">Zeitfenster belegt</div>'
+	                      : `<div class="sc__cap-row">
+	                          <div class="sc__cap-bar"><div class="sc__cap-fill" style="width:${pct}%;background:${capColor}"></div></div>
+	                          <span class="sc__cap-txt" style="color:${capColor}">${slot.available} / ${slot.maxCapacity} frei</span>
+	                        </div>`}
 	                  </div>
 	                </div>
-	                <div class="slot-actions">
-	                  <button class="btn btn-secondary btn-edit" data-id="${slot.id}">Bearbeiten</button>
-	                  <button class="btn btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
+	                <div class="sc__actions">
+	                  <button class="btn btn-sm btn-secondary btn-edit" data-id="${slot.id}">Bearbeiten</button>
+	                  <button class="btn btn-sm btn-danger btn-delete" data-id="${slot.id}">Löschen</button>
 	                </div>
 	              </div>
 	            `;
@@ -801,7 +1125,7 @@ export const prerender = false;
 		    function updateDashboard(bookings: any[]) {
 		      const today = new Date();
 		      today.setHours(0, 0, 0, 0);
-		      const todayStr = today.toISOString().split('T')[0];
+		      const todayStr = toLocalDateStr(today);
 		      const sevenDaysAhead = new Date(today);
 		      sevenDaysAhead.setDate(sevenDaysAhead.getDate() + 7);
 
@@ -893,6 +1217,9 @@ export const prerender = false;
 		              if (b.slotDate) {
 		                const slotDate = new Date(b.slotDate + 'T00:00:00');
 		                if (slotDate < today) return false;
+		              } else {
+		                // Buchungen ohne Slot-Datum: nur anzeigen wenn pending
+		                if (b.status !== 'pending') return false;
 		              }
 		            } else if (activeFilter === 'pending') {
 		              if (b.status !== 'pending') return false;
@@ -912,13 +1239,24 @@ export const prerender = false;
 		            return true;
 		          })
 		          .sort((a, b) => {
-		            const aDateBase = a.slotDate || (a.createdAt ? String(a.createdAt).split('T')[0] : '');
-		            const bDateBase = b.slotDate || (b.createdAt ? String(b.createdAt).split('T')[0] : '');
-		
-		            if (!aDateBase || !bDateBase) return 0;
-		
-		            const aDate = new Date(`${aDateBase}T${a.slotTime || '00:00'}:00`);
-		            const bDate = new Date(`${bDateBase}T${b.slotTime || '00:00'}:00`);
+		            // Offene Anfragen (pending) immer zuerst
+		            if (a.status === 'pending' && b.status !== 'pending') return -1;
+		            if (a.status !== 'pending' && b.status === 'pending') return 1;
+
+		            // Buchungen ohne Slot-Datum ans Ende
+		            if (a.slotDate && !b.slotDate) return -1;
+		            if (!a.slotDate && b.slotDate) return 1;
+		            if (!a.slotDate && !b.slotDate) return 0;
+
+		            const aDate = new Date(`${a.slotDate}T${a.slotTime || '00:00'}:00`);
+		            const bDate = new Date(`${b.slotDate}T${b.slotTime || '00:00'}:00`);
+
+		            // Stornierte: neueste Termine zuerst
+		            if (activeFilter === 'cancelled') {
+		              return bDate.getTime() - aDate.getTime();
+		            }
+
+		            // Aktive/Bestätigte: nächster Termin zuerst
 		            return aDate.getTime() - bDate.getTime();
 		          });
 
@@ -938,38 +1276,35 @@ export const prerender = false;
 		                : '';
 
 		              const status = booking.status || 'confirmed';
-		              let statusLabel = 'Bestätigt';
-		              let statusClass = 'booking-status--confirmed';
+		              let statusLabel = 'Zugesagt';
 		              if (status === 'pending') {
-		                statusLabel = 'Neu / unbestätigt';
-		                statusClass = 'booking-status--pending';
+		                statusLabel = 'Neue Anfrage';
 		              } else if (status === 'cancelled') {
 		                statusLabel = 'Abgesagt';
-		                statusClass = 'booking-status--cancelled';
 		              }
 
 		              const showConfirm = status === 'pending';
 		              const showCancel = status !== 'cancelled';
+		              const today = new Date(); today.setHours(0,0,0,0);
+		              const isPast = booking.slotDate ? new Date(booking.slotDate + 'T00:00:00') < today : false;
+		              const contactParts = [booking.email, booking.phone].filter(Boolean);
 
 		              return `
-		                <div class="slot-card booking-card" data-id="${booking.id}">
-		                  <div class="slot-info booking-info">
-		                    <div class="booking-main">
-		                      <div>
-		                        <div class="slot-date">${dateLabel}</div>
-		                        <div class="slot-time">${timeLabel}</div>
-		                      </div>
-		                      <div class="booking-status ${statusClass}">${statusLabel}</div>
-		                    </div>
-		                    <div class="booking-customer">
-		                      <div><strong>${booking.name}</strong>${booking.email ? ` (${booking.email})` : ''}</div>
-		                      <div>${booking.participants} Person(en)</div>
-		                    </div>
+		                <div class="bc bc--${status}${isPast ? ' bc--past' : ''}" data-id="${booking.id}">
+		                  <div class="bc__header">
+		                    <div class="bc__name">${escapeHtml(booking.name)}</div>
+		                    <span class="bc__status bc__status--${status}">${statusLabel}</span>
 		                  </div>
-		                  <div class="slot-actions booking-actions">
-		                    ${showConfirm ? `<button class="btn btn-success btn-confirm-booking" data-id="${booking.id}">✓ Bestätigen</button>` : ''}
-		                    ${showCancel ? `<button class="btn btn-danger btn-cancel-booking" data-id="${booking.id}">✕ Absagen</button>` : ''}
-		                    <button class="btn btn-secondary btn-edit-booking" data-id="${booking.id}">✎ Bearbeiten</button>
+		                  <div class="bc__datetime">
+		                    ${dateLabel}${timeLabel ? ' &middot; ' + timeLabel : ''}${booking.participants ? ' &middot; ' + booking.participants + ' Person(en)' : ''}
+		                  </div>
+		                  ${contactParts.length > 0 ? `<div class="bc__contact">${contactParts.map(v => escapeHtml(v)).join(' &middot; ')}</div>` : ''}
+		                  ${booking.participantNames && booking.participantNames.length > 0 ? `<div class="bc__names">Teilnehmer: ${booking.participantNames.map((n: string) => escapeHtml(n)).join(', ')}</div>` : ''}
+		                  ${booking.notes ? `<div class="bc__notes">${escapeHtml(booking.notes)}</div>` : ''}
+		                  <div class="bc__actions">
+		                    ${showConfirm ? `<button class="btn btn-sm btn-success btn-confirm-booking" data-id="${booking.id}">Zusagen</button>` : ''}
+		                    ${showCancel ? `<button class="btn btn-sm btn-danger btn-cancel-booking" data-id="${booking.id}">Absagen</button>` : ''}
+		                    <button class="btn btn-sm btn-secondary btn-edit-booking" data-id="${booking.id}">Bearbeiten</button>
 		                  </div>
 		                </div>
 		              `;
@@ -998,50 +1333,14 @@ export const prerender = false;
 		            });
 		          });
 		
-		          // Edit-Handler (Teilnehmerzahl & Notizen mit einfachen Prompts bearbeiten)
+		          // Edit-Handler → Modal öffnen
 		          listEl.querySelectorAll('.btn-edit-booking').forEach((btn) => {
-		            btn.addEventListener('click', async (e) => {
+		            btn.addEventListener('click', (e) => {
 		              const id = (e.target as HTMLElement).dataset.id;
 		              if (!id) return;
-
 		              const booking = (activeBookings as any[]).find((b) => b.id === id);
 		              if (!booking) return;
-
-		              const participantsInput = prompt('Anzahl Personen', String(booking.participants || 1));
-		              if (participantsInput === null) return;
-		              const participants = parseInt(participantsInput, 10);
-		              if (!Number.isFinite(participants) || participants <= 0) {
-		                alert('Bitte eine gültige Personenzahl eingeben.');
-		                return;
-		              }
-
-		              const notesInput = prompt('Notizen (optional)', booking.notes || '');
-		              try {
-		                const response = await fetch('/api/admin/bookings', {
-		                  method: 'PUT',
-		                  headers: {
-		                    'Authorization': `Basic ${authCredentials}`,
-		                    'Content-Type': 'application/json',
-		                  },
-		                  body: JSON.stringify({
-		                    id,
-		                    participants,
-		                    notes: notesInput ?? '',
-		                  }),
-		                });
-		
-		                if (response.ok) {
-		                  await loadBookings();
-		                  await loadSlots();
-		                } else {
-		                  const result = await response.json().catch(() => null);
-		                  const message = result?.error || 'Fehler beim Aktualisieren der Buchung';
-		                  alert(message);
-		                }
-		              } catch (error) {
-		                console.error('Error updating booking:', error);
-		                alert('Fehler beim Aktualisieren der Buchung');
-		              }
+		              openEditBookingModal(booking);
 		            });
 		          });
 		        }
@@ -1207,9 +1506,27 @@ export const prerender = false;
 	    // Setze Mindestdatum auf heute
 	    const dateInput = document.getElementById('slot-date') as HTMLInputElement;
 	    if (dateInput) {
-	      const today = new Date().toISOString().split('T')[0];
+	      const today = toLocalDateStr(new Date());
 	      dateInput.min = today;
 	    }
+
+    // ========== SIDEBAR TOGGLE ==========
+    const sidebar = document.getElementById('admin-sidebar');
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    function toggleSidebar() {
+      sidebar?.classList.toggle('open');
+      sidebarOverlay?.classList.toggle('visible');
+    }
+
+    function closeSidebar() {
+      sidebar?.classList.remove('open');
+      sidebarOverlay?.classList.remove('visible');
+    }
+
+    hamburgerBtn?.addEventListener('click', toggleSidebar);
+    sidebarOverlay?.addEventListener('click', closeSidebar);
 
     // ========== TAB NAVIGATION ==========
     const tabButtons = document.querySelectorAll('.admin-nav__btn');
@@ -1219,12 +1536,21 @@ export const prerender = false;
       btn.addEventListener('click', () => {
         const tabName = btn.getAttribute('data-tab');
 
+        // Close sidebar on mobile after tab click
+        closeSidebar();
+
         // Deaktiviere alle Tabs
         tabButtons.forEach(b => b.classList.remove('active'));
         tabContents.forEach(t => t.classList.add('hidden'));
 
         // Aktiviere gewählten Tab
         btn.classList.add('active');
+        // Update topbar title
+        const topbarTitle = document.querySelector('.topbar-title');
+        if (topbarTitle) {
+          const label = btn.querySelector('.nav-label')?.textContent || tabName;
+          topbarTitle.textContent = label;
+        }
         const targetTab = document.getElementById(`tab-${tabName}`);
         if (targetTab) {
           targetTab.classList.remove('hidden');
@@ -1236,13 +1562,19 @@ export const prerender = false;
               renderWeekCalendar();
             });
           } else if (tabName === 'termine') {
-            Promise.all([loadSlots(), loadBookings()]);
+            loadSlots();
+          } else if (tabName === 'kunden') {
+            loadBookings();
+          } else if (tabName === 'anfragen') {
+            loadInquiries();
           } else if (tabName === 'workshops') {
             Promise.all([loadWorkshopImageOptions(), loadWorkshops(), loadWorkshopBookings()]);
           } else if (tabName === 'galerie') {
             loadGalleryData();
           } else if (tabName === 'bewertungen') {
             loadReviews();
+          } else if (tabName === 'statistiken') {
+            loadAdminStats();
           }
         }
       });
@@ -1688,10 +2020,13 @@ export const prerender = false;
 
     // ========== GALERIE VERWALTUNG (S3) ==========
     const GALLERY_CATEGORIES = [
-      { id: 'tassen', name: 'Tassen' },
-      { id: 'teller', name: 'Teller' },
-      { id: 'spardosen', name: 'Spardosen & Krüge & Boxen' },
-      { id: 'anhaenger', name: 'Weihnachtsanhänger' },
+      { id: 'tassen', name: 'Tassen & Becher' },
+      { id: 'teller', name: 'Teller & Schalen' },
+      { id: 'figuren', name: 'Figuren & Deko' },
+      { id: 'spardosen', name: 'Spardosen & Krüge' },
+      { id: 'anhaenger', name: 'Anhänger & Schmuck' },
+      { id: 'kindergeburtstag', name: 'Kindergeburtstage' },
+      { id: 'sonstiges', name: 'Sonstiges' },
     ];
 
     let galleryImages: any[] = [];
@@ -1726,8 +2061,12 @@ export const prerender = false;
 
     async function uploadGalleryFile(file: File) {
       if (!uploadStatus) return;
+
+      const catSelect = document.getElementById('gallery-cat-select') as HTMLSelectElement;
+      const selectedCat = catSelect?.value || '';
+
       uploadStatus.className = 'upload-status uploading';
-      uploadStatus.textContent = `Uploading ${file.name}...`;
+      uploadStatus.textContent = `Wird hochgeladen...`;
 
       try {
         const formData = new FormData();
@@ -1746,8 +2085,22 @@ export const prerender = false;
         }
 
         const result = await response.json();
+
+        // Kategorie sofort speichern wenn ausgewählt
+        if (selectedCat && result.filename) {
+          await fetch('/api/gallery-metadata', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${authCredentials}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename: result.filename, category: selectedCat }),
+          });
+        }
+
+        const catName = GALLERY_CATEGORIES.find(c => c.id === selectedCat)?.name || 'ohne Kategorie';
         uploadStatus.className = 'upload-status success';
-        uploadStatus.textContent = `✓ Hochgeladen: ${result.filename}`;
+        uploadStatus.textContent = `✓ Hochgeladen${selectedCat ? ` → ${catName}` : ' (ohne Kategorie)'}`;
         fileInput.value = '';
         await loadGalleryData();
       } catch (error) {
@@ -1840,7 +2193,7 @@ export const prerender = false;
                 `<option value="${c.id}" ${category === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
               ).join('')}
             </select>
-            <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}">🗑️</button>
+            <button class="btn btn-sm btn-danger btn-delete-image" data-filename="${escapeHtml(img.filename)}"></button>
           </div>
         </div>
       `;
@@ -2102,7 +2455,7 @@ export const prerender = false;
     function renderOverview() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString().split('T')[0];
+      const todayStr = toLocalDateStr(today);
 
       // Heutige Termine rendern
       const todayBookings = cachedBookings.filter(b =>
@@ -2123,14 +2476,15 @@ export const prerender = false;
         if (todayListEl) {
           todayListEl.innerHTML = todayBookings.map(b => {
             const statusClass = b.status === 'pending' ? 'status-pending' : 'status-confirmed';
-            const statusLabel = b.status === 'pending' ? '⏳ Offen' : '✅ Bestätigt';
+            const statusLabel = b.status === 'pending' ? 'Offen' : 'Bestätigt';
             return `
               <div class="today-booking-card ${statusClass}">
                 <div class="today-booking-time">${b.slotTime || '?'}${b.slotEndTime ? ' - ' + b.slotEndTime : ''} Uhr</div>
                 <div class="today-booking-info">
                   <strong>${escapeHtml(b.name || '')}</strong>
                   <span>${b.participants || 1} Person(en)</span>
-                  ${b.notes ? `<span class="today-booking-note">📝 ${escapeHtml(b.notes)}</span>` : ''}
+                  ${b.participantNames && b.participantNames.length > 0 ? `<span class="today-booking-participants">${b.participantNames.map((n: string) => escapeHtml(n)).join(', ')}</span>` : ''}
+                  ${b.notes ? `<span class="today-booking-note">${escapeHtml(b.notes)}</span>` : ''}
                 </div>
                 <div class="today-booking-status ${statusClass}">${statusLabel}</div>
                 <div class="today-booking-actions">
@@ -2166,7 +2520,7 @@ export const prerender = false;
       // Offene Anfragen
       const pendingCount = cachedBookings.filter(b => b.status === 'pending').length;
       if (pendingCount > 0) {
-        warnings.push(`🔔 <strong>${pendingCount} offene Anfrage${pendingCount > 1 ? 'n' : ''}</strong> warten auf Bestätigung`);
+        warnings.push(`<strong>${pendingCount} offene Anfrage${pendingCount > 1 ? 'n' : ''}</strong> warten auf Bestätigung`);
       }
 
       // Doppelbelegungen prüfen
@@ -2183,7 +2537,7 @@ export const prerender = false;
               const a = slots[i], b = slots[j];
               if (a.time && b.time && a.endTime && b.endTime) {
                 if (a.time < b.endTime && b.time < a.endTime) {
-                  warnings.push(`⚠️ <strong>Zeitüberlappung</strong> am ${formatDate(date)}: ${a.time}-${a.endTime} und ${b.time}-${b.endTime}`);
+                  warnings.push(`<strong>Zeitüberlappung</strong> am ${formatDate(date)}: ${a.time}-${a.endTime} und ${b.time}-${b.endTime}`);
                 }
               }
             }
@@ -2197,7 +2551,7 @@ export const prerender = false;
         return slotDate >= today && s.available === 0 && s.eventType === 'normal';
       });
       if (fullSlots.length > 0) {
-        warnings.push(`📌 <strong>${fullSlots.length} Termin${fullSlots.length > 1 ? 'e' : ''}</strong> ausgebucht`);
+        warnings.push(`<strong>${fullSlots.length} Termin${fullSlots.length > 1 ? 'e' : ''}</strong> ausgebucht`);
       }
 
       if (warningsEl && warningsListEl) {
@@ -2250,12 +2604,12 @@ export const prerender = false;
       if (!calEl) return;
 
       const days = getWeekDates(calendarWeekOffset);
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = toLocalDateStr(new Date());
 
       // Wochenlabel
       const startStr = days[0].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
       const endStr = days[6].toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      if (labelEl) labelEl.textContent = `${startStr} – ${endStr}`;
+      if (labelEl) labelEl.textContent = `${startStr} bis ${endStr}`;
 
       // Slots und Buchungen pro Tag gruppieren
       let html = '<div class="cal-grid">';
@@ -2263,7 +2617,7 @@ export const prerender = false;
       const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
       days.forEach((day, idx) => {
-        const dateStr = day.toISOString().split('T')[0];
+        const dateStr = toLocalDateStr(day);
         const isToday = dateStr === todayStr;
         const isPast = day < new Date(todayStr + 'T00:00:00');
 
@@ -2279,7 +2633,7 @@ export const prerender = false;
         else if (utilization >= 40) utilizationClass = 'cal-medium';
 
         html += `
-          <div class="cal-day ${isToday ? 'cal-today' : ''} ${isPast ? 'cal-past' : ''}">
+          <div class="cal-day ${isToday ? 'cal-today' : ''} ${isPast ? 'cal-past' : ''}" data-cal-date="${dateStr}" style="cursor:pointer;" title="Klicken für Details">
             <div class="cal-day-header">
               <span class="cal-day-name">${dayNames[idx]}</span>
               <span class="cal-day-date">${day.getDate()}.${day.getMonth() + 1}</span>
@@ -2295,8 +2649,8 @@ export const prerender = false;
             const booked = slot.maxCapacity - slot.available;
 
             let badge = '';
-            if (slot.eventType === 'kindergeburtstag') badge = '🎂';
-            else if (slot.eventType === 'stammtisch') badge = '🍷';
+            if (slot.eventType === 'kindergeburtstag') badge = 'KG';
+            else if (slot.eventType === 'stammtisch') badge = 'ST';
 
             html += `
               <div class="cal-slot ${utilizationClass}">
@@ -2318,7 +2672,96 @@ export const prerender = false;
 
       html += '</div>';
       calEl.innerHTML = html;
+
+      // Click-Handler auf Kalendertage
+      calEl.querySelectorAll('.cal-day[data-cal-date]').forEach(dayEl => {
+        dayEl.addEventListener('click', () => {
+          const dateStr = (dayEl as HTMLElement).dataset.calDate;
+          if (dateStr) showDayDetail(dateStr);
+        });
+      });
     }
+
+    function showDayDetail(dateStr: string) {
+      const panel = document.getElementById('day-detail-panel');
+      const titleEl = document.getElementById('day-detail-title');
+      const contentEl = document.getElementById('day-detail-content');
+      if (!panel || !titleEl || !contentEl) return;
+
+      const dateObj = new Date(dateStr + 'T00:00:00');
+      const formatted = dateObj.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      titleEl.textContent = `${formatted}`;
+
+      const daySlots = cachedSlots.filter((s: any) => s.date === dateStr);
+      const dayBookings = cachedBookings.filter((b: any) => b.slotDate === dateStr && b.status !== 'cancelled');
+
+      if (daySlots.length === 0 && dayBookings.length === 0) {
+        contentEl.innerHTML = '<p class="no-data" style="padding:1rem">Keine Termine an diesem Tag.</p>';
+      } else {
+        let html = '';
+
+        daySlots.forEach((slot: any) => {
+          const slotBookings = dayBookings.filter((b: any) => b.slotId === slot.id);
+          const booked = slot.maxCapacity - slot.available;
+
+          let badge = '';
+          if (slot.eventType === 'kindergeburtstag') badge = 'KG Kindergeburtstag';
+          else if (slot.eventType === 'stammtisch') badge = 'ST Stammtisch';
+
+          html += `<div class="day-detail-slot">`;
+          html += `<div class="day-detail-slot-header">`;
+          html += `<strong>${slot.time}${slot.endTime ? ' bis ' + slot.endTime : ''} Uhr</strong>`;
+          html += `<span class="day-detail-capacity">${booked}/${slot.maxCapacity} Plätze</span>`;
+          if (badge) html += `<span class="day-detail-badge">${badge}</span>`;
+          html += `</div>`;
+
+          if (slotBookings.length === 0) {
+            html += `<p class="day-detail-empty">Noch keine Buchungen</p>`;
+          } else {
+            html += `<div class="day-detail-bookings">`;
+            slotBookings.forEach((b: any) => {
+              const statusClass = b.status === 'pending' ? 'status-pending' : 'status-confirmed';
+              const statusLabel = b.status === 'pending' ? '⏳ Offen' : '✓ Bestätigt';
+              html += `
+                <div class="day-detail-booking ${statusClass}">
+                  <div class="day-detail-booking-name"><strong>${escapeHtml(b.name || '?')}</strong></div>
+                  <div class="day-detail-booking-info">
+                    ${b.participants ? b.participants + ' Person(en)' : ''}
+                    ${b.email ? ' · ' + escapeHtml(b.email) : ''}
+                    ${b.phone ? ' · ' + escapeHtml(b.phone) : ''}
+                    ${b.participantNames && b.participantNames.length > 0 ? `<br>Teilnehmer: Teilnehmer: ${b.participantNames.map((n: string) => escapeHtml(n)).join(', ')}` : ''}
+                  </div>
+                  <span class="day-detail-booking-status ${statusClass}">${statusLabel}</span>
+                </div>
+              `;
+            });
+            html += `</div>`;
+          }
+
+          html += `</div>`;
+        });
+
+        // Buchungen ohne Slot-Zuordnung
+        const orphanBookings = dayBookings.filter((b: any) => !daySlots.some((s: any) => s.id === b.slotId));
+        if (orphanBookings.length > 0) {
+          html += `<div class="day-detail-slot"><div class="day-detail-slot-header"><strong>Weitere Buchungen</strong></div><div class="day-detail-bookings">`;
+          orphanBookings.forEach((b: any) => {
+            html += `<div class="day-detail-booking"><div class="day-detail-booking-name"><strong>${escapeHtml(b.name || '?')}</strong></div><div class="day-detail-booking-info">${b.participants ? b.participants + ' Person(en)' : ''} ${b.email ? ' · ' + escapeHtml(b.email) : ''}</div></div>`;
+          });
+          html += `</div></div>`;
+        }
+
+        contentEl.innerHTML = html;
+      }
+
+      panel.classList.remove('hidden');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Detail-Panel schließen
+    document.getElementById('day-detail-close')?.addEventListener('click', () => {
+      document.getElementById('day-detail-panel')?.classList.add('hidden');
+    });
 
     // Kalender-Navigation
     document.getElementById('cal-prev-week')?.addEventListener('click', () => {
@@ -2422,13 +2865,13 @@ export const prerender = false;
       el.style.display = 'block';
       el.innerHTML = `
         <div style="background: ${isActive ? '#f0fdf4' : '#fef2f2'}; border: 2px solid ${isActive ? '#16a34a' : '#dc2626'}; border-radius: 16px; padding: 1.5rem; text-align: center; max-width: 400px; margin: 0 auto;">
-          <div style="font-size: 3rem;">${isActive ? '✅' : '⚠️'}</div>
+          <div style="font-size: 1.5rem; font-weight: bold; color: ${isActive ? '#16a34a' : '#dc2626'};">${isActive ? 'Gültig' : 'Ungültig'}</div>
           <h3 style="color: ${isActive ? '#16a34a' : '#dc2626'}; margin: 0.5rem 0;">${isActive ? 'Gutschein gültig' : (voucher.status === 'redeemed' ? 'Bereits eingelöst' : 'Abgelaufen')}</h3>
           <p style="font-family: monospace; font-size: 1.25rem; letter-spacing: 2px; margin: 0.5rem 0;">${escapeHtml(voucher.code)}</p>
           <p style="font-size: 2rem; font-weight: bold; margin: 0.5rem 0;">${formatCents(voucher.amount)}</p>
           <p style="font-size: 0.85rem; color: #666;">${escapeHtml(voucher.customerEmail || '')}${voucher.customerName ? ' (' + escapeHtml(voucher.customerName) + ')' : ''}</p>
           ${voucher.redeemedAt ? `<p style="font-size: 0.8rem; color: #999;">Eingelöst: ${formatVoucherDate(voucher.redeemedAt)}</p>` : ''}
-          ${isActive ? `<button onclick="adminRedeemVoucher('${escapeHtml(voucher.code)}')" style="margin-top: 1rem; background: #dc2626; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">🎟️ Jetzt einlösen</button>` : ''}
+          ${isActive ? `<button onclick="adminRedeemVoucher('${escapeHtml(voucher.code)}')" style="margin-top: 1rem; background: #dc2626; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">Jetzt einlösen</button>` : ''}
         </div>`;
     }
 
@@ -2681,6 +3124,8 @@ export const prerender = false;
 
           if (activeTab === 'termine' || activeTab === 'uebersicht') {
             await Promise.all([loadSlots(), loadBookings()]);
+          } else if (activeTab === 'kunden') {
+            await loadBookings();
           } else if (activeTab === 'workshops') {
             await Promise.all([loadWorkshops(), loadWorkshopBookings()]);
           } else if (activeTab === 'gutscheine') {
@@ -2729,6 +3174,131 @@ export const prerender = false;
       observer.observe(adminPanel, { attributes: true, attributeFilter: ['class'] });
     }
 
+    // ========== ANFRAGEN (Besondere Anlässe) ==========
+    const INQUIRY_EVENT_LABELS: Record<string, string> = {
+      kindergeburtstag: 'Kindergeburtstag',
+      jga: 'JGA',
+      stammtisch: 'Stammtisch',
+      firmen_event: 'Firmen-Event',
+      privater_anlass: 'Privater Anlass',
+      sonstiges: 'Sonstiges',
+    };
+    const INQUIRY_STATUS_LABELS: Record<string, string> = {
+      'new': 'Neu',
+      contacted: 'Kontaktiert',
+      confirmed: 'Bestätigt',
+      cancelled: 'Abgesagt',
+    };
+    const INQUIRY_STATUS_COLORS: Record<string, string> = {
+      'new': '#e65100',
+      contacted: '#1565c0',
+      confirmed: '#2e7d32',
+      cancelled: '#999',
+    };
+
+    let allInquiries: any[] = [];
+
+    async function loadInquiries() {
+      try {
+        const res = await fetch(`/api/inquiries`, {
+          headers: { 'Authorization': `Basic ${authCredentials}` }
+        });
+        if (!res.ok) return;
+        allInquiries = await res.json();
+        renderInquiries();
+      } catch (err) {
+        console.error('Fehler beim Laden der Anfragen:', err);
+      }
+    }
+
+    function renderInquiries() {
+      const list = document.getElementById('inquiries-list');
+      const noData = document.getElementById('no-inquiries');
+      if (!list || !noData) return;
+
+      const activeFilter = document.querySelector('[data-inquiry-filter].active')?.getAttribute('data-inquiry-filter') || 'new';
+      const filtered = activeFilter === 'all' ? allInquiries : allInquiries.filter(i => i.status === activeFilter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        noData.classList.remove('hidden');
+        return;
+      }
+      noData.classList.add('hidden');
+
+      list.innerHTML = filtered.map(inq => {
+        const eventLabel = INQUIRY_EVENT_LABELS[inq.eventType] || inq.eventType;
+        const statusLabel = INQUIRY_STATUS_LABELS[inq.status] || inq.status;
+        const statusColor = INQUIRY_STATUS_COLORS[inq.status] || '#666';
+        const date = inq.preferredDate || '–';
+        const created = new Date(inq.createdAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        return `<div class="inquiry-card" data-inquiry-id="${inq.id}">
+          <div class="inquiry-card-header">
+            <span class="inquiry-event-badge">${eventLabel}</span>
+            <span class="inquiry-status-badge" style="background:${statusColor}">${statusLabel}</span>
+          </div>
+          <div class="inquiry-card-body">
+            <div class="inquiry-info"><strong>${inq.name}</strong></div>
+            <div class="inquiry-info">${inq.email} · ${inq.phone || '–'}</div>
+            <div class="inquiry-info">Wunschdatum: ${date} · ${inq.participants} Person(en)</div>
+            ${inq.message ? `<div class="inquiry-message">${inq.message}</div>` : ''}
+            ${inq.adminNotes ? `<div class="inquiry-admin-notes">Notiz: ${inq.adminNotes}</div>` : ''}
+            <div class="inquiry-meta">Eingegangen: ${created}</div>
+          </div>
+          <div class="inquiry-card-actions">
+            ${inq.status === 'new' ? `<button class="btn btn-sm btn-primary" onclick="updateInquiryStatus('${inq.id}', 'contacted')">Kontaktiert</button>` : ''}
+            ${inq.status !== 'confirmed' && inq.status !== 'cancelled' ? `<button class="btn btn-sm btn-success" onclick="updateInquiryStatus('${inq.id}', 'confirmed')">Bestätigt</button>` : ''}
+            ${inq.status !== 'cancelled' ? `<button class="btn btn-sm btn-danger" onclick="updateInquiryStatus('${inq.id}', 'cancelled')">Absagen</button>` : ''}
+            <button class="btn btn-sm btn-secondary" onclick="editInquiryNotes('${inq.id}')">Notiz</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Inquiry-Filter click handler
+    document.querySelectorAll('[data-inquiry-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-inquiry-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderInquiries();
+      });
+    });
+
+    // Global functions for inquiry actions
+    (window as any).updateInquiryStatus = async function(id: string, status: string) {
+      try {
+        const res = await fetch('/api/inquiries', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${authCredentials}` },
+          body: JSON.stringify({ id, status }),
+        });
+        if (res.ok) {
+          await loadInquiries();
+        } else {
+          alert('Fehler beim Aktualisieren.');
+        }
+      } catch (err) {
+        alert('Verbindungsfehler.');
+      }
+    };
+
+    (window as any).editInquiryNotes = async function(id: string) {
+      const inq = allInquiries.find(i => i.id === id);
+      const notes = prompt('Admin-Notiz:', inq?.adminNotes || '');
+      if (notes === null) return;
+      try {
+        const res = await fetch('/api/inquiries', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${authCredentials}` },
+          body: JSON.stringify({ id, adminNotes: notes }),
+        });
+        if (res.ok) await loadInquiries();
+      } catch (err) {
+        alert('Fehler beim Speichern.');
+      }
+    };
+
     // Seite verlassen: Refresh stoppen
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
@@ -2740,6 +3310,109 @@ export const prerender = false;
         loadBookings();
       }
     });
+    // ========== STATISTIKEN ==========
+    const MONAT_NAMEN = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+    async function loadAdminStats() {
+      const el = document.getElementById('admin-stats-content');
+      if (!el) return;
+      try {
+        const res = await fetch('/api/admin/brenn/stats');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+        const s = data.data;
+        let html = '';
+
+        // Gesamtzahlen
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-bottom:2rem">';
+        html += adminStatCard(s.gesamt.kunden, 'Kunden gesamt', '#A0522D');
+        html += adminStatCard(s.gesamt.auftraege, 'Aufträge gesamt', '#D96C4A');
+        html += adminStatCard(s.gesamt.werkstuecke, 'Werkstücke', '#B1735C');
+        html += adminStatCard(s.gesamt.buchungen, 'Buchungen', '#423430');
+        html += adminStatCard(s.abholquote.abgeholt, 'Abgeholt', '#5CB85C');
+        html += adminStatCard(s.abholquote.quote_prozent + '%', 'Abholquote', s.abholquote.quote_prozent > 70 ? '#5CB85C' : '#E8833A');
+        html += '</div>';
+
+        // Abholquote Fortschritt
+        html += '<div style="background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">';
+        html += '<h3 style="margin:0 0 0.75rem;color:#423430;font-size:1rem">Abholquote</h3>';
+        html += '<div style="display:flex;align-items:center;gap:1rem">';
+        html += '<div style="flex:1;background:#EDE4DA;border-radius:8px;height:16px;overflow:hidden">';
+        html += '<div style="background:linear-gradient(90deg,#5CB85C,#4CAE4C);height:100%;width:' + s.abholquote.quote_prozent + '%;border-radius:8px;transition:width 0.5s"></div></div>';
+        html += '<span style="font-weight:700;color:#423430;font-size:1.1rem">' + s.abholquote.quote_prozent + '%</span></div>';
+        html += '<div style="display:flex;gap:2rem;margin-top:0.75rem;font-size:0.8125rem;color:#6B5D56">';
+        html += '<span>' + s.abholquote.abgeholt + ' abgeholt</span>';
+        html += '<span>' + s.abholquote.wartet_auf_abholung + ' warten</span>';
+        html += '<span>' + s.abholquote.gesamt_bearbeitet + ' bearbeitet</span></div></div>';
+
+        // Aufträge pro Monat
+        if (s.auftraege_pro_monat.length > 0) {
+          html += '<div style="background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">';
+          html += '<h3 style="margin:0 0 1rem;color:#423430;font-size:1rem">Aufträge pro Monat</h3>';
+          const maxVal = Math.max(...s.auftraege_pro_monat.map(m => m.anzahl));
+          html += '<div style="display:flex;align-items:flex-end;gap:6px;height:140px;padding-bottom:2rem;position:relative">';
+          s.auftraege_pro_monat.forEach(m => {
+            const pct = maxVal > 0 ? (m.anzahl / maxVal) * 100 : 0;
+            const parts = m.monat.split('-');
+            const label = MONAT_NAMEN[parseInt(parts[1]) - 1] + ' ' + parts[0].slice(2);
+            html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative">';
+            html += '<div style="font-size:0.75rem;font-weight:700;color:#423430;margin-bottom:2px">' + m.anzahl + '</div>';
+            html += '<div style="width:100%;max-width:40px;background:linear-gradient(180deg,#D96C4A,#B1735C);border-radius:4px 4px 0 0;min-height:4px;height:' + pct + '%;transition:height 0.5s"></div>';
+            html += '<div style="font-size:0.625rem;color:#9B8E88;margin-top:4px;position:absolute;bottom:-20px">' + label + '</div>';
+            html += '</div>';
+          });
+          html += '</div></div>';
+        }
+
+        // Beliebteste Keramik
+        if (s.beliebte_typen.length > 0) {
+          html += '<div style="background:#fff;border-radius:12px;padding:1.5rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">';
+          html += '<h3 style="margin:0 0 1rem;color:#423430;font-size:1rem">Beliebteste Keramik</h3>';
+          const maxT = s.beliebte_typen[0].anzahl;
+          s.beliebte_typen.forEach((t, i) => {
+            const pct = maxT > 0 ? (t.anzahl / maxT) * 100 : 0;
+            const colors = ['#D96C4A', '#B1735C', '#A0522D', '#8B4726', '#6B5D56'];
+            const c = colors[Math.min(i, colors.length - 1)];
+            html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
+            html += '<div style="width:90px;font-size:0.875rem;color:#423430;font-weight:600">' + t.typ + '</div>';
+            html += '<div style="flex:1;background:#EDE4DA;border-radius:6px;height:22px;overflow:hidden">';
+            html += '<div style="background:' + c + ';height:100%;width:' + pct + '%;border-radius:6px;transition:width 0.5s"></div></div>';
+            html += '<div style="width:35px;text-align:right;font-size:0.875rem;font-weight:700;color:#423430">' + t.anzahl + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+
+        // Kunden-Wachstum
+        if (s.kunden_wachstum.length > 0) {
+          html += '<div style="background:#fff;border-radius:12px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,0.04)">';
+          html += '<h3 style="margin:0 0 1rem;color:#423430;font-size:1rem">Neue Kunden pro Monat</h3>';
+          const maxK = Math.max(...s.kunden_wachstum.map(m => m.neue_kunden));
+          html += '<div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding-bottom:2rem;position:relative">';
+          s.kunden_wachstum.forEach(m => {
+            const pct = maxK > 0 ? (m.neue_kunden / maxK) * 100 : 0;
+            const parts = m.monat.split('-');
+            const label = MONAT_NAMEN[parseInt(parts[1]) - 1] + ' ' + parts[0].slice(2);
+            html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative">';
+            html += '<div style="font-size:0.75rem;font-weight:700;color:#423430;margin-bottom:2px">' + m.neue_kunden + '</div>';
+            html += '<div style="width:100%;max-width:40px;background:linear-gradient(180deg,#5CB85C,#4CAE4C);border-radius:4px 4px 0 0;min-height:4px;height:' + pct + '%;transition:height 0.5s"></div>';
+            html += '<div style="font-size:0.625rem;color:#9B8E88;margin-top:4px;position:absolute;bottom:-20px">' + label + '</div>';
+            html += '</div>';
+          });
+          html += '</div></div>';
+        }
+
+        el.innerHTML = html;
+      } catch(e) {
+        el.innerHTML = '<p style="color:#dc2626">Statistiken konnten nicht geladen werden: ' + (e.message || e) + '</p>';
+      }
+    }
+
+    function adminStatCard(value, label, color) {
+      return '<div style="background:#fff;border-radius:10px;padding:1.25rem 1rem;text-align:center;border-top:3px solid ' + color + ';box-shadow:0 2px 8px rgba(0,0,0,0.04)">' +
+        '<div style="font-size:1.75rem;font-weight:700;color:' + color + ';line-height:1">' + value + '</div>' +
+        '<div style="font-size:0.75rem;color:#6B5D56;margin-top:0.25rem">' + label + '</div></div>';
+    }
   </script>
 </body>
 </html>

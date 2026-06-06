@@ -1,0 +1,823 @@
+---
+// Galerie-Sektion. Masonry-Layout mit natürlichen Bildproportionen
+---
+
+<section id="galerie" class="galerie" style="scroll-margin-top: 60px;">
+  <div class="galerie__head animate-on-scroll">
+    <span class="galerie__overline">Galerie</span>
+    <h2 class="galerie__title">Unsere Arbeiten</h2>
+    <p class="galerie__sub">Jedes Stück ist ein Unikat. lass dich inspirieren</p>
+
+    <div class="galerie__filter" id="galerie-filter" role="tablist">
+      <button class="gf-btn active" data-cat="all" role="tab" aria-selected="true">Alle</button>
+    </div>
+  </div>
+
+  <div class="galerie__body">
+    <div id="galerie-loading" class="galerie__loading">
+      <div class="galerie__loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <span>Galerie wird geladen</span>
+    </div>
+
+    <div id="galerie-empty-all" class="galerie__empty hidden">
+      <div class="galerie__empty-icon">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+      <h3 class="galerie__empty-title">Galerie ist in Arbeit</h3>
+      <p class="galerie__empty-text">Bald zeigen wir dir hier unsere Keramiken. Schau gerne bald wieder vorbei!</p>
+    </div>
+
+    <div id="galerie-empty-cat" class="galerie__empty hidden">
+      <p class="galerie__empty-text">Noch keine Bilder in dieser Kategorie.</p>
+    </div>
+
+    <div id="galerie-grid" class="galerie__masonry hidden"></div>
+
+    <div id="galerie-more-wrap" class="galerie__more-wrap hidden">
+      <button id="galerie-more-btn" class="galerie__more-btn" type="button">
+        Mehr anzeigen
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Instagram CTA -->
+  <div class="galerie__instagram">
+    <a
+      href="https://www.instagram.com/auszeit_keramik_malatelier/"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="galerie__instagram-link"
+    >
+      <svg class="galerie__instagram-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+        <circle cx="12" cy="12" r="4"/>
+        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+      </svg>
+      Mehr auf Instagram
+    </a>
+  </div>
+
+  <!-- Booking CTA -->
+  <div style="text-align: center; margin-top: 2rem;">
+    <p style="font-size: 1.1rem; color: #423430; margin-bottom: 0.75rem;">Gestalte dein eigenes Unikat!</p>
+    <a href="#termin-buchen" style="display: inline-block; padding: 14px 32px; background: #D96C4A; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 700;">Termin buchen</a>
+  </div>
+
+  <!-- Lightbox -->
+  <div id="glb" class="glb hidden" role="dialog" aria-modal="true">
+    <div class="glb__bg" id="glb-bg"></div>
+    <div class="glb__ui">
+      <button class="glb__close" id="glb-close" aria-label="Schließen">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <button class="glb__arrow glb__arrow--l" id="glb-prev" aria-label="Zurück">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+
+      <div class="glb__stage">
+        <img id="glb-img" class="glb__img" src="" alt="Galerie">
+      </div>
+
+      <button class="glb__arrow glb__arrow--r" id="glb-next" aria-label="Weiter">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+
+      <div class="glb__count" id="glb-count">1 / 1</div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ── Section ─────────────────────────────────────────────── */
+  .galerie {
+    background: var(--bg-paper, #FAF7F2);
+    padding: var(--space-10, 5rem) 0 var(--space-8, 4rem);
+  }
+
+  /* ── Header ──────────────────────────────────────────────── */
+  .galerie__head {
+    max-width: var(--max-width, 1080px);
+    margin: 0 auto;
+    padding: 0 var(--gutter, 1.5rem);
+    text-align: center;
+    margin-bottom: var(--space-5, 2.5rem);
+  }
+
+  .galerie__overline {
+    display: block;
+    color: var(--accent-caramel, #CFA874);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .galerie__title {
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    color: var(--brand-espresso, #423430);
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+  }
+
+  .galerie__sub {
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    color: var(--color-text-secondary, #5D4E43);
+    font-size: 1rem;
+    margin: 0 0 2rem;
+    line-height: 1.6;
+  }
+
+  /* ── Filter ──────────────────────────────────────────────── */
+  .galerie__filter {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* :global nötig weil Kategorie-Buttons dynamisch per JS erstellt werden
+     und kein Astro scoped data-Attribut bekommen */
+  :global(.gf-btn) {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(66, 52, 48, 0.12);
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--brand-espresso, #423430);
+    font-size: 0.875rem;
+    font-weight: 550;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 3px rgba(66, 52, 48, 0.06);
+    line-height: 1.3;
+  }
+
+  :global(.gf-btn:hover) {
+    background: #fff;
+    border-color: var(--accent-caramel, #CFA874);
+    color: var(--brand-espresso, #423430);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 52, 48, 0.1);
+  }
+
+  :global(.gf-btn:active) {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(66, 52, 48, 0.08);
+  }
+
+  :global(.gf-btn.active) {
+    background: var(--brand-espresso, #423430);
+    color: #fff;
+    border-color: var(--brand-espresso, #423430);
+    box-shadow: 0 3px 12px rgba(66, 52, 48, 0.25);
+    font-weight: 600;
+  }
+
+  :global(.gf-btn.active:hover) {
+    background: var(--color-clay-brown, #5D4E43);
+    border-color: var(--color-clay-brown, #5D4E43);
+    box-shadow: 0 4px 14px rgba(66, 52, 48, 0.3);
+  }
+
+  /* ── Body ────────────────────────────────────────────────── */
+  .galerie__body {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--gutter, 1.5rem);
+  }
+
+  /* ── Loading ─────────────────────────────────────────────── */
+  .galerie__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 4rem 1rem;
+    color: var(--color-text-secondary, #5D4E43);
+    font-size: 0.9rem;
+  }
+
+  .galerie__loading-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .galerie__loading-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-caramel, #CFA874);
+    animation: galerie-pulse 1.2s ease-in-out infinite;
+  }
+
+  .galerie__loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .galerie__loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes galerie-pulse {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  /* ── Empty States ────────────────────────────────────────── */
+  .galerie__empty {
+    text-align: center;
+    padding: 4rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .galerie__empty-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-caramel, #CFA874);
+    margin-bottom: 0.25rem;
+  }
+
+  .galerie__empty-title {
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: 1.4rem;
+    color: var(--brand-espresso, #423430);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .galerie__empty-text {
+    color: var(--color-text-secondary, #5D4E43);
+    font-size: 0.95rem;
+    max-width: 380px;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ── Masonry Grid ────────────────────────────────────────── */
+  .galerie__masonry {
+    columns: 3;
+    column-gap: 16px;
+  }
+
+  /* :global nötig weil Grid-Items dynamisch per JS innerHTML erstellt werden */
+  :global(.g-item) {
+    break-inside: avoid;
+    margin-bottom: 16px;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    background: var(--bg-sand, #E3D5CA);
+    transition: transform 0.28s ease, box-shadow 0.28s ease;
+    opacity: 0;
+    animation: galerie-fadeIn 0.5s ease forwards;
+  }
+
+  /* LQIP blur-up: image fades in over the warm sand placeholder */
+  :global(.g-item img) {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.4s ease, opacity 0.35s ease;
+    opacity: 0;
+  }
+
+  :global(.g-item img.loaded) {
+    opacity: 1;
+  }
+
+  @keyframes galerie-fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  :global(.g-item__hover) {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(66, 52, 48, 0) 40%,
+      rgba(66, 52, 48, 0.45) 100%
+    );
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 16px;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    color: #fff;
+  }
+
+  :global(.g-item__hover-icon) {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  :global(.g-item:hover) {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(66, 52, 48, 0.15);
+  }
+
+  :global(.g-item:hover img) {
+    transform: scale(1.03);
+  }
+
+  :global(.g-item:hover .g-item__hover) {
+    opacity: 1;
+  }
+
+  /* ── "Mehr anzeigen" Button ──────────────────────────────── */
+  .galerie__more-wrap {
+    text-align: center;
+    padding-top: var(--space-5, 2.5rem);
+  }
+
+  .galerie__more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(66, 52, 48, 0.18);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--brand-espresso, #423430);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    font-family: inherit;
+  }
+
+  .galerie__more-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--accent-caramel, #CFA874);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(66, 52, 48, 0.1);
+  }
+
+  /* ── Lightbox ────────────────────────────────────────────── */
+  .glb {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .glb.hidden { display: none; }
+
+  .glb__bg {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 5, 2, 0.92);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .glb__ui {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    height: 100%;
+    padding: 3.5rem 1rem 2.5rem;
+    box-sizing: border-box;
+  }
+
+  .glb__stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    max-width: 80vw;
+    height: 100%;
+  }
+
+  .glb__img {
+    max-height: 85vh;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 12px 60px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.2s ease;
+  }
+
+  .glb__arrow {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.18s ease;
+  }
+
+  .glb__arrow:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .glb__close {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .glb__close:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .glb__count {
+    position: fixed;
+    bottom: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.82rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 1024px) {
+    .galerie__masonry { columns: 3; column-gap: 14px; }
+    :global(.g-item) { margin-bottom: 14px; border-radius: 12px; }
+  }
+
+  @media (max-width: 767px) {
+    .galerie { padding: var(--space-8, 4rem) 0 var(--space-6, 3rem); }
+    .galerie__masonry { columns: 2; column-gap: 10px; }
+    :global(.g-item) { margin-bottom: 10px; border-radius: 10px; }
+    .galerie__head { margin-bottom: var(--space-4, 2rem); }
+    :global(.gf-btn) { padding: 8px 16px; font-size: 0.8rem; }
+    .glb__arrow { width: 40px; height: 40px; }
+    .glb__stage { max-width: 90vw; }
+  }
+
+  @media (max-width: 479px) {
+    .galerie__masonry { columns: 2; column-gap: 8px; }
+    :global(.g-item) { margin-bottom: 8px; border-radius: 8px; }
+    .galerie__filter { gap: 7px; }
+    :global(.gf-btn) { padding: 7px 14px; font-size: 0.78rem; }
+  }
+
+  @media (max-width: 374px) {
+    .galerie__masonry {
+      columns: 1;
+    }
+  }
+
+  /* ── Touch: Hover-Effekte nur auf Nicht-Touch ────────────── */
+  @media (hover: none) {
+    :global(.g-item:hover) { transform: none; box-shadow: none; }
+    :global(.g-item:hover img) { transform: none; }
+    :global(.g-item__hover) { display: none; }
+  }
+
+  /* ── Instagram CTA ───────────────────────────────────────── */
+  .galerie__instagram {
+    text-align: center;
+    padding: var(--space-6, 3rem) var(--gutter, 1.5rem) 0;
+  }
+
+  .galerie__instagram-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 30px;
+    border-radius: 999px;
+    border: 1.5px solid var(--accent-caramel, #CFA874);
+    background: transparent;
+    color: var(--brand-espresso, #423430);
+    font-family: var(--font-sans, 'Source Sans 3', sans-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+  }
+
+  .galerie__instagram-link:hover {
+    background: var(--brand-espresso, #423430);
+    border-color: var(--brand-espresso, #423430);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(66, 52, 48, 0.18);
+  }
+
+  .galerie__instagram-icon {
+    flex-shrink: 0;
+  }
+</style>
+
+<script>
+  (function () {
+    const INITIAL_COUNT = 12;
+    const LOAD_MORE_COUNT = 12;
+
+    let all: { url: string; filename: string; category: string }[] = [];
+    let visible: typeof all = [];
+    let shownCount = INITIAL_COUNT;
+    let idx = 0;
+    let activeCat = 'all';
+
+    async function init() {
+      try {
+        const [galleryRes, metaRes] = await Promise.all([
+          fetch('/api/gallery'),
+          fetch('/api/gallery-metadata'),
+        ]);
+
+        if (!galleryRes.ok) throw new Error();
+        const images = (await galleryRes.json()) as any[];
+        const metaData = metaRes.ok ? (await metaRes.json()).metadata || {} : {};
+
+        all = images
+          .filter(
+            (d: any) =>
+              d.source === 'gallery' &&
+              d.url &&
+              /\.(jpe?g|png|webp|gif)(\?|$)/i.test(d.url)
+          )
+          .map((d: any) => ({
+            url: d.url,
+            filename: d.filename,
+            category: metaData[d.filename]?.category || '',
+          }));
+      } catch {
+        document.getElementById('galerie-loading')!.textContent =
+          'Bilder konnten nicht geladen werden.';
+        return;
+      }
+
+      hide('galerie-loading');
+
+      if (all.length === 0) {
+        show('galerie-empty-all');
+        return;
+      }
+
+      // Dynamische Filter-Buttons basierend auf vorhandenen Kategorien
+      buildFilterButtons();
+
+      show('galerie-grid');
+      render('all');
+    }
+
+    // Nur Kategorien als Filter anzeigen, die auch Bilder haben
+    function buildFilterButtons() {
+      const CATEGORY_LABELS: Record<string, string> = {
+        tassen: 'Tassen & Becher',
+        teller: 'Teller & Schalen',
+        figuren: 'Figuren & Deko',
+        spardosen: 'Spardosen & Krüge',
+        anhaenger: 'Anhänger & Schmuck',
+        kindergeburtstag: 'Kindergeburtstage',
+        sonstiges: 'Sonstiges',
+      };
+
+      const usedCats = new Set(all.map((img) => img.category).filter(Boolean));
+      const filterWrap = document.getElementById('galerie-filter')!;
+
+      // "Alle" Button ist bereits im HTML
+      usedCats.forEach((cat) => {
+        const btn = document.createElement('button');
+        btn.className = 'gf-btn';
+        btn.dataset.cat = cat;
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-selected', 'false');
+        btn.textContent = CATEGORY_LABELS[cat] || cat;
+        filterWrap.appendChild(btn);
+      });
+
+      // Event-Listener für alle Filter-Buttons
+      filterWrap.querySelectorAll('.gf-btn').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          filterWrap
+            .querySelectorAll('.gf-btn')
+            .forEach((b) => {
+              b.classList.remove('active');
+              b.setAttribute('aria-selected', 'false');
+            });
+          btn.classList.add('active');
+          btn.setAttribute('aria-selected', 'true');
+          shownCount = INITIAL_COUNT;
+          render((btn as HTMLElement).dataset.cat || 'all');
+        })
+      );
+    }
+
+    function render(cat: string) {
+      activeCat = cat;
+      visible =
+        cat === 'all' ? [...all] : all.filter((d) => d.category === cat);
+
+      const grid = document.getElementById('galerie-grid')!;
+      const moreWrap = document.getElementById('galerie-more-wrap')!;
+
+      if (visible.length === 0) {
+        grid.innerHTML = '';
+        hide('galerie-grid');
+        moreWrap.classList.add('hidden');
+        if (cat === 'all') {
+          show('galerie-empty-all');
+        } else {
+          show('galerie-empty-cat');
+        }
+        return;
+      }
+
+      hide('galerie-empty-all');
+      hide('galerie-empty-cat');
+      show('galerie-grid');
+
+      const toShow = visible.slice(0, shownCount);
+
+      grid.innerHTML = toShow
+        .map(
+          (img, i) => `
+          <div class="g-item" data-i="${i}" tabindex="0" role="button" aria-label="Bild ${i + 1} ansehen" style="animation-delay: ${Math.min(i * 0.04, 0.5)}s">
+            <img src="${img.url}" alt="Keramik aus dem Atelier Auszeit" loading="lazy" decoding="async">
+            <div class="g-item__hover">
+              <div class="g-item__hover-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+            </div>
+          </div>`
+        )
+        .join('');
+
+      // LQIP: mark images as loaded once they finish loading
+      grid.querySelectorAll<HTMLImageElement>('.g-item img').forEach((imgEl) => {
+        if (imgEl.complete) {
+          imgEl.classList.add('loaded');
+        } else {
+          imgEl.addEventListener('load', () => imgEl.classList.add('loaded'), { once: true });
+        }
+      });
+
+      // Lightbox-Click auf Items
+      grid.querySelectorAll('.g-item').forEach((el) => {
+        el.addEventListener('click', () =>
+          openLightbox(
+            parseInt((el as HTMLElement).dataset.i || '0', 10)
+          )
+        );
+        el.addEventListener('keydown', (e) => {
+          if ((e as KeyboardEvent).key === 'Enter') {
+            openLightbox(
+              parseInt((el as HTMLElement).dataset.i || '0', 10)
+            );
+          }
+        });
+      });
+
+      // "Mehr anzeigen" Button
+      if (visible.length > shownCount) {
+        moreWrap.classList.remove('hidden');
+      } else {
+        moreWrap.classList.add('hidden');
+      }
+    }
+
+    // Mehr laden
+    document
+      .getElementById('galerie-more-btn')
+      ?.addEventListener('click', () => {
+        shownCount += LOAD_MORE_COUNT;
+        render(activeCat);
+      });
+
+    // ── Lightbox ──────────────────────────────────────────────
+
+    function openLightbox(i: number) {
+      idx = i;
+      document.getElementById('glb')!.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      updateLightbox();
+    }
+
+    function closeLightbox() {
+      document.getElementById('glb')!.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function updateLightbox() {
+      (document.getElementById('glb-img') as HTMLImageElement).src =
+        visible[idx]?.url || '';
+      document.getElementById('glb-count')!.textContent =
+        `${idx + 1} / ${visible.length}`;
+    }
+
+    function prev() {
+      idx = (idx - 1 + visible.length) % visible.length;
+      updateLightbox();
+    }
+    function next() {
+      idx = (idx + 1) % visible.length;
+      updateLightbox();
+    }
+
+    document
+      .getElementById('glb-close')!
+      .addEventListener('click', closeLightbox);
+    document
+      .getElementById('glb-bg')!
+      .addEventListener('click', closeLightbox);
+    document.getElementById('glb-prev')!.addEventListener('click', prev);
+    document.getElementById('glb-next')!.addEventListener('click', next);
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('glb')!.classList.contains('hidden'))
+        return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    });
+
+    // Touch-Swipe in Lightbox
+    let touchStartX = 0;
+    const stage = document.getElementById('glb')!;
+    stage.addEventListener(
+      'touchstart',
+      (e) => {
+        touchStartX = e.touches[0].clientX;
+      },
+      { passive: true }
+    );
+    stage.addEventListener(
+      'touchend',
+      (e) => {
+        const diff = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) prev();
+          else next();
+        }
+      },
+      { passive: true }
+    );
+
+    function hide(id: string) {
+      document.getElementById(id)?.classList.add('hidden');
+    }
+    function show(id: string) {
+      document.getElementById(id)?.classList.remove('hidden');
+    }
+
+    init();
+  })();
+</script>

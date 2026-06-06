@@ -1,4 +1,4 @@
-# robots.txt für Atelier Auszeit - Keramik Malatelier
+# robots.txt für Keramik Auszeit - Keramik Malatelier
 
 User-agent: *
 Allow: /

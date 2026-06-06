@@ -1,0 +1,259 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Neuer Auftrag" activeNav="auftraege">
+  <div class="brenn-card">
+    <h2>Neuen Auftrag anlegen</h2>
+    <form id="new-order-form">
+      <!-- Schritt 1: Kunde -->
+      <div class="brenn-form-group">
+        <label>Kunde <span class="required">*</span></label>
+        <div class="brenn-autocomplete" id="customer-autocomplete">
+          <input type="text" class="brenn-input" id="customer-search-input"
+                 placeholder="Kundenname eingeben…" autocomplete="off" />
+          <input type="hidden" id="selected-customer-id" name="customer_id" />
+          <div class="brenn-autocomplete__list hidden" id="customer-suggestions"></div>
+        </div>
+        <div id="selected-customer-info" class="hidden" style="margin-top:0.5rem; padding:0.5rem 0.75rem; background:#f0f0f0; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+          <span id="selected-customer-name"></span>
+          <button type="button" class="brenn-btn brenn-btn--secondary brenn-btn--small" onclick="clearCustomer()">Ändern</button>
+        </div>
+        <button type="button" class="brenn-btn brenn-btn--secondary brenn-btn--small" style="margin-top:0.5rem" onclick="showInlineCustomer()" id="new-customer-btn">Neuen Kunden anlegen</button>
+      </div>
+
+      <!-- Inline Neukunde -->
+      <div id="inline-customer-form" class="hidden" style="border:1px solid #eee; border-radius:8px; padding:1rem; margin-bottom:1rem; background:#fafafa;">
+        <h3 style="font-size:0.9375rem; color:#8B6F47; margin-bottom:0.75rem;">Neuer Kunde</h3>
+        <div class="brenn-form-row">
+          <div class="brenn-form-group">
+            <label>Vorname <span class="required">*</span></label>
+            <input type="text" class="brenn-input" id="new-first-name" maxlength="100" />
+          </div>
+          <div class="brenn-form-group">
+            <label>Nachname <span class="required">*</span></label>
+            <input type="text" class="brenn-input" id="new-last-name" maxlength="100" />
+          </div>
+        </div>
+        <div class="brenn-form-row">
+          <div class="brenn-form-group">
+            <label>E-Mail</label>
+            <input type="email" class="brenn-input" id="new-email" maxlength="255" />
+          </div>
+          <div class="brenn-form-group">
+            <label>Telefon</label>
+            <input type="tel" class="brenn-input" id="new-phone" maxlength="50" />
+          </div>
+        </div>
+        <button type="button" class="brenn-btn brenn-btn--primary brenn-btn--small" onclick="createInlineCustomer()">Kunde anlegen & auswählen</button>
+        <button type="button" class="brenn-btn brenn-btn--secondary brenn-btn--small" onclick="hideInlineCustomer()">Abbrechen</button>
+      </div>
+
+      <!-- Schritt 2: Besuchsdatum -->
+      <div class="brenn-form-group">
+        <label>Besuchsdatum <span class="required">*</span></label>
+        <input type="date" class="brenn-input" name="visit_date" id="visit-date" required style="max-width:250px;" />
+      </div>
+
+      <!-- Schritt 3: Werkstücke -->
+      <div class="brenn-form-group">
+        <label>Werkstücke <span class="required">*</span></label>
+        <div id="items-container"></div>
+        <button type="button" class="brenn-btn brenn-btn--secondary brenn-btn--small" onclick="addItemRow()" style="margin-top:0.5rem">Werkstück hinzufügen</button>
+      </div>
+
+      <!-- Schritt 4: Lagerort -->
+      <div class="brenn-form-group">
+        <label>Lagerort (optional)</label>
+        <select class="brenn-select" name="storage_location_id" id="storage-location-select" style="max-width:350px;">
+          <option value="">– Kein Lagerort –</option>
+        </select>
+      </div>
+
+      <!-- Notizen -->
+      <div class="brenn-form-group">
+        <label>Notizen</label>
+        <textarea class="brenn-textarea" name="notes" rows="2"></textarea>
+      </div>
+
+      <div class="brenn-form-actions">
+        <button type="submit" class="brenn-btn brenn-btn--primary brenn-btn--large">Auftrag anlegen</button>
+        <a href="/admin/brenn/auftraege/" class="brenn-btn brenn-btn--secondary">Abbrechen</a>
+      </div>
+    </form>
+  </div>
+</BrennLayout>
+
+<script is:inline>
+  let itemTypes = [];
+  let itemRowCount = 0;
+
+  // Set today as default
+  document.getElementById('visit-date').valueAsDate = new Date();
+
+  // Load item types and storage locations
+  async function loadFormData() {
+    try {
+      const [typesData, locationsData] = await Promise.all([
+        brennFetch('/api/admin/brenn/item-types'),
+        brennFetch('/api/admin/brenn/storage-locations')
+      ]);
+      itemTypes = (typesData.data || []).filter(t => t.is_active);
+
+      const locSelect = document.getElementById('storage-location-select');
+      const preLocations = (locationsData.data || []).filter(l => l.is_active && l.area_type === 'PRE');
+      preLocations.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l.id;
+        opt.textContent = l.code + ' – ' + l.label;
+        locSelect.appendChild(opt);
+      });
+
+      addItemRow();
+    } catch(e) { brennToast('Fehler beim Laden der Formulardaten', 'error'); }
+  }
+
+  function addItemRow() {
+    itemRowCount++;
+    const container = document.getElementById('items-container');
+    const row = document.createElement('div');
+    row.className = 'brenn-item-row';
+    row.id = 'item-row-' + itemRowCount;
+
+    let typeOptions = '<option value="">– Typ wählen –</option>';
+    itemTypes.forEach(t => { typeOptions += '<option value="' + escapeHtml(t.name) + '">' + escapeHtml(t.name) + '</option>'; });
+
+    row.innerHTML =
+      '<div class="brenn-form-group"><label>Typ</label><select class="brenn-select" name="item_type">' + typeOptions + '</select></div>' +
+      '<div class="brenn-form-group"><label>Anzahl</label><input type="number" class="brenn-input" name="quantity" value="1" min="1" max="100" style="width:70px" /></div>' +
+      '<div class="brenn-form-group"><label>Beschreibung</label><input type="text" class="brenn-input" name="description" maxlength="255" placeholder="optional" style="min-width:120px" /></div>' +
+      '<div class="brenn-form-group" style="align-self:end"><button type="button" class="brenn-btn brenn-btn--secondary brenn-btn--small" onclick="removeItemRow(' + itemRowCount + ')" title="Entfernen">✕</button></div>';
+    container.appendChild(row);
+  }
+
+  function removeItemRow(id) {
+    const container = document.getElementById('items-container');
+    if (container.children.length <= 1) {
+      brennToast('Mindestens ein Werkstück erforderlich', 'error');
+      return;
+    }
+    document.getElementById('item-row-' + id)?.remove();
+  }
+
+  // Customer search
+  let customerTimeout;
+  document.getElementById('customer-search-input').addEventListener('input', (e) => {
+    clearTimeout(customerTimeout);
+    const q = e.target.value.trim();
+    if (q.length < 2) { document.getElementById('customer-suggestions').classList.add('hidden'); return; }
+    customerTimeout = setTimeout(async () => {
+      try {
+        const data = await brennFetch('/api/admin/brenn/customers?q=' + encodeURIComponent(q) + '&limit=8');
+        renderCustomerSuggestions(data.data.customers);
+      } catch(e) {}
+    }, 300);
+  });
+
+  function renderCustomerSuggestions(customers) {
+    const el = document.getElementById('customer-suggestions');
+    if (!customers.length) {
+      el.innerHTML = '<div class="brenn-autocomplete__option" style="color:#999">Keine Kunden gefunden</div>';
+      el.classList.remove('hidden');
+      return;
+    }
+    el.innerHTML = customers.map(c =>
+      '<div class="brenn-autocomplete__option" onclick="selectCustomer(' + c.id + ',\'' + escapeHtml(c.first_name) + '\',\'' + escapeHtml(c.last_name) + '\')">' +
+      '<strong>' + escapeHtml(c.last_name) + '</strong>, ' + escapeHtml(c.first_name) +
+      (c.email ? '<small>' + escapeHtml(c.email) + '</small>' : '') + '</div>'
+    ).join('');
+    el.classList.remove('hidden');
+  }
+
+  function selectCustomer(id, firstName, lastName) {
+    document.getElementById('selected-customer-id').value = id;
+    document.getElementById('selected-customer-name').textContent = lastName + ', ' + firstName;
+    document.getElementById('selected-customer-info').classList.remove('hidden');
+    document.getElementById('selected-customer-info').style.display = 'flex';
+    document.getElementById('customer-search-input').classList.add('hidden');
+    document.getElementById('customer-suggestions').classList.add('hidden');
+    document.getElementById('new-customer-btn').classList.add('hidden');
+  }
+
+  function clearCustomer() {
+    document.getElementById('selected-customer-id').value = '';
+    document.getElementById('selected-customer-info').classList.add('hidden');
+    document.getElementById('customer-search-input').classList.remove('hidden');
+    document.getElementById('customer-search-input').value = '';
+    document.getElementById('new-customer-btn').classList.remove('hidden');
+  }
+
+  function showInlineCustomer() {
+    document.getElementById('inline-customer-form').classList.remove('hidden');
+    document.getElementById('new-customer-btn').classList.add('hidden');
+  }
+
+  function hideInlineCustomer() {
+    document.getElementById('inline-customer-form').classList.add('hidden');
+    document.getElementById('new-customer-btn').classList.remove('hidden');
+  }
+
+  async function createInlineCustomer() {
+    const firstName = document.getElementById('new-first-name').value.trim();
+    const lastName = document.getElementById('new-last-name').value.trim();
+    if (!firstName || !lastName) { brennToast('Vor- und Nachname sind erforderlich', 'error'); return; }
+
+    try {
+      const data = await brennFetch('/api/admin/brenn/customers', {
+        method: 'POST',
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          email: document.getElementById('new-email').value.trim() || null,
+          phone: document.getElementById('new-phone').value.trim() || null
+        })
+      });
+      selectCustomer(data.data.id, data.data.first_name, data.data.last_name);
+      hideInlineCustomer();
+      brennToast('Kunde angelegt und ausgewählt');
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  // Submit form
+  document.getElementById('new-order-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const customerId = document.getElementById('selected-customer-id').value;
+    if (!customerId) { brennToast('Bitte einen Kunden auswählen', 'error'); return; }
+
+    const itemRows = document.getElementById('items-container').children;
+    const items = [];
+    for (const row of itemRows) {
+      const type = row.querySelector('[name="item_type"]').value;
+      if (!type) { brennToast('Bitte Werkstücktyp auswählen', 'error'); return; }
+      items.push({
+        item_type: type,
+        quantity: Number(row.querySelector('[name="quantity"]').value) || 1,
+        description: row.querySelector('[name="description"]').value.trim() || null
+      });
+    }
+    if (items.length === 0) { brennToast('Mindestens ein Werkstück erforderlich', 'error'); return; }
+
+    const fd = new FormData(e.target);
+    try {
+      const data = await brennFetch('/api/admin/brenn/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          customer_id: Number(customerId),
+          visit_date: fd.get('visit_date'),
+          items,
+          storage_location_id: fd.get('storage_location_id') ? Number(fd.get('storage_location_id')) : null,
+          notes: fd.get('notes') || null
+        })
+      });
+      brennToast('Auftrag ' + data.data.reference_code + ' angelegt');
+      window.location.href = '/admin/brenn/auftraege/' + data.data.id + '/';
+    } catch(e) { brennToast(e.message, 'error'); }
+  });
+
+  loadFormData();
+</script>

@@ -4,7 +4,7 @@ import path from 'path';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from '../../lib/s3-storage';
 import { BOOKING_EMAIL, FROM_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, isSmtpConfigured } from '../../lib/env';
 import { createSmtpTransporter } from '../../lib/smtp';
-import { sanitizeText, sanitizeNumber } from '../../lib/sanitize';
+import { sanitizeText, sanitizeNumber, escapeHtml } from '../../lib/sanitize';
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
 
 // Admin-Passwort zur Laufzeit lesen
@@ -89,8 +89,10 @@ export const GET: APIRoute = async ({ request, url }) => {
       });
     }
     
-    // Öffentlich: nur freigegebene Bewertungen
-    const approvedReviews = reviews.filter(r => r.approved);
+    // Öffentlich: nur freigegebene Bewertungen, neueste zuerst
+    const approvedReviews = reviews
+      .filter(r => r.approved)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return new Response(JSON.stringify(approvedReviews), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -214,7 +216,7 @@ async function sendReviewNotificationEmail(review: Review) {
             <p>Eine neue Kundenbewertung wurde abgegeben und wartet auf Ihre Freigabe:</p>
 
             <div class="review-box">
-              <h2>${review.name}</h2>
+              <h2>${escapeHtml(review.name)}</h2>
               <div class="stars">${stars}</div>
               <p><strong>Bewertung:</strong> ${review.rating} von 5 Sternen</p>
               <p><strong>Datum:</strong> ${new Date(review.date).toLocaleDateString('de-DE', {
@@ -225,7 +227,7 @@ async function sendReviewNotificationEmail(review: Review) {
                 minute: '2-digit'
               })}</p>
               <div class="comment">
-                "${review.comment}"
+                "${escapeHtml(review.comment)}"
               </div>
             </div>
 
@@ -234,7 +236,7 @@ async function sendReviewNotificationEmail(review: Review) {
 
             <div class="footer">
               <p>Diese E-Mail wurde automatisch generiert.</p>
-              <p>Atelier Auszeit – Keramik Malatelier<br>
+              <p>Atelier Auszeit Keramik Malatelier<br>
               Feldstiege 6a, 48599 Gronau</p>
             </div>
           </div>
@@ -263,7 +265,7 @@ https://keramik-auszeit.de/admin
 
 ---
 Diese E-Mail wurde automatisch generiert.
-Atelier Auszeit – Keramik Malatelier
+Atelier Auszeit Keramik Malatelier
 Feldstiege 6a, 48599 Gronau
       `
     });

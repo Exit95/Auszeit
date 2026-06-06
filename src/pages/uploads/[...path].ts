@@ -25,7 +25,9 @@ export const GET: APIRoute = async ({ params }) => {
 
     // S3-Modus
     if (isS3Configured()) {
-      const s3Key = getS3Key(`uploads/${safePath}`);
+      // gallery/ Pfade direkt mappen (Auszeit/gallery/...) statt unter uploads/
+      const s3SubPath = safePath.startsWith('gallery/') ? safePath : `uploads/${safePath}`;
+      const s3Key = getS3Key(s3SubPath);
       const imageBuffer = await getImageFromS3(s3Key);
 
       if (!imageBuffer) {

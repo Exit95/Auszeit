@@ -1,0 +1,340 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Brush from '../components/Brush.astro';
+import Photo from '../components/Photo.astro';
+import Button from '../components/Button.astro';
+import WorkshopModal from '../components/WorkshopModal.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import { content } from '../data/content';
+import { getWorkshops } from '../lib/storage';
+import { isS3Configured, readJsonFromS3 } from '../lib/s3-storage';
+import fs from 'fs/promises';
+import path from 'path';
+
+interface WorkshopBooking {
+  workshopId: string;
+  participants: number;
+  status: 'pending' | 'confirmed' | 'cancelled';
+}
+
+async function getWorkshopBookings(): Promise<WorkshopBooking[]> {
+  if (isS3Configured()) {
+    try {
+      return await readJsonFromS3<WorkshopBooking[]>('workshop-bookings.json', []);
+    } catch {
+      // S3 nicht erreichbar, Fallback
+    }
+  }
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'workshop-bookings.json');
+    const data = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+}
+
+const [workshops, bookings] = await Promise.all([getWorkshops(), getWorkshopBookings()]);
+
+const activeWorkshops = workshops
+  .filter((w) => w.active)
+  .map((workshop) => {
+    const workshopBookings = bookings.filter(
+      (b) => b.workshopId === workshop.id && b.status !== 'cancelled'
+    );
+    const currentParticipants = workshopBookings.reduce(
+      (sum, b) => sum + b.participants,
+      0
+    );
+    const availableSpots = workshop.maxParticipants - currentParticipants;
+    const isFull = availableSpots <= 0;
+    const imageUrl = workshop.imageFilename
+      ? (workshop.imageFilename.startsWith('http') ? workshop.imageFilename : `/uploads/${workshop.imageFilename}`)
+      : '/fotos/sh-cup.jpg';
+    return { ...workshop, currentParticipants, availableSpots, isFull, imageUrl };
+  });
+
+const MONTHS_DE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+function getDay(dateStr: string) {
+  return new Date(dateStr + 'T00:00:00').getDate();
+}
+function getMonth(dateStr: string) {
+  return MONTHS_DE[new Date(dateStr + 'T00:00:00').getMonth()];
+}
+
+const { pageMeta } = content;
+---
+
+<MainLayout title={pageMeta.workshops.title} description={pageMeta.workshops.description}>
+
+  <Breadcrumb name="Workshops" path="/workshops" />
+
+  {activeWorkshops.length > 0 && activeWorkshops.map((workshop) => (
+    <script type="application/ld+json" is:inline set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Event",
+      "name": workshop.title,
+      "startDate": workshop.date + "T" + workshop.time + ":00",
+      "location": {
+        "@type": "Place",
+        "name": "Malatelier Auszeit",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Feldstiege 6a",
+          "addressLocality": "Gronau (Westfalen)",
+          "postalCode": "48599",
+          "addressCountry": "DE"
+        }
+      },
+      "organizer": {
+        "@type": "LocalBusiness",
+        "@id": "https://keramik-auszeit.de/#business"
+      },
+      "offers": {
+        "@type": "Offer",
+        "name": workshop.title,
+        "price": workshop.price,
+        "priceCurrency": "EUR",
+        "availability": workshop.isFull
+          ? "https://schema.org/SoldOut"
+          : "https://schema.org/InStock",
+        "url": "https://keramik-auszeit.de/workshops"
+      }
+    })} />
+  ))}
+  <div class="wrap">
+
+    <!-- Page Head -->
+    <div class="pagehead">
+      <span class="eyebrow">Workshops</span>
+      <h1>Neues lernen, zusammen werkeln</h1>
+      <Brush />
+      <p class="lead">In kleinen Runden zeigen wir dir Techniken, die deiner Keramik den letzten Schliff geben. Plätze sind begrenzt, sichere dir deinen.</p>
+    </div>
+
+    <!-- Workshop-Grid -->
+    <div class="ws-grid">
+
+      {activeWorkshops.length > 0 ? (
+        activeWorkshops.map((workshop) => (
+          <article class="ws workshop-card" data-workshop-id={workshop.id}>
+            <div class="ws__img">
+              <Photo src={workshop.imageUrl} alt={workshop.title} />
+              <div class="ws__date">
+                <b>{getDay(workshop.date)}</b>
+                <small>{getMonth(workshop.date)}</small>
+              </div>
+            </div>
+            <div class="ws__b">
+              <h3>{workshop.title}</h3>
+              <p>{workshop.description}</p>
+              <div class="ws__meta">
+                <span><b>{workshop.time} Uhr</b></span>
+                <span><b>{workshop.availableSpots}</b> freie Plätze</span>
+                <span><b>{workshop.price}</b></span>
+              </div>
+              {workshop.isFull ? (
+                <span class="ws__ausgebucht">Ausgebucht</span>
+              ) : (
+                <Button variant="terra">Platz sichern</Button>
+              )}
+            </div>
+          </article>
+        ))
+      ) : (
+        <p class="ws-empty">Aktuell sind keine Workshops geplant, frag gern nach einem Wunsch-Termin.</p>
+      )}
+
+      <!-- Wunsch-Workshop (immer sichtbar) -->
+      <article class="ws">
+        <div class="ws__img ws__img--wish">
+          <Photo src="/fotos/sh-amore.jpg" alt="Wunsch-Workshop" />
+          <div class="ws__date">
+            <b style="font-size:1rem;line-height:1.25">Nach<br>Wunsch</b>
+          </div>
+        </div>
+        <div class="ws__b">
+          <h3>Euer Wunsch-Workshop</h3>
+          <p>Ihr habt ein Thema oder einen festen Termin im Kopf? Wir richten einen Workshop nur für euch ein.</p>
+          <div class="ws__meta">
+            <span>Nach Absprache</span>
+            <span>Ab <b>8</b> Personen</span>
+            <span><b>auf Anfrage</b></span>
+          </div>
+          <Button variant="ghost" href="/events">Anfragen</Button>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Hinweis-Banner -->
+    <div class="ws-note">
+      <p><b>Schon gewusst?</b> Auch ohne Workshop kannst du jederzeit zum freien Bemalen vorbeikommen, einfach einen Termin buchen.</p>
+      <Button variant="terra" href="/#buchen">Termin buchen</Button>
+    </div>
+
+  </div>
+
+  <!-- Booking Modal (reuses existing flow) -->
+  <WorkshopModal />
+
+</MainLayout>
+
+<script src="../scripts/workshop-modal.js"></script>
+
+<style>
+  .wrap {
+    padding-bottom: clamp(3rem, 7vw, 6rem);
+  }
+
+  /* ── Page Head ──────────────────────────────────────── */
+  .pagehead {
+    padding: clamp(2.5rem, 5vw, 4rem) 0 0;
+  }
+  .pagehead h1 {
+    font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+    margin: .6rem 0 0;
+  }
+  .pagehead .lead {
+    color: var(--ink-2);
+    font-size: 1.1rem;
+    margin-top: 1rem;
+    max-width: 52ch;
+  }
+
+  /* ── Workshop Grid ──────────────────────────────────── */
+  .ws-grid {
+    display: grid;
+    gap: 1.4rem;
+    margin-top: 2.4rem;
+  }
+
+  .ws-empty {
+    color: var(--ink-2);
+    background: var(--card);
+    border-radius: var(--r-lg);
+    padding: 1.8rem 2rem;
+    box-shadow: var(--shadow-card);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* ── Workshop Card ──────────────────────────────────── */
+  .ws {
+    display: grid;
+    grid-template-columns: 1fr;
+    background: var(--card);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+  }
+  @media (min-width: 620px) {
+    .ws {
+      grid-template-columns: 220px 1fr;
+    }
+  }
+
+  .ws__img {
+    position: relative;
+    min-height: 170px;
+  }
+  :global(.ws__img img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ws__date {
+    position: absolute;
+    top: .8rem;
+    left: .8rem;
+    background: rgba(247,241,234,.95);
+    border-radius: 10px;
+    padding: .45rem .7rem;
+    text-align: center;
+    line-height: 1.02;
+    box-shadow: var(--shadow-card);
+  }
+  .ws__date b {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    display: block;
+    color: var(--ink);
+  }
+  .ws__date small {
+    font-size: .64rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--terra);
+    font-weight: 700;
+  }
+
+  .ws__b {
+    padding: 1.4rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .ws__b h3 {
+    font-size: 1.35rem;
+  }
+  .ws__b > p {
+    color: var(--ink-2);
+    font-size: .96rem;
+    margin: .45rem 0 0;
+  }
+
+  .ws__meta {
+    display: flex;
+    gap: 1.4rem;
+    flex-wrap: wrap;
+    margin: .9rem 0 1.1rem;
+    font-size: .86rem;
+    color: var(--meta);
+  }
+  .ws__meta b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .ws__b .btn {
+    align-self: flex-start;
+    margin-top: auto;
+  }
+
+  .ws__ausgebucht {
+    display: inline-block;
+    align-self: flex-start;
+    margin-top: auto;
+    font-size: .84rem;
+    font-weight: 600;
+    color: var(--meta);
+    background: var(--surface);
+    border-radius: 9px;
+    padding: .5rem 1rem;
+  }
+
+  /* ── Hinweis-Banner ─────────────────────────────────── */
+  .ws-note {
+    margin-top: 2rem;
+    background: var(--card);
+    border-radius: var(--r-lg);
+    padding: 1.6rem 1.8rem;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    gap: 1.2rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .ws-note p {
+    color: var(--ink-2);
+    max-width: 46ch;
+  }
+  .ws-note b {
+    font-family: var(--font-serif);
+    font-weight: 500;
+  }
+</style>

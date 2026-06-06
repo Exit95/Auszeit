@@ -1,24 +1,25 @@
 ---
 ---
 
-<section id="gutschein-section" class="gutschein">
+<section id="gutschein-section" class="gutschein" style="scroll-margin-top: 60px;">
   <div class="container">
     <div class="gutschein__card">
-      <h2 class="gutschein__title">Gutschein verschenken</h2>
+      <span class="gutschein__eyebrow">Geschenkidee</span>
+      <h2 class="gutschein__title">Freude verschenken</h2>
       <p class="gutschein__text">
-        Ein Geschenk, das sich persönlich anfühlt und wirklich genutzt wird.
-        Perfekt für Geburtstage, Weihnachten oder einfach als kreative Überraschung.
+        Ein Gutschein, der sich wirklich persönlich anfühlt. Perfekt für alle,
+        die gern etwas mit den Händen machen. Oder es mal ausprobieren möchten.
       </p>
 
       <div class="gutschein__options">
-        <button class="gutschein__option" data-voucher="voucher-25" type="button">
-          <span class="gutschein__value">25 €</span>
-          <span class="gutschein__label">Schnupper-Gutschein</span>
-        </button>
         <button class="gutschein__option gutschein__option--popular" data-voucher="voucher-50" type="button">
           <span class="gutschein__badge">Beliebt</span>
           <span class="gutschein__value">50 €</span>
           <span class="gutschein__label">Standard-Gutschein</span>
+        </button>
+        <button class="gutschein__option" data-voucher="voucher-25" type="button">
+          <span class="gutschein__value">25 €</span>
+          <span class="gutschein__label">Schnupper-Gutschein</span>
         </button>
         <button class="gutschein__option" data-voucher="voucher-custom" type="button" id="custom-voucher-btn">
           <span class="gutschein__value">Frei</span>
@@ -28,7 +29,7 @@
 
       <!-- Custom Amount Input (hidden by default) -->
       <div class="gutschein__custom-amount" id="custom-amount-container" style="display: none;">
-        <label for="custom-amount">Wunschbetrag (5€ - 500€):</label>
+        <label for="custom-amount">Wunschbetrag (5€ bis 500€):</label>
         <div class="gutschein__custom-input-wrapper">
           <input type="number" id="custom-amount" min="5" max="500" placeholder="z.B. 75" />
           <span class="gutschein__currency">€</span>
@@ -41,6 +42,8 @@
       <div class="gutschein__loading" id="loading-indicator" style="display: none;">
         <span class="spinner"></span> Weiterleitung zu Stripe...
       </div>
+
+      <div id="gutschein-error" class="gutschein__error" style="display: none;"></div>
 
       <p class="gutschein__hint">Sichere Zahlung über Stripe</p>
     </div>
@@ -55,8 +58,18 @@
     const buyCustomBtn = document.getElementById('buy-custom-voucher');
     const loadingIndicator = document.getElementById('loading-indicator');
 
+    const errorDiv = document.getElementById('gutschein-error');
+    const showError = (msg: string) => {
+      if (errorDiv) {
+        errorDiv.textContent = msg;
+        errorDiv.style.display = 'block';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 6000);
+      }
+    };
+
     const handleVoucherPurchase = async (voucherId: string, customAmount?: string) => {
       if (loadingIndicator) loadingIndicator.style.display = 'flex';
+      if (errorDiv) errorDiv.style.display = 'none';
 
       try {
         const response = await fetch('/api/create-checkout-session', {
@@ -70,12 +83,12 @@
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert(data.error || 'Fehler beim Erstellen der Checkout-Session');
+          showError(data.error || 'Fehler beim Erstellen der Checkout-Session');
           if (loadingIndicator) loadingIndicator.style.display = 'none';
         }
       } catch (error) {
         console.error('Checkout error:', error);
-        alert('Fehler beim Verbinden mit dem Zahlungsdienst');
+        showError('Fehler beim Verbinden mit dem Zahlungsdienst. Bitte versuche es später erneut.');
         if (loadingIndicator) loadingIndicator.style.display = 'none';
       }
     };
@@ -101,7 +114,7 @@
       buyCustomBtn.addEventListener('click', () => {
         const amount = customAmountInput?.value;
         if (!amount || parseFloat(amount) < 5 || parseFloat(amount) > 500) {
-          alert('Bitte gib einen Betrag zwischen 5€ und 500€ ein.');
+          showError('Bitte gib einen Betrag zwischen 5 € und 500 € ein.');
           return;
         }
         handleVoucherPurchase('voucher-custom', amount);
@@ -112,7 +125,19 @@
 
 <style>
   .gutschein {
-    padding: var(--space-8) var(--gutter);
+    padding: var(--space-10) var(--gutter);
+    background-color: var(--bg-paper, #FAF7F2);
+  }
+
+  .gutschein__eyebrow {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-sienna);
+    margin-bottom: 0.75rem;
   }
 
   .container {
@@ -219,6 +244,17 @@
     margin-top: var(--space-3);
   }
 
+  .gutschein__error {
+    background: rgba(185, 74, 72, 0.1);
+    color: #B94A48;
+    border: 1px solid rgba(185, 74, 72, 0.2);
+    border-radius: 10px;
+    padding: var(--space-3);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-3);
+    text-align: center;
+  }
+
   .gutschein__custom-amount {
     background: rgba(242, 235, 229, 0.55);
     border: 1px solid rgba(66, 52, 48, 0.10);
@@ -254,7 +290,7 @@
   }
 
   .gutschein__custom-amount input:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--accent-terra, #D96C4A);
   }
 
@@ -278,7 +314,7 @@
   }
 
   .gutschein__buy-btn:hover {
-    background: #c55a3a;
+    background: var(--color-sienna, #A0522D);
     transform: translateY(-1px);
   }
 

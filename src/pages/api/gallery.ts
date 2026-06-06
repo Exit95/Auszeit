@@ -19,7 +19,7 @@ function getS3Client(): S3Client {
     const secretKey = process.env.S3_SECRET_ACCESS_KEY || process.env.S3_SECRET_KEY || '';
 
     _s3Client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT || 'https://nbg1.your-objectstorage.com',
+      endpoint: process.env.S3_ENDPOINT || '',
       region: process.env.S3_REGION || 'eu-central',
       credentials: {
         accessKeyId: accessKey,
@@ -59,7 +59,6 @@ const PRODUCT_CATEGORIES = [
 // GET - Liste aller Bilder (aus gallery/ UND products/)
 export const GET: APIRoute = async () => {
   try {
-    const endpoint = process.env.S3_ENDPOINT || '';
     const bucket = getBucket();
     const allImages: Array<{
       filename: string;
@@ -70,20 +69,22 @@ export const GET: APIRoute = async () => {
       category?: string;
     }> = [];
 
-    // 1. Bilder aus gallery/ laden
-    const galleryResponse = await getS3Client().send(
-      new ListObjectsV2Command({
-        Bucket: bucket,
-        Prefix: `${PREFIX}/`,
-      })
-    );
+    // Alle S3-Anfragen parallel starten (gallery + alle product-Kategorien)
+    const [galleryResponse, ...productResponses] = await Promise.all([
+      getS3Client().send(new ListObjectsV2Command({ Bucket: bucket, Prefix: `${PREFIX}/` })),
+      ...PRODUCT_CATEGORIES.map(cat =>
+        getS3Client().send(new ListObjectsV2Command({ Bucket: bucket, Prefix: `${cat.path}/` }))
+      ),
+    ]);
 
+    // 1. Bilder aus gallery/
     if (galleryResponse.Contents) {
       for (const obj of galleryResponse.Contents) {
         if (obj.Key && !obj.Key.endsWith('/')) {
+          const fname = obj.Key.replace(`${PREFIX}/`, '');
           allImages.push({
-            filename: obj.Key.replace(`${PREFIX}/`, ''),
-            url: `${endpoint}/${bucket}/${obj.Key}`,
+            filename: fname,
+            url: `/uploads/gallery/${fname}`,
             size: obj.Size || 0,
             date: obj.LastModified || new Date(),
             source: 'gallery',
@@ -92,22 +93,16 @@ export const GET: APIRoute = async () => {
       }
     }
 
-    // 2. Bilder aus products/ laden (mit Kategorie-Mapping)
-    for (const cat of PRODUCT_CATEGORIES) {
-      const productsResponse = await getS3Client().send(
-        new ListObjectsV2Command({
-          Bucket: bucket,
-          Prefix: `${cat.path}/`,
-        })
-      );
-
-      if (productsResponse.Contents) {
-        for (const obj of productsResponse.Contents) {
+    // 2. Bilder aus products/ (parallel geladen)
+    productResponses.forEach((resp, i) => {
+      const cat = PRODUCT_CATEGORIES[i];
+      if (resp.Contents) {
+        for (const obj of resp.Contents) {
           if (obj.Key && !obj.Key.endsWith('/') && /\.(jpg|jpeg|png|gif|webp)$/i.test(obj.Key)) {
             const filename = obj.Key.split('/').pop() || '';
             allImages.push({
               filename: `products/${cat.id}/${filename}`,
-              url: `${endpoint}/${bucket}/${obj.Key}`,
+              url: `/products/${cat.id}/${filename}`,
               size: obj.Size || 0,
               date: obj.LastModified || new Date(),
               source: 'products',
@@ -116,13 +111,16 @@ export const GET: APIRoute = async () => {
           }
         }
       }
-    }
+    });
 
     // Nach Datum sortieren
     allImages.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return new Response(JSON.stringify(allImages), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=120, stale-while-revalidate=300',
+      },
     });
   } catch (error) {
     console.error('Error listing gallery:', error);
@@ -212,7 +210,7 @@ export const POST: APIRoute = async ({ request }) => {
           ACL: 'public-read',
         }));
 
-        const url = `${process.env.S3_ENDPOINT}/${getBucket()}/${key}`;
+        const url = `/uploads/gallery/${filename}`;
         resolve(new Response(JSON.stringify({ success: true, url, filename }), {
           headers: { 'Content-Type': 'application/json' },
         }));

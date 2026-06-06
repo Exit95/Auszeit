@@ -15,10 +15,12 @@ export const SMTP_HOST = getEnv('SMTP_HOST');
 export const SMTP_PORT = getEnv('SMTP_PORT', '587');
 export const SMTP_USER = getEnv('SMTP_USER');
 export const SMTP_PASS = getEnv('SMTP_PASS');
+// Optionaler TLS-Hostname wenn SMTP_HOST eine IP ist (Zertifikat prüft gegen diesen Namen).
+export const SMTP_SERVERNAME = getEnv('SMTP_SERVERNAME');
 
 // E-Mail-Adressen
-export const BOOKING_EMAIL = getEnv('BOOKING_EMAIL', 'keramik-auszeit@web.de');
-export const FROM_EMAIL = getEnv('FROM_EMAIL', 'keramik-auszeit@web.de');
+export const BOOKING_EMAIL = getEnv('BOOKING_EMAIL', 'atelier@keramik-auszeit.de');
+export const FROM_EMAIL = getEnv('FROM_EMAIL', 'atelier@keramik-auszeit.de');
 
 // Admin - als Funktion, damit es zur Laufzeit ausgewertet wird
 export function getAdminPassword(): string {

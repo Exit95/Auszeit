@@ -1,66 +1,58 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ============================================
+# Malatelier Auszeit - Deploy via PVE → Docker-Server
+# Registry läuft auf localhost:5000 des Docker-Servers (10.1.9.100)
+# ============================================
 
-# Deployment Script für Testseite
-# Dieses Script automatisiert den Deployment-Prozess
+set -euo pipefail
 
-set -e  # Bei Fehler abbrechen
+APP_NAME="keramik-auszeit-de"
+IMAGE="localhost:5000/${APP_NAME}:latest"
+PVE_HOST="DanapfelPVE"
+DOCKER_HOST="root@10.1.9.100"
+SSH_KEY="/root/.ssh/danapfel"
+TMP_ARCHIVE="/tmp/${APP_NAME}-src.tar.gz"
+REMOTE_BUILD="/tmp/${APP_NAME}-build"
 
-echo "🚀 Starte Deployment..."
-
-# Farben für Output
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
+log()  { echo -e "${GREEN}[deploy]${NC} $1"; }
+fail() { echo -e "${RED}[error]${NC} $1"; exit 1; }
 
-# 1. Git Pull (falls du Git verwendest)
-if [ -d .git ]; then
-    echo -e "${YELLOW}📥 Pulling latest changes from Git...${NC}"
-    git pull
-fi
+log "1/6  Projekt packen ..."
+tar czf "${TMP_ARCHIVE}" \
+  --exclude=node_modules --exclude=.git --exclude=dist \
+  --exclude=.superpowers --exclude=.env --exclude='*Auszeit Keramik*' --exclude='*Auszeit_Galerie*' \
+  -C "$(pwd)" .
+log "     $(du -h ${TMP_ARCHIVE} | cut -f1) gepackt"
 
-# 2. Dependencies installieren/aktualisieren
-echo -e "${YELLOW}📦 Installing dependencies...${NC}"
-npm install --production=false
+log "2/6  Archiv zum PVE senden ..."
+scp "${TMP_ARCHIVE}" "${PVE_HOST}:${TMP_ARCHIVE}" || fail "SCP zum PVE fehlgeschlagen"
 
-# 3. Build erstellen
-echo -e "${YELLOW}🔨 Building application...${NC}"
-npm run build
+log "3/6  Archiv zum K3s-Server weiterleiten ..."
+ssh "${PVE_HOST}" "scp -i ${SSH_KEY} ${TMP_ARCHIVE} ${DOCKER_HOST}:${TMP_ARCHIVE}" || fail "SCP zum K3s-Server fehlgeschlagen"
 
-# 4. Logs-Ordner erstellen (falls nicht vorhanden)
-if [ ! -d "logs" ]; then
-    echo -e "${YELLOW}📁 Creating logs directory...${NC}"
-    mkdir -p logs
-fi
+log "4/6  Docker Image bauen und in Registry pushen ..."
+ssh "${PVE_HOST}" "ssh -i ${SSH_KEY} ${DOCKER_HOST} '\
+  rm -rf ${REMOTE_BUILD} && \
+  mkdir -p ${REMOTE_BUILD} && \
+  cd ${REMOTE_BUILD} && \
+  tar xzf ${TMP_ARCHIVE} && \
+  docker build --no-cache -t ${IMAGE} . && \
+  docker push ${IMAGE} && \
+  rm -rf ${REMOTE_BUILD} ${TMP_ARCHIVE} \
+'" || fail "Remote Build/Push fehlgeschlagen"
 
-# 5. Data-Ordner erstellen (falls nicht vorhanden)
-if [ ! -d "data" ]; then
-    echo -e "${YELLOW}📁 Creating data directory...${NC}"
-    mkdir -p data
-    echo '[]' > data/bookings.json
-    echo '[]' > data/time-slots.json
-fi
+log "5/6  Container deployen ..."
+ssh "${PVE_HOST}" "ssh -i ${SSH_KEY} ${DOCKER_HOST} '\
+  cd /srv/docker/apps && \
+  docker compose pull ${APP_NAME} && \
+  docker compose up -d --force-recreate ${APP_NAME} \
+'" || fail "Deploy fehlgeschlagen"
 
-# 6. PM2 neu starten oder starten
-echo -e "${YELLOW}🔄 Restarting PM2 application...${NC}"
-if pm2 describe testseite > /dev/null 2>&1; then
-    pm2 reload ecosystem.config.js --update-env
-    echo -e "${GREEN}✅ Application reloaded${NC}"
-else
-    pm2 start ecosystem.config.js
-    pm2 save
-    echo -e "${GREEN}✅ Application started${NC}"
-fi
+log "6/6  Aufräumen ..."
+rm -f "${TMP_ARCHIVE}"
+ssh "${PVE_HOST}" "rm -f ${TMP_ARCHIVE}" 2>/dev/null || true
 
-# 7. Status anzeigen
-echo -e "${GREEN}📊 Application Status:${NC}"
-pm2 status testseite
-
-echo -e "${GREEN}✅ Deployment completed successfully!${NC}"
-echo ""
-echo "Nützliche Befehle:"
-echo "  pm2 logs testseite     - Logs anzeigen"
-echo "  pm2 status             - Status prüfen"
-echo "  pm2 restart testseite  - App neu starten"
-echo "  pm2 stop testseite     - App stoppen"
-
+log "Fertig! https://keramik-auszeit.de"

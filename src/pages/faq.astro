@@ -1,0 +1,117 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Brush from '../components/Brush.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import { content } from '../data/content';
+---
+<MainLayout
+  title={content.pageMeta.faq.title}
+  description={content.pageMeta.faq.description}
+>
+  <Breadcrumb name="FAQ" path="/faq" />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": content.faq.items.map(item => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.answer
+      }
+    }))
+  })} />
+
+  <div class="wrap">
+    <div class="pagehead">
+      <span class="eyebrow">Oft gefragt</span>
+      <h1>Gern beantwortet</h1>
+      <Brush />
+      <p class="lead">Hier findest du Antworten auf die häufigsten Fragen rund um Preise, Ablauf und Buchung.</p>
+    </div>
+
+    <div class="faq">
+      {content.faq.items.map((item, i) => (
+        <details open={i === 0 || undefined}>
+          <summary>{item.question}</summary>
+          <p>{item.answer}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+
+  <section class="faq-cta blk soft">
+    <div class="wrap">
+      <div class="head center">
+        <h2>Noch Fragen?</h2>
+        <p class="lead">Meld dich einfach bei mir, ich helfe dir gern.</p>
+        <div class="faq-cta__links">
+          <a href="/#buchen" class="btn btn-terra">Termin buchen</a>
+          <a href="https://wa.me/4917634255005?text=Hallo%2C%20ich%20habe%20eine%20Frage%20zum%20Keramik-Malatelier." target="_blank" rel="noopener" class="btn btn-ghost">WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+  .faq {
+    max-width: 760px;
+    margin: 2.5rem auto 0;
+    padding-bottom: clamp(2rem, 5vw, 4rem);
+  }
+
+  details {
+    border-bottom: 1px solid var(--hair, #e4d8cb);
+  }
+
+  summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 1.1rem 0;
+    font-family: var(--serif, serif);
+    font-size: 1.2rem;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::after {
+    content: "+";
+    color: var(--terra, #d96c4a);
+    font-family: var(--sans, sans-serif);
+    font-weight: 400;
+    font-size: 1.5rem;
+    line-height: 1;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  details[open] summary::after {
+    transform: rotate(45deg);
+  }
+
+  details p {
+    padding: 0 0 1.2rem;
+    color: var(--ink-2, #5d4a3c);
+  }
+
+  .faq-cta {
+    margin-top: clamp(2rem, 4vw, 3rem);
+    text-align: center;
+  }
+
+  .faq-cta__links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1.75rem;
+  }
+</style>

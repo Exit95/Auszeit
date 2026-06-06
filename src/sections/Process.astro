@@ -1,55 +1,60 @@
 ---
-import StepItem from '../components/StepItem.astro';
-import { content } from '../data/content';
+import Brush from '../components/Brush.astro';
 ---
 
-<section class="process">
-  <div class="container">
-    <h2 class="process__title">{content.process.title}</h2>
-    <div class="process__steps">
-      {
-        content.process.steps.map((step, index) => (
-          <StepItem
-            icon={step.icon}
-            title={step.title}
-            text={step.text}
-            number={index + 1}
-          />
-        ))
-      }
+<section class="blk soft">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">So einfach geht es</span>
+      <h2>In drei Schritten zu deiner fertigen Keramik</h2>
+      <Brush />
+    </div>
+    <div class="steps">
+      <div class="step">
+        <h3>Termin aussuchen</h3>
+        <p>Schau dir die freien Termine an und such dir einen Zeitpunkt aus, der für dich passt.</p>
+      </div>
+      <div class="step">
+        <h3>Ankommen und loslegen</h3>
+        <p>Setz dich gemütlich hin, wähle deinen Rohling und lass deiner Kreativität freien Lauf. Ich helfe dir gern.</p>
+      </div>
+      <div class="step">
+        <h3>Abholen und freuen</h3>
+        <p>Nach 10 bis 14 Tagen ist dein Werk fertig glasiert. Hol es ab und freu dich jedes Mal, wenn du es benutzt.</p>
+      </div>
     </div>
   </div>
 </section>
 
 <style>
-  .process {
-    padding: var(--space-12) var(--gutter);
-    background-color: var(--color-off-white);
-  }
-
-  .container {
-    max-width: var(--max-width);
-    margin: 0 auto;
-  }
-
-  .process__title {
-    font-family: var(--font-serif);
-    color: var(--color-clay-brown);
-    text-align: center;
-    margin-bottom: var(--space-8);
-  }
-
-  .process__steps {
+  .steps {
     display: grid;
-    gap: var(--space-8);
-    max-width: 900px;
-    margin: 0 auto;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
   }
 
-  @media (min-width: 768px) {
-    .process__steps {
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--space-6);
-    }
+  .step {
+    padding-top: 1.4rem;
+    position: relative;
+  }
+
+  .step::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 64px;
+    height: 13px;
+    background: var(--brush) no-repeat left / contain;
+  }
+
+  .step h3 {
+    font-size: 1.4rem;
+    margin: .2rem 0 .5rem;
+  }
+
+  .step p {
+    color: var(--ink-2);
   }
 </style>

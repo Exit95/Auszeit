@@ -1,180 +1,117 @@
 ---
-import Button from "../components/Button.astro";
-import WhatsAppLink from "../components/WhatsAppLink.astro";
-import InstagramLink from "../components/InstagramLink.astro";
-import { content } from "../data/content";
+import Button from '../components/Button.astro';
+import Photo from '../components/Photo.astro';
+import Stars from '../components/Stars.astro';
 ---
 
-<section class="hero" aria-label="Willkommen bei Atelier Auszeit">
-  <div class="hero__content">
-    <div class="hero__logo-card">
-      <div class="hero__logo-card-inner">
-        <img
-          src="/auszeit2.png"
-          alt="Atelier Auszeit – Keramik Malatelier Logo in Gronau, Nordrhein-Westfalen"
-          class="hero__logo-image"
-          width="400"
-          height="400"
-          loading="eager"
-        />
-      </div>
+<section class="hero" aria-label="Malatelier Auszeit">
+  <div class="hero__text">
+    <span class="eyebrow">Malatelier Auszeit · Gronau</span>
+    <h1>Dein Ort zum Ankommen und <em>Kreativsein</em></h1>
+    <p class="sub">Keramik bemalen, durchatmen, glücklich nach Hause gehen. Wir glasieren und brennen für dich, abholbereit in 10 bis 14 Tagen.</p>
+    <div class="cta">
+      <Button href="#buchen">Termin buchen</Button>
+      <a class="link-ul" href="/galerie">Unsere Keramik ansehen</a>
     </div>
-    <nav class="hero__actions" aria-label="Hauptaktionen">
-      <WhatsAppLink
-        phone={content.contact.whatsapp}
-        message={content.contact.whatsappMessage}
-        text={content.hero.ctaSecondary}
-      />
-      <Button href="#calendar-section" variant="primary" size="large">
-        {content.hero.ctaPrimary}
-      </Button>
-      <Button href="#gutschein-section" variant="secondary" size="large">
-        Gutschein kaufen
-      </Button>
-      <InstagramLink
-        url="https://www.instagram.com/auszeit_keramik_malatelier?igsh=MW90eGY0cGxlemt5cw=="
-        text={content.hero.ctaTertiary}
-      />
-    </nav>
+    <div class="trust">
+      <Stars label="Fünf von fünf Sternen" />
+      bei Google, von echten Gästen aus dem Münsterland
+    </div>
+  </div>
+  <div class="hero__img">
+    <Photo
+      src="/fotos/sh-hero.jpg"
+      alt="Beim Bemalen mit Pinsel im Atelier"
+      loading="eager"
+      fetchpriority="high"
+      width={1000}
+      height={1500}
+    />
+    <div class="hero__cap">Mitten im Atelier, Gronau</div>
   </div>
 </section>
 
 <style>
   .hero {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr;
     align-items: center;
-    justify-content: center;
-    background: linear-gradient(
-      135deg,
-      var(--color-clay-brown) 0%,
-      var(--color-warm-beige) 100%
-    );
-    padding: var(--space-2) var(--gutter);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+    padding-top: clamp(1rem, 2vw, 2rem);
   }
 
-  .hero__logo-card {
+  @media (min-width: 860px) {
+    .hero {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+  }
+
+  .hero__text {
+    padding: clamp(2rem, 4vw, 4rem) var(--gutter);
+  }
+
+  .hero h1 {
+    font-size: clamp(2.6rem, 5.4vw, 4.4rem);
+    margin: 1rem 0 1.1rem;
+    max-width: 13ch;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--terra);
+  }
+
+  .hero .sub {
+    font-size: 1.12rem;
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 42ch;
+  }
+
+  .hero .cta {
     display: flex;
-    justify-content: center;
-    margin-bottom: var(--space-1);
+    gap: 1.3rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
   }
 
-  .hero__logo-card-inner {
-    background: transparent;
-    padding: var(--space-3) var(--space-4);
-    border-radius: 20px;
-    box-shadow: none;
-    border: 0;
-    max-width: min(440px, 85vw);
-    backdrop-filter: none;
+  .hero .trust {
+    margin-top: 1.7rem;
+    font-size: .9rem;
+    color: var(--meta);
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+    flex-wrap: wrap;
   }
 
-  .hero__logo-image {
-    width: 100%;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-    border-radius: 14px;
+  .hero__img {
+    position: relative;
+    min-height: clamp(340px, 46vw, 560px);
+    margin: clamp(1rem, 2vw, 1.6rem);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
   }
 
-  .hero::before {
-    content: "";
+  .hero__img :global(img) {
     position: absolute;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.5;
-  }
-
-  .hero__content {
-    position: relative;
-    z-index: 1;
-    max-width: 800px;
     width: 100%;
-    animation: fadeIn var(--duration-slow) var(--easing);
+    height: 100%;
+    object-fit: cover;
+    object-position: center 35%;
   }
 
-  .hero__actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  /* Sehr kleine Bildschirme (< 375px) */
-  @media (max-width: 374px) {
-    .hero {
-      padding: var(--space-2) var(--gutter);
-    }
-
-    .hero__logo-card-inner {
-      padding: var(--space-3) var(--space-3);
-      border-radius: 18px;
-    }
-
-    .hero__actions {
-      width: 100%;
-      gap: var(--space-2);
-      margin: 0 auto;
-    }
-  }
-
-  /* Kleine Smartphones (375px - 479px) */
-  @media (min-width: 375px) and (max-width: 479px) {
-    .hero__actions {
-      width: 100%;
-      max-width: 320px;
-      margin: 0 auto;
-    }
-  }
-
-  /* Größere Smartphones (480px - 639px) */
-  @media (min-width: 480px) and (max-width: 639px) {
-    .hero__actions {
-      max-width: 400px;
-      margin: 0 auto;
-    }
-  }
-
-  @media (min-width: 640px) {
-    .hero__actions {
-      flex-direction: row;
-      justify-content: center;
-    }
-
-    .hero__claim {
-      font-size: 1.5rem;
-    }
-  }
-
-	  @media (min-width: 768px) {
-    .hero__claim {
-      font-size: 1.75rem;
-    }
-  }
-
-  @media (max-width: 639px) {
-    .hero__actions {
-      width: 100%;
-      max-width: 300px;
-    }
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero__content {
-      animation: none;
-    }
+  .hero__cap {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    color: #fff;
+    font-size: .74rem;
+    letter-spacing: .04em;
+    padding: 3rem 1.2rem 1rem;
+    background: linear-gradient(transparent, rgba(58, 45, 36, .5));
   }
 </style>

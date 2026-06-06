@@ -6,6 +6,8 @@ import { sanitizeText, sanitizeEmail, sanitizePhone, sanitizeNumber, sanitizeDat
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitResponse } from '../../lib/rate-limit';
 import { createICalEvent } from '../../lib/ical-helper';
 import { getCancelUrl } from '../../lib/cancel-token';
+import { bookingRequestCustomerHtml, bookingRequestAdminHtml } from '../../lib/email-templates';
+import { notifyNewBooking } from '../../lib/push-notifications';
 
 export const POST: APIRoute = async ({ request }) => {
 	  // Rate limiting
@@ -26,6 +28,15 @@ export const POST: APIRoute = async ({ request }) => {
 	    const date = sanitizeDate(data.date);
 	    const time = sanitizeTime(data.time);
 	    const notes = sanitizeText(data.notes);
+
+	    // Teilnehmernamen sanitizen
+	    let participantNames: string[] = [];
+	    if (Array.isArray(data.participantNames)) {
+	      participantNames = data.participantNames
+	        .map((n: any) => sanitizeText(String(n || '')))
+	        .filter((n: string) => n.length > 0)
+	        .slice(0, participants);
+	    }
 
 	    // Validate required fields
 	    if (!name || !email || !phone || !date || !time) {
@@ -85,6 +96,7 @@ export const POST: APIRoute = async ({ request }) => {
 	      email: email!,
 	      phone: phone || '',
 	      participants,
+	      participantNames: participantNames.length > 0 ? participantNames : undefined,
 	      notes: notes || '',
 	    });
 
@@ -108,32 +120,28 @@ export const POST: APIRoute = async ({ request }) => {
 	    // Anzeigeformat für die Uhrzeit (mit optionaler Endzeit)
 	    const timeDisplay = slot.endTime ? `${slot.time} - ${slot.endTime}` : slot.time;
 
+	    // Teilnehmernamen für E-Mail formatieren
+	    const participantNamesHtml = participantNames.length > 0
+	      ? `<p><strong>Teilnehmer:</strong></p><ol>${participantNames.map(n => `<li>${n}</li>`).join('')}</ol>`
+	      : '';
+	    const participantNamesText = participantNames.length > 0
+	      ? `Teilnehmer:\n${participantNames.map((n, i) => `  ${i + 1}. ${n}`).join('\n')}`
+	      : '';
+
 	    // E-Mail-Benachrichtigung für Admin vorbereiten
 	    const adminEmailData = {
 	      to: bookingEmail,
 	      from: fromEmail,
-	      subject: `Neue Buchung: ${name} - ${date} ${timeDisplay} Uhr`,
-      html: `
-        <h2>Neue Buchungsanfrage</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>E-Mail:</strong> ${email}</p>
-        <p><strong>Telefon:</strong> ${phone || 'Nicht angegeben'}</p>
-        <p><strong>Anzahl Personen:</strong> ${participants}</p>
-	        <p><strong>Datum:</strong> ${date}</p>
-	        <p><strong>Uhrzeit:</strong> ${timeDisplay} Uhr</p>
-        <p><strong>Notizen:</strong> ${notes || 'Keine'}</p>
-      `,
-      text: `
-Neue Buchungsanfrage
-
-Name: ${name}
-E-Mail: ${email}
-Telefon: ${phone || 'Nicht angegeben'}
-Anzahl Personen: ${participants}
-	  Datum: ${date}
-	  Uhrzeit: ${timeDisplay} Uhr
-Notizen: ${notes || 'Keine'}
-      `
+	      subject: `Neue Buchung: ${name} | ${date} ${timeDisplay} Uhr`,
+        html: bookingRequestAdminHtml({
+          name, email,
+          phone: phone || 'Nicht angegeben',
+          date, time: timeDisplay,
+          participants,
+          participantNames: participantNames.length ? participantNames : undefined,
+          notes: notes || undefined,
+        }),
+        text: `Neue Buchungsanfrage\n\nName: ${name}\nE-Mail: ${email}\nTelefon: ${phone || 'Nicht angegeben'}\nDatum: ${date}\nUhrzeit: ${timeDisplay} Uhr\nPersonen: ${participants}\n${participantNamesText}\nNotizen: ${notes || 'Keine'}`,
     };
 
 		    // Stornierungslink für den Kunden
@@ -143,77 +151,15 @@ Notizen: ${notes || 'Keine'}
 		    const customerEmailData = {
 	      to: email,
 	      from: fromEmail,
-		      subject: `Buchungsanfrage eingegangen - Atelier Auszeit am ${date} um ${timeDisplay} Uhr`,
-	      html: `
-	        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-	          <h2 style="color: #8B6F47;">Vielen Dank für Ihre Buchungsanfrage!</h2>
-	          <p>Liebe/r ${name},</p>
-	          <p>wir haben Ihre Buchungsanfrage erhalten und prüfen nun, ob wir den Termin bestätigen können.</p>
-	          <p>Sie erhalten eine <strong>separate E-Mail mit der endgültigen Bestätigung</strong>, sobald wir Ihren Termin fest eingeplant haben.</p>
-
-	          <div style="background-color: #F5F0E8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-		            <h3 style="color: #8B6F47; margin-top: 0;">Ihre Angabe:</h3>
-		            <p><strong>Datum:</strong> ${date}</p>
-		            <p><strong>Uhrzeit:</strong> ${timeDisplay} Uhr</p>
-	            <p><strong>Anzahl Personen:</strong> ${participants}</p>
-	            ${notes ? `<p><strong>Ihre Notizen:</strong> ${notes}</p>` : ''}
-	          </div>
-
-	          <div style="background-color: #E8DCC8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-	            <h3 style="color: #8B6F47; margin-top: 0;">Veranstaltungsort:</h3>
-	            <p>
-	              <strong>Atelier Auszeit</strong><br>
-	              Feldstiege 6a<br>
-	              48599 Gronau
-	            </p>
-	          </div>
-
-		          <p>Bei Fragen oder Änderungswünschen können Sie uns gerne kontaktieren:</p>
-		          <p>
-		            📧 E-Mail: keramik-auszeit@web.de<br>
-		            📱 Telefon: +49 176 34255005
-		          </p>
-
-	          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E8DCC8;">
-	            <p style="font-size: 0.85rem; color: #999;">Falls Sie Ihren Termin nicht wahrnehmen können, können Sie ihn hier stornieren:<br>
-	            <a href="${cancelUrl}" style="color: #dc2626;">Termin stornieren</a></p>
-	          </div>
-
-	          <p style="margin-top: 30px;">Herzliche Grüße,<br>
-	          <strong>Irena Woschkowiak</strong><br>
-	          Atelier Auszeit</p>
-	        </div>
-	      `,
-	      text: `
-Vielen Dank für Ihre Buchungsanfrage!
-
-Liebe/r ${name},
-
-wir haben Ihre Buchungsanfrage erhalten und prüfen nun, ob wir den Termin bestätigen können.
-Sie erhalten eine separate E-Mail mit der endgültigen Bestätigung, sobald wir Ihren Termin fest eingeplant haben.
-
-IHRE ANGABE:
-  Datum: ${date}
-  Uhrzeit: ${timeDisplay} Uhr
-Anzahl Personen: ${participants}
-${notes ? `Ihre Notizen: ${notes}` : ''}
-
-VERANSTALTUNGSORT:
-Atelier Auszeit
-Feldstiege 6a
-48599 Gronau
-
-Bei Fragen oder Änderungswünschen können Sie uns gerne kontaktieren:
-E-Mail: keramik-auszeit@web.de
-Telefon: +49 176 34255005
-
-Falls Sie Ihren Termin nicht wahrnehmen können, können Sie ihn hier stornieren:
-${cancelUrl}
-
-Herzliche Grüße,
-Irena Woschkowiak
-Atelier Auszeit
-	      `
+		      subject: `Buchungsanfrage eingegangen | Atelier Auszeit am ${date} um ${timeDisplay} Uhr`,
+          html: bookingRequestCustomerHtml({
+            name, date, time: timeDisplay,
+            participants,
+            participantNames: participantNames.length ? participantNames : undefined,
+            notes: notes || undefined,
+            cancelUrl,
+          }),
+          text: `Ihre Buchungsanfrage ist eingegangen\n\nLiebe/r ${name},\n\nwir haben Ihre Anfrage erhalten und melden uns mit der Bestätigung.\n\nDatum: ${date}\nUhrzeit: ${timeDisplay} Uhr\nPersonen: ${participants}\n${participantNamesText}\n${notes ? `Notizen: ${notes}\n` : ''}\nStornierung: ${cancelUrl}\n\nHerzliche Grüße,\nIrena Woschkowiak\nAtelier Auszeit`,
 		    };
 
 	    // Kalender-Event erstellen (iCal Format mit korrekter Zeitzone)
@@ -283,6 +229,9 @@ Atelier Auszeit
       // Starte E-Mail-Versand im Hintergrund (nicht awaiten!)
       sendEmails().catch(err => console.error('Background email error:', err));
       emailSent = true; // Wir gehen davon aus, dass es klappt
+
+      // Push-Notification an App senden
+      notifyNewBooking(name, participants, date, time).catch(err => console.error('Push notification error:', err));
     } else {
       console.warn('⚠️ SMTP nicht konfiguriert - E-Mail wird nicht gesendet');
       emailError = 'SMTP nicht konfiguriert';

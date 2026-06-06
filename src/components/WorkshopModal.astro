@@ -50,7 +50,8 @@
                 id="bookingName"
                 name="name"
                 required
-                placeholder="Ihr Name"
+                autocomplete="name"
+                placeholder="Dein Name"
               />
             </div>
 
@@ -61,7 +62,8 @@
                 id="bookingEmail"
                 name="email"
                 required
-                placeholder="ihre@email.de"
+                autocomplete="email"
+                placeholder="deine@email.de"
               />
             </div>
 
@@ -72,7 +74,8 @@
                 id="bookingPhone"
                 name="phone"
                 required
-                placeholder="Ihre Telefonnummer"
+                autocomplete="tel"
+                placeholder="Deine Telefonnummer"
               />
             </div>
 
@@ -98,15 +101,19 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">
-              Jetzt verbindlich anfragen
+              Meinen Platz sichern
             </button>
 
             <p class="form-note">
-              Sie erhalten zeitnah eine Bestätigung per E-Mail.
+              Du bekommst zeitnah eine Bestaetigung per E-Mail.
+            </p>
+            <p class="form-privacy-note">
+              Mit dem Absenden stimmst du der Verarbeitung deiner Angaben zu.
+              Details in unserer <a href="/datenschutz">Datenschutzerklaerung</a>.
             </p>
           </form>
 
-          <div id="bookingMessageDiv" class="message hidden"></div>
+          <div id="bookingMessageDiv" class="message hidden" role="alert" aria-live="assertive"></div>
         </div>
 
         <div class="modal__closed-section hidden" id="workshopModalClosed">
@@ -332,7 +339,7 @@
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--color-terracotta);
   }
 

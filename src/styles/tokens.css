@@ -1,129 +1,31 @@
 :root {
-  /* Core Palette - Warmes Design */
-  --brand-espresso: #423430;
-  --bg-cream: #F2EBE5;
-  --bg-sand: #E3D5CA;
-  --accent-terra: #D96C4A;
-  --accent-caramel: #CFA874;
-
-  /* Legacy colors (für Kompatibilität) */
-  --color-clay-brown: #5D4E43;
-  --color-warm-beige: #E3D5CA;
-  --color-off-white: #F2EBE5;
-  --color-soft-cream: #FAF8F3;
-  --color-charcoal: #2D2D2D;
-  --color-terracotta: #D96C4A;
-
-  /* Semantic color tokens */
-  --color-background: var(--bg-cream);
-  --color-surface: rgba(255, 255, 255, 0.62);
-  --color-surface-hover: rgba(255, 255, 255, 0.85);
-  --color-text-primary: #2D2D2D;
-  --color-text-secondary: #5D4E43;
-  --color-accent: var(--accent-terra);
-  --color-focus: var(--accent-terra);
-
-  /* Functional Colors */
-  --color-success: #4A7C59;
-  --color-warning: #D9A05B;
-  --color-info: #6B7C93;
-  --color-error: #B94A48;
-
-  /* Typography */
-  --font-script: 'Dancing Script', cursive;
-  --font-serif: 'Cinzel', serif;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-
-  /* Spacing (8px base) */
-  --space-1: 0.5rem;
-  --space-2: 1rem;
-  --space-3: 1.5rem;
-  --space-4: 2rem;
-  --space-5: 2.5rem;
-  --space-6: 3rem;
-  --space-8: 4rem;
-  --space-10: 5rem;
-  --space-12: 6rem;
-	  --space-16: 8rem;
-
+  /* Farbe */
+  --bg:#F7F1EA; --surface:#EDE3D8; --card:#FFFFFF;
+  --ink:#3A2D24; --ink-2:#5D4A3C; --meta:#94816F;
+  --terra:#D96C4A; --terra-h:#C75D3D; --caramel:#CFA874; --hair:#E4D8CB;
+  --focus:#D96C4A;
+  /* semantische Aliase fuer bestehenden Code */
+  --color-background:var(--bg); --color-text-primary:var(--ink);
+  --color-text-secondary:var(--ink-2); --color-accent:var(--terra);
+  /* Typografie */
+  --font-serif:'Fraunces',Georgia,serif;
+  --font-sans:'Source Sans 3',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --text-h1:clamp(2.6rem, 2.3rem + 2vw, 4.4rem);
+  --text-h2:clamp(2rem, 1.7rem + 1.5vw, 3rem);
+  --text-h3:clamp(1.3rem, 1.2rem + 0.6vw, 1.5rem);
+  --text-body:clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
   /* Layout */
-  --max-width: 1080px;
-  --gutter: 1rem;
-  /* Kleinerer Standard-Gutter für mobile */
-  --grid-columns: 12;
-
-  /* Touch targets */
-  --touch-target-min: 44px;
-
-  /* Border radius - Weichere Ecken */
-  --radius: 18px;
-  --radius-sm: 10px;
-  --radius-base: 14px;
-  --radius-lg: 24px;
-  --radius-full: 999px;
-
-  /* Shadows - Wärmer mit Espresso-Tönen */
-  --shadow-sm: 0 1px 2px 0 rgba(66, 52, 48, 0.06);
-  --shadow: 0 4px 12px -1px rgba(66, 52, 48, 0.10);
-  --shadow-md: 0 6px 16px -2px rgba(66, 52, 48, 0.10);
-  --shadow-lg: 0 10px 24px -3px rgba(66, 52, 48, 0.12);
-  --shadow-soft: 0 10px 30px rgba(66, 52, 48, 0.12);
-  --shadow-card: 0 10px 24px rgba(66, 52, 48, 0.10);
-
-  /* Typography scale & weights */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-3xl: 1.875rem;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 650;
-  --font-weight-bold: 700;
-  --font-body: var(--font-sans);
-
-  /* Borders - Weichere Ränder */
-  --color-border: rgba(66, 52, 48, 0.14);
-  --color-border-soft: rgba(66, 52, 48, 0.10);
-  --color-border-light: rgba(255, 255, 255, 0.6);
-  --color-gray-50: #f9fafb;
-  --color-text-tertiary: rgba(45, 45, 45, 0.74);
-  --color-brand-beige: var(--color-warm-beige);
-
-  /* Status colors - Abgestimmt auf warme Palette */
-  --color-error-light: #fee2e2;
-  --color-success-light: #dcfce7;
-
+  --maxw:1200px; --gutter:clamp(1.25rem, 5vw, 4rem); --section:clamp(3.5rem, 8vw, 8rem);
+  --touch-min:44px;
+  /* Radien */
+  --r-xl:clamp(16px, 1.8vw, 26px); --r-lg:clamp(12px, 1.4vw, 18px); --r-md:12px; --r-sm:9px;
+  /* Schatten */
+  --shadow-soft:0 22px 50px -40px rgba(58,45,36,.4);
+  --shadow-card:0 12px 28px -22px rgba(58,45,36,.3);
   /* Motion */
-  --duration-fast: 140ms;
-  --duration-normal: 160ms;
-  --duration-slow: 240ms;
-  --easing: cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: all var(--duration-normal) var(--easing);
-}
-
-/* Responsive Layout Anpassungen */
-@media (min-width: 480px) {
-  :root {
-    --gutter: 1.25rem;
-  }
-}
-
-@media (min-width: 768px) {
-  :root {
-    --gutter: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  :root {
-    --gutter: 2rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --duration-fast: 0ms;
-    --duration-normal: 0ms;
-    --duration-slow: 0ms;
-  }
+  --ease-smooth:cubic-bezier(0.22,0.61,0.36,1);
+  --ease-out:cubic-bezier(0.25,1,0.5,1);
+  --dur-fast:180ms; --dur-mid:420ms; --dur-reveal:680ms;
+  /* Pinselstrich (Karamell) */
+  --brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 18' preserveAspectRatio='none'%3E%3Cpath fill='%23CFA874' d='M2 10 C 24 3 52 14 82 8 C 112 2 138 13 158 7 L 157 10 C 136 16 110 8 81 12 C 50 16 24 6 3 13 Z'/%3E%3C/svg%3E");
 }

@@ -1,0 +1,138 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Brennliste" activeNav="brennliste">
+  <div class="brenn-card">
+    <h2>Brennliste</h2>
+    <p style="font-size:0.8125rem; color:#999; margin-bottom:1rem">Nur brennrelevante Status: Wartet auf Brennen, Im Brennofen, Gebrannt</p>
+
+    <div class="brenn-filters">
+      <select class="brenn-select" id="brenn-status-filter">
+        <option value="">Alle brennrelevanten</option>
+        <option value="WARTET_AUF_BRENNEN">Wartet auf Brennen</option>
+        <option value="IM_BRENNOFEN">Im Brennofen</option>
+        <option value="GEBRANNT">Gebrannt</option>
+      </select>
+      <div style="flex:1"></div>
+      <button class="brenn-btn brenn-btn--warning brenn-btn--small" id="bulk-in-ofen-btn" onclick="bulkAction('IM_BRENNOFEN')" disabled>Ausgewählte → In den Ofen</button>
+      <button class="brenn-btn brenn-btn--primary brenn-btn--small" id="bulk-gebrannt-btn" onclick="bulkAction('GEBRANNT')" disabled>Ausgewählte → Gebrannt</button>
+    </div>
+
+    <div id="brennliste-content" class="brenn-loading">Wird geladen…</div>
+  </div>
+</BrennLayout>
+
+<script is:inline>
+  let brennListeData = [];
+  let selectedOrders = new Set();
+
+  document.getElementById('brenn-status-filter').addEventListener('change', loadBrennliste);
+
+  async function loadBrennliste() {
+    const statusFilter = document.getElementById('brenn-status-filter').value;
+    const statuses = statusFilter || 'WARTET_AUF_BRENNEN,IM_BRENNOFEN,GEBRANNT';
+
+    try {
+      const data = await brennFetch('/api/admin/brenn/orders?status=' + statuses + '&limit=100');
+      brennListeData = data.data.orders;
+      selectedOrders.clear();
+      renderBrennliste();
+    } catch(e) {
+      document.getElementById('brennliste-content').innerHTML = '<p style="color:#dc2626">Fehler beim Laden</p>';
+    }
+  }
+
+  function renderBrennliste() {
+    const el = document.getElementById('brennliste-content');
+    if (!brennListeData.length) {
+      el.innerHTML = '<div class="brenn-empty-state"><p>Keine brennrelevanten Aufträge</p></div>';
+      return;
+    }
+
+    let html = '<div class="brenn-table-wrapper"><table class="brenn-table brenn-table--responsive"><thead><tr>' +
+      '<th style="width:30px"><input type="checkbox" class="brenn-checkbox" onchange="toggleAllBrenn(this.checked)" /></th>' +
+      '<th>Referenz</th><th>Kunde</th><th>Werkstücke</th><th>Status</th><th>Lagerort</th><th>Aktion</th></tr></thead><tbody>';
+
+    brennListeData.forEach(o => {
+      const itemsSummary = (o.items || []).map(i => i.quantity + '× ' + i.item_type).join(', ') || '-';
+      const nextSt = NEXT_STATUS[o.overall_status];
+
+      html += '<tr>' +
+        '<td><input type="checkbox" class="brenn-checkbox" value="' + o.id + '" onchange="updateBrennSelection()" ' + (selectedOrders.has(o.id) ? 'checked' : '') + ' /></td>' +
+        '<td data-label="Referenz"><a href="/admin/brenn/auftraege/' + o.id + '/"><strong>' + escapeHtml(o.reference_code) + '</strong></a></td>' +
+        '<td data-label="Kunde">' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) + '</td>' +
+        '<td data-label="Werkstücke" style="font-size:0.8125rem">' + escapeHtml(itemsSummary) + '</td>' +
+        '<td data-label="Status">' + statusBadgeHtml(o.overall_status) + '</td>' +
+        '<td data-label="Lagerort">' + escapeHtml(o.storage_code || '-') + '</td>' +
+        '<td data-label="Aktion">';
+
+      if (nextSt) {
+        html += '<button class="brenn-btn brenn-btn--primary brenn-btn--small" onclick="quickBrennStatus(' + o.id + ',\'' + nextSt + '\')">' + escapeHtml(STATUS_LABELS[nextSt]) + '</button>';
+      }
+      html += '</td></tr>';
+    });
+
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+    updateBulkButtons();
+  }
+
+  function toggleAllBrenn(checked) {
+    selectedOrders.clear();
+    if (checked) brennListeData.forEach(o => selectedOrders.add(o.id));
+    document.querySelectorAll('#brennliste-content .brenn-checkbox[value]').forEach(cb => cb.checked = checked);
+    updateBulkButtons();
+  }
+
+  function updateBrennSelection() {
+    selectedOrders.clear();
+    document.querySelectorAll('#brennliste-content .brenn-checkbox[value]:checked').forEach(cb => {
+      selectedOrders.add(Number(cb.value));
+    });
+    updateBulkButtons();
+  }
+
+  function updateBulkButtons() {
+    const hasSelection = selectedOrders.size > 0;
+    document.getElementById('bulk-in-ofen-btn').disabled = !hasSelection;
+    document.getElementById('bulk-gebrannt-btn').disabled = !hasSelection;
+  }
+
+  async function bulkAction(newStatus) {
+    if (selectedOrders.size === 0) return;
+
+    for (const orderId of selectedOrders) {
+      const order = brennListeData.find(o => o.id === orderId);
+      if (!order) continue;
+      const items = (order.items || []).filter(i => i.status !== 'PROBLEM' && i.status !== 'ABGEHOLT');
+      const itemIds = items.map(i => i.id);
+      if (itemIds.length === 0) continue;
+
+      try {
+        await brennFetch('/api/admin/brenn/orders/' + orderId + '/items/bulk-status', {
+          method: 'PATCH',
+          body: JSON.stringify({ item_ids: itemIds, new_status: newStatus })
+        });
+      } catch(e) { /* continue with others */ }
+    }
+    brennToast(selectedOrders.size + ' Aufträge aktualisiert');
+    loadBrennliste();
+  }
+
+  async function quickBrennStatus(orderId, newStatus) {
+    try {
+      const data = await brennFetch('/api/admin/brenn/orders/' + orderId);
+      const items = data.data.items.filter(i => i.status !== 'PROBLEM' && i.status !== 'ABGEHOLT');
+      await brennFetch('/api/admin/brenn/orders/' + orderId + '/items/bulk-status', {
+        method: 'PATCH',
+        body: JSON.stringify({ item_ids: items.map(i => i.id), new_status: newStatus })
+      });
+      brennToast('Status geändert');
+      loadBrennliste();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  loadBrennliste();
+</script>

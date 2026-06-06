@@ -1,0 +1,82 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Button from '../components/Button.astro';
+import Brush from '../components/Brush.astro';
+---
+<MainLayout
+  title="Seite nicht gefunden — Malatelier Auszeit"
+  description="Diese Seite wurde nicht gefunden. Hier findest du den Weg zurück zur Startseite."
+  noindex={true}
+>
+  <div class="not-found">
+    <div class="not-found__inner">
+      <span class="eyebrow">404</span>
+      <h1>Hier ist leider nichts</h1>
+      <Brush />
+      <p class="lead">
+        Die Seite, die du suchst, existiert nicht oder wurde verschoben.
+        Aber dein nächstes Keramik-Erlebnis ist nur einen Klick entfernt.
+      </p>
+      <div class="not-found__actions">
+        <Button href="/">Zur Startseite</Button>
+        <a href="/#buchen" class="link-ul">Termin buchen</a>
+      </div>
+    </div>
+  </div>
+</MainLayout>
+
+<style>
+  .not-found {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(4rem, 10vw, 7rem) var(--gutter);
+  }
+
+  .not-found__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 520px;
+  }
+
+  .not-found__inner .eyebrow {
+    font-size: clamp(4rem, 16vw, 8rem);
+    font-family: var(--font-serif);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--terra);
+    opacity: 0.18;
+    letter-spacing: -0.04em;
+    user-select: none;
+    pointer-events: none;
+    margin-bottom: -0.3em;
+  }
+
+  .not-found__inner h1 {
+    font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+    margin: 0.6rem 0 0;
+  }
+
+  .not-found__inner .brush {
+    margin-inline: auto;
+    margin-bottom: 0;
+  }
+
+  .not-found__inner .lead {
+    margin-top: 1.25rem;
+    max-width: 42ch;
+    text-align: center;
+  }
+
+  .not-found__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+</style>

@@ -1,0 +1,57 @@
+---
+import Button from "../components/Button.astro";
+---
+
+<section class="final">
+  <div class="wrap">
+    <h2>Bereit für deine Auszeit?</h2>
+    <p>Such dir einen Termin aus, komm vorbei und nimm etwas mit, das bleibt.</p>
+    <div class="cta">
+      <Button href="#buchen">Termin buchen</Button>
+      <a class="link-ul" href="/gutscheine">Lieber einen Gutschein verschenken</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .final {
+    margin: var(--section, clamp(3.5rem, 8vw, 8rem)) clamp(0.3rem, 1vw, 0.9rem) 0;
+    border-radius: var(--r-xl, clamp(16px, 1.8vw, 26px));
+    background: linear-gradient(135deg, #3a2d24, #5d4a3c);
+    color: #f7f1ea;
+    text-align: center;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft, 0 22px 50px -40px rgba(58, 45, 36, 0.4));
+  }
+
+  .final .wrap {
+    padding: var(--section, clamp(3.5rem, 8vw, 8rem)) var(--gutter, clamp(1.25rem, 5vw, 4rem));
+  }
+
+  .final h2 {
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    max-width: 18ch;
+    margin: 0 auto 1rem;
+  }
+
+  .final p {
+    color: #e0d2c3;
+    max-width: 42ch;
+    margin: 0 auto 2rem;
+  }
+
+  .final .cta {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .final :global(.link-ul) {
+    color: #f7f1ea;
+    background: linear-gradient(var(--caramel, #cfa874), var(--caramel, #cfa874)) left bottom /
+      100% 2px no-repeat;
+  }
+</style>

@@ -1,0 +1,372 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Brush from '../components/Brush.astro';
+import Photo from '../components/Photo.astro';
+import Button from '../components/Button.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import { content } from '../data/content';
+
+const { events, pageMeta } = content;
+
+const ANL_PHOTOS: Record<string, string> = {
+  kindergeburtstag: '/fotos/g-bdayplate.jpg',
+  jga:              '/fotos/sh-cup.jpg',
+  firmen_event:     '/fotos/g-tile.jpg',
+  privater_anlass:  '/fotos/sh-bee.jpg',
+};
+---
+
+<MainLayout title={pageMeta.events.title} description={pageMeta.events.description}>
+
+  <Breadcrumb name="Besondere Anlässe" path="/events" />
+  <div class="wrap">
+
+    <!-- Page Head -->
+    <div class="pagehead">
+      <span class="eyebrow">Besondere Anlässe</span>
+      <h1>Gemeinsam kreativ sein verbindet</h1>
+      <Brush />
+      <p class="lead">Ob Kindergeburtstag, JGA oder Firmen-Event: Wir richten alles für euch her, ihr müsst nur kommen und loslegen.</p>
+    </div>
+
+    <!-- Banner -->
+    <div class="anl-banner">
+      <Photo src="/fotos/sh-group.jpg" alt="Gruppe bemalt gemeinsam Keramik" loading="eager" fetchpriority="high" />
+      <div class="anl-banner__s"></div>
+      <p>Eine gute Zeit, die ihr mit nach Hause nehmt.</p>
+    </div>
+
+    <!-- Anlass-Cards -->
+    <div class="anl-grid">
+      {events.types.map((type) => (
+        <article class="anl">
+          <Photo src={ANL_PHOTOS[type.id] ?? '/fotos/sh-cup.jpg'} alt={type.title} />
+          <div class="anl__b">
+            <h3>{type.title}</h3>
+            <p>{type.text}</p>
+            <ul>
+              {type.features.map((f) => <li>{f}</li>)}
+            </ul>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <!-- Anfrage-Formular -->
+    <div class="form" id="anfrage">
+      <h3>Eure Anfrage</h3>
+      <p class="sub">Erzählt uns kurz von eurem Anlass, wir melden uns schnell zurück.</p>
+      <form id="anlassForm">
+        <div class="form-grid">
+          <div class="field">
+            <label for="anlAnlass">Anlass</label>
+            <select id="anlAnlass" name="eventType">
+              <option value="">Bitte wählen</option>
+              <option value="kindergeburtstag">Kindergeburtstag</option>
+              <option value="jga">JGA (Junggesellenabschied)</option>
+              <option value="stammtisch">Stammtisch / Gruppenabend</option>
+              <option value="firmen_event">Firmen-Event / Teambuilding</option>
+              <option value="privater_anlass">Privater Anlass</option>
+              <option value="sonstiges">Sonstiges</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="anlDatum">Wunschdatum</label>
+            <input type="text" id="anlDatum" name="preferredDate" placeholder="z. B. 12. Juli 2026" />
+          </div>
+          <div class="field">
+            <label for="anlName">Name</label>
+            <input type="text" id="anlName" name="name" required placeholder="Dein Name" autocomplete="name" />
+          </div>
+          <div class="field">
+            <label for="anlPersonen">Personenzahl</label>
+            <input type="number" id="anlPersonen" name="participants" min="1" max="50" placeholder="z. B. 8" />
+          </div>
+          <div class="field">
+            <label for="anlEmail">E-Mail</label>
+            <input type="email" id="anlEmail" name="email" required placeholder="du@beispiel.de" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="anlTelefon">Telefon</label>
+            <input type="tel" id="anlTelefon" name="phone" placeholder="optional" autocomplete="tel" />
+          </div>
+          <div class="field full">
+            <label for="anlNachricht">Nachricht</label>
+            <textarea id="anlNachricht" name="message" rows="4" placeholder="Worauf sollen wir uns einstellen?"></textarea>
+          </div>
+        </div>
+        <Button variant="terra" type="submit">Anfrage senden</Button>
+      </form>
+      <div id="anlassResult" class="form-result hidden"></div>
+    </div>
+
+  </div>
+
+</MainLayout>
+
+<script>
+  // Pre-fill from card click (cards link to #anfrage with data)
+  document.querySelectorAll<HTMLElement>('[data-anlass]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const sel = document.getElementById('anlAnlass') as HTMLSelectElement | null;
+      if (sel) sel.value = el.dataset.anlass ?? '';
+      document.getElementById('anfrage')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Form submit
+  const form = document.getElementById('anlassForm') as HTMLFormElement | null;
+  const resultDiv = document.getElementById('anlassResult');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const origText = submitBtn.textContent ?? 'Anfrage senden';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Wird gesendet …';
+
+    try {
+      const fd = new FormData(form);
+      const payload = {
+        eventType:     fd.get('eventType')    as string || 'sonstiges',
+        name:          (fd.get('name')         as string || '').trim(),
+        email:         (fd.get('email')        as string || '').trim(),
+        phone:         (fd.get('phone')        as string || '').trim(),
+        preferredDate: (fd.get('preferredDate')as string || '').trim(),
+        participants:  parseInt(fd.get('participants') as string) || 1,
+        message:       (fd.get('message')      as string || '').trim(),
+      };
+
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (resultDiv) {
+        resultDiv.classList.remove('hidden', 'success', 'error');
+        if (data.success) {
+          resultDiv.classList.add('success');
+          resultDiv.textContent = 'Vielen Dank! Deine Anfrage ist angekommen. Wir melden uns schnell bei dir.';
+          form.reset();
+        } else {
+          resultDiv.classList.add('error');
+          resultDiv.textContent = data.message || 'Fehler beim Senden. Bitte versuche es erneut.';
+        }
+      }
+    } catch {
+      if (resultDiv) {
+        resultDiv.classList.remove('hidden', 'success', 'error');
+        resultDiv.classList.add('error');
+        resultDiv.textContent = 'Verbindungsfehler. Bitte versuche es später erneut.';
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = origText;
+    }
+  });
+</script>
+
+<style>
+  .wrap {
+    padding-bottom: clamp(3rem, 7vw, 6rem);
+  }
+
+  /* ── Page Head ──────────────────────────────────────── */
+  .pagehead {
+    padding: clamp(2.5rem, 5vw, 4rem) 0 0;
+  }
+  .pagehead h1 {
+    font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+    margin: .6rem 0 0;
+  }
+  .pagehead .lead {
+    color: var(--ink-2);
+    font-size: 1.1rem;
+    margin-top: 1rem;
+    max-width: 52ch;
+  }
+
+  /* ── Banner ─────────────────────────────────────────── */
+  .anl-banner {
+    position: relative;
+    border-radius: var(--r-xl);
+    overflow: hidden;
+    margin-top: 2rem;
+    min-height: clamp(220px, 30vw, 320px);
+    display: flex;
+    align-items: flex-end;
+    box-shadow: var(--shadow-soft);
+  }
+  :global(.anl-banner img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+  }
+  .anl-banner__s {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(46,36,29,.7), transparent 70%);
+  }
+  .anl-banner p {
+    position: relative;
+    color: #fff;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(1.3rem, 2.6vw, 1.9rem);
+    padding: 1.6rem;
+    max-width: 24ch;
+  }
+
+  /* ── Anlass Grid ────────────────────────────────────── */
+  .anl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+  }
+
+  .anl {
+    background: var(--card);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+  }
+  :global(.anl img) {
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    width: 100%;
+  }
+  .anl__b {
+    padding: 1.4rem 1.5rem 1.7rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .anl h3 {
+    font-size: 1.4rem;
+  }
+  .anl p {
+    color: var(--ink-2);
+    margin: .5rem 0 .2rem;
+    font-size: .96rem;
+  }
+  .anl ul {
+    list-style: none;
+    margin-top: .9rem;
+  }
+  .anl li {
+    padding-left: 1.15rem;
+    position: relative;
+    font-size: .92rem;
+    color: var(--ink-2);
+    margin: .35rem 0;
+  }
+  .anl li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .55em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--terra);
+  }
+
+  /* ── Formular ───────────────────────────────────────── */
+  .form {
+    background: var(--card);
+    border-radius: var(--r-lg);
+    padding: clamp(1.5rem, 4vw, 2.4rem);
+    box-shadow: var(--shadow-card);
+    max-width: 780px;
+    margin: 2.5rem auto 0;
+  }
+  .form h3 {
+    font-size: 1.5rem;
+    margin-bottom: .3rem;
+  }
+  .form .sub {
+    color: var(--meta);
+    font-size: .92rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  @media (max-width: 560px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+  }
+  .field.full {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--ink-2);
+    margin-bottom: .35rem;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: .72rem .9rem;
+    border: 1.5px solid var(--hair);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 1rem;
+    background: var(--bg);
+    color: var(--ink);
+    resize: vertical;
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 2px solid var(--terra);
+    outline-offset: 1px;
+    border-color: var(--terra);
+  }
+
+  .form .btn {
+    margin-top: 1.3rem;
+  }
+
+  .form-result {
+    margin-top: 1.2rem;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: .95rem;
+  }
+  .form-result.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+  }
+  .form-result.error {
+    background: #fbe9e7;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+  }
+  .hidden {
+    display: none;
+  }
+</style>

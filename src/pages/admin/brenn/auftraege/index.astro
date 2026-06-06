@@ -1,0 +1,135 @@
+---
+export const prerender = false;
+import BrennLayout from '../../../../layouts/BrennLayout.astro';
+---
+
+<BrennLayout title="Aufträge" activeNav="auftraege">
+  <div class="brenn-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem">
+      <h2 style="margin:0">Werkstückliste</h2>
+      <a href="/admin/brenn/auftraege/neu/" class="brenn-btn brenn-btn--primary brenn-btn--small">Neuer Auftrag</a>
+    </div>
+
+    <div class="brenn-filters">
+      <input type="search" class="brenn-input" id="order-search" placeholder="Referenz-ID oder Kundenname…" />
+      <select class="brenn-select" id="status-filter">
+        <option value="">Alle Status</option>
+        <option value="ERFASST">Erfasst</option>
+        <option value="WARTET_AUF_BRENNEN">Wartet auf Brennen</option>
+        <option value="IM_BRENNOFEN">Im Brennofen</option>
+        <option value="GEBRANNT">Gebrannt</option>
+        <option value="ABHOLBEREIT">Abholbereit</option>
+        <option value="ABGEHOLT">Abgeholt</option>
+        <option value="PROBLEM">Problem</option>
+      </select>
+      <input type="date" class="brenn-input" id="date-from" placeholder="Von" title="Ab Datum" style="width:auto" />
+      <input type="date" class="brenn-input" id="date-to" placeholder="Bis" title="Bis Datum" style="width:auto" />
+    </div>
+
+    <div id="orders-content" class="brenn-loading">Wird geladen…</div>
+    <div id="orders-pagination" class="brenn-pagination"></div>
+  </div>
+</BrennLayout>
+
+<script is:inline>
+  let currentPage = 1;
+  let searchTimeout;
+
+  ['order-search'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => { currentPage = 1; loadOrders(); }, 300);
+    });
+  });
+
+  ['status-filter', 'date-from', 'date-to'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => { currentPage = 1; loadOrders(); });
+  });
+
+  async function loadOrders() {
+    const q = document.getElementById('order-search').value.trim();
+    const status = document.getElementById('status-filter').value;
+    const from = document.getElementById('date-from').value;
+    const to = document.getElementById('date-to').value;
+
+    const params = new URLSearchParams({ page: currentPage, limit: 25 });
+    if (q) params.set('q', q);
+    if (status) params.set('status', status);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+
+    try {
+      const data = await brennFetch('/api/admin/brenn/orders?' + params);
+      renderOrders(data.data);
+    } catch(e) {
+      document.getElementById('orders-content').innerHTML = '<p style="color:#dc2626">Fehler beim Laden</p>';
+    }
+  }
+
+  function renderOrders(data) {
+    const el = document.getElementById('orders-content');
+    if (!data.orders.length) {
+      el.innerHTML = '<div class="brenn-empty-state"><p>Keine Aufträge gefunden</p><small>Erstellen Sie einen neuen Auftrag oder ändern Sie die Filter.</small></div>';
+      document.getElementById('orders-pagination').innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="brenn-table-wrapper"><table class="brenn-table brenn-table--responsive"><thead><tr>' +
+      '<th>Referenz</th><th>Kunde</th><th>Datum</th><th>Werkstücke</th><th>Status</th><th>Lagerort</th><th>Aktion</th></tr></thead><tbody>';
+
+    data.orders.forEach(o => {
+      const itemsSummary = (o.items || []).map(i => i.quantity + '× ' + i.item_type).join(', ') || '-';
+      const nextSt = NEXT_STATUS[o.overall_status];
+
+      html += '<tr>' +
+        '<td data-label="Referenz"><a href="/admin/brenn/auftraege/' + o.id + '/"><strong>' + escapeHtml(o.reference_code) + '</strong></a></td>' +
+        '<td data-label="Kunde">' + escapeHtml(o.last_name) + ', ' + escapeHtml(o.first_name) + '</td>' +
+        '<td data-label="Datum">' + formatDate(o.visit_date) + '</td>' +
+        '<td data-label="Werkstücke" style="font-size:0.8125rem">' + escapeHtml(itemsSummary) + '</td>' +
+        '<td data-label="Status">' + statusBadgeHtml(o.overall_status) + '</td>' +
+        '<td data-label="Lagerort">' + escapeHtml(o.storage_code || '-') + '</td>' +
+        '<td data-label="Aktion">';
+
+      if (nextSt) {
+        html += '<button class="brenn-btn brenn-btn--primary brenn-btn--small" onclick="quickStatus(' + o.id + ',\'' + nextSt + '\')">' + escapeHtml(STATUS_LABELS[nextSt]) + '</button>';
+      }
+      html += '</td></tr>';
+    });
+
+    html += '</tbody></table></div>';
+    el.innerHTML = html;
+
+    // Pagination
+    const p = data.pagination;
+    const pagEl = document.getElementById('orders-pagination');
+    if (p.pages <= 1) { pagEl.innerHTML = ''; return; }
+    let pagHtml = '<button ' + (p.page <= 1 ? 'disabled' : '') + ' onclick="goPage(' + (p.page-1) + ')">‹</button>';
+    for (let i = 1; i <= Math.min(p.pages, 10); i++) {
+      pagHtml += '<button class="' + (i === p.page ? 'active' : '') + '" onclick="goPage(' + i + ')">' + i + '</button>';
+    }
+    pagHtml += '<button ' + (p.page >= p.pages ? 'disabled' : '') + ' onclick="goPage(' + (p.page+1) + ')">›</button>';
+    pagEl.innerHTML = pagHtml;
+  }
+
+  function goPage(p) { currentPage = p; loadOrders(); }
+
+  async function quickStatus(orderId, newStatus) {
+    try {
+      // Get order items first
+      const data = await brennFetch('/api/admin/brenn/orders/' + orderId);
+      const items = data.data.items.filter(i => i.status !== 'PROBLEM' && i.status !== 'ABGEHOLT');
+      const itemIds = items.map(i => i.id);
+
+      if (itemIds.length === 0) { brennToast('Keine Werkstücke zum Aktualisieren', 'error'); return; }
+
+      await brennFetch('/api/admin/brenn/orders/' + orderId + '/items/bulk-status', {
+        method: 'PATCH',
+        body: JSON.stringify({ item_ids: itemIds, new_status: newStatus })
+      });
+      brennToast('Status geändert');
+      loadOrders();
+    } catch(e) { brennToast(e.message, 'error'); }
+  }
+
+  loadOrders();
+</script>

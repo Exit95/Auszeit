@@ -1,69 +1,72 @@
 ---
-import FAQItem from "../components/FAQItem.astro";
+import Brush from "../components/Brush.astro";
 import { content } from "../data/content";
+
+const items = content.faq.items;
 ---
 
-<section class="faq">
-  <div class="container">
-    <h2 class="faq__title">{content.faq.title}</h2>
-    <div class="faq__list">
-      {
-        content.faq.items.map((item) => (
-          <FAQItem question={item.question} answer={item.answer} />
-        ))
-      }
+<section class="blk soft">
+  <div class="wrap">
+    <div class="head center">
+      <span class="eyebrow">Oft gefragt</span>
+      <h2>Gern beantwortet</h2>
+      <Brush />
+    </div>
+    <div class="faq">
+      {items.map((item, i) => (
+        <details open={i === 0 || undefined}>
+          <summary>{item.question}</summary>
+          <p>{item.answer}</p>
+        </details>
+      ))}
     </div>
   </div>
 </section>
 
 <style>
   .faq {
-    padding: var(--space-12) var(--gutter);
-    background-color: var(--color-warm-beige);
+    max-width: 760px;
+    margin: 2.5rem auto 0;
   }
 
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
+  details {
+    border-bottom: 1px solid var(--hair, #e4d8cb);
   }
 
-  .faq__title {
-    font-family: var(--font-serif);
-    color: var(--color-clay-brown);
-    text-align: center;
-    margin-bottom: var(--space-8);
-  }
-
-  .faq__list {
+  summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 1.1rem 0;
+    font-family: var(--serif, serif);
+    font-size: 1.2rem;
+    font-weight: 500;
     display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
   }
 
-  /* Mobile Optimierungen */
-  @media (max-width: 374px) {
-    .faq {
-      padding: var(--space-8) var(--gutter);
-    }
-
-    .faq__title {
-      font-size: 1.75rem;
-      margin-bottom: var(--space-6);
-    }
-
-    .faq__list {
-      gap: var(--space-2);
-    }
+  summary::-webkit-details-marker {
+    display: none;
   }
 
-  @media (min-width: 375px) and (max-width: 639px) {
-    .faq {
-      padding: var(--space-10) var(--gutter);
-    }
+  summary::after {
+    content: "+";
+    color: var(--terra, #d96c4a);
+    font-family: var(--sans, sans-serif);
+    font-weight: 400;
+    font-size: 1.5rem;
+    line-height: 1;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
 
-    .faq__title {
-      font-size: 1.875rem;
-      margin-bottom: var(--space-6);
-    }
+  details[open] summary::after {
+    transform: rotate(45deg);
+  }
+
+  details p {
+    padding: 0 0 1.2rem;
+    color: var(--ink-2, #5d4a3c);
   }
 </style>

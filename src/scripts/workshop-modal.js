@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Bild setzen - prüfe ob URL oder lokaler Dateiname
     const imageUrl = workshop.imageFilename
       ? (workshop.imageFilename.startsWith('http') ? workshop.imageFilename : `/uploads/${workshop.imageFilename}`)
-      : "/becher.jpeg";
+      : "/tasse.webp";
     modalImage.src = imageUrl;
     modalImage.alt = workshop.title;
 
@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
         closedMessage = "<p>Dieser Workshop hat bereits stattgefunden.</p>";
       } else if (isFull) {
         closedMessage =
-          '<p>Leider sind alle Plätze ausgebucht.<br><a href="/kontakt">Schreiben Sie mir</a> für die Warteliste.</p>';
+          '<p>Leider sind alle Pl\u00e4tze ausgebucht.<br><a href="/kontakt">Schreib mir</a> f\u00fcr die Warteliste.</p>';
       } else {
         closedMessage = "<p>Buchung ist derzeit nicht möglich.</p>";
       }
@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (res.ok && result.success) {
         bookingMessageDiv.textContent =
-          "Vielen Dank! Ihre Anfrage wurde gesendet. Sie erhalten bald eine Bestätigung.";
+          "Angekommen! Deine Anfrage ist bei mir — du bekommst gleich eine Best\u00e4tigung per Mail.";
         bookingMessageDiv.className = "message success";
         bookingForm.reset();
       } else {
@@ -209,17 +209,17 @@ document.addEventListener("DOMContentLoaded", () => {
         bookingMessageDiv.className = "message error";
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = "Jetzt verbindlich anfragen";
+          submitBtn.textContent = "Meinen Platz sichern";
         }
       }
     } catch (error) {
       bookingMessageDiv.classList.remove("hidden");
       bookingMessageDiv.textContent =
-        "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.";
+        "Das hat gerade nicht geklappt. Versuch es bitte gleich nochmal.";
       bookingMessageDiv.className = "message error";
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = "Jetzt verbindlich anfragen";
+        submitBtn.textContent = "Meinen Platz sichern";
       }
     }
   });
