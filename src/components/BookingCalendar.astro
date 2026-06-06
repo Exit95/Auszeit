@@ -192,7 +192,8 @@ import Brush from './Brush.astro';
     padding-bottom: .5rem;
     font-weight: 600;
   }
-  .day {
+  /* per JS erzeugte Tageszellen -> :global, sonst greifen Astros gescopte Styles nicht */
+  :global(.cal-grid .day) {
     aspect-ratio: 1;
     display: flex;
     flex-direction: column;
@@ -209,23 +210,23 @@ import Brush from './Brush.astro';
     font-family: var(--font-sans);
     min-height: var(--touch-min);
   }
-  .day:hover { background: var(--surface); }
-  .day:focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; }
-  .day .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--terra); }
-  .day.is-muted {
+  :global(.cal-grid .day:hover) { background: var(--surface); }
+  :global(.cal-grid .day:focus-visible) { outline: 2px solid var(--terra); outline-offset: 2px; }
+  :global(.cal-grid .day .dot) { width: 5px; height: 5px; border-radius: 50%; background: var(--terra); }
+  :global(.cal-grid .day.is-muted) {
     color: var(--meta);
     opacity: .4;
     cursor: default;
     pointer-events: none;
   }
-  .day.is-sel {
+  :global(.cal-grid .day.is-sel) {
     background: var(--terra);
     color: #fff;
     font-weight: 700;
     box-shadow: 0 12px 22px -10px rgba(217,108,74,.6);
   }
-  .day.is-sel .dot { background: #fff; }
-  .day.is-empty { cursor: default; background: transparent; pointer-events: none; }
+  :global(.cal-grid .day.is-sel .dot) { background: #fff; }
+  :global(.cal-grid .day.is-empty) { cursor: default; background: transparent; pointer-events: none; }
 
   /* ---- Legend ---- */
   .cal-legend {
@@ -257,12 +258,16 @@ import Brush from './Brush.astro';
     margin-bottom: 1.1rem;
   }
   .times { display: flex; gap: .6rem; flex-wrap: wrap; }
-  .timepill {
+  /* per JS erzeugte Zeit-Pillen -> :global */
+  :global(.times .timepill) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
     border: 1.5px solid var(--hair);
     background: #fff;
-    border-radius: 999px;
-    padding: .55rem 1.2rem;
-    font-size: .92rem;
+    border-radius: 14px;
+    padding: .5rem 1.05rem;
     font-weight: 600;
     color: var(--ink-2);
     cursor: pointer;
@@ -271,19 +276,23 @@ import Brush from './Brush.astro';
     min-height: var(--touch-min);
     min-width: var(--touch-min);
   }
-  .timepill:hover {
+  :global(.times .timepill:hover) {
     border-color: var(--terra);
     color: var(--terra);
     transform: translateY(-1px);
   }
-  .timepill:focus-visible { outline: 2px solid var(--terra); outline-offset: 2px; }
-  .timepill.is-active { background: var(--terra); border-color: var(--terra); color: #fff; }
-  .timepill.is-off {
+  :global(.times .timepill:focus-visible) { outline: 2px solid var(--terra); outline-offset: 2px; }
+  :global(.times .timepill.is-active) { background: var(--terra); border-color: var(--terra); color: #fff; }
+  :global(.times .timepill.is-off) {
     opacity: .4;
     text-decoration: line-through;
     cursor: default;
     pointer-events: none;
   }
+  :global(.times .tp-time) { font-size: .98rem; line-height: 1.1; }
+  :global(.times .tp-free) { font-size: .68rem; font-weight: 500; color: var(--meta); letter-spacing: .01em; }
+  :global(.times .timepill.is-low .tp-free) { color: var(--terra); }
+  :global(.times .timepill.is-active .tp-free) { color: rgba(255,255,255,.88); }
   #calProceed {
     margin-top: 1.4rem;
     width: 100%;
@@ -449,6 +458,7 @@ import Brush from './Brush.astro';
   let selTime: string | null = null;
   let selTimeDisplay: string | null = null;
   let selCapacity = 0;
+  let selMax = 0;
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const calGrid      = document.getElementById('calGrid')    as HTMLElement;
@@ -587,9 +597,16 @@ import Brush from './Brush.astro';
       daySlots.forEach(slot => {
         const pill = document.createElement('button');
         pill.type = 'button';
-        pill.className = 'timepill';
-        pill.textContent = slot.time;
-        pill.setAttribute('aria-label', `Uhrzeit ${slot.time}`);
+        pill.className = 'timepill' + (slot.available <= 2 ? ' is-low' : '');
+        const t = document.createElement('span');
+        t.className = 'tp-time';
+        t.textContent = slot.time;
+        const f = document.createElement('span');
+        f.className = 'tp-free';
+        f.textContent = slot.available === 1 ? 'noch 1 frei' : `noch ${slot.available} frei`;
+        pill.appendChild(t);
+        pill.appendChild(f);
+        pill.setAttribute('aria-label', `Uhrzeit ${slot.time}, noch ${slot.available} von ${slot.maxCapacity} Plätzen frei`);
         pill.addEventListener('click', () => selectTime(slot, pill));
         calTimes.appendChild(pill);
       });
@@ -603,8 +620,9 @@ import Brush from './Brush.astro';
   // ── Time selection ────────────────────────────────────────────────────────
   function selectTime(slot: Slot, pillEl: HTMLButtonElement) {
     selTime = slot.time;
-    selTimeDisplay = slot.endTime ? `${slot.time} - ${slot.endTime} Uhr` : `${slot.time} Uhr`;
+    selTimeDisplay = slot.endTime ? `${slot.time} bis ${slot.endTime} Uhr` : `${slot.time} Uhr`;
     selCapacity = slot.available;
+    selMax = slot.maxCapacity;
 
     // Visual state
     calTimes.querySelectorAll<HTMLButtonElement>('.timepill').forEach(p => p.classList.remove('is-active'));
@@ -624,7 +642,8 @@ import Brush from './Brush.astro';
     selectedDateEl.dataset.isoDate = selDateISO;
     selectedTimeEl.textContent = selTimeDisplay || selTime;
     selectedTimeEl.dataset.time = selTime;
-    capacityEl.textContent = String(selCapacity);
+    const booked = Math.max(0, selMax - selCapacity);
+    capacityEl.textContent = `${selCapacity} von ${selMax} frei (${booked} gebucht)`;
 
     calView.classList.add('hidden');
     bookingForm.classList.remove('hidden');
