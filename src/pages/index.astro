@@ -1,13 +1,15 @@
 ---
-// prerender disabled - Offerings.astro needs to load images from S3 at runtime
+// prerender disabled - SSR required for booking calendar
 import MainLayout from '../layouts/MainLayout.astro';
 import Hero from '../sections/Hero.astro';
 import WasErwartet from '../sections/WasErwartet.astro';
-import Offerings from '../sections/Offerings.astro';
 import Process from '../sections/Process.astro';
+import Gastgeberin from '../sections/Gastgeberin.astro';
+import AngebotPreise from '../sections/AngebotPreise.astro';
+import GalerieTeaser from '../sections/GalerieTeaser.astro';
+import Band from '../sections/Band.astro';
 import BookingCalendar from '../components/BookingCalendar.astro';
 import Reviews from '../sections/Reviews.astro';
-import Profil from '../sections/Profil.astro';
 import Contact from '../sections/Contact.astro';
 
 // SEO-optimierter Title und Description für lokale Suche
@@ -18,10 +20,12 @@ const seoDescription = "Keramik selbst bemalen in Gronau (Westfalen) im Münster
 <MainLayout title={seoTitle} description={seoDescription}>
   <Hero />
   <WasErwartet />
-  <Offerings />
   <Process />
+  <Gastgeberin />
+  <AngebotPreise />
+  <GalerieTeaser />
+  <Band />
   <BookingCalendar title="Termin buchen" />
   <Reviews />
-  <Profil />
   <Contact />
 </MainLayout>

@@ -1,0 +1,86 @@
+---
+import Photo from '../components/Photo.astro';
+---
+
+<section class="blk">
+  <div class="wrap about">
+    <div class="about__img">
+      <Photo
+        src="/fotos/sh-irena-malt.jpg"
+        alt="Irena beim Bemalen eines Keramikstuecks in ihrem Atelier"
+      />
+    </div>
+    <div class="about__text">
+      <span class="eyebrow">Die Gastgeberin</span>
+      <h2>Bei Irena ist jeder willkommen</h2>
+      <p>Kein Kurszwang, kein Koennen noetig. Du suchst dir ein Stueck, ich zeige dir die Farben, den Rest macht deine Hand. Ich bin da, wenn du mich brauchst, und lasse dir Raum, wenn du in deinem Tempo werkeln willst.</p>
+      <blockquote class="pullquote">„Sie ist super herzlich und man fuehlt sich direkt wohl. Sie gibt einem Zeit, kreativ zu sein."<span>Carina · Google</span></blockquote>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    align-items: center;
+  }
+
+  @media (min-width: 820px) {
+    .about {
+      grid-template-columns: 5fr 7fr;
+    }
+  }
+
+  .about__img {
+    position: relative;
+    min-height: clamp(320px, 40vw, 460px);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .about__img img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+  }
+
+  .about h2 {
+    font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+    margin: .6rem 0 .9rem;
+    max-width: 18ch;
+  }
+
+  .about p {
+    color: var(--ink-2);
+    max-width: 48ch;
+  }
+
+  .pullquote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.3rem;
+    line-height: 1.4;
+    color: var(--ink);
+    border-left: 3px solid var(--caramel);
+    padding-left: 1.1rem;
+    margin: 1.6rem 0 0;
+    max-width: 36ch;
+  }
+
+  .pullquote span {
+    display: block;
+    font-style: normal;
+    font-family: var(--sans);
+    font-size: .78rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--meta);
+    margin-top: .7rem;
+  }
+</style>
