@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Alert,
+  View, Text, StyleSheet, ScrollView, RefreshControl, Pressable,
   TextInput, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +8,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { adminApi } from '../api/adminClient';
-import { BrushAccent } from '../components';
+import { ScreenHeader } from '../components';
+import { getApiHost } from '../lib/utils';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 import type { Booking, Inquiry, Review, RootStackParamList } from '../types';
 
@@ -39,9 +40,9 @@ export function AtelierHubScreen() {
     openInquiries: 0,
     pendingReviews: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [authError, setAuthError] = useState(false);
+  const [_authError, setAuthError] = useState(false);
   const [needsLogin, setNeedsLogin] = useState(Platform.OS !== 'web' && !adminApi.getCredentials());
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
@@ -54,10 +55,7 @@ export function AtelierHubScreen() {
     try {
       await adminApi.setCredentials('admin', password.trim());
       // Test the credentials
-      const apiHost =
-        (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
-        'https://keramik-auszeit.de';
-      const response = await fetch(`${apiHost}/api/admin/bookings`, {
+      const response = await fetch(`${getApiHost()}/api/admin/bookings`, {
         headers: { 'Authorization': `Basic ${adminApi.getCredentials()}` },
       });
       if (response.ok) {
@@ -249,17 +247,7 @@ export function AtelierHubScreen() {
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={styles.header}>
-            <View style={styles.headerInner}>
-              <View>
-                <Text style={styles.title}>Atelier</Text>
-                <Text style={styles.subtitle}>Keramik Auszeit</Text>
-              </View>
-              <View style={styles.headerIcon}>
-                <Ionicons name="storefront" size={28} color={colors.primary} />
-              </View>
-            </View>
-          </View>
+          <ScreenHeader title="Atelier" subtitle="Keramik Auszeit" icon="storefront" />
 
           <View style={styles.loginBody}>
             <View style={styles.loginCard}>
@@ -319,19 +307,7 @@ export function AtelierHubScreen() {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerInner}>
-            <View>
-              <Text style={styles.title}>Atelier</Text>
-              <BrushAccent width={60} />
-              <Text style={styles.subtitle}>Keramik Auszeit</Text>
-            </View>
-            <View style={styles.headerIcon}>
-              <Ionicons name="storefront" size={28} color={colors.primary} />
-            </View>
-          </View>
-        </View>
+        <ScreenHeader title="Atelier" subtitle="Keramik Auszeit" icon="storefront" />
 
         <View style={styles.body}>
 
@@ -376,40 +352,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: spacing.xxl,
-  },
-  header: {
-    backgroundColor: colors.card,
-    borderBottomLeftRadius: borderRadius.xl,
-    borderBottomRightRadius: borderRadius.xl,
-    paddingBottom: spacing.lg,
-    marginBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerInner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  title: {
-    fontSize: fontSize.xl,
-    fontWeight: fontWeight.bold,
-    color: colors.ink,
-  },
-  subtitle: {
-    fontSize: fontSize.sm,
-    color: colors.meta,
-    marginTop: 2,
-  },
-  headerIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.primary + '18',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: spacing.md,

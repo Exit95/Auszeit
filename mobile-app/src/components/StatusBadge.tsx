@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { statusColors, statusLabels, colors, fontSize } from '../theme';
+import { statusColors, statusLabels, colors } from '../theme';
 
 interface StatusBadgeProps {
   status: string;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, RefreshControl, Pressable } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useNavigation } from '@react-navigation/native';
@@ -6,8 +6,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, EmptyState, LoadingScreen, Input } from '../components';
 import { useCustomers } from '../queries/customers';
-import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
-import type { RootStackParamList } from '../types';
+import { colors, spacing, fontSize, fontWeight } from '../theme';
+import type { RootStackParamList, Customer } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,6 +27,30 @@ export function CustomersScreen() {
       return fullName.includes(q) || email.includes(q) || phone.includes(q);
     });
   }, [customers, search]);
+
+  const renderCustomerItem = useCallback(({ item }: { item: Customer }) => (
+    <Card onPress={() => navigation.navigate('CustomerDetail', { id: item.id })}>
+      <View style={styles.customerRow}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {(item.first_name || '?')[0]}{(item.last_name || '?')[0]}
+          </Text>
+        </View>
+        <View style={styles.customerInfo}>
+          <Text style={styles.customerName}>
+            {item.first_name} {item.last_name}
+          </Text>
+          {item.email && (
+            <Text style={styles.customerDetail}>{item.email}</Text>
+          )}
+          {item.phone && (
+            <Text style={styles.customerDetail}>{item.phone}</Text>
+          )}
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.meta} />
+      </View>
+    </Card>
+  ), [navigation]);
 
   if (isLoading && customers.length === 0) return <LoadingScreen />;
 
@@ -55,29 +79,7 @@ export function CustomersScreen() {
             colors={[colors.primary]}
           />
         }
-        renderItem={({ item }) => (
-          <Card onPress={() => navigation.navigate('CustomerDetail', { id: item.id })}>
-            <View style={styles.customerRow}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {(item.first_name || '?')[0]}{(item.last_name || '?')[0]}
-                </Text>
-              </View>
-              <View style={styles.customerInfo}>
-                <Text style={styles.customerName}>
-                  {item.first_name} {item.last_name}
-                </Text>
-                {item.email && (
-                  <Text style={styles.customerDetail}>{item.email}</Text>
-                )}
-                {item.phone && (
-                  <Text style={styles.customerDetail}>{item.phone}</Text>
-                )}
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.meta} />
-            </View>
-          </Card>
-        )}
+        renderItem={renderCustomerItem}
         ListEmptyComponent={
           <EmptyState
             icon="people-outline"

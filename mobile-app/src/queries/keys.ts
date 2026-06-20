@@ -29,4 +29,10 @@ export const queryKeys = {
   vouchers: {
     all: ['vouchers'] as const,
   },
+  blockedDates: {
+    all: ['blockedDates'] as const,
+  },
+  stats: {
+    all: ['stats'] as const,
+  },
 } as const;

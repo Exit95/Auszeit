@@ -50,7 +50,7 @@ function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         ...screenOptions,
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color, size: _size }) => {
           const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
             Dashboard: focused ? 'grid' : 'grid-outline',
             Orders: focused ? 'document-text' : 'document-text-outline',
@@ -153,7 +153,7 @@ export function AppNavigator() {
           <Stack.Screen
             name="AtelierBookings"
             component={BookingsScreen}
-            options={{ title: 'Buchungen' }}
+            options={{ title: '' }}
           />
           <Stack.Screen
             name="AtelierInquiries"
@@ -173,7 +173,7 @@ export function AppNavigator() {
           <Stack.Screen
             name="AtelierSlots"
             component={SlotsScreen}
-            options={{ title: 'Termine' }}
+            options={{ title: '' }}
           />
           <Stack.Screen
             name="SlotForm"
@@ -200,7 +200,7 @@ export function AppNavigator() {
           <Stack.Screen
             name="AdminReviews"
             component={AdminReviewsScreen}
-            options={{ title: 'Bewertungen' }}
+            options={{ title: '' }}
           />
           <Stack.Screen
             name="VoucherScanner"

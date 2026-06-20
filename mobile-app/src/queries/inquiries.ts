@@ -10,7 +10,7 @@ export function useInquiries() {
       const data = await adminApi.get<Inquiry[]>('/api/inquiries');
       return Array.isArray(data) ? data : [];
     },
-    refetchInterval: 30 * 1000,
+    refetchInterval: 60 * 1000,
     refetchIntervalInBackground: false,
   });
 }

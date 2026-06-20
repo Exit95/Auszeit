@@ -22,7 +22,7 @@ const {
 const siteUrl = "https://keramik-auszeit.de";
 const currentUrl = canonicalUrl || Astro.url.pathname;
 const fullUrl = new URL(currentUrl, siteUrl).href;
-const fullOgImage = new URL(ogImage, siteUrl).href;
+const fullOgImage = new URL(ogImage + "?v=2", siteUrl).href;
 ---
 
 <!doctype html>
@@ -244,11 +244,11 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
         </div>
 
         <div>
-          <h4>Öffnungszeiten</h4>
+          <h4>Wann du vorbeikommen kannst</h4>
           <ul>
-            <li>Dienstag bis Sonntag</li>
-            <li>10:00 bis 18:00 Uhr</li>
-            <li style="color:#9c8a7c;margin-top:.4rem">Montag Ruhetag</li>
+            <li>Feste Öffnungszeiten gibt es bei uns nicht</li>
+            <li>Ich gebe Termine frei, du suchst dir deinen aus</li>
+            <li style="color:#9c8a7c;margin-top:.4rem">Alle freien Plätze siehst du bei der Buchung</li>
           </ul>
         </div>
 
@@ -258,6 +258,7 @@ const fullOgImage = new URL(ogImage, siteUrl).href;
             <li><a href="/galerie">Galerie</a></li>
             <li><a href="/workshops">Workshops</a></li>
             <li><a href="/gutscheine">Gutscheine</a></li>
+            <li><a href="/warum">Hinter den Kulissen</a></li>
             <li><a href="https://www.instagram.com/auszeit_keramik_malatelier/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
             <li><a href="https://www.facebook.com/irena.kentrup/" target="_blank" rel="noopener noreferrer">Facebook</a></li>
           </ul>

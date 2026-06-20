@@ -1,144 +1,20 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { adminApi } from '../api/adminClient';
-import { api } from '../api/client';
 import { ScreenHeader, LoadingScreen } from '../components';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
-import type { Booking, Inquiry, Review, Voucher } from '../types';
-
-interface StatsData {
-  bookingsThisWeek: number;
-  bookingsThisMonth: number;
-  participantsThisMonth: number;
-  openInquiries: number;
-  voucherCount: number;
-  voucherRevenueEur: number; // eingelöste Gutscheine in Euro
-  voucherActiveEur: number;  // noch offene (aktive) Gutscheine in Euro
-  reviewAvg: number | null;
-  reviewCount: number;
-  ordersReady: number;
-  ordersInProgress: number;
-  ordersTotal: number;
-}
-
-function startOfWeekISO(): string {
-  const d = new Date();
-  const day = (d.getDay() + 6) % 7; // Montag = 0
-  d.setDate(d.getDate() - day);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function startOfMonthISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
-}
+import { useStats } from '../queries/stats';
 
 export function StatsScreen() {
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { data: stats, isLoading, isRefetching, refetch } = useStats();
 
-  const load = useCallback(async () => {
-    try {
-      const weekStart = startOfWeekISO();
-      const monthStart = startOfMonthISO();
+  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
 
-      const [bookingsRes, inquiriesRes, vouchersRes, reviewsRes, brennStatsRes] =
-        await Promise.allSettled([
-          adminApi.get<Booking[]>('/api/admin/bookings'),
-          adminApi.get<Inquiry[]>('/api/inquiries'),
-          adminApi.get<Voucher[]>('/api/admin/vouchers'),
-          adminApi.get<Review[]>('/api/reviews', { all: 'true' }),
-          api.get<any>('/stats'),
-        ]);
-
-      let bookingsThisWeek = 0;
-      let bookingsThisMonth = 0;
-      let participantsThisMonth = 0;
-      if (bookingsRes.status === 'fulfilled') {
-        const confirmed = bookingsRes.value.filter(
-          (b) => b.status === 'confirmed' && b.slotDate,
-        );
-        bookingsThisWeek = confirmed.filter((b) => (b.slotDate as string) >= weekStart).length;
-        const monthly = confirmed.filter((b) => (b.slotDate as string) >= monthStart);
-        bookingsThisMonth = monthly.length;
-        participantsThisMonth = monthly.reduce((sum, b) => sum + (b.participants || 0), 0);
-      }
-
-      let openInquiries = 0;
-      if (inquiriesRes.status === 'fulfilled') {
-        openInquiries = inquiriesRes.value.filter((i) => i.status === 'new').length;
-      }
-
-      let voucherCount = 0;
-      let voucherRevenueEur = 0;
-      let voucherActiveEur = 0;
-      if (vouchersRes.status === 'fulfilled') {
-        const vouchers = vouchersRes.value;
-        voucherCount = vouchers.length;
-        // Betrag ist in Cent gespeichert
-        voucherRevenueEur = vouchers
-          .filter((v) => v.status === 'redeemed')
-          .reduce((sum, v) => sum + (v.amount || 0), 0) / 100;
-        voucherActiveEur = vouchers
-          .filter((v) => v.status === 'active')
-          .reduce((sum, v) => sum + (v.amount || 0), 0) / 100;
-      }
-
-      let reviewAvg: number | null = null;
-      let reviewCount = 0;
-      if (reviewsRes.status === 'fulfilled') {
-        const approved = reviewsRes.value.filter((r) => r.approved);
-        reviewCount = approved.length;
-        if (approved.length > 0) {
-          reviewAvg = approved.reduce((sum, r) => sum + (r.rating || 0), 0) / approved.length;
-        }
-      }
-
-      // Brenn-Aufträge: /stats liefert { gesamt: {...}, abholquote: {...} }
-      let ordersReady = 0;
-      let ordersInProgress = 0;
-      let ordersTotal = 0;
-      if (brennStatsRes.status === 'fulfilled') {
-        const data = brennStatsRes.value?.data || brennStatsRes.value;
-        ordersTotal = Number(data?.gesamt?.auftraege ?? 0);
-        ordersReady = Number(data?.abholquote?.wartet_auf_abholung ?? 0);
-        const bearbeitet = Number(data?.abholquote?.gesamt_bearbeitet ?? 0);
-        const abgeholt = Number(data?.abholquote?.abgeholt ?? 0);
-        // "In Arbeit" = bearbeitet minus bereits abgeholt minus abholbereit
-        ordersInProgress = Math.max(0, bearbeitet - abgeholt - ordersReady);
-      }
-
-      setStats({
-        bookingsThisWeek,
-        bookingsThisMonth,
-        participantsThisMonth,
-        openInquiries,
-        voucherCount,
-        voucherRevenueEur,
-        voucherActiveEur,
-        reviewAvg,
-        reviewCount,
-        ordersReady,
-        ordersInProgress,
-        ordersTotal,
-      });
-    } catch (error) {
-      console.error('Statistiken laden fehlgeschlagen:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useFocusEffect(useCallback(() => { load(); }, [load]));
-
-  if (loading && !stats) return <LoadingScreen />;
+  if (isLoading && !stats) return <LoadingScreen />;
 
   const fmtEur = (n: number) =>
     n.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
@@ -150,8 +26,8 @@ export function StatsScreen() {
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); load(); }}
+            refreshing={isRefetching}
+            onRefresh={refetch}
             colors={[colors.primary]}
           />
         }

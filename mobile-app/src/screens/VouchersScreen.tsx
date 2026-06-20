@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, RefreshControl, Pressable, TextInput,
   Modal, ScrollView,
@@ -96,7 +96,7 @@ export function VouchersScreen() {
       });
   }, [vouchers, activeFilter, search]);
 
-  const copyCode = async (code: string) => {
+  const copyCode = useCallback(async (code: string) => {
     try {
       await Clipboard.setStringAsync(code);
       setCopiedCode(code);
@@ -104,7 +104,52 @@ export function VouchersScreen() {
     } catch {
       // Clipboard nicht verfügbar — still ignorieren
     }
-  };
+  }, []);
+
+  const renderVoucherItem = useCallback(({ item }: { item: Voucher }) => {
+    const statusColor = STATUS_COLORS[item.status];
+    return (
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => setSelected(item)}
+      >
+        <View style={[styles.cardAccent, { backgroundColor: statusColor }]} />
+        <View style={styles.cardInner}>
+          <View style={styles.cardTop}>
+            <Text style={styles.code}>{item.code}</Text>
+            <View style={[styles.statusChip, { backgroundColor: statusColor + '20' }]}>
+              <Text style={[styles.statusChipText, { color: statusColor }]}>
+                {STATUS_LABELS[item.status]}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.amount}>{formatAmount(item.amount)}</Text>
+          <Text style={styles.detail} numberOfLines={1}>
+            {item.customerName || 'Ohne Namen'}
+          </Text>
+          <Text style={styles.detailMuted} numberOfLines={1}>{item.customerEmail}</Text>
+          <Text style={styles.detailMuted}>Gekauft: {formatDate(item.createdAt)}</Text>
+          <View style={styles.cardActions}>
+            <Pressable
+              style={styles.copyBtn}
+              onPress={() => copyCode(item.code)}
+              hitSlop={6}
+              accessibilityLabel={`Code ${item.code} kopieren`}
+            >
+              <Ionicons
+                name={copiedCode === item.code ? 'checkmark' : 'copy-outline'}
+                size={15}
+                color={colors.primary}
+              />
+              <Text style={styles.copyBtnText}>
+                {copiedCode === item.code ? 'Kopiert' : 'Code kopieren'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Pressable>
+    );
+  }, [copiedCode, setSelected, copyCode]);
 
   if (isLoading && vouchers.length === 0) return <LoadingScreen />;
 
@@ -152,53 +197,7 @@ export function VouchersScreen() {
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[colors.primary]} />
         }
-        renderItem={({ item }) => {
-          const statusColor = STATUS_COLORS[item.status];
-          return (
-            <Pressable
-              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-              onPress={() => setSelected(item)}
-            >
-              <View style={[styles.cardAccent, { backgroundColor: statusColor }]} />
-              <View style={styles.cardInner}>
-                <View style={styles.cardTop}>
-                  <Text style={styles.code}>{item.code}</Text>
-                  <View style={[styles.statusChip, { backgroundColor: statusColor + '20' }]}>
-                    <Text style={[styles.statusChipText, { color: statusColor }]}>
-                      {STATUS_LABELS[item.status]}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={styles.amount}>{formatAmount(item.amount)}</Text>
-
-                <Text style={styles.detail} numberOfLines={1}>
-                  {item.customerName || 'Ohne Namen'}
-                </Text>
-                <Text style={styles.detailMuted} numberOfLines={1}>{item.customerEmail}</Text>
-                <Text style={styles.detailMuted}>Gekauft: {formatDate(item.createdAt)}</Text>
-
-                <View style={styles.cardActions}>
-                  <Pressable
-                    style={styles.copyBtn}
-                    onPress={() => copyCode(item.code)}
-                    hitSlop={6}
-                    accessibilityLabel={`Code ${item.code} kopieren`}
-                  >
-                    <Ionicons
-                      name={copiedCode === item.code ? 'checkmark' : 'copy-outline'}
-                      size={15}
-                      color={colors.primary}
-                    />
-                    <Text style={styles.copyBtnText}>
-                      {copiedCode === item.code ? 'Kopiert' : 'Code kopieren'}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            </Pressable>
-          );
-        }}
+        renderItem={renderVoucherItem}
         ListEmptyComponent={
           <EmptyState
             icon="gift-outline"
@@ -396,8 +395,9 @@ const styles = StyleSheet.create({
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingVertical: 6,
+    minHeight: 44,
     paddingHorizontal: 10,
     borderRadius: borderRadius.md,
     borderWidth: 1,

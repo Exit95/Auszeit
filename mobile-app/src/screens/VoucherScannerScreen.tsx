@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Pressable, Alert, ActivityIndicator,
   TextInput, Vibration, Animated, Keyboard, ScrollView, Platform,
@@ -7,7 +7,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { adminApi } from '../api/adminClient';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 
@@ -24,7 +23,6 @@ interface Voucher {
 type ScanState = 'scanning' | 'loading' | 'result' | 'manual';
 
 export function VoucherScannerScreen() {
-  const navigation = useNavigation();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanState, setScanState] = useState<ScanState>('scanning');
   const [voucher, setVoucher] = useState<Voucher | null>(null);
@@ -33,7 +31,7 @@ export function VoucherScannerScreen() {
   const [redeeming, setRedeeming] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
-  const successAnim = useRef(new Animated.Value(0)).current;
+  const successAnim = useMemo(() => new Animated.Value(0), []);
   const scannedRef = useRef(false);
 
   // Reset scanned flag when returning to scanning

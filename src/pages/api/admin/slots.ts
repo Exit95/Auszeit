@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getTimeSlots, addTimeSlot, deleteTimeSlot, updateTimeSlot, type TimeSlot } from '../../../lib/storage';
+import { getTimeSlots, addTimeSlot, deleteTimeSlot, updateTimeSlot, getBlockedDates, isDateBlocked, type TimeSlot } from '../../../lib/storage';
 import { validateCredentials } from '../../../lib/totp';
 
 // Authentifizierung - akzeptiert Superuser und Admin
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
 		// Einen einzelnen Slot-Datensatz aus rohem Input bauen + validieren.
 		// Gibt entweder { slot } oder { error } zurück.
 		const buildSlot = (raw: any): { slot?: Omit<TimeSlot, 'id' | 'createdAt'>; error?: string } => {
-			const { date, time, startTime, endTime, maxCapacity, initialBooked, eventType } = raw || {};
+			const { date, time, startTime, endTime, maxCapacity, initialBooked, eventType, isPrivate } = raw || {};
 			const slotTime = startTime || time;
 
 			if (!date || !slotTime || maxCapacity == null) {
@@ -84,9 +84,19 @@ export const POST: APIRoute = async ({ request }) => {
 					maxCapacity: totalCapacity,
 					available: totalCapacity - alreadyBooked,
 					eventType: validEventTypes.includes(eventType) ? eventType : 'normal',
+					isPrivate: isPrivate === true || isPrivate === 1 ? true : undefined,
 				},
 			};
 		};
+
+		const [existingSlots, blockedRanges] = await Promise.all([getTimeSlots(), getBlockedDates()]);
+
+		// Prüft ob bereits ein Slot mit exakt diesem Datum+Uhrzeit existiert
+		const isDuplicate = (date: string, time: string, excludeId?: string) =>
+			existingSlots.some(s => s.date === date && s.time === time && s.id !== excludeId);
+
+		// Prüft ob ein Datum in einer Sperrzeit liegt
+		const isInBlockedPeriod = (date: string) => isDateBlocked(date, blockedRanges);
 
 		// Batch-Modus: Array von Slots (Serien-Slots aus der App)
 		if (Array.isArray(data.slots)) {
@@ -105,6 +115,8 @@ export const POST: APIRoute = async ({ request }) => {
 			}
 
 			const created: TimeSlot[] = [];
+			// Bereits in diesem Batch gesehene Kombinationen mittracking (verhindert Duplikate im Batch selbst)
+			const seenInBatch = new Set<string>();
 			for (const raw of rawSlots) {
 				const { slot, error } = buildSlot(raw);
 				if (error || !slot) {
@@ -113,6 +125,24 @@ export const POST: APIRoute = async ({ request }) => {
 						headers: { 'Content-Type': 'application/json' },
 					});
 				}
+				const key = `${slot.date}_${slot.time}`;
+				if (isDuplicate(slot.date, slot.time) || seenInBatch.has(key)) {
+					return new Response(JSON.stringify({
+						error: `Termin am ${slot.date} um ${slot.time} Uhr existiert bereits.`
+					}), {
+						status: 409,
+						headers: { 'Content-Type': 'application/json' },
+					});
+				}
+				if (isInBlockedPeriod(slot.date)) {
+					return new Response(JSON.stringify({
+						error: `${slot.date} liegt in einer Sperrzeit (Urlaub/Feiertag). Sperrzeit zuerst entfernen.`
+					}), {
+						status: 409,
+						headers: { 'Content-Type': 'application/json' },
+					});
+				}
+				seenInBatch.add(key);
 				created.push(await addTimeSlot(slot));
 			}
 
@@ -127,6 +157,24 @@ export const POST: APIRoute = async ({ request }) => {
 		if (error || !slot) {
 			return new Response(JSON.stringify({ error: error || 'Invalid slot' }), {
 				status: 400,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
+		if (isDuplicate(slot.date, slot.time)) {
+			return new Response(JSON.stringify({
+				error: `Termin am ${slot.date} um ${slot.time} Uhr existiert bereits.`
+			}), {
+				status: 409,
+				headers: { 'Content-Type': 'application/json' },
+			});
+		}
+
+		if (isInBlockedPeriod(slot.date)) {
+			return new Response(JSON.stringify({
+				error: `${slot.date} liegt in einer Sperrzeit (Urlaub/Feiertag). Sperrzeit zuerst entfernen.`
+			}), {
+				status: 409,
 				headers: { 'Content-Type': 'application/json' },
 			});
 		}
@@ -195,7 +243,7 @@ export const PUT: APIRoute = async ({ request }) => {
 
 	try {
 		const body = await request.json();
-		const { id, date, time, startTime, endTime, maxCapacity, eventType, initialBooked } = body as any;
+		const { id, date, time, startTime, endTime, maxCapacity, eventType, initialBooked, isPrivate } = body as any;
 
 		if (!id) {
 			return new Response(JSON.stringify({ error: 'Missing slot ID' }), {
@@ -205,8 +253,8 @@ export const PUT: APIRoute = async ({ request }) => {
 		}
 
 		// Aktuellen Slot laden, um bestehende Buchungen zu berücksichtigen
-		const allSlots = await getTimeSlots();
-		const existing = allSlots.find((s) => s.id === id);
+		const allSlotsForLookup = await getTimeSlots();
+		const existing = allSlotsForLookup.find((s) => s.id === id);
 		if (!existing) {
 			return new Response(JSON.stringify({ error: 'Slot not found' }), {
 				status: 404,
@@ -216,13 +264,27 @@ export const PUT: APIRoute = async ({ request }) => {
 
 		const updates: Partial<TimeSlot> = {};
 
+		// Duplikat-Prüfung: wenn Datum oder Zeit geändert wird
+		const newDate = date || existing.date;
+		const newTime = startTime || time || existing.time;
+		const dateOrTimeChanged = (date && date !== existing.date) || ((startTime || time) && (startTime || time) !== existing.time);
+		if (dateOrTimeChanged) {
+			const duplicate = allSlotsForLookup.some(s => s.date === newDate && s.time === newTime && s.id !== id);
+			if (duplicate) {
+				return new Response(JSON.stringify({
+					error: `Termin am ${newDate} um ${newTime} Uhr existiert bereits.`
+				}), {
+					status: 409,
+					headers: { 'Content-Type': 'application/json' },
+				});
+			}
+		}
+
 		if (date) {
 			updates.date = date;
 		}
 
-		// Unterstützt sowohl altes "time" als auch neues "startTime"
-		const newTime = startTime || time;
-		if (newTime) {
+		if (startTime || time) {
 			updates.time = newTime;
 		}
 
@@ -236,6 +298,11 @@ export const PUT: APIRoute = async ({ request }) => {
 			if (validEventTypes.includes(eventType)) {
 				updates.eventType = eventType;
 			}
+		}
+
+		// Privat-Flag aktualisieren
+		if (typeof isPrivate !== 'undefined') {
+			updates.isPrivate = isPrivate === true || isPrivate === 1 ? true : false;
 		}
 
 		if (typeof maxCapacity !== 'undefined' && maxCapacity !== null) {

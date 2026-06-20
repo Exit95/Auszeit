@@ -3,7 +3,7 @@ import path from 'path';
 import { isS3Configured, readJsonFromS3, writeJsonToS3 } from './s3-storage';
 import { isDbEnabled, isDualWriteEnabled, isJsonFallbackEnabled } from './database';
 import {
-  dbGetTimeSlots, dbSaveTimeSlot, dbDeleteTimeSlot, dbUpdateTimeSlot,
+  dbGetTimeSlots, dbSaveTimeSlot, dbDeleteTimeSlot, dbUpdateTimeSlot, dbAttemptBookingCapacity,
   dbGetBookings, dbSaveBooking, dbUpdateBookingStatus,
   dbGetWorkshops, dbSaveWorkshop,
   dbGetCategories, dbSaveCategory,
@@ -60,6 +60,7 @@ export interface TimeSlot {
 	createdAt: string;
 	eventType?: EventType; // Art des Events (normal, kindergeburtstag, stammtisch)
 	eventDuration?: number; // Dauer in Stunden (z.B. 3 für 3 Stunden)
+	isPrivate?: boolean; // Privater Termin: nicht im öffentlichen Kalender sichtbar
 }
 
 export interface Booking {
@@ -209,6 +210,15 @@ export async function deleteTimeSlot(id: string): Promise<boolean> {
 }
 
 export async function updateTimeSlot(id: string, updates: Partial<TimeSlot>): Promise<TimeSlot | null> {
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try {
+      await dbUpdateTimeSlot(id, updates);
+      const slots = await dbGetTimeSlots();
+      return slots.find(s => s.id === id) ?? null;
+    } catch (err) {
+      console.error('[Storage] DB-Fehler bei updateTimeSlot, Fallback auf JSON:', err);
+    }
+  }
   const slots = await getTimeSlots();
   const index = slots.findIndex(s => s.id === id);
   if (index === -1) return null;
@@ -254,29 +264,36 @@ export async function saveBookings(bookings: Booking[]): Promise<void> {
 }
 
 export async function addBooking(booking: Omit<Booking, 'id' | 'createdAt' | 'status'>): Promise<Booking | null> {
-  const bookings = await getBookings();
   const slots = await getTimeSlots();
-
-  // Finde den Slot
   const slot = slots.find(s => s.id === booking.slotId);
   if (!slot) return null;
 
-  // Prüfe Verfügbarkeit
-  if (slot.available < booking.participants) return null;
-
-  // Erstelle Buchung
   const newBooking: Booking = {
     ...booking,
     id: `booking_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     createdAt: new Date().toISOString(),
-	    // Neue Buchungen starten als "neu/unbestätigt" und können im Admin-Panel bestätigt werden
-	    status: 'pending',
+    status: 'pending',
   };
+
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try {
+      // Atomar: Kapazität reservieren — schlägt fehl wenn ein concurrent Request schneller war
+      const reserved = await dbAttemptBookingCapacity(slot.id, booking.participants);
+      if (!reserved) return null;
+      await dbSaveBooking(newBooking);
+      return newBooking;
+    } catch (err) {
+      console.error('[Storage] DB-Fehler bei addBooking, Fallback auf JSON:', err);
+    }
+  }
+
+  // JSON/S3-Pfad: nicht-atomarer Read-Modify-Write (kein concurrent load erwartet)
+  const bookings = await getBookings();
+  if (slot.available < booking.participants) return null;
 
   bookings.push(newBooking);
   await saveBookings(bookings);
 
-  // Aktualisiere Slot-Verfügbarkeit
   slot.available -= booking.participants;
   await updateTimeSlot(slot.id, { available: slot.available });
 
@@ -292,19 +309,32 @@ export async function cancelBooking(id: string): Promise<boolean> {
   const bookings = await getBookings();
   const booking = bookings.find(b => b.id === id);
   if (!booking) return false;
+  if (booking.status === 'cancelled') return false;
+
+  if (isDbEnabled() && !isJsonFallbackEnabled()) {
+    try {
+      await dbUpdateBookingStatus(id, 'cancelled');
+      const slot = (await getTimeSlots()).find(s => s.id === booking.slotId);
+      if (slot) {
+        await updateTimeSlot(slot.id, { available: slot.available + booking.participants });
+      }
+      return true;
+    } catch (err) {
+      console.error('[Storage] DB-Fehler bei cancelBooking, Fallback auf JSON:', err);
+    }
+  }
 
   booking.status = 'cancelled';
   await saveBookings(bookings);
 
-  // Gebe Kapazität zurück
   const slot = (await getTimeSlots()).find(s => s.id === booking.slotId);
   if (slot) {
     slot.available += booking.participants;
     await updateTimeSlot(slot.id, { available: slot.available });
   }
 
-	  return true;
-	}
+  return true;
+}
 
 	// Allgemeine Aktualisierung einer Buchung (z.B. Teilnehmerzahl, Notizen, Status)
 	// Hinweis: Status "cancelled" wird weiterhin ausschließlich über cancelBooking gesetzt,

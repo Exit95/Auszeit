@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, fontSize, fontWeight } from '../theme';
 
 function ShimmerCard({ delay }: { delay: number }) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
+  const opacity = useMemo(() => new Animated.Value(0.3), []);
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -35,7 +35,7 @@ function ShimmerCard({ delay }: { delay: number }) {
 }
 
 export function LoadingScreen() {
-  const brandOpacity = useRef(new Animated.Value(0)).current;
+  const brandOpacity = useMemo(() => new Animated.Value(0), []);
 
   useEffect(() => {
     Animated.timing(brandOpacity, {

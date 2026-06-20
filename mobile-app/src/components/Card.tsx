@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Pressable, Animated } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { colors, spacing, borderRadius } from '../theme';
@@ -10,7 +10,7 @@ interface CardProps {
 }
 
 export function Card({ children, onPress, style }: CardProps) {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useMemo(() => new Animated.Value(1), []);
 
   const handlePressIn = () => {
     Animated.spring(scale, {

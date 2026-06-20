@@ -10,7 +10,7 @@ export function useBookings() {
       const all = await adminApi.get<Booking[]>('/api/admin/bookings');
       return Array.isArray(all) ? all : [];
     },
-    refetchInterval: 30 * 1000,
+    refetchInterval: 60 * 1000,
     refetchIntervalInBackground: false,
   });
 }

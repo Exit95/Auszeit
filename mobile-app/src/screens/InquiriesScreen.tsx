@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, RefreshControl, Pressable, Linking,
 } from 'react-native';
@@ -92,28 +92,84 @@ export function InquiriesScreen() {
     [inquiries],
   );
 
-  const markContacted = (inquiry: Inquiry, via: 'whatsapp' | 'call') => {
+  const markContacted = useCallback((inquiry: Inquiry, via: 'whatsapp' | 'call') => {
     if (inquiry.status !== 'new') return;
     const timestamp = new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
     const note = `[${timestamp}] Kontakt via ${via === 'whatsapp' ? 'WhatsApp' : 'Anruf'}`;
     const combinedNotes = inquiry.adminNotes ? `${inquiry.adminNotes}\n${note}` : note;
     updateInquiry.mutate({ id: inquiry.id, status: 'contacted', adminNotes: combinedNotes });
-  };
+  }, [updateInquiry]);
 
-  const handleCall = (inquiry: Inquiry) => {
+  const handleCall = useCallback((inquiry: Inquiry) => {
     if (!inquiry.phone) return;
     Linking.openURL(`tel:${inquiry.phone.replace(/\s+/g, '')}`);
     markContacted(inquiry, 'call');
-  };
+  }, [markContacted]);
 
-  const handleWhatsApp = (inquiry: Inquiry) => {
+  const handleWhatsApp = useCallback((inquiry: Inquiry) => {
     if (!inquiry.phone) return;
     const cleaned = inquiry.phone.replace(/[^0-9+]/g, '');
     const normalized = cleaned.startsWith('0') ? '+49' + cleaned.slice(1) : cleaned;
     const text = encodeURIComponent(`Hallo ${inquiry.name || ''},\n\nvielen Dank für Ihre Anfrage beim Atelier Auszeit!`);
     Linking.openURL(`https://wa.me/${normalized}?text=${text}`);
     markContacted(inquiry, 'whatsapp');
-  };
+  }, [markContacted]);
+
+  const renderInquiryItem = useCallback(({ item }: { item: Inquiry }) => (
+    <View style={styles.card}>
+      <View style={[styles.cardAccent, { backgroundColor: STATUS_COLORS[item.status] }]} />
+      <View style={styles.cardInner}>
+        <View style={styles.cardTop}>
+          <View style={styles.eventChip}>
+            <Text style={styles.eventChipText}>
+              {EVENT_LABELS[item.eventType] || item.eventType}
+            </Text>
+          </View>
+          <View style={[styles.statusChip, { backgroundColor: STATUS_COLORS[item.status] + '20' }]}>
+            <Text style={[styles.statusChipText, { color: STATUS_COLORS[item.status] }]}>
+              {STATUS_LABELS[item.status]}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.detail}>
+          {formatDate(item.preferredDate)} · {item.participants} Personen
+        </Text>
+        <Text style={styles.detail} numberOfLines={1}>{item.email}</Text>
+        {item.phone && <Text style={styles.detail}>{item.phone}</Text>}
+        {item.message && (
+          <View style={styles.messageBox}>
+            <Text style={styles.messageText} numberOfLines={3}>{item.message}</Text>
+          </View>
+        )}
+        <Text style={styles.createdAt}>Eingegangen: {formatCreatedAt(item.createdAt)}</Text>
+        <View style={styles.actions}>
+          <Pressable
+            style={[styles.btn, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.navigate('InquiryDetail', { id: item.id })}
+          >
+            <Text style={styles.btnText}>Verwalten</Text>
+          </Pressable>
+          {item.phone && (
+            <>
+              <Pressable
+                style={[styles.btn, { backgroundColor: colors.info }]}
+                onPress={() => handleCall(item)}
+              >
+                <Text style={styles.btnText}>Anrufen</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.btn, { backgroundColor: '#25D366' }]}
+                onPress={() => handleWhatsApp(item)}
+              >
+                <Text style={styles.btnText}>WhatsApp</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      </View>
+    </View>
+  ), [navigation, handleCall, handleWhatsApp]);
 
   if (isLoading && inquiries.length === 0) return <LoadingScreen />;
 
@@ -141,71 +197,7 @@ export function InquiriesScreen() {
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[colors.primary]} />
         }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={[styles.cardAccent, { backgroundColor: STATUS_COLORS[item.status] }]} />
-            <View style={styles.cardInner}>
-              {/* Kopfzeile */}
-              <View style={styles.cardTop}>
-                <View style={styles.eventChip}>
-                  <Text style={styles.eventChipText}>
-                    {EVENT_LABELS[item.eventType] || item.eventType}
-                  </Text>
-                </View>
-                <View style={[styles.statusChip, { backgroundColor: STATUS_COLORS[item.status] + '20' }]}>
-                  <Text style={[styles.statusChipText, { color: STATUS_COLORS[item.status] }]}>
-                    {STATUS_LABELS[item.status]}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Name */}
-              <Text style={styles.name}>{item.name}</Text>
-
-              {/* Details */}
-              <Text style={styles.detail}>
-                {formatDate(item.preferredDate)} · {item.participants} Personen
-              </Text>
-              <Text style={styles.detail} numberOfLines={1}>{item.email}</Text>
-              {item.phone && <Text style={styles.detail}>{item.phone}</Text>}
-
-              {/* Nachricht */}
-              {item.message && (
-                <View style={styles.messageBox}>
-                  <Text style={styles.messageText} numberOfLines={3}>{item.message}</Text>
-                </View>
-              )}
-
-              <Text style={styles.createdAt}>Eingegangen: {formatCreatedAt(item.createdAt)}</Text>
-
-              {/* Aktionen */}
-              <View style={styles.actions}>
-                <Pressable
-                  style={[styles.btn, { backgroundColor: colors.primary }]}
-                  onPress={() => navigation.navigate('InquiryDetail', { id: item.id })}
-                >
-                  <Text style={styles.btnText}>Verwalten</Text>
-                </Pressable>
-                {item.phone && (
-                  <>
-                    <Pressable
-                      style={[styles.btn, { backgroundColor: colors.info }]}
-                      onPress={() => handleCall(item)}
-                    >
-                      <Text style={styles.btnText}>Anrufen</Text>
-                    </Pressable>
-                    <Pressable
-                      style={[styles.btn, { backgroundColor: '#25D366' }]}
-                      onPress={() => handleWhatsApp(item)}
-                    >
-                      <Text style={styles.btnText}>WhatsApp</Text>
-                    </Pressable>
-                  </>
-                )}
-              </View>
-            </View>
-          </View>
-        )}
+        renderItem={renderInquiryItem}
         ListEmptyComponent={
           <EmptyState
             icon="mail-open-outline"

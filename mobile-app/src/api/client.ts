@@ -2,12 +2,11 @@ import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { adminApi } from './adminClient';
 
-// API zeigt auf die bestehenden Brenn-Endpunkte der Auszeit-Website
+import { getApiHost } from '../lib/utils';
+
 // Auch im Dev-Modus auf Live-API, da DB nur auf dem Server läuft.
 // EXPO_PUBLIC_API_HOST erlaubt lokalen CORS-Proxy im Web-Dev-Build.
-const API_HOST =
-  (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
-  'https://keramik-auszeit.de';
+const API_HOST = getApiHost();
 const API_BASE = `${API_HOST}/api/admin/brenn`;
 
 // Die Brenn-Endpoints erwarten serverseitig Basic-Auth
@@ -135,7 +134,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public details?: Array<{ field: string; message: string }>
+    public details?: { field: string; message: string }[]
   ) {
     super(message);
     this.name = 'ApiError';

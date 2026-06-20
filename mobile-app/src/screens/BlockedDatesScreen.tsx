@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Alert, TextInput,
   KeyboardAvoidingView, Platform, ActivityIndicator, RefreshControl,
@@ -6,9 +6,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { adminApi } from '../api/adminClient';
 import { ScreenHeader, EmptyState } from '../components';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
+import { useBlockedDates, useAddBlockedDate, useDeleteBlockedDate } from '../queries/blockedDates';
 import type { BlockedDate } from '../types';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -46,32 +46,16 @@ function dayCount(from: string, to: string): number {
 }
 
 export function BlockedDatesScreen() {
-  const [items, setItems] = useState<BlockedDate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
   const [from, setFrom] = useState(todayString());
   const [to, setTo] = useState(todayString());
   const [reason, setReason] = useState('');
-  const [saving, setSaving] = useState(false);
 
-  const load = useCallback(async () => {
-    try {
-      setError(null);
-      const data = await adminApi.get<BlockedDate[]>('/api/admin/blocked-dates');
-      setItems(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setError(err?.message || 'Fehler beim Laden');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+  const { data: items = [], isLoading, isRefetching, error: queryError, refetch } = useBlockedDates();
+  const addDate = useAddBlockedDate();
+  const deleteDate = useDeleteBlockedDate();
 
-  useEffect(() => { load(); }, [load]);
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
 
   const validate = (): string | null => {
     if (!DATE_RE.test(from)) return 'Von-Datum im Format JJJJ-MM-TT eingeben.';
@@ -82,24 +66,13 @@ export function BlockedDatesScreen() {
 
   const handleAdd = async () => {
     const err = validate();
-    if (err) {
-      Alert.alert('Eingabe prüfen', err);
-      return;
-    }
-    setSaving(true);
+    if (err) { Alert.alert('Eingabe prüfen', err); return; }
     try {
-      await adminApi.post('/api/admin/blocked-dates', {
-        from,
-        to,
-        reason: reason.trim(),
-      });
+      await addDate.mutateAsync({ from, to, reason: reason.trim() });
       setReason('');
-      await load();
     } catch (e: any) {
       const status = e?.status ? ` (${e.status})` : '';
       Alert.alert('Speichern fehlgeschlagen' + status, e?.message || 'Bitte erneut versuchen.');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -115,29 +88,7 @@ export function BlockedDatesScreen() {
           onPress: async () => {
             setDeletingId(item.id);
             try {
-              // DELETE braucht einen Body mit der ID — daher direkt fetch (wie SlotsScreen).
-              const creds = adminApi.getCredentials();
-              const apiHost =
-                (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
-                'https://keramik-auszeit.de';
-              const resp = await fetch(`${apiHost}/api/admin/blocked-dates`, {
-                method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                  ...(creds ? { Authorization: `Basic ${creds}` } : {}),
-                },
-                body: JSON.stringify({ id: item.id }),
-              });
-              if (!resp.ok) {
-                const text = await resp.text().catch(() => '');
-                let msg = text || `HTTP ${resp.status}`;
-                try {
-                  const parsed = JSON.parse(text);
-                  if (parsed?.error) msg = parsed.error;
-                } catch {}
-                throw new Error(msg);
-              }
-              await load();
+              await deleteDate.mutateAsync(item.id);
             } catch (err: any) {
               Alert.alert('Fehlgeschlagen', err?.message || 'Bitte erneut versuchen.');
             } finally {
@@ -161,8 +112,8 @@ export function BlockedDatesScreen() {
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => { setRefreshing(true); load(); }}
+              refreshing={isRefetching}
+              onRefresh={refetch}
               colors={[colors.primary]}
             />
           }
@@ -173,10 +124,10 @@ export function BlockedDatesScreen() {
             icon="airplane-outline"
           />
 
-          {error && (
+          {queryError && (
             <View style={styles.errorBox}>
               <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
-              <Text style={styles.errorText}>{error}</Text>
+              <Text style={styles.errorText}>{(queryError as Error)?.message ?? 'Fehler beim Laden'}</Text>
             </View>
           )}
 
@@ -240,11 +191,11 @@ export function BlockedDatesScreen() {
             )}
 
             <Pressable
-              style={[styles.addBtn, saving && styles.btnDisabled]}
+              style={[styles.addBtn, addDate.isPending && styles.btnDisabled]}
               onPress={handleAdd}
-              disabled={saving}
+              disabled={addDate.isPending}
             >
-              {saving ? (
+              {addDate.isPending ? (
                 <ActivityIndicator size="small" color={colors.textOnPrimary} />
               ) : (
                 <>
@@ -257,7 +208,7 @@ export function BlockedDatesScreen() {
 
           {/* Liste */}
           <Text style={styles.listTitle}>Gesperrte Zeiträume</Text>
-          {loading && items.length === 0 ? (
+          {isLoading && items.length === 0 ? (
             <ActivityIndicator style={{ marginTop: spacing.lg }} color={colors.primary} />
           ) : items.length === 0 ? (
             <EmptyState
@@ -361,7 +312,9 @@ const styles = StyleSheet.create({
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: 4 },
   quickChip: {
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.card,
     borderRadius: borderRadius.full,
     borderWidth: 1,

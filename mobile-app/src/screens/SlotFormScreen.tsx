@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Alert, TextInput,
-  KeyboardAvoidingView, Platform, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -91,6 +91,7 @@ export function SlotFormScreen() {
   const [maxCapacity, setMaxCapacity] = useState('8');
   const [initialBooked, setInitialBooked] = useState('0');
   const [eventType, setEventType] = useState<SlotEventType>('normal');
+  const [isPrivate, setIsPrivate] = useState(false);
 
   // Serien-Slots (nur beim Anlegen, nicht beim Bearbeiten)
   const [repeat, setRepeat] = useState(false);
@@ -119,6 +120,7 @@ export function SlotFormScreen() {
       setMaxCapacity(String(slot.maxCapacity));
       setInitialBooked(String(slot.maxCapacity - slot.available));
       setEventType((slot.eventType as SlotEventType) || 'normal');
+      setIsPrivate(slot.isPrivate === true);
     } catch (err: any) {
       setError(err?.message || 'Fehler beim Laden');
     } finally {
@@ -156,6 +158,7 @@ export function SlotFormScreen() {
       maxCapacity: parseInt(maxCapacity, 10),
       initialBooked: parseInt(initialBooked || '0', 10),
       eventType,
+      isPrivate,
     };
 
     // Serien-Modus: mehrere Slots auf einmal anlegen
@@ -378,6 +381,22 @@ export function SlotFormScreen() {
             </View>
           </View>
 
+          {/* Privater Termin */}
+          <View style={styles.section}>
+            <View style={styles.privateRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sectionTitle}>Privater Termin</Text>
+                <Text style={styles.helperText}>Termin verschwindet aus dem öffentlichen Buchungskalender</Text>
+              </View>
+              <Switch
+                value={isPrivate}
+                onValueChange={setIsPrivate}
+                trackColor={{ false: '#ccc', true: '#7C3AED40' }}
+                thumbColor={isPrivate ? '#7C3AED' : '#fff'}
+              />
+            </View>
+          </View>
+
           {/* Serien-Slots (nur beim Anlegen) */}
           {!isEdit && (
             <View style={styles.section}>
@@ -501,6 +520,11 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.sm,
   },
+  privateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   sectionTitle: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.bold,
@@ -536,7 +560,9 @@ const styles = StyleSheet.create({
   },
   quickChip: {
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.card,
     borderRadius: borderRadius.full,
     borderWidth: 1,
