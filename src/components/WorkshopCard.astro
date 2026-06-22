@@ -68,10 +68,10 @@ const location =
 
 <style>
   .workshop-card {
-    background: var(--color-background);
-    border-radius: var(--radius);
+    background: var(--card);
+    border-radius: var(--r-md);
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-card);
     transition:
       transform var(--duration-normal) var(--easing),
       box-shadow var(--duration-normal) var(--easing);
@@ -83,7 +83,7 @@ const location =
 
   .workshop-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 28px 54px -24px rgba(58, 45, 36, 0.38);
   }
 
   .card-link {

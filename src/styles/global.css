@@ -69,6 +69,19 @@ h3 {
   font-weight: 500;
   letter-spacing: -.02em;
   line-height: 1.12;
+  text-wrap: balance;
+}
+
+/* Ausgewogener Fliesstext-Umbruch (keine Witwen-Zeilen) */
+.lead,
+.sub,
+.hero p {
+  text-wrap: pretty;
+}
+
+/* Anker-Sprung unter den Sticky-Header schieben */
+:where([id]) {
+  scroll-margin-top: 5rem;
 }
 
 h4,
@@ -140,7 +153,9 @@ h6 {
   padding: .82rem 1.7rem;
   cursor: pointer;
   border: 0;
-  transition: transform .18s, box-shadow .18s, background .18s;
+  transition: transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
 }
 
 .btn-terra {
@@ -268,9 +283,9 @@ section.blk {
 }
 
 .prose a {
-  color: var(--terra);
+  color: var(--terra-ink);
   text-decoration: none;
-  background: linear-gradient(var(--terra), var(--terra)) left bottom / 100% 1px no-repeat;
+  background: linear-gradient(var(--terra-ink), var(--terra-ink)) left bottom / 100% 1px no-repeat;
   padding-bottom: 2px;
 }
 
