@@ -5,7 +5,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, OrderCard, EmptyState, StatusBadge } from '../components';
+import { Card, OrderCard, EmptyState } from '../components';
 import { api } from '../api/client';
 import { colors, spacing, fontSize, fontWeight, borderRadius, statusLabels } from '../theme';
 import type { Order, Customer, RootStackParamList, OrderStatus } from '../types';
@@ -24,7 +24,7 @@ export function SearchScreen() {
   const navigation = useNavigation<Nav>();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
   // Filter
@@ -61,6 +61,42 @@ export function SearchScreen() {
     }
   }, [query, filterStatus]);
 
+  const renderFilterChip = useCallback(({ item }: { item: { key: string; label: string } }) => (
+    <Pressable
+      onPress={() => { setFilterStatus(item.key as OrderStatus | ''); }}
+      style={[styles.filterChip, filterStatus === item.key && styles.filterChipActive]}
+    >
+      <Text style={[styles.filterText, filterStatus === item.key && styles.filterTextActive]}>
+        {item.label}
+      </Text>
+    </Pressable>
+  ), [filterStatus]);
+
+  const renderSearchResult = useCallback(({ item }: { item: SearchResult }) => {
+    if (item.type === 'order') {
+      return (
+        <OrderCard
+          order={item.data}
+          onPress={() => navigation.navigate('OrderDetail', { id: item.data.id })}
+        />
+      );
+    }
+    const customer = item.data as Customer;
+    return (
+      <Card onPress={() => navigation.navigate('CustomerDetail', { id: customer.id })}>
+        <View style={styles.customerResult}>
+          <Ionicons name="person-outline" size={20} color={colors.primary} />
+          <View style={styles.customerInfo}>
+            <Text style={styles.customerName}>
+              {customer.first_name} {customer.last_name}
+            </Text>
+            {customer.email && <Text style={styles.customerDetail}>{customer.email}</Text>}
+          </View>
+        </View>
+      </Card>
+    );
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       {/* Suchleiste */}
@@ -92,16 +128,7 @@ export function SearchScreen() {
             ...Object.entries(statusLabels).map(([key, label]) => ({ key, label })),
           ]}
           keyExtractor={item => item.key}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => { setFilterStatus(item.key as OrderStatus | ''); }}
-              style={[styles.filterChip, filterStatus === item.key && styles.filterChipActive]}
-            >
-              <Text style={[styles.filterText, filterStatus === item.key && styles.filterTextActive]}>
-                {item.label}
-              </Text>
-            </Pressable>
-          )}
+          renderItem={renderFilterChip}
           contentContainerStyle={styles.filterList}
         />
 
@@ -116,30 +143,7 @@ export function SearchScreen() {
         data={results}
         keyExtractor={(item, index) => `${item.type}-${item.type === 'order' ? item.data.id : item.data.id}-${index}`}
         contentContainerStyle={styles.results}
-        renderItem={({ item }) => {
-          if (item.type === 'order') {
-            return (
-              <OrderCard
-                order={item.data}
-                onPress={() => navigation.navigate('OrderDetail', { id: item.data.id })}
-              />
-            );
-          }
-          const customer = item.data as Customer;
-          return (
-            <Card onPress={() => navigation.navigate('CustomerDetail', { id: customer.id })}>
-              <View style={styles.customerResult}>
-                <Ionicons name="person-outline" size={20} color={colors.primary} />
-                <View style={styles.customerInfo}>
-                  <Text style={styles.customerName}>
-                    {customer.first_name} {customer.last_name}
-                  </Text>
-                  {customer.email && <Text style={styles.customerDetail}>{customer.email}</Text>}
-                </View>
-              </View>
-            </Card>
-          );
-        }}
+        renderItem={renderSearchResult}
         ListEmptyComponent={
           searched ? (
             <EmptyState icon="search-outline" title="Keine Ergebnisse" message="Versuche andere Suchbegriffe oder Filter" />

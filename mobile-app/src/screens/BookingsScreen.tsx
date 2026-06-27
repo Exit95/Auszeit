@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, RefreshControl, Pressable, Alert,
 } from 'react-native';
@@ -6,10 +6,11 @@ import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Card, EmptyState, LoadingScreen } from '../components';
+import { Card, EmptyState, LoadingScreen, FilterChips, ScreenHeader } from '../components';
+import type { FilterChip } from '../components/FilterChips';
 import { useBookings, useConfirmBooking, useCancelBooking } from '../queries/bookings';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
-import type { Booking, BookingStatus, RootStackParamList } from '../types';
+import type { Booking, RootStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -70,7 +71,7 @@ export function BookingsScreen() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  const { filtered, pendingCount, activeCount } = useMemo(() => {
+  const { filtered, activeCount } = useMemo(() => {
     const pending = bookings.filter(b => b.status === 'pending').length;
     const active = bookings.filter(b => {
       if (b.status === 'cancelled') return false;
@@ -111,7 +112,7 @@ export function BookingsScreen() {
     return { filtered: list, pendingCount: pending, activeCount: active };
   }, [bookings, activeFilter, today]);
 
-  const handleConfirm = (booking: Booking) => {
+  const handleConfirm = useCallback((booking: Booking) => {
     Alert.alert(
       'Buchung bestätigen',
       `Buchung von ${booking.name} bestätigen?\nEine Bestätigungs-E-Mail wird automatisch gesendet.`,
@@ -129,9 +130,9 @@ export function BookingsScreen() {
         },
       ]
     );
-  };
+  }, [confirmMutation]);
 
-  const handleCancel = (booking: Booking) => {
+  const handleCancel = useCallback((booking: Booking) => {
     Alert.alert(
       'Buchung stornieren',
       `Buchung von ${booking.name} stornieren?`,
@@ -158,48 +159,105 @@ export function BookingsScreen() {
         },
       ]
     );
-  };
+  }, [cancelMutation]);
+
+  const renderBookingItem = useCallback(({ item }: { item: Booking }) => {
+    const isProcessing = actionLoadingId === item.id;
+    return (
+      <Card style={[styles.card, isProcessing && styles.cardDisabled]}>
+        {/* Header: Datum + Uhrzeit */}
+        <View style={styles.cardHeader}>
+          <View style={styles.dateTimeBadge}>
+            <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+            <Text style={styles.dateText}>{formatDate(item.slotDate)}</Text>
+            {item.slotTime && (
+              <Text style={styles.timeText}>
+                {' · '}{formatTime(item.slotTime)}
+                {item.slotEndTime ? ` – ${formatTime(item.slotEndTime)}` : ''}
+              </Text>
+            )}
+          </View>
+          <View style={styles.participantsBadge}>
+            <Ionicons name="people-outline" size={14} color={colors.inkSecondary} />
+            <Text style={styles.participantsText}>{item.participants}</Text>
+          </View>
+        </View>
+
+        {/* Kundenname */}
+        <Text style={styles.customerName}>{item.name}</Text>
+
+        {/* Kontakt */}
+        <View style={styles.contactRow}>
+          <Ionicons name="mail-outline" size={13} color={colors.meta} />
+          <Text style={styles.contactText} numberOfLines={1}>{item.email}</Text>
+        </View>
+        {item.phone && (
+          <View style={styles.contactRow}>
+            <Ionicons name="call-outline" size={13} color={colors.meta} />
+            <Text style={styles.contactText}>{item.phone}</Text>
+          </View>
+        )}
+
+        {/* Notizen */}
+        {item.notes && (
+          <Text style={styles.notes} numberOfLines={2}>{item.notes}</Text>
+        )}
+
+        {/* Eingangsdatum */}
+        <Text style={styles.createdAt}>Eingegangen: {formatCreatedAt(item.createdAt)}</Text>
+
+        {/* Aktionen */}
+        <View style={styles.actionRow}>
+          <Pressable
+            style={[styles.actionBtn, styles.manageBtn, isProcessing && styles.btnDisabled]}
+            onPress={() => navigation.navigate('BookingDetail', { id: item.id })}
+          >
+            <Ionicons name="create-outline" size={16} color={colors.textOnPrimary} />
+            <Text style={styles.actionBtnText}>Verwalten</Text>
+          </Pressable>
+          {item.status !== 'cancelled' && item.status === 'pending' && (
+            <Pressable
+              style={[styles.actionBtn, styles.confirmBtn, isProcessing && styles.btnDisabled]}
+              onPress={() => { if (!isProcessing) handleConfirm(item); }}
+            >
+              <Ionicons name="checkmark-circle-outline" size={16} color={colors.textOnPrimary} />
+              <Text style={styles.actionBtnText}>Bestätigen</Text>
+            </Pressable>
+          )}
+          {item.status !== 'cancelled' && (
+            <Pressable
+              style={[styles.actionBtn, styles.cancelBtn, isProcessing && styles.btnDisabled]}
+              onPress={() => { if (!isProcessing) handleCancel(item); }}
+            >
+              <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+              <Text style={[styles.actionBtnText, { color: colors.error }]}>Stornieren</Text>
+            </Pressable>
+          )}
+        </View>
+      </Card>
+    );
+  }, [actionLoadingId, navigation, handleConfirm, handleCancel]);
 
   if (isLoading && bookings.length === 0) return <LoadingScreen />;
 
   const errorMessage = error ? (error as Error).message : null;
 
+  const filterChips: FilterChip[] = FILTERS.map(f => ({
+    key: f.key,
+    label: f.label,
+    count: f.key === 'active' ? activeCount : bookings.filter(b => b.status === f.key).length,
+  }));
+
   return (
     <View style={styles.container}>
-      {/* Filter Tabs */}
-      <View style={styles.filterRow}>
-        {FILTERS.map(f => {
-          const count = f.key === 'active' ? activeCount : bookings.filter(b => b.status === f.key).length;
-          const isActive = activeFilter === f.key;
-          return (
-            <Pressable
-              key={f.key}
-              style={[
-                styles.filterTab,
-                isActive && { backgroundColor: f.color + '20', borderColor: f.color },
-              ]}
-              onPress={() => setActiveFilter(f.key)}
-            >
-              <Text style={[
-                styles.filterLabel,
-                isActive && { color: f.color, fontWeight: fontWeight.semibold },
-              ]}>
-                {f.label}
-              </Text>
-              {count > 0 && (
-                <View style={[styles.filterBadge, { backgroundColor: isActive ? f.color : colors.border }]}>
-                  <Text style={[
-                    styles.filterBadgeText,
-                    isActive && { color: colors.textOnPrimary },
-                  ]}>
-                    {count}
-                  </Text>
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
+      <ScreenHeader title="Buchungen" subtitle="Neue & bestätigte Buchungen" icon="calendar-outline" />
+      <FilterChips
+        filters={filterChips}
+        activeFilter={activeFilter}
+        onSelect={key => setActiveFilter(key as Filter)}
+        getColor={key => FILTERS.find(f => f.key === key)?.color ?? colors.primary}
+        variant="tabs"
+      />
 
       {errorMessage && (
         <View style={styles.errorBox}>
@@ -220,82 +278,7 @@ export function BookingsScreen() {
             colors={[colors.primary]}
           />
         }
-        renderItem={({ item }) => {
-          const isProcessing = actionLoadingId === item.id;
-          return (
-            <Card style={[styles.card, isProcessing && styles.cardDisabled]}>
-              {/* Header: Datum + Uhrzeit */}
-              <View style={styles.cardHeader}>
-                <View style={styles.dateTimeBadge}>
-                  <Ionicons name="calendar-outline" size={14} color={colors.primary} />
-                  <Text style={styles.dateText}>{formatDate(item.slotDate)}</Text>
-                  {item.slotTime && (
-                    <Text style={styles.timeText}>
-                      {' · '}{formatTime(item.slotTime)}
-                      {item.slotEndTime ? ` – ${formatTime(item.slotEndTime)}` : ''}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.participantsBadge}>
-                  <Ionicons name="people-outline" size={14} color={colors.inkSecondary} />
-                  <Text style={styles.participantsText}>{item.participants}</Text>
-                </View>
-              </View>
-
-              {/* Kundenname */}
-              <Text style={styles.customerName}>{item.name}</Text>
-
-              {/* Kontakt */}
-              <View style={styles.contactRow}>
-                <Ionicons name="mail-outline" size={13} color={colors.meta} />
-                <Text style={styles.contactText} numberOfLines={1}>{item.email}</Text>
-              </View>
-              {item.phone && (
-                <View style={styles.contactRow}>
-                  <Ionicons name="call-outline" size={13} color={colors.meta} />
-                  <Text style={styles.contactText}>{item.phone}</Text>
-                </View>
-              )}
-
-              {/* Notizen */}
-              {item.notes && (
-                <Text style={styles.notes} numberOfLines={2}>{item.notes}</Text>
-              )}
-
-              {/* Eingangsdatum */}
-              <Text style={styles.createdAt}>Eingegangen: {formatCreatedAt(item.createdAt)}</Text>
-
-              {/* Aktionen */}
-              <View style={styles.actionRow}>
-                <Pressable
-                  style={[styles.actionBtn, styles.manageBtn, isProcessing && styles.btnDisabled]}
-                  onPress={() => navigation.navigate('BookingDetail', { id: item.id })}
-                >
-                  <Ionicons name="create-outline" size={16} color={colors.textOnPrimary} />
-                  <Text style={styles.actionBtnText}>Verwalten</Text>
-                </Pressable>
-                {item.status !== 'cancelled' && item.status === 'pending' && (
-                  <Pressable
-                    style={[styles.actionBtn, styles.confirmBtn, isProcessing && styles.btnDisabled]}
-                    onPress={() => { if (!isProcessing) handleConfirm(item); }}
-                  >
-                    <Ionicons name="checkmark-circle-outline" size={16} color={colors.textOnPrimary} />
-                    <Text style={styles.actionBtnText}>Bestätigen</Text>
-                  </Pressable>
-                )}
-                {item.status !== 'cancelled' && (
-                  <Pressable
-                    style={[styles.actionBtn, styles.cancelBtn, isProcessing && styles.btnDisabled]}
-                    onPress={() => { if (!isProcessing) handleCancel(item); }}
-                  >
-                    <Ionicons name="close-circle-outline" size={16} color={colors.error} />
-                    <Text style={[styles.actionBtnText, { color: colors.error }]}>Stornieren</Text>
-                  </Pressable>
-                )}
-              </View>
-            </Card>
-          );
-        }}
+        renderItem={renderBookingItem}
         ListEmptyComponent={
           <EmptyState
             icon={activeFilter === 'pending' ? 'checkmark-circle-outline' : 'calendar-outline'}
@@ -323,44 +306,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  filterTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  filterLabel: {
-    fontSize: fontSize.sm,
-    color: colors.inkSecondary,
-  },
-  filterBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  filterBadgeText: {
-    fontSize: 10,
-    fontWeight: fontWeight.bold,
-    color: colors.inkSecondary,
   },
   errorBox: {
     flexDirection: 'row',

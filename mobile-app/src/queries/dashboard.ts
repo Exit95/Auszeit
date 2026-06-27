@@ -10,7 +10,7 @@ export function useDashboard() {
       const result = await api.get<DashboardResponse>('/dashboard');
       return result.data;
     },
-    refetchInterval: 30 * 1000, // alle 30s im Vordergrund
+    refetchInterval: 60 * 1000,
     refetchIntervalInBackground: false,
   });
 }

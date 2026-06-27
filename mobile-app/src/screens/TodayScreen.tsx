@@ -74,13 +74,13 @@ export function TodayScreen() {
 
   const totalParticipants = bookings.reduce((sum, b) => sum + b.participants, 0);
 
-  const handleCall = (phone?: string) => {
+  const handleCall = useCallback((phone?: string) => {
     if (!phone) return;
     const cleaned = phone.replace(/\s+/g, '');
     Linking.openURL(`tel:${cleaned}`);
-  };
+  }, []);
 
-  const handleCancel = (booking: Booking) => {
+  const handleCancel = useCallback((booking: Booking) => {
     Alert.alert(
       'Buchung stornieren',
       `Buchung von ${booking.name} (heute ${formatTime(booking.slotTime)}) wirklich stornieren?`,
@@ -108,7 +108,54 @@ export function TodayScreen() {
         },
       ],
     );
-  };
+  }, [loadBookings]);
+
+  const renderTodayItem = useCallback(({ item }: { item: Booking }) => (
+    <Card style={styles.bookingCard}>
+      <View style={styles.cardHeader}>
+        <View style={styles.timeBadge}>
+          <Ionicons name="time-outline" size={14} color={colors.info} />
+          <Text style={styles.timeText}>
+            {formatTime(item.slotTime)}
+            {item.slotEndTime ? ` – ${formatTime(item.slotEndTime)}` : ''}
+          </Text>
+        </View>
+        <View style={styles.participantsBadge}>
+          <Ionicons name="people-outline" size={14} color={colors.inkSecondary} />
+          <Text style={styles.participantsText}>{item.participants}</Text>
+        </View>
+      </View>
+      <Text style={styles.customerName}>{item.name}</Text>
+      {item.participantNames && item.participantNames.length > 0 && (
+        <Text style={styles.participantNames}>{item.participantNames.join(', ')}</Text>
+      )}
+      {item.notes && <Text style={styles.notes}>{item.notes}</Text>}
+      <View style={styles.actions}>
+        {item.phone && (
+          <Pressable style={styles.actionBtn} onPress={() => handleCall(item.phone)}>
+            <Ionicons name="call-outline" size={16} color={colors.textOnPrimary} />
+            <Text style={styles.actionBtnText}>{item.phone}</Text>
+          </Pressable>
+        )}
+        <Pressable
+          style={styles.manageBtn}
+          onPress={() => navigation.navigate('BookingDetail', { id: item.id })}
+        >
+          <Ionicons name="create-outline" size={16} color={colors.textOnPrimary} />
+          <Text style={styles.actionBtnText}>Bearbeiten</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.cancelBtn, cancellingId === item.id && styles.btnDisabled]}
+          onPress={() => cancellingId !== item.id && handleCancel(item)}
+        >
+          <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+          <Text style={[styles.actionBtnText, { color: colors.error }]}>
+            {cancellingId === item.id ? 'Storniere…' : 'Stornieren'}
+          </Text>
+        </Pressable>
+      </View>
+    </Card>
+  ), [cancellingId, navigation, handleCall, handleCancel]);
 
   if (loading && bookings.length === 0) return <LoadingScreen />;
 
@@ -145,68 +192,7 @@ export function TodayScreen() {
           )}
         </View>
       }
-      renderItem={({ item }) => (
-        <Card style={styles.bookingCard}>
-          {/* Zeit-Badge */}
-          <View style={styles.cardHeader}>
-            <View style={styles.timeBadge}>
-              <Ionicons name="time-outline" size={14} color={colors.info} />
-              <Text style={styles.timeText}>
-                {formatTime(item.slotTime)}
-                {item.slotEndTime ? ` – ${formatTime(item.slotEndTime)}` : ''}
-              </Text>
-            </View>
-            <View style={styles.participantsBadge}>
-              <Ionicons name="people-outline" size={14} color={colors.inkSecondary} />
-              <Text style={styles.participantsText}>{item.participants}</Text>
-            </View>
-          </View>
-
-          {/* Name */}
-          <Text style={styles.customerName}>{item.name}</Text>
-
-          {/* Teilnehmernamen */}
-          {item.participantNames && item.participantNames.length > 0 && (
-            <Text style={styles.participantNames}>
-              {item.participantNames.join(', ')}
-            </Text>
-          )}
-
-          {/* Notizen */}
-          {item.notes && (
-            <Text style={styles.notes}>{item.notes}</Text>
-          )}
-
-          {/* Aktionen */}
-          <View style={styles.actions}>
-            {item.phone && (
-              <Pressable
-                style={styles.actionBtn}
-                onPress={() => handleCall(item.phone)}
-              >
-                <Ionicons name="call-outline" size={16} color={colors.textOnPrimary} />
-                <Text style={styles.actionBtnText}>{item.phone}</Text>
-              </Pressable>
-            )}
-            <Pressable
-              style={styles.manageBtn}
-              onPress={() => navigation.navigate('BookingDetail', { id: item.id })}
-            >
-              <Ionicons name="create-outline" size={16} color={colors.textOnPrimary} />
-              <Text style={styles.actionBtnText}>Bearbeiten</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.cancelBtn, cancellingId === item.id && styles.btnDisabled]}
-              onPress={() => cancellingId !== item.id && handleCancel(item)}
-            >
-              <Ionicons name="close-circle-outline" size={16} color={colors.error} />
-              <Text style={[styles.actionBtnText, { color: colors.error }]}>
-                {cancellingId === item.id ? 'Storniere…' : 'Stornieren'}
-              </Text>
-            </Pressable>
-          </View>
-        </Card>
-      )}
+      renderItem={renderTodayItem}
       ListEmptyComponent={
         !error ? (
           <EmptyState

@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl, Alert, Pressable, ActivityIndicator, Linking,
 } from 'react-native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +12,6 @@ import { api } from '../api/client';
 import { colors, spacing, fontSize, fontWeight, borderRadius, statusLabels } from '../theme';
 import type { RootStackParamList, OrderStatus } from '../types';
 
-type Nav = import('@react-navigation/native-stack').NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'OrderDetail'>;
 
 interface OrderDetailData {
@@ -29,21 +28,21 @@ interface OrderDetailData {
   phone: string | null;
   pickup_notified_at: string | null;
   created_at: string;
-  items: Array<{
+  items: {
     id: number;
     item_type_name: string;
     quantity: number;
     status: OrderStatus;
     storage_code: string | null;
-  }>;
-  status_log: Array<{
+  }[];
+  status_log: {
     id: number;
     old_status: string | null;
     new_status: string;
     changed_by: string | null;
     note: string | null;
     changed_at: string;
-  }>;
+  }[];
 }
 
 const STATUS_FLOW: OrderStatus[] = [
@@ -68,12 +67,11 @@ function toWhatsAppNumber(phone: string | null): string | null {
 }
 
 export function OrderDetailScreen() {
-  const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const [order, setOrder] = useState<OrderDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [photos, setPhotos] = useState<Array<{ key: string; url: string }>>([]);
+  const [photos, setPhotos] = useState<{ key: string; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const loadOrder = useCallback(async () => {
@@ -213,7 +211,7 @@ export function OrderDetailScreen() {
                 picked_up_by: `${order.first_name} ${order.last_name}`,
               });
               loadOrder();
-            } catch (e) {
+            } catch {
               Alert.alert('Fehler', 'Abholung konnte nicht gespeichert werden');
             }
           },
@@ -307,7 +305,7 @@ export function OrderDetailScreen() {
     }
   };
 
-  const [storageLocations, setStorageLocations] = useState<Array<{id: number; code: string}>>([]);
+  const [storageLocations, setStorageLocations] = useState<{id: number; code: string}[]>([]);
 
   const loadStorageLocations = useCallback(async () => {
     try {

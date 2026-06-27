@@ -4,10 +4,9 @@
 
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApiHost } from '../lib/utils';
 
-const BASE_URL =
-  (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
-  'https://keramik-auszeit.de';
+const BASE_URL = getApiHost();
 const CREDS_KEY = 'admin_credentials';
 const LEGACY_ASYNC_KEY = 'admin_credentials'; // gleicher Key, migriert aus AsyncStorage
 
@@ -113,15 +112,19 @@ class AdminApiClient {
     return response.json();
   }
 
-  async delete<T>(path: string, params?: Record<string, string>): Promise<T> {
+  async delete<T>(
+    path: string,
+    options?: { params?: Record<string, string>; body?: unknown },
+  ): Promise<T> {
     let url = `${BASE_URL}${path}`;
-    if (params) {
-      const qs = new URLSearchParams(params).toString();
+    if (options?.params) {
+      const qs = new URLSearchParams(options.params).toString();
       url += `?${qs}`;
     }
     const response = await fetch(url, {
       method: 'DELETE',
       headers: this.buildHeaders(),
+      ...(options?.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({ error: 'Netzwerkfehler' }));

@@ -35,16 +35,29 @@ export async function dbGetTimeSlots(): Promise<TimeSlot[]> {
 
 export async function dbSaveTimeSlot(slot: TimeSlot): Promise<void> {
   await execute(
-    `INSERT INTO time_slots (legacy_id, slot_date, start_time, end_time, max_capacity, available, event_type, event_duration, raw_json, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO time_slots (legacy_id, slot_date, start_time, end_time, max_capacity, available, event_type, event_duration, is_private, raw_json, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        slot_date = VALUES(slot_date), start_time = VALUES(start_time), end_time = VALUES(end_time),
        max_capacity = VALUES(max_capacity), available = VALUES(available),
        event_type = VALUES(event_type), event_duration = VALUES(event_duration),
+       is_private = VALUES(is_private),
        updated_at = NOW()`,
     [slot.id, slot.date, slot.time, slot.endTime || null, slot.maxCapacity, slot.available,
-     slot.eventType || 'normal', slot.eventDuration || null, JSON.stringify(slot), toDbDatetime(slot.createdAt) || new Date().toISOString().slice(0, 19).replace('T', ' ')]
+     slot.eventType || 'normal', slot.eventDuration || null, slot.isPrivate ? 1 : 0,
+     JSON.stringify(slot), toDbDatetime(slot.createdAt) || new Date().toISOString().slice(0, 19).replace('T', ' ')]
   );
+}
+
+// Atomares Kapazitäts-Decrement — verhindert Race Condition bei gleichzeitigen Buchungen.
+// Gibt true zurück wenn genug Plätze vorhanden waren und reserviert wurden, sonst false.
+export async function dbAttemptBookingCapacity(slotLegacyId: string, participants: number): Promise<boolean> {
+  const result = await execute(
+    `UPDATE time_slots SET available = available - ?, updated_at = NOW()
+     WHERE legacy_id = ? AND available >= ? AND deleted_at IS NULL`,
+    [participants, slotLegacyId, participants]
+  );
+  return result.affectedRows > 0;
 }
 
 export async function dbDeleteTimeSlot(legacyId: string): Promise<boolean> {
@@ -65,6 +78,7 @@ export async function dbUpdateTimeSlot(legacyId: string, updates: Partial<TimeSl
   if (updates.maxCapacity !== undefined) { sets.push('max_capacity = ?'); params.push(updates.maxCapacity); }
   if (updates.available !== undefined) { sets.push('available = ?'); params.push(updates.available); }
   if (updates.eventType !== undefined) { sets.push('event_type = ?'); params.push(updates.eventType); }
+  if (updates.isPrivate !== undefined) { sets.push('is_private = ?'); params.push(updates.isPrivate ? 1 : 0); }
 
   if (sets.length === 0) return;
   sets.push('updated_at = NOW()');
@@ -262,6 +276,7 @@ function rowToTimeSlot(r: RowDataPacket): TimeSlot {
     createdAt: new Date(r.created_at).toISOString(),
     eventType: r.event_type !== 'normal' ? r.event_type : undefined,
     eventDuration: r.event_duration || undefined,
+    isPrivate: r.is_private === 1 || r.is_private === true || undefined,
   };
 }
 

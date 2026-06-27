@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, RefreshControl, Pressable,
 } from 'react-native';
@@ -8,7 +8,7 @@ import { OrderCard, EmptyState, LoadingScreen, FilterChips, ScreenHeader } from 
 import type { FilterChip } from '../components';
 import { useOrders } from '../queries/orders';
 import { colors, spacing, statusColors, statusLabels } from '../theme';
-import type { RootStackParamList, OrderStatus } from '../types';
+import type { RootStackParamList, OrderStatus, Order } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -29,6 +29,13 @@ export function OrdersScreen() {
   const navigation = useNavigation<Nav>();
   const [activeFilter, setActiveFilter] = useState<OrderStatus | 'alle'>('alle');
   const { data: orders = [], isLoading, isRefetching, refetch } = useOrders(activeFilter);
+
+  const renderOrderItem = useCallback(({ item }: { item: Order }) => (
+    <OrderCard
+      order={item}
+      onPress={() => navigation.navigate('OrderDetail', { id: item.id })}
+    />
+  ), [navigation]);
 
   if (isLoading && orders.length === 0) return <LoadingScreen />;
 
@@ -55,12 +62,7 @@ export function OrdersScreen() {
             colors={[colors.primary]}
           />
         }
-        renderItem={({ item }) => (
-          <OrderCard
-            order={item}
-            onPress={() => navigation.navigate('OrderDetail', { id: item.id })}
-          />
-        )}
+        renderItem={renderOrderItem}
         ListEmptyComponent={
           <EmptyState
             icon="document-text-outline"

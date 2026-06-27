@@ -12,15 +12,13 @@ import {
   loadBiometricCredentials,
 } from '../hooks/useBiometrics';
 import { adminApi } from '../api/adminClient';
+import { getApiHost } from '../lib/utils';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 
 // Wir validieren das Admin-Passwort live gegen den Server. Damit entfällt
 // der hardcodierte 2468-PIN. Ein erfolgreicher Login schaltet sowohl
 // Atelier- als auch Brenn-Endpoints frei (beide nutzen Basic-Auth).
-const API_HOST =
-  (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
-  'https://keramik-auszeit.de';
-const LIVE_AUTH_ENDPOINT = `${API_HOST}/api/admin/bookings`;
+const LIVE_AUTH_ENDPOINT = `${getApiHost()}/api/admin/bookings`;
 
 type BioType = 'fingerprint' | 'face' | 'iris';
 

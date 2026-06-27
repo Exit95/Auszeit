@@ -191,6 +191,7 @@ export interface TimeSlot {
   available: number;
   createdAt: string;
   eventType?: SlotEventType;
+  isPrivate?: boolean;
 }
 
 export interface Review {

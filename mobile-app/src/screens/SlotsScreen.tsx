@@ -6,7 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { adminApi } from '../api/adminClient';
-import { EmptyState, LoadingScreen } from '../components';
+import { EmptyState, LoadingScreen, FilterChips, ScreenHeader } from '../components';
+import type { FilterChip } from '../components/FilterChips';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../theme';
 import type { TimeSlot, SlotEventType, RootStackParamList } from '../types';
 
@@ -104,7 +105,7 @@ export function SlotsScreen() {
       data: grouped[date].sort((a, b) => (a.time || '').localeCompare(b.time || '')),
     }));
 
-  const handleDelete = (slot: TimeSlot) => {
+  const handleDelete = useCallback((slot: TimeSlot) => {
     const booked = slot.maxCapacity - slot.available;
     const warning = booked > 0
       ? `\n\n⚠️ ACHTUNG: Dieser Termin hat bereits ${booked} Buchung${booked !== 1 ? 'en' : ''}! Löschen storniert die Buchungen NICHT automatisch.`
@@ -122,27 +123,7 @@ export function SlotsScreen() {
             try {
               // DELETE braucht einen Body mit der Slot-ID — nicht von adminApi.delete
               // abgedeckt (das nimmt Query-Params), deshalb direkt fetch.
-              const creds = adminApi.getCredentials();
-              const apiHost =
-                (typeof process !== 'undefined' && (process as any).env?.EXPO_PUBLIC_API_HOST) ||
-                'https://keramik-auszeit.de';
-              const resp = await fetch(`${apiHost}/api/admin/slots`, {
-                method: 'DELETE',
-                headers: {
-                  'Content-Type': 'application/json',
-                  ...(creds ? { Authorization: `Basic ${creds}` } : {}),
-                },
-                body: JSON.stringify({ id: slot.id }),
-              });
-              if (!resp.ok) {
-                const text = await resp.text().catch(() => '');
-                let msg = text || `HTTP ${resp.status}`;
-                try {
-                  const parsed = JSON.parse(text);
-                  if (parsed?.error) msg = parsed.error;
-                } catch {}
-                throw new Error(msg);
-              }
+              await adminApi.delete('/api/admin/slots', { body: { id: slot.id } });
               await load();
             } catch (err: any) {
               Alert.alert('Löschen fehlgeschlagen', err?.message || 'Bitte erneut versuchen.');
@@ -153,43 +134,98 @@ export function SlotsScreen() {
         },
       ],
     );
-  };
+  }, [load]);
+
+  const renderSlotItem = useCallback(({ item }: { item: TimeSlot }) => {
+    const isDeleting = deletingId === item.id;
+    const booked = item.maxCapacity - item.available;
+    const eventType = (item.eventType || 'normal') as SlotEventType;
+    const eventColor = EVENT_COLORS[eventType] || colors.primary;
+    const isFull = item.available === 0;
+    return (
+      <View style={[styles.card, isDeleting && styles.cardDisabled]}>
+        <View style={styles.cardHeader}>
+          <View style={styles.timeBadge}>
+            <Ionicons name="time-outline" size={14} color={colors.primary} />
+            <Text style={styles.timeText}>
+              {formatTime(item.time)}
+              {item.endTime ? ` – ${formatTime(item.endTime)}` : ''}
+            </Text>
+          </View>
+          <View style={styles.chipRow}>
+            {item.isPrivate && (
+              <View style={styles.privateChip}>
+                <Ionicons name="lock-closed-outline" size={11} color="#7C3AED" />
+                <Text style={styles.privateChipText}>Privat</Text>
+              </View>
+            )}
+            <View style={[styles.eventChip, { backgroundColor: eventColor + '18' }]}>
+              <Text style={[styles.eventChipText, { color: eventColor }]}>
+                {EVENT_LABELS[eventType]}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.capacityRow}>
+          <Ionicons name="people-outline" size={15} color={colors.inkSecondary} />
+          <Text style={styles.capacityText}>{booked} / {item.maxCapacity} gebucht</Text>
+          {isFull && (
+            <View style={styles.fullPill}>
+              <Text style={styles.fullPillText}>AUSGEBUCHT</Text>
+            </View>
+          )}
+          {!isFull && item.available <= 2 && (
+            <View style={styles.warnPill}>
+              <Text style={styles.warnPillText}>Nur noch {item.available} frei</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.actionRow}>
+          <Pressable
+            style={[styles.actionBtn, styles.editBtn]}
+            onPress={() => navigation.navigate('SlotForm', { id: item.id })}
+            disabled={isDeleting}
+          >
+            <Ionicons name="create-outline" size={15} color={colors.textOnPrimary} />
+            <Text style={styles.actionBtnText}>Bearbeiten</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.actionBtn, styles.deleteBtn, isDeleting && styles.btnDisabled]}
+            onPress={() => !isDeleting && handleDelete(item)}
+            disabled={isDeleting}
+          >
+            <Ionicons name="trash-outline" size={15} color={colors.error} />
+            <Text style={[styles.actionBtnText, { color: colors.error }]}>
+              {isDeleting ? 'Lösche…' : 'Löschen'}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }, [deletingId, navigation, handleDelete]);
 
   if (loading && slots.length === 0) return <LoadingScreen />;
 
+  const slotsFilterChips: FilterChip[] = FILTERS.map(f => ({
+    key: f.key,
+    label: f.label,
+    count: slots.filter(s => {
+      if (f.key === 'today') return s.date === today;
+      if (f.key === 'upcoming') return s.date >= today;
+      if (f.key === 'past') return s.date < today;
+      return true;
+    }).length,
+  }));
+
   return (
     <View style={styles.container}>
-      {/* Filter */}
-      <View style={styles.filterRow}>
-        {FILTERS.map((f) => {
-          const isActive = activeFilter === f.key;
-          const count = slots.filter((s) => {
-            if (f.key === 'today') return s.date === today;
-            if (f.key === 'upcoming') return s.date >= today;
-            if (f.key === 'past') return s.date < today;
-            return true;
-          }).length;
-          return (
-            <Pressable
-              key={f.key}
-              style={[
-                styles.filterTab,
-                isActive && { backgroundColor: colors.primary + '18', borderColor: colors.primary },
-              ]}
-              onPress={() => setActiveFilter(f.key)}
-            >
-              <Text style={[styles.filterLabel, isActive && { color: colors.primary, fontWeight: fontWeight.semibold }]}>
-                {f.label}
-              </Text>
-              {count > 0 && (
-                <View style={[styles.filterBadge, { backgroundColor: isActive ? colors.primary : colors.border }]}>
-                  <Text style={[styles.filterBadgeText, isActive && { color: colors.textOnPrimary }]}>{count}</Text>
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
+      <ScreenHeader title="Termine" subtitle="Zeitslots verwalten" icon="time-outline" />
+      <FilterChips
+        filters={slotsFilterChips}
+        activeFilter={activeFilter}
+        onSelect={key => setActiveFilter(key as Filter)}
+        variant="tabs"
+      />
 
       {error && (
         <View style={styles.errorBox}>
@@ -213,69 +249,7 @@ export function SlotsScreen() {
         renderSectionHeader={({ section: { title } }) => (
           <Text style={styles.sectionHeader}>{formatDateHeader(title)}</Text>
         )}
-        renderItem={({ item }) => {
-          const isDeleting = deletingId === item.id;
-          const booked = item.maxCapacity - item.available;
-          const eventType = (item.eventType || 'normal') as SlotEventType;
-          const eventColor = EVENT_COLORS[eventType] || colors.primary;
-          const isFull = item.available === 0;
-          return (
-            <View style={[styles.card, isDeleting && styles.cardDisabled]}>
-              <View style={styles.cardHeader}>
-                <View style={styles.timeBadge}>
-                  <Ionicons name="time-outline" size={14} color={colors.primary} />
-                  <Text style={styles.timeText}>
-                    {formatTime(item.time)}
-                    {item.endTime ? ` – ${formatTime(item.endTime)}` : ''}
-                  </Text>
-                </View>
-                <View style={[styles.eventChip, { backgroundColor: eventColor + '18' }]}>
-                  <Text style={[styles.eventChipText, { color: eventColor }]}>
-                    {EVENT_LABELS[eventType]}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.capacityRow}>
-                <Ionicons name="people-outline" size={15} color={colors.inkSecondary} />
-                <Text style={styles.capacityText}>
-                  {booked} / {item.maxCapacity} gebucht
-                </Text>
-                {isFull && (
-                  <View style={styles.fullPill}>
-                    <Text style={styles.fullPillText}>AUSGEBUCHT</Text>
-                  </View>
-                )}
-                {!isFull && item.available <= 2 && (
-                  <View style={styles.warnPill}>
-                    <Text style={styles.warnPillText}>Nur noch {item.available} frei</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.actionRow}>
-                <Pressable
-                  style={[styles.actionBtn, styles.editBtn]}
-                  onPress={() => navigation.navigate('SlotForm', { id: item.id })}
-                  disabled={isDeleting}
-                >
-                  <Ionicons name="create-outline" size={15} color={colors.textOnPrimary} />
-                  <Text style={styles.actionBtnText}>Bearbeiten</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.actionBtn, styles.deleteBtn, isDeleting && styles.btnDisabled]}
-                  onPress={() => !isDeleting && handleDelete(item)}
-                  disabled={isDeleting}
-                >
-                  <Ionicons name="trash-outline" size={15} color={colors.error} />
-                  <Text style={[styles.actionBtnText, { color: colors.error }]}>
-                    {isDeleting ? 'Lösche…' : 'Löschen'}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          );
-        }}
+        renderItem={renderSlotItem}
         ListEmptyComponent={
           <EmptyState
             icon="calendar-outline"
@@ -303,41 +277,6 @@ export function SlotsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  filterRow: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  filterTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  filterLabel: { fontSize: fontSize.sm, color: colors.inkSecondary },
-  filterBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  filterBadgeText: {
-    fontSize: 10,
-    fontWeight: fontWeight.bold,
-    color: colors.inkSecondary,
-  },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -388,6 +327,25 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     color: colors.primary,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  privateChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#7C3AED18',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+  },
+  privateChipText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    color: '#7C3AED',
   },
   eventChip: {
     paddingHorizontal: 10,

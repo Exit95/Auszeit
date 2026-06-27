@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { Text, StyleSheet, Animated } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +16,7 @@ export function NetworkBanner() {
   const queryClient = useQueryClient();
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
-  const slideAnim = React.useRef(new Animated.Value(-50)).current;
+  const slideAnim = React.useMemo(() => new Animated.Value(-50), []);
 
   useEffect(() => {
     const unsub = NetInfo.addEventListener((state) => {

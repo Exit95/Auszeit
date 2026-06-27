@@ -36,9 +36,9 @@ import { content } from '../data/content';
 
         <!-- Wunschbetrag Input (versteckt bis ausgewählt) -->
         <div id="custom-amount-container" style="display:none; margin-top:1rem;">
-          <label for="custom-amount" class="custom-label">Betrag eingeben (5 bis 500 Euro):</label>
+          <label for="custom-amount" class="custom-label">Betrag eingeben (25 bis 500 Euro):</label>
           <div class="custom-input-row">
-            <input type="number" id="custom-amount" min="5" max="500" placeholder="z.B. 75" />
+            <input type="number" id="custom-amount" min="25" max="500" placeholder="z.B. 75" />
             <span class="custom-currency">€</span>
           </div>
         </div>
@@ -73,6 +73,31 @@ import { content } from '../data/content';
         <div class="meta">
           <span>Malatelier Auszeit · Gronau</span>
           <span>einlösbar vor Ort</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Social Proof: Echter Gutschein in echt -->
+    <div class="proof-section">
+      <div class="proof-inner">
+        <div class="proof-img-wrap">
+          <picture>
+            <source srcset="/gutschein-einloesen-real.webp" type="image/webp" />
+            <img
+              src="/gutschein-einloesen-real.jpg"
+              alt="Auszeit Gutschein als Geburtstagsgeschenk"
+              class="proof-img"
+              loading="lazy"
+              width="945"
+              height="1252"
+            />
+          </picture>
+        </div>
+        <div class="proof-text">
+          <span class="eyebrow">Aus dem echten Leben</span>
+          <h2 class="proof-heading">Ein Geschenk, das ankommt</h2>
+          <p>Steffi hat diesen Gutschein zum Geburtstag bekommen, ausgedruckt, in einen Umschlag gesteckt und mit Herzblut verschenkt. Wenige Wochen später stand sie bei uns im Atelier.</p>
+          <p class="proof-caption">So einfach geht Schenken: Betrag wählen, bezahlen, Gutschein-Code per E-Mail erhalten, ausdrucken oder digital weiterschicken.</p>
         </div>
       </div>
     </div>
@@ -154,8 +179,8 @@ import { content } from '../data/content';
     buyBtn?.addEventListener('click', () => {
       if (selectedVoucherId === 'voucher-custom') {
         const amount = customInput?.value;
-        if (!amount || parseFloat(amount) < 5 || parseFloat(amount) > 500) {
-          showError('Bitte gib einen Betrag zwischen 5 € und 500 € ein.');
+        if (!amount || parseFloat(amount) < 25 || parseFloat(amount) > 500) {
+          showError('Bitte gib einen Betrag zwischen 25 € und 500 € ein.');
           return;
         }
         handlePurchase('voucher-custom', amount);
@@ -421,5 +446,61 @@ import { content } from '../data/content';
       flex-direction: column;
       gap: 0.25rem;
     }
+  }
+
+  /* ── Social Proof Section ────────────────────────────────── */
+  .proof-section {
+    padding: clamp(3rem, 7vw, 5rem) 0;
+    border-top: 1px solid var(--hair, #E4D8CB);
+    margin-bottom: clamp(3rem, 7vw, 5rem);
+  }
+
+  .proof-inner {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(2rem, 4vw, 3.5rem);
+    align-items: center;
+  }
+
+  @media (min-width: 700px) {
+    .proof-inner {
+      grid-template-columns: auto 1fr;
+    }
+  }
+
+  .proof-img-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+
+  .proof-img {
+    width: clamp(200px, 35vw, 320px);
+    height: auto;
+    border-radius: var(--r-lg, 18px);
+    box-shadow: 0 24px 60px -20px rgba(58, 45, 36, 0.35);
+    object-fit: cover;
+    transform: rotate(-1.5deg);
+  }
+
+  .proof-heading {
+    font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 500;
+    margin: 0.5rem 0 1rem;
+    color: var(--ink, #3A2D24);
+  }
+
+  .proof-text p {
+    font-size: 1rem;
+    color: var(--ink-2, #5D4A3C);
+    line-height: 1.65;
+    max-width: 50ch;
+    margin: 0 0 0.8rem;
+  }
+
+  .proof-caption {
+    font-size: 0.88rem !important;
+    color: var(--meta, #94816F) !important;
   }
 </style>

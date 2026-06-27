@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Alert, Pressable,
+  Text, StyleSheet, ScrollView, Alert, Pressable,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,7 +38,7 @@ export function OrderFormScreen() {
         const order = orderResult?.data?.order || orderResult?.data;
         if (order) {
           setCustomerId(order.customer_id);
-          setVisitDate(order.visit_date?.split('T')[0] || visitDate);
+          setVisitDate(prev => order.visit_date?.split('T')[0] || prev);
           setNotes(order.notes || '');
           const items = orderResult?.data?.items || [];
           if (items.length > 0) {

@@ -67,20 +67,28 @@ interface UsePushOptions {
 export function usePushNotifications({ enabled }: UsePushOptions) {
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
+  const registeredRef = useRef(false);
 
   useEffect(() => {
-    if (!enabled || Platform.OS === 'web') return; // Nur registrieren wenn User auth'd ist
+    if (!enabled || Platform.OS === 'web') return;
 
     let cancelled = false;
 
-    registerForPushNotifications().then(async (token) => {
-      if (cancelled || !token) return;
-      try {
-        await adminApi.post('/api/admin/push-token', { token, platform: Platform.OS });
-      } catch (err) {
-        if (__DEV__) console.warn('[Push] Token-Registrierung fehlgeschlagen:', err);
-      }
-    });
+    if (!registeredRef.current) {
+      registeredRef.current = true;
+      registerForPushNotifications().then(async (token) => {
+        if (cancelled || !token) {
+          registeredRef.current = false; // allow retry on next mount
+          return;
+        }
+        try {
+          await adminApi.post('/api/admin/push-token', { token, platform: Platform.OS });
+        } catch (err) {
+          registeredRef.current = false; // allow retry on network error
+          if (__DEV__) console.warn('[Push] Token-Registrierung fehlgeschlagen:', err);
+        }
+      });
+    }
 
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notification) => {

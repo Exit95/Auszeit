@@ -34,6 +34,7 @@ import Brush from './Brush.astro';
           <div class="cal-legend">
             <span><i style="background:var(--terra)"></i>freie Tage</span>
             <span><i style="background:var(--meta);opacity:.4"></i>belegt oder Ruhetag</span>
+            <span><i style="background:#e8b86d;opacity:.7"></i>Urlaub / geschlossen</span>
           </div>
         </div>
 
@@ -105,10 +106,9 @@ import Brush from './Brush.astro';
           <div class="trust-bar">
             <span class="trust-bar__item">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4,9 von 5, 47 Bewertungen
+              5,0 von 5, 33 Bewertungen
             </span>
             <span class="trust-bar__item">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               Kostenlose Stornierung bis 24h vorher
             </span>
           </div>
@@ -213,6 +213,31 @@ import Brush from './Brush.astro';
   :global(.cal-grid .day:hover) { background: var(--surface); }
   :global(.cal-grid .day:focus-visible) { outline: 2px solid var(--terra); outline-offset: 2px; }
   :global(.cal-grid .day .dot) { width: 5px; height: 5px; border-radius: 50%; background: var(--terra); }
+  :global(.cal-grid .day.is-vacation) {
+    background: #e8b86d18;
+    color: #a07830;
+    cursor: default;
+    pointer-events: none;
+    position: relative;
+    font-size: .75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: 2px;
+    border: 1px solid #e8b86d40;
+    border-radius: 6px;
+  }
+  :global(.cal-grid .day.is-vacation .vacation-lbl) {
+    font-size: .55rem;
+    line-height: 1;
+    color: #a07830;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
   :global(.cal-grid .day.is-muted) {
     color: var(--meta);
     opacity: .4;
@@ -450,8 +475,11 @@ import Brush from './Brush.astro';
     blockedReason?: string;
   }
 
+  interface BlockedPeriod { from: string; to: string; reason: string; }
+
   // ── State ────────────────────────────────────────────────────────────────
   let allSlots: Slot[] = [];
+  let blockedPeriods: BlockedPeriod[] = [];
   let viewYear  = new Date().getFullYear();
   let viewMonth = new Date().getMonth(); // 0-based
   let selDateISO: string | null = null;
@@ -494,6 +522,11 @@ import Brush from './Brush.astro';
     return allSlots.some(s => s.date.startsWith(prefix) && !s.isBlocked && s.available > 0);
   }
 
+  function getBlockedReason(iso: string): string | null {
+    const p = blockedPeriods.find(b => iso >= b.from && iso <= b.to);
+    return p ? p.reason : null;
+  }
+
   // ── Calendar render ───────────────────────────────────────────────────────
   function renderCalendar() {
     calMonthLbl.textContent = `${DE_MONTHS[viewMonth]} ${viewYear}`;
@@ -525,8 +558,6 @@ import Brush from './Brush.astro';
 
     for (let d = 1; d <= daysInMonth; d++) {
       const iso = toISO(viewYear, viewMonth, d);
-      const dow = new Date(viewYear, viewMonth, d).getDay(); // 0=Sun, 1=Mon …
-      const isMonday = dow === 1;
       const isPast = iso < todayISO;
       const freeSlots = slotsForDate(iso);
       const hasFree = freeSlots.length > 0;
@@ -536,7 +567,24 @@ import Brush from './Brush.astro';
       btn.textContent = String(d);
       btn.setAttribute('aria-label', `${d}. ${DE_MONTHS[viewMonth]}`);
 
-      if (isPast || isMonday || !hasFree) {
+      const blockedReason = getBlockedReason(iso);
+
+      // Vergangene Tage immer sperren. Kein fester Ruhetag mehr –
+      // jeder Tag mit freien Slots ist buchbar, Tage ohne fallen unten in 'is-muted'.
+      if (isPast) {
+        btn.className = 'day is-muted';
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+      } else if (blockedReason) {
+        btn.className = 'day is-vacation';
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+        btn.setAttribute('title', blockedReason);
+        const lbl = document.createElement('span');
+        lbl.className = 'vacation-lbl';
+        lbl.textContent = blockedReason.length > 7 ? 'Urlaub' : blockedReason;
+        btn.appendChild(lbl);
+      } else if (!hasFree) {
         btn.className = 'day is-muted';
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');
@@ -789,7 +837,9 @@ import Brush from './Brush.astro';
     try {
       const res = await fetch('/api/slots');
       if (res.ok) {
-        allSlots = await res.json();
+        const data = await res.json();
+        allSlots = data.slots ?? data;
+        blockedPeriods = data.blockedPeriods ?? [];
       }
     } catch (err) {
       console.error('Fehler beim Laden der Termine:', err);

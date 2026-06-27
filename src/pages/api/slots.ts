@@ -9,9 +9,11 @@ export const GET: APIRoute = async () => {
     const now = new Date();
 
     // Filtere zukünftige Slots
+    // - Private Termine: nie öffentlich anzeigen
     // - Normale Termine: nur wenn verfügbare Plätze > 0 UND Datum nicht gesperrt
     // - Kindergeburtstag/Stammtisch: immer anzeigen (als ausgebucht)
     const relevantSlots = allSlots.filter(slot => {
+      if (slot.isPrivate) return false; // Private Termine nie öffentlich zeigen
       const slotDateTime = new Date(`${slot.date}T${slot.time}`);
       if (slotDateTime <= now) return false; // Vergangene Termine ausschließen
 
@@ -47,7 +49,13 @@ export const GET: APIRoute = async () => {
           : null
     }));
 
-    return new Response(JSON.stringify(slotsWithInfo), {
+    // Sperrzeiträume für den Kalender mitliefern (nur zukünftige)
+    const todayISO = now.toISOString().slice(0, 10);
+    const blockedPeriods = blocked
+      .filter(b => b.to >= todayISO)
+      .map(b => ({ from: b.from, to: b.to, reason: b.reason || 'Geschlossen' }));
+
+    return new Response(JSON.stringify({ slots: slotsWithInfo, blockedPeriods }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

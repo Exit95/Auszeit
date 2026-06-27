@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ScrollView, StyleSheet, Alert } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Input, Button } from '../components';
 import { api, ApiError } from '../api/client';
-import { colors, spacing, fontSize, fontWeight } from '../theme';
-import type { RootStackParamList, Customer } from '../types';
+import { colors, spacing } from '../theme';
+import type { RootStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'CustomerForm'>;
@@ -22,13 +22,7 @@ export function CustomerFormScreen() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (isEdit) {
-      loadCustomer();
-    }
-  }, []);
-
-  const loadCustomer = async () => {
+  const loadCustomer = useCallback(async () => {
     try {
       const result = await api.get<any>(`/customers/${route.params.id}`);
       const customer = result?.data?.customer || result?.data || result;
@@ -40,7 +34,11 @@ export function CustomerFormScreen() {
     } catch {
       Alert.alert('Fehler', 'Kundendaten konnten nicht geladen werden');
     }
-  };
+  }, [route.params?.id]);
+
+  useEffect(() => {
+    if (isEdit) loadCustomer();
+  }, [isEdit, loadCustomer]);
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim()) {

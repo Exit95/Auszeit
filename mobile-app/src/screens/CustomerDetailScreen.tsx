@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, RefreshControl, Alert, Linking,
+  View, Text, StyleSheet, ScrollView, Alert, Linking,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,7 +27,7 @@ export function CustomerDetailScreen() {
       if (!d?.customer) throw new Error('Kundendaten nicht gefunden');
       setCustomer(d.customer);
       setOrders(d.orders || []);
-    } catch (error) {
+    } catch {
       Alert.alert('Fehler', 'Kundendaten konnten nicht geladen werden');
     } finally {
       setLoading(false);
@@ -46,7 +46,7 @@ export function CustomerDetailScreen() {
           try {
             await api.delete(`/customers/${route.params.id}`);
             navigation.goBack();
-          } catch (error) {
+          } catch {
             Alert.alert('Fehler', 'Kunde konnte nicht gelöscht werden. Möglicherweise existieren noch Aufträge.');
           }
         },

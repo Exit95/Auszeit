@@ -41,6 +41,10 @@ const linking: LinkingOptions<RootStackParamList> = {
       AtelierBookings: 'atelier/bookings',
       AtelierInquiries: 'atelier/inquiries',
       AtelierSlots: 'atelier/slots',
+      SlotForm: {
+        path: 'atelier/slot/:id',
+        parse: { id: (id: string) => id },
+      },
       BookingCreate: 'atelier/booking/new',
       BlockedDates: 'atelier/blocked-dates',
       Stats: 'atelier/stats',
@@ -74,7 +78,7 @@ async function applyUpdatesIfAny() {
       await Updates.reloadAsync();
     }
   } catch (err) {
-    if (__DEV__) console.warn('[OTA] Update-Check fehlgeschlagen:', err);
+    console.warn('[OTA] Update-Check fehlgeschlagen:', err);
   }
 }
 
