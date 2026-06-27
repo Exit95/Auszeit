@@ -54,7 +54,7 @@ import Brush from './Brush.astro';
       <div id="bookingForm" class="booking-form hidden">
         <div class="booking-trust">
           <div class="booking-trust__stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-          <p class="booking-trust__quote">„Ein wunderschöner Nachmittag! Wir kommen wieder."</p>
+          <p class="booking-trust__quote">„Ein wunderschöner Nachmittag! Wir kommen wieder.“</p>
           <span class="booking-trust__source">Google Bewertung</span>
         </div>
         <h3>Buchung bestätigen</h3>
@@ -558,6 +558,8 @@ import Brush from './Brush.astro';
 
     for (let d = 1; d <= daysInMonth; d++) {
       const iso = toISO(viewYear, viewMonth, d);
+      const dow = new Date(viewYear, viewMonth, d).getDay(); // 0=Sun, 1=Mon …
+      const isMonday = dow === 1;
       const isPast = iso < todayISO;
       const freeSlots = slotsForDate(iso);
       const hasFree = freeSlots.length > 0;
@@ -569,9 +571,7 @@ import Brush from './Brush.astro';
 
       const blockedReason = getBlockedReason(iso);
 
-      // Vergangene Tage immer sperren. Kein fester Ruhetag mehr –
-      // jeder Tag mit freien Slots ist buchbar, Tage ohne fallen unten in 'is-muted'.
-      if (isPast) {
+      if (isPast || isMonday) {
         btn.className = 'day is-muted';
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');

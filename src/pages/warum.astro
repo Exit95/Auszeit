@@ -25,8 +25,10 @@ import Photo from '../components/Photo.astro';
         </div>
         <div class="hero-img photo-hover" data-animate="scale-up">
           <Photo
-            src="/fotos/sh-irena-help.jpg"
-            alt="Irena beim Helfen im Atelier"
+            src="/fotos/warum-hero.webp"
+            alt="Beim Keramikbemalen im Malatelier Auszeit in Gronau"
+            loading="eager"
+            fetchpriority="high"
           />
         </div>
       </div>
@@ -42,9 +44,7 @@ import Photo from '../components/Photo.astro';
           <p>Ein paar schöne Stunden im Atelier, einen Rohling deiner Wahl, Farben, Pinsel und jemanden, der dir zeigt, wie es geht.</p>
           <p class="reveal-note">Das ist nicht wenig. Aber es ist nur die halbe Wahrheit.</p>
         </div>
-        <div class="reveal-divider" aria-hidden="true">
-          <span class="reveal-arrow">&#8595;</span>
-        </div>
+        <div class="reveal-divider" aria-hidden="true"></div>
         <div class="reveal-card hide" data-animate="fade-up" data-animate-delay="150">
           <span class="reveal-label">Was du nicht siehst</span>
           <p>Alles, was vorher, nachher und im Hintergrund passiert. Und das ist eine ganze Menge.</p>
@@ -59,41 +59,18 @@ import Photo from '../components/Photo.astro';
       <div class="section-intro" data-animate="fade-up">
         <span class="eyebrow eyebrow--light">Die laufenden Kosten</span>
         <h2>Jeden Monat, egal ob das Atelier voll ist oder leer</h2>
+        <p class="intro-note">Diese Dinge laufen weiter, ob jemand kommt oder nicht. Sie tragen jeden einzelnen Termin mit.</p>
       </div>
-      <div class="cost-grid" data-animate-stagger="80">
-        <div class="cost-item" data-animate="fade-up">
-          <span class="cost-icon">&#127968;</span>
-          <p>Miete und Nebenkosten</p>
-        </div>
-        <div class="cost-item" data-animate="fade-up">
-          <span class="cost-icon">&#9889;</span>
-          <p>Strom, Wasser und Heizung</p>
-        </div>
-        <div class="cost-item" data-animate="fade-up">
-          <span class="cost-icon">&#128201;</span>
-          <p>Buchhaltung und Steuerberatung</p>
-        </div>
-        <div class="cost-item" data-animate="fade-up">
-          <span class="cost-icon">&#128274;</span>
-          <p>Versicherungen fürs Gewerbe</p>
-        </div>
-        <div class="cost-item" data-animate="fade-up">
-          <span class="cost-icon">&#127753;</span>
-          <p>Rohkeramiken und Glasuren</p>
-        </div>
-        <div class="cost-item" data-animate="fade-up">
-          <span class="cost-icon">&#128293;</span>
-          <p>Brennofen und Verbrauchsmaterial</p>
-        </div>
-        <div class="cost-item" data-animate="fade-up">
-          <span class="cost-icon">&#128241;</span>
-          <p>Website, Buchungssystem und Kassensoftware</p>
-        </div>
-        <div class="cost-item" data-animate="fade-up">
-          <span class="cost-icon">&#127881;</span>
-          <p>Deko, Mobiliar und Atelier-Ausstattung</p>
-        </div>
-      </div>
+      <ul class="cost-list" data-animate-stagger="70">
+        <li data-animate="fade-up">Miete und Nebenkosten</li>
+        <li data-animate="fade-up">Strom, Wasser und Heizung</li>
+        <li data-animate="fade-up">Buchhaltung und Steuerberatung</li>
+        <li data-animate="fade-up">Versicherungen fürs Gewerbe</li>
+        <li data-animate="fade-up">Rohkeramiken und Glasuren</li>
+        <li data-animate="fade-up">Brennofen und Verbrauchsmaterial</li>
+        <li data-animate="fade-up">Website, Buchungssystem und Kassensoftware</li>
+        <li data-animate="fade-up">Deko, Mobiliar und Atelier-Ausstattung</li>
+      </ul>
     </div>
   </section>
 
@@ -103,14 +80,14 @@ import Photo from '../components/Photo.astro';
       <div class="org-grid">
         <div class="org-img photo-hover" data-animate="scale-up">
           <Photo
-            src="/fotos/sh-brushes.jpg"
-            alt="Pinsel und Malutensilien im Atelier Auszeit"
+            src="/fotos/warum-organisation.webp"
+            alt="Vorbereitung im Atelier Auszeit, Pinsel und Keramik werden gerichtet"
           />
         </div>
         <div class="org-text" data-animate="slide-right" data-animate-delay="120">
           <span class="eyebrow">Organisation</span>
           <h2>Das läuft im Hintergrund, damit du einfach ankommen kannst</h2>
-          <ul class="behind-list">
+          <ul class="line-list">
             <li>Termine planen und das Buchungssystem pflegen</li>
             <li>Anfragen per Mail und WhatsApp beantworten</li>
             <li>Neues Sortiment auswählen und einkaufen</li>
@@ -134,7 +111,7 @@ import Photo from '../components/Photo.astro';
       <div class="timeline-cards" data-animate-stagger="100">
         <div class="tl-card" data-animate="fade-up">
           <span class="tl-label">Bevor du kommst</span>
-          <ul>
+          <ul class="line-list">
             <li>Das Atelier wird geputzt und vorbereitet</li>
             <li>Alle Rohkeramiken und Glasuren werden aufgefüllt</li>
             <li>Kaffee und Tee sind bereit</li>
@@ -143,7 +120,7 @@ import Photo from '../components/Photo.astro';
         </div>
         <div class="tl-card tl-card--mid" data-animate="fade-up">
           <span class="tl-label">Während deiner Auszeit</span>
-          <ul>
+          <ul class="line-list">
             <li>Ich begleite dich und erkläre die Techniken</li>
             <li>Kaffee, Tee und Wasser gibt es so viel du willst, kostenlos</li>
             <li>Bei der kleinen Gruppe hat jeder genug Zeit und Platz</li>
@@ -152,7 +129,7 @@ import Photo from '../components/Photo.astro';
         </div>
         <div class="tl-card" data-animate="fade-up">
           <span class="tl-label">Nachdem du gegangen bist</span>
-          <ul>
+          <ul class="line-list">
             <li>Aufräumen und Reinigen</li>
             <li>Deine Keramik glasieren und für den Brand vorbereiten</li>
             <li>Den Brennofen beladen und überwachen</li>
@@ -170,13 +147,13 @@ import Photo from '../components/Photo.astro';
       <div class="quote-split">
         <div class="quote-img photo-hover" data-animate="scale-up">
           <Photo
-            src="/fotos/sh-atelier.jpg"
-            alt="Das Atelier Auszeit in Gronau von innen"
+            src="/fotos/warum-irena.webp"
+            alt="Irena, Inhaberin des Malateliers Auszeit in Gronau"
           />
         </div>
         <div class="quote-text" data-animate="slide-right" data-animate-delay="120">
           <blockquote class="big-quote">
-            "Du bezahlst nicht nur für zwei Stunden Pinsel in der Hand. Du bezahlst für alles, was vorher und nachher passiert. Für das Atelier, das auf dich wartet. Für die Glasur, die ich erst nach deinem Besuch auftrage. Für den Brand, der dein Stück fertig macht."
+            „Du bezahlst nicht nur für zwei Stunden Pinsel in der Hand. Du bezahlst für alles, was vorher und nachher passiert. Für das Atelier, das auf dich wartet. Für die Glasur, die ich erst nach deinem Besuch auftrage. Für den Brand, der dein Stück fertig macht.“
             <cite>Irena, Inhaberin Malatelier Auszeit</cite>
           </blockquote>
         </div>
@@ -193,21 +170,33 @@ import Photo from '../components/Photo.astro';
         <Brush />
       </div>
       <div class="support-grid" data-animate-stagger="100">
-        <div class="support-item" data-animate="fade-up">
-          <div class="support-icon">&#9825;</div>
-          <h3>Ein kleines Unternehmen mit echten Menschen</h3>
-          <p>Kein Konzern, keine Kette. Nur Irena, ihr Atelier und die Freude daran, Menschen kreative Auszeiten zu schenken.</p>
-        </div>
-        <div class="support-item" data-animate="fade-up">
-          <div class="support-icon">&#127774;</div>
-          <h3>Handwerk und Kreativität vor Ort</h3>
-          <p>Ein Angebot, das es in Gronau so nur einmal gibt. Und das es nur gibt, weil Menschen wie du kommen.</p>
-        </div>
-        <div class="support-item" data-animate="fade-up">
-          <div class="support-icon">&#127968;</div>
-          <h3>Lokale Wertschöpfung in deiner Region</h3>
-          <p>Dein Geld bleibt hier. Es fließt in Miete, Material und in den Fortbestand eines kleinen Ateliers mitten in Gronau.</p>
-        </div>
+        <article class="support-item" data-animate="fade-up">
+          <div class="support-img">
+            <Photo src="/fotos/warum-menschen.webp" alt="Irena im Atelier Auszeit" />
+          </div>
+          <div class="support-body">
+            <h3>Ein kleines Unternehmen mit echten Menschen</h3>
+            <p>Kein Konzern, keine Kette. Nur Irena, ihr Atelier und die Freude daran, Menschen kreative Auszeiten zu schenken.</p>
+          </div>
+        </article>
+        <article class="support-item" data-animate="fade-up">
+          <div class="support-img">
+            <Photo src="/fotos/warum-handwerk.webp" alt="Farben, Pinsel und bemalte Keramik im Atelier" />
+          </div>
+          <div class="support-body">
+            <h3>Handwerk und Kreativität vor Ort</h3>
+            <p>Ein Angebot, das es in Gronau so nur einmal gibt. Und das es nur gibt, weil Menschen wie du kommen.</p>
+          </div>
+        </article>
+        <article class="support-item" data-animate="fade-up">
+          <div class="support-img">
+            <Photo src="/fotos/warum-atelier.webp" alt="Das Malatelier Auszeit in Gronau von außen" />
+          </div>
+          <div class="support-body">
+            <h3>Lokale Wertschöpfung in deiner Region</h3>
+            <p>Dein Geld bleibt hier. Es fließt in Miete, Material und in den Fortbestand eines kleinen Ateliers mitten in Gronau.</p>
+          </div>
+        </article>
       </div>
     </div>
   </section>
@@ -269,7 +258,7 @@ import Photo from '../components/Photo.astro';
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     gap: 1.5rem;
-    align-items: center;
+    align-items: stretch;
     max-width: 900px;
     margin: 0 auto;
   }
@@ -277,7 +266,6 @@ import Photo from '../components/Photo.astro';
     .split-reveal {
       grid-template-columns: 1fr;
     }
-    .reveal-divider { text-align: center; }
   }
   .reveal-card {
     background: var(--card);
@@ -294,7 +282,7 @@ import Photo from '../components/Photo.astro';
     font-size: .72rem;
     letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--terra);
+    color: var(--terra-ink);
     margin-bottom: .8rem;
   }
   .reveal-card p {
@@ -306,9 +294,21 @@ import Photo from '../components/Photo.astro';
     color: var(--meta) !important;
     font-size: .9rem;
   }
+  /* dezenter Trenner statt Pfeil-Icon */
   .reveal-divider {
-    font-size: 1.4rem;
-    color: var(--caramel);
+    align-self: center;
+    justify-self: center;
+    width: 1px;
+    height: 72px;
+    background: linear-gradient(var(--caramel), transparent);
+  }
+  @media (max-width: 640px) {
+    .reveal-divider {
+      width: 48px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--caramel), transparent);
+      margin: .25rem auto;
+    }
   }
 
   /* ── DARK EDITORIAL ── */
@@ -326,29 +326,28 @@ import Photo from '../components/Photo.astro';
     margin-top: .4rem;
   }
   .section-intro {
-    margin-bottom: 3rem;
+    margin-bottom: 2.6rem;
   }
-  .cost-grid {
+  .intro-note {
+    color: rgba(247, 241, 234, .72);
+    max-width: 48ch;
+    margin-top: 1rem;
+  }
+  /* Kostenliste: editorial, mit Haarlinien statt Icons */
+  .cost-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.2rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    column-gap: 3rem;
   }
-  .cost-item {
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: var(--r-md);
-    padding: 1.4rem 1.2rem;
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-  }
-  .cost-icon {
-    font-size: 1.5rem;
-    line-height: 1;
-  }
-  .cost-item p {
-    font-size: .9rem;
-    color: rgba(247,241,234,.8);
+  .cost-list li {
+    font-family: var(--font-serif);
+    font-size: clamp(1.05rem, 1rem + .3vw, 1.25rem);
+    color: var(--bg);
+    padding: 1.05rem 0;
+    border-top: 1px solid rgba(247, 241, 234, .16);
   }
 
   /* ── ORGANISATION ── */
@@ -366,7 +365,7 @@ import Photo from '../components/Photo.astro';
   .org-img {
     border-radius: var(--r-lg);
     overflow: hidden;
-    min-height: clamp(260px, 32vw, 400px);
+    min-height: clamp(280px, 36vw, 460px);
     box-shadow: var(--shadow-soft);
     position: relative;
   }
@@ -382,27 +381,20 @@ import Photo from '../components/Photo.astro';
     margin: .5rem 0 1.2rem;
     max-width: 28ch;
   }
-  .behind-list {
+
+  /* ── LINE-LIST (icon-frei, Haarlinien) ── */
+  .line-list {
     list-style: none;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: .7rem;
+    margin: 0;
   }
-  .behind-list li {
-    padding-left: 1.4rem;
-    position: relative;
+  .line-list li {
     color: var(--ink-2);
+    padding: .8rem 0;
+    border-bottom: 1px solid var(--hair);
   }
-  .behind-list li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: .55em;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--caramel);
+  .line-list li:first-child {
+    border-top: 1px solid var(--hair);
   }
 
   /* ── TIMELINE CARDS ── */
@@ -434,31 +426,19 @@ import Photo from '../components/Photo.astro';
     font-family: var(--font-serif);
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--terra);
+    color: var(--terra-ink);
     margin-bottom: 1rem;
   }
-  .tl-card ul {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: .6rem;
-  }
-  .tl-card ul li {
-    color: var(--ink-2);
-    padding-left: 1.2rem;
-    position: relative;
+  .tl-card .line-list li {
     font-size: .95rem;
   }
-  .tl-card ul li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: .6em;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--caramel);
+  .tl-card .line-list li:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .tl-card .line-list li:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
   }
 
   /* ── QUOTE SPLIT ── */
@@ -476,7 +456,7 @@ import Photo from '../components/Photo.astro';
   .quote-img {
     border-radius: var(--r-lg);
     overflow: hidden;
-    min-height: clamp(240px, 30vw, 380px);
+    min-height: clamp(300px, 38vw, 480px);
     box-shadow: var(--shadow-soft);
     position: relative;
   }
@@ -486,6 +466,7 @@ import Photo from '../components/Photo.astro';
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center 30%;
   }
   .big-quote {
     font-family: var(--font-serif);
@@ -496,6 +477,7 @@ import Photo from '../components/Photo.astro';
     border-left: 4px solid var(--caramel);
     padding-left: 1.4rem;
     margin: 0;
+    text-wrap: pretty;
   }
   .big-quote cite {
     display: block;
@@ -508,34 +490,56 @@ import Photo from '../components/Photo.astro';
     margin-top: 1.2rem;
   }
 
-  /* ── SUPPORT ── */
+  /* ── SUPPORT (Foto-Karten, icon-frei) ── */
   .support-blk {
     background: var(--surface);
   }
   .support-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 2rem;
     margin-top: 1rem;
   }
   .support-item {
-    padding: 1.8rem;
     background: var(--card);
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-card);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform .4s var(--ease-out), box-shadow .4s var(--ease-out);
   }
-  .support-icon {
-    font-size: 2rem;
-    line-height: 1;
-    margin-bottom: .8rem;
+  .support-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 28px 54px -24px rgba(58, 45, 36, .38);
+  }
+  .support-img {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+  }
+  :global(.support-img img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .5s var(--ease-out);
+  }
+  .support-item:hover :global(.support-img img) {
+    transform: scale(1.04);
+  }
+  .support-body {
+    padding: 1.6rem 1.8rem 1.9rem;
   }
   .support-item h3 {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
     margin-bottom: .5rem;
+    max-width: 24ch;
   }
   .support-item p {
     color: var(--ink-2);
-    font-size: .92rem;
+    font-size: .95rem;
   }
 
   /* ── FINAL CTA ── */

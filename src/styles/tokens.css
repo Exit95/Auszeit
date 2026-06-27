@@ -2,7 +2,7 @@
   /* Farbe */
   --bg:#F7F1EA; --surface:#EDE3D8; --card:#FFFFFF;
   --ink:#3A2D24; --ink-2:#5D4A3C; --meta:#7A6A5A;
-  --terra:#996b5b; --terra-h:#7a5548; --caramel:#d9ac93; --hair:#E4D8CB;
+  --terra:#996b5b; --terra-h:#7a5548; --terra-ink:#6f4d40; --caramel:#d9ac93; --hair:#E4D8CB;
   --focus:#996b5b;
   /* Spacing */
   --space-1:0.25rem; --space-2:0.5rem; --space-3:0.75rem; --space-4:1rem;
@@ -32,6 +32,19 @@
   --ease-smooth:cubic-bezier(0.22,0.61,0.36,1);
   --ease-out:cubic-bezier(0.25,1,0.5,1);
   --dur-fast:180ms; --dur-mid:420ms; --dur-reveal:680ms;
+  /* Kompatibilitaets-Aliase: veraltete Token-Namen -> kanonische Tokens
+     (vereinheitlicht 12 Komponenten auf EINE Palette, statt zwei) */
+  --color-terracotta: var(--terra);
+  --color-sienna:     var(--terra-ink);   /* dunkler Akzent: Preise/Links auf hell */
+  --brand-espresso:   var(--ink);
+  --color-clay-brown: var(--ink-2);
+  --color-warm-beige: var(--surface);
+  --color-off-white:  var(--card);
+  --bg-paper:         var(--bg);
+  /* Typografie- und Layout-Tippfehler abfangen */
+  --serif: var(--font-serif);  --sans: var(--font-sans);
+  --touch-target-min: var(--touch-min);
+  --radius-lg: var(--r-lg);
   /* Pinselstrich (Karamell) */
   --brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 18' preserveAspectRatio='none'%3E%3Cpath fill='%23d9ac93' d='M2 10 C 24 3 52 14 82 8 C 112 2 138 13 158 7 L 157 10 C 136 16 110 8 81 12 C 50 16 24 6 3 13 Z'/%3E%3C/svg%3E");
 }
